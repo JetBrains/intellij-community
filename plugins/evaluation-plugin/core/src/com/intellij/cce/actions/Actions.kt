@@ -1,11 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.actions
 
-import com.google.gson.*
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import com.intellij.cce.core.DEFAULT_LOOKUP_ELEMENT_TYPE
 import com.intellij.cce.core.TokenProperties
 import java.lang.reflect.Type
-import java.util.*
+import java.util.UUID
 
 sealed interface Action {
   val type: ActionType

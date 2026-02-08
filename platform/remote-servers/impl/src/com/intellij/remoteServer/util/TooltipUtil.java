@@ -10,7 +10,7 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import javax.swing.event.HyperlinkEvent;
 
 /**

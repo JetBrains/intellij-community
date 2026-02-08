@@ -1,7 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.PluginDescriptorLoadingResult
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginLoadingResult
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNonLoadReason
+import com.intellij.ide.plugins.PluginSetBuilder
+import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.ProductPluginInitContext
+import com.intellij.ide.plugins.isBrokenPlugin
+import com.intellij.ide.plugins.loadDescriptorFromArtifact
+import com.intellij.ide.plugins.loadDescriptors
 import com.intellij.openapi.application.PluginAutoUpdateRepository.PluginUpdateInfo
 import com.intellij.openapi.application.PluginAutoUpdateRepository.clearUpdates
 import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdateDirPath

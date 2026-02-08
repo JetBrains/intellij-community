@@ -431,7 +431,6 @@ c:com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProj
 com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - customize(com.intellij.openapi.externalSystem.service.notification.NotificationData,com.intellij.openapi.project.Project,java.lang.String,java.lang.Throwable):V
-- customize(com.intellij.openapi.externalSystem.service.notification.NotificationData,com.intellij.openapi.project.Project,java.lang.Throwable):V
 - a:getTargetExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 f:com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager
 - com.intellij.openapi.Disposable
@@ -1169,7 +1168,6 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 f:com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 - sf:HASHING_STRATEGY:com.intellij.util.containers.HashingStrategy
 - s:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
-- s:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.util.Collection):Z
 - s:convert(com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent):com.intellij.build.events.BuildEvent
 - s:createExecutionEnvironment(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String):com.intellij.execution.runners.ExecutionEnvironment
 - s:createExternalSystemRunnerAndConfigurationSettings(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.execution.RunnerAndConfigurationSettings

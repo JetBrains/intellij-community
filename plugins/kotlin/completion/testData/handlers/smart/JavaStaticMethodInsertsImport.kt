@@ -4,3 +4,5 @@ fun foo(){
 
 // ELEMENT_TEXT: "Calendar.getInstance"
 // TAIL_TEXT: "(TimeZone!) (java.util)"
+
+// IGNORE_K2

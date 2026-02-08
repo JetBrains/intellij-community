@@ -16,6 +16,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -32,7 +33,6 @@ import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.util.function.Function
 
@@ -274,7 +274,7 @@ fun getModuleToStartConsole(project: Project, moduleManager: ModuleManager): Mod
   }
 
   val projectLocalModule = moduleManager.modules.firstOrNull {
-    val roots = it.rootManager.contentRoots
+    val roots = ModuleRootManager.getInstance(it).contentRoots
     roots.all { it.isInLocalFileSystem }
   }
   if (projectLocalModule != null) {

@@ -11,7 +11,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.stopAfter
 import com.intellij.util.takeWhileInclusive
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 import kotlin.reflect.KClass
 
 val PsiElement.startOffset: Int

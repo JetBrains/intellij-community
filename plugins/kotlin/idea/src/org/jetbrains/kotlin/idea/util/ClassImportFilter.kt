@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -8,6 +9,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
 /** Filter that can block classes from being automatically imported as a side-effect of other actions. */
+@K1Deprecation
 fun interface ClassImportFilter {
     /**
      * This class holds information that implementations of ClassImportFilter might need to decide whether to import a given class.

@@ -7,17 +7,26 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.LookAndFeel;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicPasswordFieldUI;
 import javax.swing.text.Caret;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.Rectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPACT_HEIGHT;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
 
 /**
  * @author Konstantin Bulenkov

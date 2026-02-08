@@ -51,6 +51,12 @@ my-app.submodule.jvmMain
 my-app.submodule.jvmTest
     targetPlatform = JVM (17)
 
+my-app.submodule.webMain
+    targetPlatform = JS
+
+my-app.submodule.webTest
+    targetPlatform = JS
+
 
 Test configuration:
 - showing only following facet fields: targetPlatform

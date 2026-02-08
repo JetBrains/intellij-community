@@ -9,7 +9,8 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 import java.io.File;
 
 public final class JavadocConfigurable implements Configurable {

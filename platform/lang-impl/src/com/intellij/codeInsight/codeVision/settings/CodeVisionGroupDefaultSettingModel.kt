@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
-import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionInitializer
+import com.intellij.codeInsight.codeVision.CodeVisionMessageBundle
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPass
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderAdapter
 import com.intellij.lang.Language

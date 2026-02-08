@@ -3,7 +3,12 @@ package com.intellij.platform.navbar.frontend.actions
 
 import com.intellij.ide.CopyPasteDelegator
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.platform.navbar.NavBarVmItem
 import javax.swing.JComponent
 

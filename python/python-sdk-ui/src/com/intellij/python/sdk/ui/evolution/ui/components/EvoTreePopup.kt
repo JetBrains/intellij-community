@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.ui.popup.list.PopupListElementRenderer
 import kotlinx.coroutines.CoroutineScope
 import java.awt.Component
 import javax.swing.JList

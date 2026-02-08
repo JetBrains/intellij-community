@@ -2,12 +2,18 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability
 
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundType
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeEnhancer
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.enhanceWith
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isFlexible
 
+@K1Deprecation
 class MutabilityBoundTypeEnhancer : BoundTypeEnhancer() {
     override fun enhance(
         expression: KtExpression,

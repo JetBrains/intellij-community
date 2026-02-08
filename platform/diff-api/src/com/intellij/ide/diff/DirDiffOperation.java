@@ -8,8 +8,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 /**
  * @author Konstantin Bulenkov

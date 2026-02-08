@@ -11,12 +11,17 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 import org.jetbrains.kotlin.idea.core.getOrCreateValueParameterList
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureConfiguration
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.modify
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.runChangeSignature
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.suggestReceiverNames
 import org.jetbrains.kotlin.idea.refactoring.resolveToExpectedDescriptorIfPossible
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -26,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 
+@K1Deprecation
 class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntention<KtTypeReference>(
     KtTypeReference::class.java,
     KotlinBundle.messagePointer("convert.receiver.to.parameter")

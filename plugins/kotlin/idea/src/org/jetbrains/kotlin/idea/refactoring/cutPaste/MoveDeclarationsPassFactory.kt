@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
-import com.intellij.codeHighlighting.*
+import com.intellij.codeHighlighting.Pass
+import com.intellij.codeHighlighting.TextEditorHighlightingPass
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -12,7 +16,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
 
     class Registrar : TextEditorHighlightingPassFactoryRegistrar {

@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

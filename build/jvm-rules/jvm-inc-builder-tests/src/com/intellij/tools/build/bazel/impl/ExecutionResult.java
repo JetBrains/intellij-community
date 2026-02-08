@@ -1,6 +1,6 @@
 package com.intellij.tools.build.bazel.impl;
 
-import org.junit.jupiter.api.Assertions;
+import org.junit.Assert;
 
 public interface ExecutionResult {
 
@@ -18,13 +18,13 @@ public interface ExecutionResult {
 
   default void assertSuccessful() {
     if (!isSuccessful()) {
-      Assertions.fail("Build failed.\n" + getOutput());
+      Assert.fail("Build failed.\n" + getOutput());
     }
   }
 
   default void assertFailure() {
     if (isSuccessful()) {
-      Assertions.fail("Build successful, but is expected to fail.\n" + getOutput());
+      Assert.fail("Build successful, but is expected to fail.\n" + getOutput());
     }
   }
 

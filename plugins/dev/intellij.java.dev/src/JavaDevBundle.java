@@ -2,7 +2,11 @@
 package com.intellij.java.dev;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 public final class JavaDevBundle {
   private static final @NonNls String BUNDLE_FQN = "messages.JavaDevBundle";

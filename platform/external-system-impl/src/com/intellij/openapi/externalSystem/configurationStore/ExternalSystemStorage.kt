@@ -1,8 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.DataWriter
+import com.intellij.configurationStore.DataWriterFilter
 import com.intellij.configurationStore.DataWriterFilter.ElementLevel
+import com.intellij.configurationStore.DirectoryBasedStorage
+import com.intellij.configurationStore.ExternalStorageWithInternalPart
+import com.intellij.configurationStore.SaveSessionProducer
+import com.intellij.configurationStore.StateMap
+import com.intellij.configurationStore.StateStorageManager
+import com.intellij.configurationStore.StreamProviderFactory
+import com.intellij.configurationStore.XmlElementStorage
 import com.intellij.configurationStore.XmlElementStorage.XmlElementStorageSaveSessionProducer
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros

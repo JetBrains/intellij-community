@@ -5,7 +5,7 @@ import com.intellij.grazie.GrazieDynamic
 import org.languagetool.broker.ResourceDataBroker
 import java.io.InputStream
 import java.net.URL
-import java.util.*
+import java.util.Locale
 
 internal object GrazieDynamicDataBroker : ResourceDataBroker {
   override fun getAsURL(path: String) = GrazieDynamic.getResource(path)

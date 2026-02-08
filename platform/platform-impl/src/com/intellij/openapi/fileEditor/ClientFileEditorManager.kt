@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 import com.intellij.codeWithMe.ClientId
@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorCompositeModel
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -27,13 +26,11 @@ interface ClientFileEditorManager {
     fun getCurrentInstance(project: Project): ClientFileEditorManager = project.service()
 
     @JvmStatic
-    fun getClientId(fileEditor: FileEditor): ClientId? = CLIENT_ID.get(fileEditor)
+    fun getClientId(fileEditor: FileEditor): ClientId? = FileEditorClientUtils.getClientId(fileEditor)
 
     @JvmStatic
     @ApiStatus.Internal
-    fun assignClientId(fileEditor: FileEditor, clientId: ClientId?): Unit = CLIENT_ID.set(fileEditor, clientId)
-
-    private val CLIENT_ID = Key.create<ClientId>("CLIENT_ID")
+    fun assignClientId(fileEditor: FileEditor, clientId: ClientId?): Unit = FileEditorClientUtils.assignClientId(fileEditor, clientId)
   }
 
   fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider?

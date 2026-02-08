@@ -2,7 +2,9 @@ package com.intellij.database.run.actions;
 
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.DatabaseDataKeys;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;

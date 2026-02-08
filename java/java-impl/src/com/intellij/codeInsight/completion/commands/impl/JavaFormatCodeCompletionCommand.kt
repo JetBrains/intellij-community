@@ -8,7 +8,11 @@ import com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCo
 import com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.psi.*
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiStatement
 import com.intellij.psi.util.parents
 
 internal class JavaFormatCodeCompletionCommandProvider : AbstractFormatCodeCompletionCommandProvider() {

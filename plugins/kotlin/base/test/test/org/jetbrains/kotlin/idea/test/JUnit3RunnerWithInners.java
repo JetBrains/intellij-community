@@ -17,12 +17,23 @@ import org.junit.internal.MethodSorter;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
-import org.junit.runner.manipulation.*;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.Filterable;
+import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runner.manipulation.Sortable;
+import org.junit.runner.manipulation.Sorter;
 import org.junit.runner.notification.RunNotifier;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortable {
     private static final Set<Class<?>> requestedRunners = new HashSet<>();

@@ -3,7 +3,11 @@ package org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections
 
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.diagnostic.Logger

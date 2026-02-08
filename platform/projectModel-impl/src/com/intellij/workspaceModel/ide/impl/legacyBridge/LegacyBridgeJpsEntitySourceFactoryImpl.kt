@@ -4,7 +4,11 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames

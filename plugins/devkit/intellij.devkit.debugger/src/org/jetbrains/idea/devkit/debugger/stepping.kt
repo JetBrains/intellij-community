@@ -1,7 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.debugger
 
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebugProcess
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebugProcessListener
+import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.SteppingListener
+import com.intellij.debugger.engine.SuspendContext
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
@@ -12,8 +18,13 @@ import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import com.sun.jdi.*
-import java.util.*
+import com.sun.jdi.BooleanValue
+import com.sun.jdi.ClassType
+import com.sun.jdi.ObjectCollectedException
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.VMDisconnectedException
+import java.util.WeakHashMap
 
 private const val CANCELLATION_FQN = "com.intellij.openapi.progress.Cancellation"
 

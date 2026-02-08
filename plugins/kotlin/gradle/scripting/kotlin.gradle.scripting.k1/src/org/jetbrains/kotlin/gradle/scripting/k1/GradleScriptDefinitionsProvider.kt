@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.gradle.scripting.k1
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.ConcurrentHashMap
 
+@K1Deprecation
 class GradleScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionsSource {
     companion object {
         fun getInstance(project: Project): GradleScriptDefinitionsContributor? =

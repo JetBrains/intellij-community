@@ -5,7 +5,13 @@ import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.SetVFUEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SetVFUEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyListVFUEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySetVFUEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.BeforeEach

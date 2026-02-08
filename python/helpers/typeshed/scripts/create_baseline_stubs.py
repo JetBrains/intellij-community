@@ -105,12 +105,18 @@ async def get_upstream_repo_url(project: str) -> str | None:
             # Remove `www.`; replace `http://` with `https://`
             url = re.sub(r"^(https?://)?(www\.)?", "https://", url_to_check)
             netloc = urllib.parse.urlparse(url).netloc
-            if netloc in {"gitlab.com", "github.com", "bitbucket.org", "foss.heptapod.net"}:
-                # truncate to https://site.com/user/repo
-                upstream_repo_url = "/".join(url.split("/")[:5])
-                async with session.get(upstream_repo_url) as response:
-                    if response.status == HTTPStatus.OK:
-                        return upstream_repo_url
+            if netloc not in {"gitlab.com", "github.com", "bitbucket.org", "foss.heptapod.net"}:
+                continue
+            # truncate to https://site.com/user/repo
+            upstream_repo_url = "/".join(url.split("/")[:5])
+            async with session.get(upstream_repo_url, allow_redirects=True) as response:
+                if response.status != HTTPStatus.OK:
+                    continue
+                # final url after redirects
+                final_url = str(response.url)
+                # normalize again (in case redirect added extra path)
+                final_repo_url = "/".join(final_url.split("/")[:5])
+                return final_repo_url
     return None
 
 

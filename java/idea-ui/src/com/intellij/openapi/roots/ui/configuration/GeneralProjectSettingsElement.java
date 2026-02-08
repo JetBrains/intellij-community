@@ -15,7 +15,16 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.PlaceInProjectStructureBase;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemType;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolder;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.UsageInProjectSettings;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.UsagesInUnloadedModules;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +33,12 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class GeneralProjectSettingsElement extends ProjectStructureElement {
   public GeneralProjectSettingsElement(@NotNull StructureConfigurableContext context) {

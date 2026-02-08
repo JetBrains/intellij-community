@@ -4,7 +4,9 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.util.ui.PlatformColors;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 
 public class VertInsertFeedbackPainter implements FeedbackPainter {

@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.history
 
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
-import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModel
-import java.util.*
+import java.util.Collections
 
 internal class CommandHistoryManager(
   private val session: BlockTerminalSession,

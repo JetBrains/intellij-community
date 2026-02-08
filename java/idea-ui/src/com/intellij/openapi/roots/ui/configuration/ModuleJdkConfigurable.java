@@ -17,7 +17,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.function.Predicate;

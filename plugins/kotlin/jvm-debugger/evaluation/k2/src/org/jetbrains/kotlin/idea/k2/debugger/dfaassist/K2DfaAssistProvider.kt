@@ -33,7 +33,11 @@ import com.sun.jdi.Value
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -43,11 +47,30 @@ import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtBaseDescriptor
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtLambdaThisVariableDescriptor
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtThisDescriptor
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtVariableDescriptor
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import java.util.*
+import java.util.IdentityHashMap
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 private class K2DfaAssistProvider : DfaAssistProvider {

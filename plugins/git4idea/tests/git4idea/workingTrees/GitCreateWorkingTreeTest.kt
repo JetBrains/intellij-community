@@ -13,6 +13,7 @@ import git4idea.commands.GitLineHandler
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.registerRepo
 import git4idea.workingTrees.GitWorkingTreeTestBase.Companion.createBranch
+import git4idea.workingTrees.GitWorkingTreeTestBase.Companion.ensureWorkingTreesUpToDateForTests
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Paths
@@ -70,7 +71,7 @@ class GitCreateWorkingTreeTest : GitSingleRepoTest() {
     assertNull("Current branch is should be null, got ${workingTreeRepo.currentBranchName} instead",
                workingTreeRepo.currentBranchName)
 
-    repo.workingTreeHolder.ensureUpToDateForTests()
+    repo.ensureWorkingTreesUpToDateForTests()
     val workingTrees = repo.workingTreeHolder.getWorkingTrees()
     val expected = listOf(
       GitWorkingTree(repo.root.path,
@@ -91,7 +92,7 @@ class GitCreateWorkingTreeTest : GitSingleRepoTest() {
     git("worktree add -B $branch ../$treeRoot")
     git("worktree lock ../$treeRoot")
 
-    repo.workingTreeHolder.ensureUpToDateForTests()
+    repo.ensureWorkingTreesUpToDateForTests()
     val workingTrees = repo.workingTreeHolder.getWorkingTrees()
     val expected = listOf(
       GitWorkingTree(repo.root.path,
@@ -113,7 +114,7 @@ class GitCreateWorkingTreeTest : GitSingleRepoTest() {
     git("worktree add -B $branch ../$treeRoot")
     git("worktree lock --reason Because ../$treeRoot")
 
-    repo.workingTreeHolder.ensureUpToDateForTests()
+    repo.ensureWorkingTreesUpToDateForTests()
     val workingTrees = repo.workingTreeHolder.getWorkingTrees()
     val expected = listOf(
       GitWorkingTree(repo.root.path,
@@ -135,7 +136,7 @@ class GitCreateWorkingTreeTest : GitSingleRepoTest() {
     git("worktree add -B $branch ../$treeRoot")
     testNioRoot.resolve(treeRoot).deleteRecursively()
 
-    repo.workingTreeHolder.ensureUpToDateForTests()
+    repo.ensureWorkingTreesUpToDateForTests()
     val workingTrees = repo.workingTreeHolder.getWorkingTrees()
     val expected = listOf(
       GitWorkingTree(repo.root.path,

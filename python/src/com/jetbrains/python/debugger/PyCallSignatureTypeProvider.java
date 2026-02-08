@@ -5,7 +5,11 @@ import com.intellij.openapi.util.Ref;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 public final class PyCallSignatureTypeProvider extends PyTypeProviderBase {

@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.imports
 
 import com.intellij.codeInsight.daemon.ReferenceImporter
 import org.jetbrains.kotlin.idea.codeInsight.AbstractKotlinReferenceImporter
-import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter
+import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 

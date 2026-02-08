@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
-import com.intellij.maven.server.m40.compat.CompatResidentMavenInvoker;
 import com.intellij.maven.server.m40.InvokerWithoutCoreExtensions;
+import com.intellij.maven.server.m40.compat.CompatResidentMavenInvoker;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.cling.invoker.LookupContext;
 import org.apache.maven.cling.invoker.ProtoLookup;

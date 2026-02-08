@@ -3,8 +3,12 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
 
 import java.util.ArrayList;
 import java.util.List;

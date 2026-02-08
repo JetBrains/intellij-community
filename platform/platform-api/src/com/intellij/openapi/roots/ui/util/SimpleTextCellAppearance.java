@@ -8,7 +8,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 // todo: move to intellij.platform.lang.impl ?
 public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx {

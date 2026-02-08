@@ -1,6 +1,6 @@
 <!-- cannot use dependent-on-core="false" - kotlin stdlib is required -->
 <!-- see the comment where we do include it about why we have dependency on it (yes, ktor-core wants this lib) -->
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.kotlinx.coroutines.slf4j"/>

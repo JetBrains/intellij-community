@@ -38,7 +38,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.append;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class MqPatchTest extends HgPlatformTest {

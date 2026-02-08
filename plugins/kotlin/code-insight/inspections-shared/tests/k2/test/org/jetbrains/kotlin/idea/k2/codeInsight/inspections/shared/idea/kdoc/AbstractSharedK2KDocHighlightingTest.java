@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingTest;
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KDocUnresolvedReferenceQuickFixProvider;
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 

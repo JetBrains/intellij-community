@@ -23,7 +23,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import static com.intellij.openapi.editor.impl.DisplayedFoldingAnchor.Type;
 

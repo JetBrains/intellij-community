@@ -6,7 +6,12 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.feedback.dialog.TEXT_AREA_ROW_SIZE
 import com.intellij.platform.feedback.dialog.adjustBehaviourForFeedbackForm
 import com.intellij.platform.feedback.dialog.createBoldJBLabel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.rows
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
 

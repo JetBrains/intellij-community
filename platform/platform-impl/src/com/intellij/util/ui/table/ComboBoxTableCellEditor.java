@@ -9,9 +9,12 @@ import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ListWithSelection;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
+import javax.swing.JTable;
 import javax.swing.event.PopupMenuEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.ArrayList;
 
 /**

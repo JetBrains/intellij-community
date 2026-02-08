@@ -2,12 +2,11 @@
 package com.intellij.platform.testFramework.junit5.eel.showcase
 
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
 import com.intellij.platform.testFramework.junit5.eel.fixture.tempDirFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

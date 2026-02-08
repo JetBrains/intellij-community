@@ -210,7 +210,7 @@ class _Params(TypedDict, total=False):
     download_ranges: Callable[[Any, YoutubeDL], Iterator[_DownloadRange]] | None
     force_keyframes_at_cuts: bool | None
     list_thumbnails: str | None
-    playlist_items: Collection[int] | None
+    playlist_items: str | None
     match_filter: NotRequired[Callable[[Mapping[str, Any], bool], str | None] | Callable[[Mapping[str, Any]], str | None] | None]
     color: _Color | None
     ffmpeg_location: str | None

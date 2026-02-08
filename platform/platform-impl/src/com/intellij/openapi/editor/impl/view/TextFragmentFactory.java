@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
 
-import java.awt.*;
+import java.awt.Font;
 import java.lang.Character.UnicodeScript;
 import java.util.List;
 

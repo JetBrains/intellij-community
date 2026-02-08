@@ -3,9 +3,13 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.collaboration.util.ResultUtil.processErrorAndGet
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.GHGQLRequests
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHComment
 import org.jetbrains.plugins.github.api.data.GithubIssueCommentWithHtml
+import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 private val LOG = logger<GHPRCommentService>()

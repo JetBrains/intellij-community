@@ -2,7 +2,11 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.NodeSortOrder;
+import com.intellij.ide.projectView.NodeSortSettings;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +15,14 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,7 +37,14 @@ import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class ExternalLibrariesNode extends ProjectViewNode<String> {
   private static final Logger LOG = Logger.getInstance(ExternalLibrariesNode.class);

@@ -1332,6 +1332,9 @@ f:com.intellij.platform.workspace.jps.entities.SdkRoot
 - hashCode():I
 f:com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 - java.io.Serializable
+- sf:CLASSES:com.intellij.platform.workspace.jps.entities.SdkRootTypeId
+- sf:Companion:com.intellij.platform.workspace.jps.entities.SdkRootTypeId$Companion
+- sf:SOURCES:com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 - <init>(java.lang.String):V
 - f:component1():java.lang.String
 - f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.SdkRootTypeId
@@ -1339,6 +1342,7 @@ f:com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
+f:com.intellij.platform.workspace.jps.entities.SdkRootTypeId$Companion
 com.intellij.platform.workspace.jps.entities.SourceRootEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntity
 - sf:Companion:com.intellij.platform.workspace.jps.entities.SourceRootEntity$Companion

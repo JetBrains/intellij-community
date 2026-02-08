@@ -13,7 +13,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 
 public final class CompilerIconLayerProvider implements IconLayerProvider {

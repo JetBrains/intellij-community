@@ -2,10 +2,8 @@
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
 
-    <!--todo temporary disabled until it will be a backend module-->
-
-    <!--<module name="intellij.jsp"/>-->
-    <!--<module name="intellij.java"/>-->
+    <module name="intellij.jsp"/>
+    <module name="intellij.java"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>

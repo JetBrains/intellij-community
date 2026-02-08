@@ -7,7 +7,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.*
+import com.intellij.ui.AnActionButtonRunnable
+import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TableSpeedSearch
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBViewport
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ColumnInfo

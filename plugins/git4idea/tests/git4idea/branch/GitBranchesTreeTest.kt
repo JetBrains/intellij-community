@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -14,7 +14,15 @@ import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.dashboard.*
+import git4idea.ui.branch.dashboard.BranchInfo
+import git4idea.ui.branch.dashboard.BranchNodeDescriptor
+import git4idea.ui.branch.dashboard.BranchTreeNode
+import git4idea.ui.branch.dashboard.BranchesTreeModel
+import git4idea.ui.branch.dashboard.BranchesTreeModelBase
+import git4idea.ui.branch.dashboard.FilteringBranchesTreeBase
+import git4idea.ui.branch.dashboard.NodeDescriptorsModel
+import git4idea.ui.branch.dashboard.RefsCollection
+import git4idea.ui.branch.dashboard.TagInfo
 import junit.framework.TestCase.assertEquals
 
 abstract class GitBranchesTreeTest: LightPlatformTestCase() {
@@ -77,6 +85,10 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
     if (expanded) {
       TreeTestUtil(tree).expandAll()
     }
+  }
+
+  fun refilter() {
+    filter(searchTextField.text)
   }
 
   fun filter(filterText: String) {

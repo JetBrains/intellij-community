@@ -4,8 +4,8 @@ package com.jetbrains.python.statistics.feedback
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 object PythonJobStatisticsCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("python.job.statistics", 2)

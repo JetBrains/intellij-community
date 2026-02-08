@@ -15,7 +15,22 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.lexer.YAMLFlexLexer;
 import org.jetbrains.yaml.parser.YAMLParser;
-import org.jetbrains.yaml.psi.impl.*;
+import org.jetbrains.yaml.psi.impl.YAMLAliasImpl;
+import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl;
+import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
+import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
+import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
+import org.jetbrains.yaml.psi.impl.YAMLCompoundValueImpl;
+import org.jetbrains.yaml.psi.impl.YAMLDocumentImpl;
+import org.jetbrains.yaml.psi.impl.YAMLFileImpl;
+import org.jetbrains.yaml.psi.impl.YAMLHashImpl;
+import org.jetbrains.yaml.psi.impl.YAMLKeyValueImpl;
+import org.jetbrains.yaml.psi.impl.YAMLPlainTextImpl;
+import org.jetbrains.yaml.psi.impl.YAMLPsiElementImpl;
+import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
+import org.jetbrains.yaml.psi.impl.YAMLScalarListImpl;
+import org.jetbrains.yaml.psi.impl.YAMLScalarTextImpl;
+import org.jetbrains.yaml.psi.impl.YAMLSequenceItemImpl;
 
 public class YAMLParserDefinition implements ParserDefinition {
   public static final IFileElementType FILE = new IFileElementType(YAMLLanguage.INSTANCE);

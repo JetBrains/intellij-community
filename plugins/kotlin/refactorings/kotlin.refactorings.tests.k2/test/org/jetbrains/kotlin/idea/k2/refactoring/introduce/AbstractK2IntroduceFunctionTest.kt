@@ -9,7 +9,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.KotlinFirExtractFunctionHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler

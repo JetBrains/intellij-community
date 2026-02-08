@@ -7,6 +7,8 @@ import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
@@ -21,7 +23,8 @@ import java.io.File
 import javax.swing.Icon
 import kotlin.coroutines.resume
 
-internal class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
+@ApiStatus.Internal
+class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
   override suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
     if (!ShellName.isPowerShell(context.shellName)) {
       return null
@@ -138,6 +141,9 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
 
       val typeIcon = item.type.getIcon()
       if (typeIcon != null) icon(typeIcon)
+
+      // insertValue is already escaped
+      noEscaping()
     }
   }
 
@@ -195,21 +201,22 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
     return if (shouldAddInvocationPrefix) invocationPrefix + str else str
   }
 
-  private fun String.isSurroundedByQuotes(): Boolean {
-    return isSurroundedBy("'") || isSurroundedBy("\"")
-  }
-
-  private fun String.isSurroundedBy(value: String): Boolean {
-    return startsWith(value) && endsWith(value)
-  }
-
   companion object {
     /**
      * Sequence that is sent to the shell when pressing `F12, e`.
      * Our PowerShell integration script binds completion to this sequence.
      */
-    private const val CALL_COMPLETION_SEQUENCE = "\u001b[24~e"
+    @VisibleForTesting
+    const val CALL_COMPLETION_SEQUENCE: String = "\u001b[24~e"
 
     private val LOG = logger<PowerShellCompletionContributor>()
   }
+}
+
+internal fun String.isSurroundedByQuotes(): Boolean {
+  return isSurroundedBy("'") || isSurroundedBy("\"")
+}
+
+internal fun String.isSurroundedBy(value: String): Boolean {
+  return startsWith(value) && endsWith(value)
 }

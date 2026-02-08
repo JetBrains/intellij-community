@@ -2,7 +2,11 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.services.*;
+import com.intellij.execution.services.ServiceEventListener;
+import com.intellij.execution.services.ServiceViewContributor;
+import com.intellij.execution.services.ServiceViewDescriptor;
+import com.intellij.execution.services.ServiceViewEmptyTreeSuggestion;
+import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.util.treeView.TreeState;
@@ -37,15 +41,23 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.InputEvent;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 import static com.intellij.platform.execution.serviceView.ServiceViewDragHelper.getTheOnlyRootContributor;

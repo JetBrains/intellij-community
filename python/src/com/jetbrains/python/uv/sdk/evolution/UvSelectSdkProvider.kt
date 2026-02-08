@@ -2,28 +2,25 @@ package com.jetbrains.python.uv.sdk.evolution
 
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.basePath
-import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
-import com.intellij.python.sdk.ui.evolution.sdk.EvoSdk
 import com.intellij.python.sdk.ui.evolution.AddNewEnvAction
 import com.intellij.python.sdk.ui.evolution.SelectEnvAction
+import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
+import com.intellij.python.sdk.ui.evolution.sdk.EvoSdk
 import com.intellij.python.sdk.ui.evolution.tool.pip.sdk.VenvEvoSdkManager
 import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.nio.file.Path
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 
-internal class UvSelectSdkProvider() : EvoSelectSdkProvider {
+internal class UvSelectSdkProvider : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeLazyNodeElement {
     val icon = PythonCommunityImplUVCommonIcons.UV
     return EvoTreeLazyNodeElement("uv", icon) {
@@ -34,7 +31,7 @@ internal class UvSelectSdkProvider() : EvoSelectSdkProvider {
       }.map { it.copy(icon = icon) }
       val envByFolders = environments.groupBy { it.pythonBinaryPath?.parent?.parent?.parent }.toMutableMap()
       envByFolders.putIfAbsent(
-        evoModuleSdk.module.basePath?.let { Path.of(it) },
+        evoModuleSdk.module.baseDir?.path?.let { Path.of(it) },
         listOf(EvoSdk(icon = icon, name = VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME, pythonBinaryPath = null))
       )
       val envSections = envByFolders.map { (basePath, sdks) ->

@@ -11,7 +11,8 @@ import org.jetbrains.java.generate.exception.TemplateResourceException;
 import org.jetbrains.java.generate.template.TemplateResource;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 @State(name = "EqualsHashCodeTemplates", storages = @Storage("equalsHashCodeTemplates.xml"), category = SettingsCategory.CODE)
 public final class EqualsHashCodeTemplatesManager extends EqualsHashCodeTemplatesManagerBase {

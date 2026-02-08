@@ -5,16 +5,24 @@ import com.intellij.codeInsight.hints.chain.AbstractDeclarativeCallChainProvider
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.AbstractKotlinInlayHintsProvider.Companion.addInlayInfoDetail
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 
+@K1Deprecation
 class KotlinCallChainHintsProvider: AbstractDeclarativeCallChainProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
     override fun KotlinType.buildTree(
         expression: PsiElement,

@@ -5,10 +5,12 @@ package org.jetbrains.kotlin.idea.completion.handlers
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.completion.KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
 import org.jetbrains.kotlin.idea.completion.tryGetOffset
 
+@K1Deprecation
 class SmartCompletionTailOffsetProviderFE10Impl: SmartCompletionTailOffsetProvider() {
     override fun getTailOffset(context: InsertionContext, item: LookupElement): Int {
         val completionChar = context.completionChar

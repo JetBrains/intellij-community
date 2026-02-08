@@ -3,10 +3,21 @@
 
 package org.jetbrains.intellij.build.impl
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.intellij.build.dependencies.*
+import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import java.math.BigInteger
 import java.nio.file.Files

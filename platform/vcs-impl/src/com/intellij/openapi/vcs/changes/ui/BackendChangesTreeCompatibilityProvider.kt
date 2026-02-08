@@ -8,7 +8,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.IgnoredViewDialog
+import com.intellij.openapi.vcs.changes.UnversionedViewDialog
+import com.intellij.openapi.vcs.changes.VcsCurrentRevisionProxy
+import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vcs.changes.ignore.actions.IgnoreFileActionGroup
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile

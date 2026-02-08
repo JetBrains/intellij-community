@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.find.usages.symbol.SearchTargetSymbol
@@ -15,10 +16,19 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_ICON
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolMatchCustomizer
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryScopeContributor
+import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
-import com.intellij.polySymbols.utils.*
+import com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
+import com.intellij.polySymbols.utils.kindName
+import com.intellij.polySymbols.utils.matchedNameOrName
+import com.intellij.polySymbols.utils.namespace
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.api.RenameUsageSearcher
@@ -26,7 +36,7 @@ import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
 import javax.swing.Icon
 
 /**
@@ -337,6 +347,9 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
      **/
     @JvmField
     val PROP_IJ_TEXT_ATTRIBUTES_KEY: PolySymbolProperty<String> = PolySymbolProperty["ij-text-attributes-key"]
+
+    @JvmField
+    val PROP_READ_WRITE_ACCESS: PolySymbolProperty<ReadWriteAccessDetector.Access> = PolySymbolProperty["ij-read-write-access"]
   }
 }
 

@@ -68,12 +68,8 @@ com.intellij.ide.script.IdeScriptEngine
 - a:setStdIn(java.io.Reader):V
 - a:setStdOut(java.io.Writer):V
 c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-- isAnimatedCaret():Z
-- setAnimatedCaret(Z):V
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
-- IS_ANIMATED_CARET:Z
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
-- sf:PROP_IS_ANIMATED_CARET:java.lang.String
 com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

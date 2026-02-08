@@ -15,7 +15,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;

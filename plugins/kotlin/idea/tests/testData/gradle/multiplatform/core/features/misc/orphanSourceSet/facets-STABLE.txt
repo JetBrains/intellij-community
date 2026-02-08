@@ -22,6 +22,12 @@ my-app.jvmTest
 my-app.orphan
     targetPlatform = JS/JVM (1.8)
 
+my-app.webMain
+    targetPlatform = JS
+
+my-app.webTest
+    targetPlatform = JS
+
 
 Test configuration:
 - showing only following facet fields: targetPlatform

@@ -6,6 +6,7 @@ c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.XDebugSession):V
 - p:createListRenderer():javax.swing.ListCellRenderer
 - p:getFrameNavigatable(com.intellij.xdebugger.frame.XStackFrame,Z):com.intellij.pom.Navigatable
+- p:getProject():com.intellij.openapi.project.Project
 - getSelectedFrame():com.intellij.xdebugger.frame.XStackFrame
 - p:getSelectedFrameNavigatable():com.intellij.pom.Navigatable
 - selectFrame(I):Z

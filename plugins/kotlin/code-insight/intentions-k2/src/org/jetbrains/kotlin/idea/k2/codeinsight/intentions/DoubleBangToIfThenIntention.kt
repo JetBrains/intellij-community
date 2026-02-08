@@ -21,7 +21,11 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformatio
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.convertToIfNullExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.introduceValueForCondition
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.isPure
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtThrowExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 
 internal class DoubleBangToIfThenIntention : SelfTargetingIntention<KtPostfixExpression>(

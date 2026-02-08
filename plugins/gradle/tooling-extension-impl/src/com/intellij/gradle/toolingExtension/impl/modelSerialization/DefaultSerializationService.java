@@ -4,7 +4,13 @@ package com.intellij.gradle.toolingExtension.impl.modelSerialization;
 import org.apache.commons.io.input.ClassLoaderObjectInputStream;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 
 /**
  * @author Vladislav.Soroka

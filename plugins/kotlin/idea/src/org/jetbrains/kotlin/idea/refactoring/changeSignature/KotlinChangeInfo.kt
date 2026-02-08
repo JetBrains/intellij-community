@@ -12,6 +12,7 @@ import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.VisibilityUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.keysToMap
 
+@K1Deprecation
 open class KotlinChangeInfo(
     val methodDescriptor: KotlinMethodDescriptor,
     private var name: String = methodDescriptor.name,
@@ -581,16 +583,21 @@ open class KotlinChangeInfo(
     }
 }
 
+@K1Deprecation
 val KotlinChangeInfo.originalBaseFunctionDescriptor: CallableDescriptor
     get() = methodDescriptor.baseDescriptor
 
+@K1Deprecation
 val KotlinChangeInfo.kind: Kind get() = methodDescriptor.kind
 
+@K1Deprecation
 val KotlinChangeInfo.oldName: String?
     get() = (methodDescriptor.method as? KtFunction)?.name
 
+@K1Deprecation
 fun KotlinChangeInfo.getAffectedCallables(): Collection<UsageInfo> = methodDescriptor.affectedCallables + propagationTargetUsageInfos
 
+@K1Deprecation
 fun ChangeInfo.toJetChangeInfo(
     originalChangeSignatureDescriptor: KotlinMethodDescriptor,
     resolutionFacade: ResolutionFacade

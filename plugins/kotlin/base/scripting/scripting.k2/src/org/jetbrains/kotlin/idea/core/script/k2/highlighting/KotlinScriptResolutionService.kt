@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -159,6 +160,7 @@ class KotlinScriptResolutionService(
          * - Increments [HighlightingSettingsPerFile] modification count to refresh daemon highlighting.
          * - Publishes global module and script module state modification events to re-run analysis.
          */
+        @OptIn(KaPlatformInterface::class)
         private fun dropKotlinScriptCaches(project: Project) {
             ThreadingAssertions.assertWriteAccess()
 

@@ -3,7 +3,7 @@ package com.intellij.python.community.services.shared
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.jetbrains.python.PyToolUIInfo
-import java.util.*
+import java.util.Objects
 
 
 private val logger = fileLogger()

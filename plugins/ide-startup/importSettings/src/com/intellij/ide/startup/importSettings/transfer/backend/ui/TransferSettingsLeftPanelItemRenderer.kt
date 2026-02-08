@@ -5,7 +5,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI

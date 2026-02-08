@@ -11,7 +11,11 @@ import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.testFramework.IndexingTestUtil.Companion.suspendUntilIndexesAreReady
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.editorFixture
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.psiFileFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

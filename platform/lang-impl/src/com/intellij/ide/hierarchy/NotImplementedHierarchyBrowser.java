@@ -7,7 +7,8 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 public final class NotImplementedHierarchyBrowser implements HierarchyBrowser {
   private final PsiElement myTarget;

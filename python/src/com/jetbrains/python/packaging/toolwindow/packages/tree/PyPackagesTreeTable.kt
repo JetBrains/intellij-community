@@ -2,7 +2,13 @@
 package com.jetbrains.python.packaging.toolwindow.packages.tree
 
 import com.intellij.ide.CopyProvider
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
@@ -16,7 +22,12 @@ import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
-import com.jetbrains.python.packaging.toolwindow.model.*
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
+import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
+import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageNameCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageVersionCellRenderer
 import com.jetbrains.python.sdk.isReadOnly

@@ -3,12 +3,22 @@
 
 package com.intellij.toolWindow
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.openapi.wm.impl.UnifiedToolWindowWeights
+import com.intellij.openapi.wm.impl.WindowInfoImpl
+import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.normalizeOrder
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable

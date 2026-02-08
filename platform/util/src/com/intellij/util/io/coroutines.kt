@@ -2,7 +2,11 @@
 package com.intellij.util.io
 
 import com.intellij.util.concurrency.Semaphore
-import java.util.concurrent.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 
 @Deprecated("Please migrate to using kotlinx.coroutines.future.await instead. " +

@@ -2,12 +2,16 @@
 
 package com.intellij.tools.ide.metrics.collector.telemetry
 
-import kotlinx.serialization.*
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.serializer
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration

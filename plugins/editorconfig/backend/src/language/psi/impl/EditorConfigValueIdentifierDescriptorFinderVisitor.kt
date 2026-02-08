@@ -3,7 +3,14 @@ package org.editorconfig.language.psi.impl
 
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueIdentifier
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
-import org.editorconfig.language.schema.descriptors.impl.*
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigElementAwareDescriptorVisitor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigListDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigNumberDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigStringDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescriptor
 
 class EditorConfigValueIdentifierDescriptorFinderVisitor(
   override val element: EditorConfigOptionValueIdentifier

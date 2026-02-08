@@ -2,10 +2,14 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.openapi.diagnostic.Logger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream

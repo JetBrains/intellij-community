@@ -1,21 +1,24 @@
 - name: lib/gradle-java.jar
   modules:
-  - name: intellij.gradle.java
+    - name: intellij.gradle.java
 - name: lib/gradle-jps.jar
   modules:
-  - name: intellij.gradle.jps
-    libraries:
-      ant:
-      - name: $MAVEN_REPOSITORY$/org/apache/ant/ant/1/ant-1.jar
+    - name: intellij.gradle.jps
+      libraries:
+        ant:
+          - name: $MAVEN_REPOSITORY$/org/apache/ant/ant/1/ant-1.jar
 - name: lib/modules/intellij.gradle.analysis.jar
   contentModules:
-  - name: intellij.gradle.analysis
+    - name: intellij.gradle.analysis
 - name: lib/modules/intellij.gradle.dependencyUpdater.jar
   contentModules:
-  - name: intellij.gradle.dependencyUpdater
+    - name: intellij.gradle.dependencyUpdater
 - name: lib/modules/intellij.gradle.java.maven.jar
   contentModules:
-  - name: intellij.gradle.java.maven
+    - name: intellij.gradle.java.maven
+- name: lib/modules/intellij.gradle.java.performance.jar
+  contentModules:
+    - name: intellij.gradle.java.performance
 - name: lib/modules/intellij.gradle.profiler.jar
   contentModules:
-  - name: intellij.gradle.profiler
+    - name: intellij.gradle.profiler

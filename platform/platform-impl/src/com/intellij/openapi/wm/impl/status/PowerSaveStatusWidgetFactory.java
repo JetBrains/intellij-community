@@ -14,7 +14,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.awt.event.MouseEvent;
 
 /**

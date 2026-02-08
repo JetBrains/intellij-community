@@ -19,7 +19,11 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.breakpoints.*
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -202,8 +206,7 @@ fun <B : XBreakpoint<P>, P : XBreakpointProperties<*>> getEditorsProvider(
 ): XDebuggerEditorsProvider? = breakpointType.getEditorsProvider(breakpoint as B, project)
 
 @Suppress("DEPRECATION")
-@ApiStatus.Internal
-fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy {
+internal fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy {
   return if (this is XLineBreakpointImpl<*>) {
     this.asProxy()
   }
@@ -213,5 +216,4 @@ fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy {
 }
 
 @Suppress("DEPRECATION")
-@ApiStatus.Internal
-fun <T : XLineBreakpointImpl<*>> T.asProxy(): XLineBreakpointProxy = MonolithLineBreakpointProxy(this)
+internal fun <T : XLineBreakpointImpl<*>> T.asProxy(): XLineBreakpointProxy = MonolithLineBreakpointProxy(this)

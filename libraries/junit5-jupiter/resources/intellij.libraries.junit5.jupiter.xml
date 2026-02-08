@@ -1,3 +1,4 @@
+<!-- we have intellij.libraries.junit5.vintage as runtime dep to ensure org.junit.vintage.engine.VintageTestEngine appears before org.junit.jupiter.engine.JupiterTestEngine after the topological sort -->
 <idea-plugin visibility="internal">
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
@@ -5,7 +6,6 @@
     <module name="intellij.libraries.junit5.launcher"/>
     <!-- endregion -->
 
-    <!-- ensure org.junit.vintage.engine.VintageTestEngine appears before org.junit.jupiter.engine.JupiterTestEngine after the topological sort -->
     <module name="intellij.libraries.junit5.vintage"/>
   </dependencies>
 </idea-plugin>

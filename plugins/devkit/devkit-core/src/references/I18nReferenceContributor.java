@@ -26,10 +26,18 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Actions;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.Separator;
+import org.jetbrains.idea.devkit.dom.Synonym;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import static com.intellij.patterns.XmlPatterns.*;
+import static com.intellij.patterns.XmlPatterns.or;
+import static com.intellij.patterns.XmlPatterns.xmlAttribute;
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 final class I18nReferenceContributor extends PsiReferenceContributor {
 

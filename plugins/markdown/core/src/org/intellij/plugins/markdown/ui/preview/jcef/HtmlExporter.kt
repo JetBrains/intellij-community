@@ -13,7 +13,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.Base64
 
 internal data class HtmlResourceSavingSettings(val isSaved: Boolean, val resourceDir: String)
 

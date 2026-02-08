@@ -7,7 +7,10 @@ import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
 
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.INTERFACE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC;
 

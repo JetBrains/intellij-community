@@ -3,7 +3,22 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterList
+import com.intellij.psi.PsiTypeParameterListOwner
 import com.intellij.psi.impl.source.tree.Factory
 import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -15,8 +30,12 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.asJava.*
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
+import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.getAccessorLightMethods
+import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar

@@ -6,7 +6,12 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEdi
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.ui.ToolbarDecorator
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidSinglePlatformModuleConfiguratorBase
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.BrowserJsSinglePlatformModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.IOSSinglePlatformModuleConfiguratorBase
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsSinglePlatformModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.NodeJsSinglePlatformModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.withAllSubModules
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
@@ -15,7 +20,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIB
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.createPanelWithPopupHandler
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
+import java.util.Locale
 import javax.swing.JComponent
 
 internal class ModulesEditorToolbarDecorator(

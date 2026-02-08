@@ -36,6 +36,7 @@ class BazelGeneratorIntegrationTests {
   @Test fun snapshotRepositoryLibrary() = doTest("snapshot-repository-library")
   @Test fun snapshotLibrary() = doTest("snapshot-library")
   @Test fun snapshotLibraryInTree() = doTest("snapshot-library-in-tree")
+  @Test fun moduleRepositoryLibrarySnapshot() = doTest("module-repository-library-snapshot")
 
   private fun doTest(
     testName: String,

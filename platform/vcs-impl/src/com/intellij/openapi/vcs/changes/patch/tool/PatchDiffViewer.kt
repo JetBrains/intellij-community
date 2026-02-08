@@ -16,7 +16,12 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.side.OnesideContentPanel
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor

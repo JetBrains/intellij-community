@@ -51,6 +51,7 @@ class LocalProcessServiceImpl : LocalProcessService {
       .setWindowsAnsiColorEnabled(!SystemProperties.getBooleanProperty("pty4j.win.disable.ansi.in.console.mode", false))
       .setUnixOpenTtyToPreserveOutputAfterTermination(SystemProperties.getBooleanProperty("pty4j.open.child.tty", SystemInfo.isMac))
       .setSpawnProcessUsingJdkOnMacIntel(Registry.`is`("run.processes.using.pty.helper.on.mac.intel", true))
+      .setConPtyInheritCursor(options.winConPtyInheritCursor)
 
     if(options.winSuspendedProcessCallback != null) {
       builder.setWindowsSuspendedProcessCallback(options.winSuspendedProcessCallback!!)

@@ -19,10 +19,48 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-import static com.intellij.lang.PsiBuilderUtil.*;
-import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.lang.PsiBuilderUtil.advance;
+import static com.intellij.lang.PsiBuilderUtil.drop;
+import static com.intellij.lang.PsiBuilderUtil.expect;
+import static com.intellij.lang.PsiBuilderUtil.parseBlockLazy;
+import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.error;
+import static com.intellij.lang.java.parser.JavaParserUtil.expectOrError;
+import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
+import static com.intellij.lang.java.parser.JavaParserUtil.getLanguageLevel;
+import static com.intellij.lang.java.parser.JavaParserUtil.isParseStatementCodeBlocksDeep;
+import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
 import static com.intellij.psi.impl.source.tree.ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ASSERT_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.BLOCK_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.BREAK_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CASE_LABEL_ELEMENT_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CATCH_SECTION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CODE_BLOCK;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CONTINUE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECLARATION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DEFAULT_CASE_LABEL_ELEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DO_WHILE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EMPTY_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOREACH_PATTERN_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOREACH_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOR_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IF_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LABELED_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RETURN_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_LABELED_RULE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_LABEL_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SYNCHRONIZED_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.THROW_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TRY_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.WHILE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.YIELD_STATEMENT;
 
 /**
  * @deprecated Use the new Java syntax library instead.

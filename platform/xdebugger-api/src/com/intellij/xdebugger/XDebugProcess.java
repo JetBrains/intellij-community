@@ -306,7 +306,7 @@ public abstract class XDebugProcess {
    * Provide execution stacks corresponding to all the live threads in the debug process to the {@code container}.
    */
   @ApiStatus.Internal
-  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackContainer container) {
+  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackGroupContainer container, @Nullable XSuspendContext suspendContext) {
     container.addExecutionStack(List.of(), true);
   }
 

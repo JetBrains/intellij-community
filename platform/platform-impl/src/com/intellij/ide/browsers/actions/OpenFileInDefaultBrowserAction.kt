@@ -3,7 +3,11 @@ package com.intellij.ide.browsers.actions
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.browsers.*
+import com.intellij.ide.browsers.BrowserLauncherAppless
+import com.intellij.ide.browsers.DefaultBrowserPolicy
+import com.intellij.ide.browsers.WebBrowser
+import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction

@@ -15,6 +15,7 @@ f:com.intellij.platform.eel.provider.EelProviderUtil
 - *sf:getEelDescriptor(com.intellij.openapi.project.Project):com.intellij.platform.eel.EelDescriptor
 - *sf:getEelDescriptor(java.nio.file.Path):com.intellij.platform.eel.EelDescriptor
 - *sf:getLocalEel():com.intellij.platform.eel.LocalEelApi
+- *sf:getOsFamily(java.nio.file.Path):com.intellij.platform.eel.EelOsFamily
 - *sf:toEelApiBlocking(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
 - *sf:toEelApiBlocking(com.intellij.platform.eel.EelMachine,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
 *f:com.intellij.platform.eel.provider.LocalEelDescriptor

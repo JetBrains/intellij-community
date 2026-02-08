@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 public abstract class GutterContentProvider {
   protected static final int MAX_LINE_END_GUTTER_WIDTH_IN_CHAR = 2;

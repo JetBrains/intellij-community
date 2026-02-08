@@ -14,7 +14,7 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
 
 /**
  * {@link AbstractProjectResolverExtension} provides dummy implementation of Gradle project resolver.

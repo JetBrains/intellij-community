@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.html.CSS;
-import java.awt.*;
+import java.awt.Font;
 import java.awt.font.TextAttribute;
 import java.util.Map;
 

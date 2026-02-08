@@ -19,7 +19,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Queue
 
 open class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val visited: Flags, private val down: Boolean = true) {
   constructor(start: Int, graph: LiteLinearGraph) : this(start, graph, BitSetFlags(graph.nodesCount()))

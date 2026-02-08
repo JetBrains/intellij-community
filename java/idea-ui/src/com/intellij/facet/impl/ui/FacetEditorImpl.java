@@ -3,7 +3,11 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.ui.*;
+import com.intellij.facet.ui.FacetEditor;
+import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.facet.ui.FacetEditorTab;
+import com.intellij.facet.ui.FacetEditorValidator;
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,10 +25,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.HashSet;
 import java.util.Set;
 

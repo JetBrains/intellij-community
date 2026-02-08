@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.AbstractLazyFileOutputProducer
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducer
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.update
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import java.io.File
 import java.security.MessageDigest

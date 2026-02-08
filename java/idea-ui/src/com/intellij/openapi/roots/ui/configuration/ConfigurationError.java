@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Comparator;
 
 public abstract class ConfigurationError implements Comparable<ConfigurationError> {

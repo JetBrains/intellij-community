@@ -3,7 +3,12 @@ package com.intellij.json.editor.lineMover;
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiUtil;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;

@@ -30,7 +30,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.ByteArrayInputStream
 import java.nio.file.Files
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.Locale
+import java.util.MissingResourceException
+import java.util.ResourceBundle
 import java.util.concurrent.CancellationException
 import java.util.function.Predicate
 import java.util.stream.Stream

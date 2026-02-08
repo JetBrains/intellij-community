@@ -4,7 +4,16 @@ package com.intellij.codeInspection
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.lang.findUsages.LanguageFindUsages
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.psi.PsiWildcardType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration

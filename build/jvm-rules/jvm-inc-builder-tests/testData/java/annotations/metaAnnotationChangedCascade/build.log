@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  C.class
+  A1.class
+  C1.class
+End of files
+Compiling files:
+  java/annotations/metaAnnotationChangedCascade/a/A.java
+  java/annotations/metaAnnotationChangedCascade/a/C.java
+  java/annotations/metaAnnotationChangedCascade/a/A1.java
+  java/annotations/metaAnnotationChangedCascade/a/C1.java
+End of files
+------------------------------------------
+Exit code: OK

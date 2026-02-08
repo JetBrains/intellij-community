@@ -3,7 +3,11 @@ package com.intellij.polySymbols.customElements.impl
 
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
-import com.intellij.polySymbols.customElements.json.*
+import com.intellij.polySymbols.customElements.json.ClassField
+import com.intellij.polySymbols.customElements.json.ClassMethod
+import com.intellij.polySymbols.customElements.json.CustomElementsMember
+import com.intellij.polySymbols.customElements.json.MemberBase
+import com.intellij.polySymbols.customElements.json.buildFunctionType
 import com.intellij.polySymbols.js.JS_PROPERTIES
 
 class CustomElementsMemberSymbol private constructor(

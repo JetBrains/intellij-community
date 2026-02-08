@@ -10,7 +10,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
 public class ModificationOfImportedModelWarningComponent {
   private final JLabel myLabel;

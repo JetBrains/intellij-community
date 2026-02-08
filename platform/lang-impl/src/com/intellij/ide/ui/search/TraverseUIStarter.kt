@@ -18,7 +18,13 @@ import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME
 import com.intellij.idea.AppMode
 import com.intellij.l10n.LocalizationUtil
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -31,13 +37,21 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.CompositeConfigurable
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.MasterDetails
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ReflectionUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jdom.IllegalDataException
@@ -46,7 +60,8 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.ArrayDeque
+import java.util.TreeSet
 import kotlin.io.path.forEachDirectoryEntry
 
 /**

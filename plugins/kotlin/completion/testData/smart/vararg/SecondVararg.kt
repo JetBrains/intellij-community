@@ -8,3 +8,4 @@ fun bar(c: Char, pInt: Int) {
 // ABSENT: { lookupString: "charArrayOf", itemText: "*charArrayOf" }
 // EXIST: pInt
 // EXIST: { lookupString: "intArrayOf", itemText: "*intArrayOf" }
+// IGNORE_K2

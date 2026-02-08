@@ -9,11 +9,13 @@ import com.intellij.ui.EditorComboBox
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.TextAccessor
 import com.intellij.util.ArrayUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import java.awt.event.ActionListener
 
+@K1Deprecation
 class KotlinTypeReferenceEditorComboWithBrowseButton(
     browseActionListener: ActionListener,
     text: String?,

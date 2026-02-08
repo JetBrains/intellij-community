@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.StandardPatterns.or
 import groovy.lang.Closure
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PUBLISHING_EXTENSION
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SCRIPT_HANDLER
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern

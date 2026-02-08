@@ -3,7 +3,14 @@ package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.application.PathManager
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.relativeTo
 
 fun main() {
   reportBuildFileStructure(Path.of(PathManager.getHomePath()))

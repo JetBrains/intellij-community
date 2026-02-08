@@ -17,7 +17,7 @@ import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class LightEditAbstractPopupWidgetWrapper
   implements StatusBarWidget, LightEditorListener, CustomStatusBarWidget {

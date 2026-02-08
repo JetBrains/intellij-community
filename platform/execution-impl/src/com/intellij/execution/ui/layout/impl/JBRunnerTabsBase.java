@@ -3,7 +3,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.ui.tabs.JBTabsEx;
 
-import java.awt.*;
+import java.awt.Point;
 
 
 public interface JBRunnerTabsBase extends JBTabsEx {

@@ -16,13 +16,19 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferencesWrapper;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +45,7 @@ public class LegacyCompletionContributor extends CompletionContributor implement
     if (parameters.getCompletionType() != CompletionType.BASIC) {
       return;
     }
+    if (ModCompletionItemProvider.modCommandCompletionEnabled()) return;
     CompletionData completionData = getCompletionData(parameters);
     if (completionData == null) return;
 

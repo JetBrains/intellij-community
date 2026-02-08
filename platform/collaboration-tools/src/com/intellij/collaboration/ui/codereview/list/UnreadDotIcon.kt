@@ -4,7 +4,11 @@ package com.intellij.collaboration.ui.codereview.list
 import com.intellij.ui.JBColor
 import com.intellij.ui.NewUI
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 

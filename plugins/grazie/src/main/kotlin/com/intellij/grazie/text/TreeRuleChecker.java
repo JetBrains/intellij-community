@@ -57,7 +57,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -627,6 +636,17 @@ public final class TreeRuleChecker {
     @Override
     public @NotNull TreeProblem copyWithProblemFixes(@NotNull List<ProblemFix> fixes) {
       return new TreeProblem(copyWithFixes(getSource(), fixes), getRule(), getText(), match, customFixes);
+    }
+
+    @Override
+    public @NotNull GrazieProblem copyWithHighlighting(ai.grazie.text.@NotNull TextRange @NotNull [] always,
+                                                       ai.grazie.text.@NotNull TextRange @NotNull [] onHover) {
+      return new TreeProblem(copyWithHighlighting(getSource(), always, onHover), getRule(), getText(), match, customFixes);
+    }
+
+    @Override
+    public @NotNull GrazieProblem copyWithInfoAndMessage(Problem.@NotNull KindInfo info, @NotNull String message) {
+      return new TreeProblem(copyWithInfoAndMessage(getSource(), info, message), getRule(), getText(), match, customFixes);
     }
   }
 }

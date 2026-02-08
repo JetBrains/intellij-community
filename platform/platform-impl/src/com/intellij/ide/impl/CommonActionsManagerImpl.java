@@ -2,14 +2,25 @@
 package com.intellij.ide.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.AutoScrollToSourceOptionProvider;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.TreeExpander;
+import com.intellij.ide.actions.CollapseAllAction;
+import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.actions.ExpandAllAction;
+import com.intellij.ide.actions.ExportToTextFileToolbarAction;
+import com.intellij.ide.actions.NextOccurenceToolbarAction;
+import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 
 final class CommonActionsManagerImpl extends CommonActionsManager {
   @Override

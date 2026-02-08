@@ -14,3 +14,5 @@ fun f3(): Iterable<Char>{}
 // EXIST: f3
 // EXIST: { lookupString:"listOf", itemText: "listOf", tailText: "(vararg elements: T) (kotlin.collections)", typeText:"List<T>" }
 
+
+// IGNORE_K2

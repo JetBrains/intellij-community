@@ -18,7 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Base class for a configuration that is associated with a specific module. For example, Java run configurations use the selected module

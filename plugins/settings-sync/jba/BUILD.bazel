@@ -27,7 +27,6 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:cloud-config-client",
     "//platform/statistics",
-    "//plugins/performanceTesting/core:performanceTesting",
     "//platform/util/progress",
   ]
 )
@@ -55,8 +54,6 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/performanceTesting/core:performanceTesting",
-    "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "//libraries/mockito",
     "//platform/util/progress",
     "//libraries/kotlinx/coroutines/test",

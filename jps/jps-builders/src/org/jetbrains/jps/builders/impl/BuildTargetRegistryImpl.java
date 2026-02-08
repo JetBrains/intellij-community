@@ -12,7 +12,11 @@ import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public final class BuildTargetRegistryImpl implements BuildTargetRegistry {

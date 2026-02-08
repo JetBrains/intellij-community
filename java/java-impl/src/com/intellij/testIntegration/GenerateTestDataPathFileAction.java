@@ -16,8 +16,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import java.awt.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;

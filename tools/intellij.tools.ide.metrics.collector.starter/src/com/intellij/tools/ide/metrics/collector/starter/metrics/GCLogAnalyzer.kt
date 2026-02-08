@@ -11,7 +11,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.NumberFormat
-import java.util.*
+import java.util.Locale
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.name

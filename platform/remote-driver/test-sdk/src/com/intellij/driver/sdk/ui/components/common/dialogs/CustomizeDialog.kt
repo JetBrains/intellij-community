@@ -2,7 +2,13 @@ package com.intellij.driver.sdk.ui.components.common.dialogs
 
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
-import com.intellij.driver.sdk.ui.components.elements.*
+import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
+import com.intellij.driver.sdk.ui.components.elements.button
+import com.intellij.driver.sdk.ui.components.elements.dialog
+import com.intellij.driver.sdk.ui.components.elements.list
+import com.intellij.driver.sdk.ui.components.elements.textField
+import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.xQuery
 import java.awt.Point

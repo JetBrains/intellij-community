@@ -1,8 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.exists
+import com.jetbrains.rhizomedb.withDefaultPart
 
 inline fun <reified E : Entity> ChangeScope.update(entity: E, crossinline f: E.() -> Unit): E? =
   if (entity.exists()) {

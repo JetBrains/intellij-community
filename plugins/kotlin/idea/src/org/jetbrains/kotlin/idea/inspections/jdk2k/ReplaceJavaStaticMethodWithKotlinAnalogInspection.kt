@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isChar
 
 // TODO merge with JavaCollectionsStaticMethodInspection
+@K1Deprecation
 class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(call) {
         val callee = call.calleeExpression ?: return
@@ -215,6 +217,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
     }
 }
 
+@K1Deprecation
 @FileModifier.SafeTypeForPreview
 data class Replacement(
     val javaMethodFqName: String,

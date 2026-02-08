@@ -32,10 +32,21 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.GridBagConstraints;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
 
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 

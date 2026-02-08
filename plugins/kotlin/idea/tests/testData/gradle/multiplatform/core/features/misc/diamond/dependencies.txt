@@ -5,8 +5,6 @@ my-app.commonMain
 
 my-app.commonTest
     commonMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}} (TEST)
 
 my-app.jsMain
     commonMain (refines, COMPILE)
@@ -31,8 +29,6 @@ my-app.jvmAndJsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     jvmAndJsMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}} (TEST)
 
 my-app.jvmMain
     commonMain (refines, COMPILE)

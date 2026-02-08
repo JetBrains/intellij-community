@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
+@K1Deprecation
 class K1IdeKotlinAnchorModuleProvider(val project: Project) : IdeKotlinAnchorModuleProvider {
     override fun getAnchorModule(libraryModule: KaLibraryModule): KaSourceModule? {
         @OptIn(K1ModeProjectStructureApi::class)

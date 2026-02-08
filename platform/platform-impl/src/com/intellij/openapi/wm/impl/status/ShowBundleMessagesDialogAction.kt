@@ -13,7 +13,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Dimension
-import java.util.*
+import java.util.Vector
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 import javax.swing.table.DefaultTableModel

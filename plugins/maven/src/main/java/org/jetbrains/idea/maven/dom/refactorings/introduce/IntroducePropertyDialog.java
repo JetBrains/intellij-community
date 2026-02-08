@@ -25,8 +25,12 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;

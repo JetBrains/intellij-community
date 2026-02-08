@@ -3,7 +3,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;

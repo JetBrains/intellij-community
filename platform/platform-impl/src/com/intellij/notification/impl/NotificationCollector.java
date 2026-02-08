@@ -11,7 +11,12 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -27,7 +32,23 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
-import static com.intellij.notification.impl.NotificationsEventLogGroup.*;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.ACTION_INVOKED;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.ADDITIONAL;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.BALLOON_COLLAPSED;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.BALLOON_EXPANDED;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.CLOSED_BY_USER;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.DISPLAY_TYPE;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.EVENT_LOG_BALLOON_SHOWN;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.HYPERLINK_CLICKED;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.ID;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.IS_EXPANDABLE;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.LOGGED;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.NOTIFICATION_GROUP_ID;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.NOTIFICATION_ID;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.NOTIFICATION_PLACE;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.SETTINGS_CLICKED;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.SEVERITY;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.SHOWN;
 
 @ApiStatus.Internal
 @Service

@@ -15,8 +15,11 @@
  */
 package com.intellij.ui.components.panels;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.LayoutManager;
 
 /**
  * @author Eugene Belyaev

@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists

@@ -1,10 +1,32 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete.impl
 
-import fleet.kernel.rete.*
+import fleet.kernel.rete.CancellationReason
+import fleet.kernel.rete.ContextMatches
+import fleet.kernel.rete.Many
+import fleet.kernel.rete.Match
+import fleet.kernel.rete.Query
+import fleet.kernel.rete.Rete
+import fleet.kernel.rete.SubscriptionDisposedException
+import fleet.kernel.rete.Token
+import fleet.kernel.rete.UnsatisfiedMatchException
+import fleet.kernel.rete.ValidationResultEnum
+import fleet.kernel.rete.WithMatchResult
+import fleet.kernel.rete.transform
+import fleet.kernel.rete.withReteDbSource
 import fleet.util.causeOfType
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlin.concurrent.atomics.AtomicInt
 
 enum class InvalidationReason {

@@ -3,8 +3,9 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Container;
+import java.awt.Dimension;
 
 public final class XYLayoutManagerImpl extends XYLayoutManager {
   private final Dimension myPreferredSize;

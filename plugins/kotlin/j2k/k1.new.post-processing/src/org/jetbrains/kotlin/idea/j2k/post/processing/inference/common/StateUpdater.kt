@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
 import com.intellij.openapi.application.runWriteAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
+@K1Deprecation
 abstract class StateUpdater {
     fun updateStates(inferenceContext: InferenceContext) {
         if (inferenceContext.typeVariables.isEmpty()) return

@@ -24,7 +24,12 @@ import git4idea.ui.toolbar.GitMergeRebaseWidgetKt;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.

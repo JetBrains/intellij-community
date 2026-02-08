@@ -3,8 +3,12 @@ package com.jetbrains.python.refactoring.suggested
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.psi.PsiCodeFragment
-import com.intellij.refactoring.suggested.*
+import com.intellij.refactoring.suggested.SignaturePresentationBuilder
+import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
+import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
+import com.intellij.refactoring.suggested.SuggestedRefactoringUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.impl.ParamHelper

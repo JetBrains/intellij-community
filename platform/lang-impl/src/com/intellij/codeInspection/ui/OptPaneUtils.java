@@ -12,7 +12,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.text.JTextComponent;
 
 @ApiStatus.Experimental

@@ -8,8 +8,10 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
 
+@K1Deprecation
 class K1ScratchFileEditorWithPreview(
   val kotlinScratchFile: K1KotlinScratchFile, sourceTextEditor: TextEditor, previewTextEditor: TextEditor
 ) : ScratchFileEditorWithPreview(kotlinScratchFile, sourceTextEditor, previewTextEditor) {

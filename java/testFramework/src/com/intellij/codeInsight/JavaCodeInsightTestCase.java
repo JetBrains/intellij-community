@@ -37,7 +37,13 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.common.EditorCaretTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
@@ -50,7 +56,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   protected Editor myEditor;

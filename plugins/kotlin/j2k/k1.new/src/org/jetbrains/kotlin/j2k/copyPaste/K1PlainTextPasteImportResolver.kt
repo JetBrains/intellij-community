@@ -5,11 +5,22 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiImportList
+import com.intellij.psi.PsiImportStatementBase
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiQualifiedReference
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
@@ -33,6 +44,7 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 /**
  * Tests: [org.jetbrains.kotlin.nj2k.K1JavaToKotlinCopyPasteConversionTestGenerated].
  */
+@K1Deprecation
 class K1PlainTextPasteImportResolver(private val conversionData: ConversionData, private val targetKotlinFile: KtFile) :
     PlainTextPasteImportResolver {
     private val sourceJavaFile: PsiJavaFile = conversionData.sourceJavaFile

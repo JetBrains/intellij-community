@@ -73,7 +73,9 @@
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
-    <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
+    <orderEntry type="library" name="netty-codec-protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.eel" />

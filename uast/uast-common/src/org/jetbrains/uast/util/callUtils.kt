@@ -18,7 +18,15 @@
 
 package org.jetbrains.uast.util
 
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UBinaryExpressionWithType
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastCallKind
 
 fun UElement.isConstructorCall(): Boolean = (this as? UCallExpression)?.kind == UastCallKind.CONSTRUCTOR_CALL
 

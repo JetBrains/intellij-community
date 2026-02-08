@@ -14,7 +14,12 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 

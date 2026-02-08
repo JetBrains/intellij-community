@@ -5,7 +5,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.UnmodifiableIterator;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
 public final class TextRanges implements Iterable<TextRange> {
   private static final Comparator<TextRange> START_COMP = Comparator.comparingInt(TextRange::getStartOffset);

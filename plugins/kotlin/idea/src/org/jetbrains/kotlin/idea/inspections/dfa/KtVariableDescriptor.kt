@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
@@ -23,7 +24,22 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.JvmStandardClassIds.VOLATILE_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -31,6 +47,7 @@ import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.match
 
+@K1Deprecation
 class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDescriptor() {
     val stable: Boolean = calculateStable()
 
@@ -173,8 +190,10 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                     target.findAnnotation(VOLATILE_ANNOTATION_FQ_NAME) == null
     }
 }
+@K1Deprecation
 enum class LambdaVariableKind { IT, THIS }
 
+@K1Deprecation
 class KtLambdaSpecialVariableDescriptor(val lambda: KtFunctionLiteral, val kind: LambdaVariableKind, val type: KotlinType): JvmVariableDescriptor() {
     override fun getDfType(qualifier: DfaVariableValue?): DfType = type.toDfType()
     override fun isStable(): Boolean = true

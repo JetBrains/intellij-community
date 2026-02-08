@@ -1,11 +1,3 @@
-c:com.intellij.extapi.psi.StubBasedPsiElementBase
-- com.intellij.extapi.psi.ASTDelegatePsiElement
-- *:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
-- *pf:getElementTypeImpl():com.intellij.psi.tree.IElementType
-- *f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
-- *f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
-- *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
-- *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 *f:com.intellij.ide.plugins.IdeaPluginDescriptorExtensions
 - *sf:getContentModuleName(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 - *sf:getContentModules(com.intellij.ide.plugins.IdeaPluginDescriptor):java.util.List
@@ -109,25 +101,9 @@ com.intellij.psi.impl.file.impl.FileManager
 - *a:findViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
 - *a:getCachedPsiFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *a:getCachedPsiFiles(com.intellij.openapi.vfs.VirtualFile):java.util.List
-a:com.intellij.psi.impl.source.PsiFileImpl
-- com.intellij.psi.impl.ElementBase
-- com.intellij.openapi.ui.Queryable
-- com.intellij.psi.impl.PsiFileEx
-- com.intellij.psi.impl.source.PsiFileWithStubSupport
-- java.lang.Cloneable
-- *:getStubDescriptor():com.intellij.psi.stubs.LanguageStubDescriptor
 c:com.intellij.psi.impl.source.resolve.ResolveCache
 - com.intellij.openapi.Disposable
 - *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 - *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,Z,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 *:com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver
 - a:resolve(com.intellij.model.psi.PsiSymbolReference):java.util.Collection
-c:com.intellij.psi.stubs.PsiFileStubImpl
-- com.intellij.psi.stubs.StubBase
-- com.intellij.psi.stubs.PsiFileStub
-- *:getElementType():com.intellij.psi.tree.IElementType
-- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
-*f:com.intellij.psi.stubs.StubElementUtil
-- sf:shouldCreateStubForPsi(com.intellij.psi.stubs.StubElementFactory,com.intellij.psi.PsiElement):Z
-f:com.intellij.psi.stubs.StubTreeBuilder
-- *s:getStubbedRootDescriptors(com.intellij.psi.FileViewProvider):java.util.List

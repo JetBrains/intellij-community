@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingProgressCallback;
+import com.intellij.formatting.LeafBlockWrapper;
+import com.intellij.formatting.WhiteSpace;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;

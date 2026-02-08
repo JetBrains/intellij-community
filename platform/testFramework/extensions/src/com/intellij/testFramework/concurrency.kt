@@ -19,7 +19,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.throwIfNotEmpty
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.concurrency.Promise
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit

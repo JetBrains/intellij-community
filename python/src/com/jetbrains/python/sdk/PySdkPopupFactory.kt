@@ -2,7 +2,11 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.projectRoots.Sdk
@@ -57,10 +61,7 @@ class PySdkPopupFactory(val module: Module) {
     val interpreterList = PyConfigurableInterpreterList.getInstance(module.project)
     val moduleSdksByTypes = SlowOperations.knownIssue("PY-76167").use {
       groupModuleSdksByTypes(interpreterList.getAllPythonSdks(module.project, module, false), module) {
-        !it.sdkSeemsValid ||
-        PythonSdkType.hasInvalidRemoteCredentials(it) ||
-        PythonSdkType.isIncompleteRemote(it) ||
-        !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
+        !it.sdkSeemsValid || !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
       }
     }
 

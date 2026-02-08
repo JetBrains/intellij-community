@@ -10,7 +10,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;

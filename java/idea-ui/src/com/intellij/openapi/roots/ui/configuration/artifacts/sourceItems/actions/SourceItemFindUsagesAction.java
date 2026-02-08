@@ -18,7 +18,11 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ArtifactEditorFindUsagesActionBase;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.*;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ArtifactSourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemNode;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;

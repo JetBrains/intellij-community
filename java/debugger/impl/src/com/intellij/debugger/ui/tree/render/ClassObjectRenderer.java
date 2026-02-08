@@ -13,7 +13,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

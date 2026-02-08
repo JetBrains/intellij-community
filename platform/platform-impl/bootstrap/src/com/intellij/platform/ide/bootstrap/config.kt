@@ -16,7 +16,12 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.RawSwingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -40,6 +45,10 @@ internal suspend fun importConfigIfNeeded(
     val entries = NioFiles.list(configDir).joinToString(", ") { "\"${it.name}\"" }
     scope.launch {
       logDeferred.await().info("Will skip the config import to directory \"$configDir\" (exists = $configDirExists). Current entries: ${entries}.")
+    }
+    if (ClassicUiToIslandsMigration.isEnabledFeature && !isHeadless) {
+      // Possible minor update
+      ClassicUiToIslandsMigration.enableNewUiWithIslands(logDeferred)
     }
     return null
   }
@@ -66,7 +75,13 @@ internal suspend fun importConfigIfNeeded(
   importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
 
   val isNewUser = InitialConfigImportState.isNewUser()
-  enableNewUi(logDeferred, isNewUser)
+
+  if (ClassicUiToIslandsMigration.isEnabledFeature) {
+    ClassicUiToIslandsMigration.enableNewUiWithIslands(logDeferred)
+  } else {
+    enableNewUi(logDeferred, isNewUser)
+  }
+
   if (isNewUser && InitialConfigImportState.isStartupWizardEnabled()) {
     log.info("Will enter initial app wizard flow.")
     val result = CompletableDeferred<Boolean>()

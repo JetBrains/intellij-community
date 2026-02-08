@@ -17,7 +17,7 @@ package com.intellij.vcs.log.graph.actions;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Cursor;
 
 /**
  * The graph returns an instance of the GraphAnswer as a reaction to {@link ActionController#performAction(GraphAction)}.

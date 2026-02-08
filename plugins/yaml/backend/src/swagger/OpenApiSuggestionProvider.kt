@@ -9,7 +9,13 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.createTryUltimateActionLabel
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.tryUltimateIsDisabled
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -54,7 +60,7 @@ private class OpenApiPluginSuggestion(val project: Project,
     val suggestedCommercialIde = PluginAdvertiserService.getIde(suggestedIdeCode)
 
     if (suggestedCommercialIde == null) {
-      panel.text = IdeBundle.message("plugins.advertiser.plugins.found", OPENAPI_FILES)
+      panel.text = IdeBundle.message("plugins.advertiser.plugins.found", 1, OPENAPI_FILES)
 
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", OPENAPI_PLUGIN_NAME)) {
         val pluginIds = listOf(OPENAPI_PLUGIN_ID)

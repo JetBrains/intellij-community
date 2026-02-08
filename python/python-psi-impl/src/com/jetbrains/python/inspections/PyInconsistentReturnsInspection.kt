@@ -11,7 +11,16 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.extensions.isExhaustive
 import com.jetbrains.python.inspections.quickfix.PyMakeReturnExplicitFix
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyForPart
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyIfPart
+import com.jetbrains.python.psi.PyIfStatement
+import com.jetbrains.python.psi.PyMatchStatement
+import com.jetbrains.python.psi.PyReturnStatement
+import com.jetbrains.python.psi.PyStatement
+import com.jetbrains.python.psi.PyTryExceptStatement
+import com.jetbrains.python.psi.PyWhilePart
+import com.jetbrains.python.psi.PyWithStatement
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**

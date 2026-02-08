@@ -16,8 +16,16 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.MessageView
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class MessageViewImpl(private val project: Project, private val scope: CoroutineScope) : MessageView {
   private val toolWindow: Deferred<ToolWindow> =

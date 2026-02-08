@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
@@ -12,7 +13,17 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
@@ -20,8 +31,8 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getExplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
 
@@ -29,6 +40,7 @@ private var KtElement.newFqName: FqName? by CopyablePsiUserDataProperty(Key.crea
 private var KtElement.replaceWithTargetThis: Boolean? by CopyablePsiUserDataProperty(Key.create("REPLACE_WITH_TARGET_THIS"))
 private var KtElement.newTypeText: ((TypeSubstitutor) -> String?)? by CopyablePsiUserDataProperty(Key.create("NEW_TYPE_TEXT"))
 
+@K1Deprecation
 fun markElements(
     declaration: KtNamedDeclaration,
     context: BindingContext,
@@ -93,6 +105,7 @@ fun markElements(
     return affectedElements
 }
 
+@K1Deprecation
 fun applyMarking(
     declaration: KtNamedDeclaration,
     substitutor: TypeSubstitutor, targetClassDescriptor: ClassDescriptor
@@ -146,6 +159,7 @@ fun applyMarking(
     )
 }
 
+@K1Deprecation
 fun clearMarking(markedElements: List<KtElement>) {
     markedElements.forEach {
         it.newFqName = null

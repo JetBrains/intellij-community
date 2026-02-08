@@ -9,7 +9,11 @@ import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.computeIfA
 import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.extension.*
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.ParameterContext
+import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.platform.commons.util.AnnotationUtils.findAnnotatedFields
 import org.junit.platform.commons.util.ReflectionUtils
 

@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
-import com.intellij.openapi.externalSystem.model.task.event.*
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent
+import com.intellij.openapi.externalSystem.model.task.event.FailureResult
+import com.intellij.openapi.externalSystem.model.task.event.TestAssertionFailure
+import com.intellij.openapi.externalSystem.model.task.event.TestFailure
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import org.jetbrains.annotations.ApiStatus
 import java.util.StringJoiner
 

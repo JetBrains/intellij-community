@@ -6,8 +6,28 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.MAPPING_GET
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.NOT_REQUIRED
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.NOT_REQUIRED_EXT
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.READONLY
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.READONLY_EXT
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.REQUIRED
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.REQUIRED_EXT
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.TYPED_DICT
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.TYPED_DICT_EXT
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getType
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.resolveToQualifiedNames
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyBoolLiteralExpression
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -15,8 +35,20 @@ import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypedDictStubImpl
 import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyCallableParameter
+import com.jetbrains.python.psi.types.PyCallableParameterImpl
+import com.jetbrains.python.psi.types.PyCallableType
+import com.jetbrains.python.psi.types.PyCallableTypeImpl
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeProviderBase
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import java.util.stream.Collectors
 
 typealias TDFields = LinkedHashMap<String, PyTypedDictType.FieldTypeAndTotality>
@@ -27,7 +59,12 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
   }
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    return PyTypeUtil.notNullToRef(getTypedDictTypeForResolvedCallee(referenceTarget, context))
+    val type = when (referenceTarget) {
+      is PyClass -> getTypedDictTypeForClass(referenceTarget, true, context)
+      is PyTargetExpression -> getTypedDictTypeForTarget(referenceTarget, context)
+      else -> null
+    }
+    return PyTypeUtil.notNullToRef(type)
   }
 
   override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
@@ -101,14 +138,6 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return null
     }
 
-    private fun getTypedDictTypeForResolvedCallee(referenceTarget: PsiElement, context: TypeEvalContext): PyTypedDictType? {
-      return when (referenceTarget) {
-        is PyClass -> getTypedDictTypeForTypingTDInheritorAsCallee(referenceTarget, context, false)
-        is PyTargetExpression -> getTypedDictTypeForTarget(referenceTarget, context)
-        else -> null
-      }
-    }
-
     private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
       if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
 
@@ -141,17 +170,16 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return null
     }
 
-    private fun getTypedDictTypeForTypingTDInheritorAsCallee(
+    private fun getTypedDictTypeForClass(
       cls: PyClass,
+      isDefinition: Boolean,
       context: TypeEvalContext,
-      isInstance: Boolean,
     ): PyTypedDictType? {
       if (isTypingTypedDictInheritor(cls, context)) {
         return PyTypedDictType(cls.name ?: return null,
                                TDFields(collectFields(cls, context)),
                                PyBuiltinCache.getInstance(cls).dictType?.pyClass ?: return null,
-                               if (isInstance) PyTypedDictType.DefinitionLevel.INSTANCE else PyTypedDictType.DefinitionLevel.NEW_TYPE,
-                               cls.getAncestorTypes(context).filterIsInstance<PyTypedDictType>(),
+                               isDefinition,
                                cls)
       }
 
@@ -272,61 +300,28 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     private fun getTypedDictTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyTypedDictType? {
       return StubAwareComputation.on(target)
         .withCustomStub { it.getCustomStub(PyTypedDictStub::class.java) }
-        .overStub { getTypedDictTypeFromStub(target, it, context, false) }
+        .overStub { getTypedDictTypeFromStub(target, it, context) }
         .withStubBuilder { PyTypedDictStubImpl.create(it) }
         .compute(context)
     }
 
     fun getTypedDictTypeForResolvedElement(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
       return Ref.deref(PyUtil.getParameterizedCachedValue(resolved, context) { typeEvalContext ->
-        return@getParameterizedCachedValue Ref.create(calculateTypeDictType(resolved, typeEvalContext))
+        val type = if (resolved is PyClass) getTypedDictTypeForClass(resolved, false, typeEvalContext) else null
+        Ref.create(type)
       })
     }
 
-    private fun calculateTypeDictType(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
-      if (resolved is PyClass && isTypingTypedDictInheritor(resolved, context)) {
-        return getTypedDictTypeForTypingTDInheritorAsCallee(resolved, context, true)
-      }
-      if (resolved is PyCallExpression) {
-        val callee = resolved.callee
-        if (callee is PyReferenceExpression && isTypedDict(callee, context)) {
-          val type = getTypedDictTypeFromAST(resolved, context)
-          if (type != null) {
-            return type
-          }
-        }
-      }
-
-      return null
-    }
-
-    private fun getTypedDictTypeFromAST(call: PyCallExpression, context: TypeEvalContext): PyTypedDictType? {
-      return if (context.maySwitchToAST(call)) {
-        getTypedDictTypeFromStub(call, PyTypedDictStubImpl.create(call), context, true)
-      }
-      else null
-    }
-
     private fun getTypedDictTypeFromStub(
-      targetOrCall: PsiElement,
+      target: PyTargetExpression,
       stub: PyTypedDictStub?,
       context: TypeEvalContext,
-      isInstance: Boolean,
     ): PyTypedDictType? {
       if (stub == null) return null
 
-      val dictClass = PyBuiltinCache.getInstance(targetOrCall).dictType?.pyClass
-      if (dictClass == null) return null
-      val fields = stub.fields
-      val total = stub.isRequired
-      val typedDictFields = parseTypedDictFields(targetOrCall, fields, context, total)
-
-      return PyTypedDictType(stub.name,
-                             typedDictFields,
-                             dictClass,
-                             if (isInstance) PyTypedDictType.DefinitionLevel.INSTANCE else PyTypedDictType.DefinitionLevel.NEW_TYPE,
-                             emptyList(),
-                             getDeclaration(targetOrCall))
+      val dictClass = PyBuiltinCache.getInstance(target).dictType?.pyClass ?: return null
+      val typedDictFields = parseTypedDictFields(target, stub.fields, context, stub.isRequired)
+      return PyTypedDictType(stub.name, typedDictFields, dictClass, true, target)
     }
 
     private fun parseTypedDictFields(
@@ -340,14 +335,6 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
         result[field.name] = parseTypedDictField(anchor, field.type, context, total)
       }
       return result
-    }
-
-    private fun getDeclaration(targetOrCall: PsiElement): PyQualifiedNameOwner? {
-      return when (targetOrCall) {
-        is PyTargetExpression -> targetOrCall
-        is PyCallExpression -> (targetOrCall.parent as? PyAssignmentStatement)?.leftHandSideExpression as? PyTargetExpression
-        else -> null
-      }
     }
 
     private fun parseTypedDictField(

@@ -33,14 +33,17 @@ import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import java.awt.Font
 import java.io.IOException
 
+private val ICON = LayeredIcon(2).apply { setIcon(AllIcons.Actions.Edit, 0) }
+
 /**
  * Action opens `Edit Events Test Scheme` dialog.
  */
-class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
-  : DumbAwareAction(ActionsBundle.messagePointer("action.EditTestSchemeAction.text"),
-                    ActionsBundle.messagePointer("action.EditTestSchemeAction.description"),
-                    ICON) {
-
+@Suppress("ActionPresentationInstantiatedInCtor")
+class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER) : DumbAwareAction(
+  ActionsBundle.messagePointer("action.EditTestSchemeAction.text"),
+  ActionsBundle.messagePointer("action.EditTestSchemeAction.description"),
+  ICON
+) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: ProjectManager.getInstance().defaultProject
     val testSchemeStorage = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)
@@ -82,13 +85,13 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
         if (indicator.isCanceled) return null
         val productionGroups = testSchemeStorage.loadProductionGroups()
         if (indicator.isCanceled) return null
-        val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorderId)
+        val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorder = recorderId)
         return EventsTestScheme(localGroups, productionGroups, eventsScheme)
       }
     })
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
@@ -99,14 +102,6 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
     sizeCountIcon.setInsets(1, 1, 0, 0)
     ICON.setIcon(sizeCountIcon, 1, JBUIScale.scale(10), JBUIScale.scale(10))
     e.presentation.icon = ICON
-  }
-
-  companion object {
-    private val ICON = LayeredIcon(2)
-
-    init {
-      ICON.setIcon(AllIcons.Actions.Edit, 0)
-    }
   }
 
   class EventsTestScheme(

@@ -41,7 +41,8 @@ import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;

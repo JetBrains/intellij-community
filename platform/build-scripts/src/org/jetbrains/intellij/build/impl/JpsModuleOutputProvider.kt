@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -14,25 +16,24 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
-internal class JpsModuleOutputProvider(private val project: JpsProject) : ModuleOutputProvider {
+internal class JpsModuleOutputProvider(private val project: JpsProject, override val useTestCompilationOutput: Boolean) : ModuleOutputProvider {
   private val modules = project.modules
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
+  private val projectLibraryToModuleMapCache by lazy { buildProjectLibraryToModuleMap(modules) }
 
-  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun getAllModules(): List<JpsModule> = modules
+
+  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     val outputDir = requireNotNull(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(/* module = */ module, /* forTests = */ forTests)) {
       "Output directory for ${module.name} isn't set"
     }
     val file = outputDir.resolve(relativePath)
     try {
-      return Files.readAllBytes(file)
+      return withContext(Dispatchers.IO) { Files.readAllBytes(file) }
     }
     catch (_: NoSuchFileException) {
       return null
     }
-  }
-
-  override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    return readFileContentFromModuleOutput(module, relativePath, forTests)
   }
 
   override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
@@ -80,6 +81,8 @@ internal class JpsModuleOutputProvider(private val project: JpsProject) : Module
       processedModules = processedModules,
     )
   }
+
+  override fun getProjectLibraryToModuleMap(): Map<String, String> = projectLibraryToModuleMapCache
 
   override fun getModuleImlFile(module: JpsModule): Path {
     val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {

@@ -1,7 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
@@ -13,12 +20,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
 import org.jetbrains.plugins.groovy.lang.psi.util.isCompactConstructor
-import org.jetbrains.plugins.groovy.lang.resolve.*
+import org.jetbrains.plugins.groovy.lang.resolve.BaseConstructorResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.ConstructorResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult
+import org.jetbrains.plugins.groovy.lang.resolve.getDefaultConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
+import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 fun getAllConstructorResults(type: PsiClassType, place: PsiElement): Collection<GroovyResolveResult> {
   val clazz = type.resolve() ?: return emptyList()

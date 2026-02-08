@@ -3,8 +3,12 @@ package com.intellij.uiDesigner.core;
 
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 public final class SpansTest extends TestCase {
   public static void setDefaults(Component component) {

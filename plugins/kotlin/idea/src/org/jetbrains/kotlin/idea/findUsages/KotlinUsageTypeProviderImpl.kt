@@ -3,20 +3,43 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinUsageTypeProvider
 import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum
-import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.*
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.ANNOTATION
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.CLASS_NEW_OPERATOR
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.COMPANION_OBJECT_ACCESS
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.FUNCTION_CALL
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.IMPLICIT_GET
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.IMPLICIT_INVOKE
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.IMPLICIT_SET
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.SUPER_DELEGATION
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.SUPER_TYPE
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
+import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.KtWhenConditionInRange
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class KotlinUsageTypeProviderImpl : KotlinUsageTypeProvider() {
 
     override fun getUsageTypeEnumByReference(refExpr: KtReferenceExpression): UsageTypeEnum? {

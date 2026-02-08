@@ -11,6 +11,7 @@ interface EventsFlow {
     eventClass: Class<EventType>,
     subscriber: Any,
     timeout: Duration = 30.seconds,
+    sequential: Boolean = false,
     callback: suspend (event: EventType) -> Unit,
   ): Boolean
 
@@ -18,6 +19,7 @@ interface EventsFlow {
     eventClass: Class<EventType>,
     subscriber: Any,
     timeout: Duration = 30.seconds,
+    sequential: Boolean = false,
     callback: suspend (event: EventType) -> Unit,
   ): Boolean
 

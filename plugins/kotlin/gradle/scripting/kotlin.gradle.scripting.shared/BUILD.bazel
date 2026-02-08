@@ -52,8 +52,9 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//platform/lang-api:lang",
     "//platform/indexing-api:indexing",
-    "//plugins/repository-search",
     "//platform/eel-provider",
+    "//plugins/repository-search/common",
+    "//plugins/gradle/completion",
   ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.shared` end

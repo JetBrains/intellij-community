@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -14,13 +15,14 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.dialog.VcsDialogUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-
-import static com.intellij.openapi.util.SystemInfo.isMac;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public final class StartUseVcsDialog extends DialogWrapper {
 
@@ -38,6 +40,7 @@ public final class StartUseVcsDialog extends DialogWrapper {
     myVcsCombo.setRenderer(SimpleListCellRenderer.create("", AbstractVcs::getDisplayName));
 
     setTitle(VcsBundle.message("dialog.enable.version.control.integration.title"));
+    setOKButtonText(ApplicationBundle.message("button.enable"));
 
     init();
   }
@@ -62,16 +65,9 @@ public final class StartUseVcsDialog extends DialogWrapper {
 
     mainPanel.add(myVcsCombo, gb);
 
-    String path = isMac ? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
-    JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text") + path);
-    helpText.setUI(new MultiLineLabelUI());
-    helpText.setForeground(NamedColorUtil.getInactiveTextColor());
+    ++gb.gridx;
 
-    gb.anchor = GridBagConstraints.NORTHWEST;
-    gb.gridx = 0;
-    ++gb.gridy;
-    gb.gridwidth = 2;
-    mainPanel.add(helpText, gb);
+    mainPanel.add(VcsDialogUtils.getMorePluginsLink(mainPanel), gb);
 
     JPanel wrapper = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,

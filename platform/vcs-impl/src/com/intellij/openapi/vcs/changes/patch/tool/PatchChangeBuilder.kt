@@ -9,7 +9,12 @@ import com.intellij.diff.tools.fragmented.LineNumberConvertor
 import com.intellij.diff.tools.simple.AlignableChange
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
-import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffRangeUtil
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.editor.Document

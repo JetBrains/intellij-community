@@ -8,7 +8,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.EdtExecutorService;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingConstants;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;

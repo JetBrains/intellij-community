@@ -6,7 +6,9 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 
 /**
  * Common {@link ListCellRenderer} do be used in {@link JComboBox} displaying {@link Repository repositories}.

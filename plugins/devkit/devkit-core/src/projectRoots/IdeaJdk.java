@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.icons.AllIcons;
@@ -9,18 +9,36 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.buildData.productInfo.ProductInfoData;
+import com.intellij.platform.ide.productInfo.IdeProductInfo;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
@@ -45,13 +63,20 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -106,7 +131,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     // in 173.* and earlier builds all IDEs included platform modules into openapi.jar
     // (see org.jetbrains.intellij.build.ProductModulesLayout.platformApiModules)
     // DO NOT change order of this list, first match must return JAR containing marker class for getRequiredJdkVersion()
-    for (String name : List.of("app-client.jar", "app.jar", "platform-api.jar", "openapi.jar")) {
+    for (String name : List.of("intellij.platform.ide.core.jar", "app-client.jar", "app.jar", "platform-api.jar", "openapi.jar")) {
       Path result = libDir.resolve(name);
       if (Files.exists(result)) {
         return result;
@@ -163,7 +188,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         VirtualFile vf = jfs.findFileByPath(home + File.separator + productModuleJarPath + JarFileSystem.JAR_SEPARATOR);
         if (vf != null) {
           result.add(vf);
-        } else {
+        }
+        else {
           LOG.error(productModuleJarPath + " not found in " + home);
         }
       }
@@ -286,9 +312,33 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static @Nullable JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
-    if (PsiUtil.isPathToIntelliJIdeaSources(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
-    Path apiJar = getPlatformApiJar(ideaSdk.getHomePath());
+    String homePath = ideaSdk.getHomePath();
+    if (PsiUtil.isPathToIntelliJIdeaSources(homePath)) return JavaSdkVersion.JDK_1_8;
+    if (homePath != null) {
+      JavaSdkVersion version = getRequiredVersionFromProductInfo(homePath);
+      if (version != null) {
+        return version;
+      }
+    }
+    Path apiJar = getPlatformApiJar(homePath);
     return apiJar != null ? ClsParsingUtil.getJdkVersionByBytecode(getIdeaClassFileVersion(apiJar)) : null;
+  }
+
+  private static @Nullable JavaSdkVersion getRequiredVersionFromProductInfo(String homePath) {
+    ProductInfoData productInfo = IdeProductInfo.getInstance().loadProductInfo(Path.of(homePath));
+    if (productInfo == null) return null;
+    Integer minRequiredJavaVersion = productInfo.getMinRequiredJavaVersion();
+    if (minRequiredJavaVersion == null) return null;
+    try {
+      LanguageLevel languageLevel = LanguageLevel.forFeature(minRequiredJavaVersion);
+      if (languageLevel != null) {
+        return JavaSdkVersion.fromLanguageLevel(languageLevel);
+      }
+    }
+    catch (NumberFormatException e) {
+      LOG.warn("Could not parse minRequiredJavaVersion: " + minRequiredJavaVersion);
+    }
+    return null;
   }
 
   private static int getIdeaClassFileVersion(Path apiJar) {

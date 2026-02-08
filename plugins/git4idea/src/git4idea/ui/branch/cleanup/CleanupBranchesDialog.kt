@@ -2,7 +2,12 @@
 package git4idea.ui.branch.cleanup
 
 import com.intellij.ide.CopyProvider
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -53,7 +58,16 @@ import java.awt.event.MouseEvent
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorCompletionService
 import java.util.concurrent.TimeUnit
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.KeyStroke
+import javax.swing.ListSelectionModel
+import javax.swing.UIManager
 import javax.swing.event.TableModelEvent
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellRenderer

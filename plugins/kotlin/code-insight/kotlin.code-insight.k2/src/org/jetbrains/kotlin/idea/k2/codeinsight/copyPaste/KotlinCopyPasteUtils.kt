@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
-import kotlin.collections.flatMap
 
 internal val KaSymbol.isExtension: Boolean get() = this is KaCallableSymbol && isExtension
 

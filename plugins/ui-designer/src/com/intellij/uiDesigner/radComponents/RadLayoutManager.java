@@ -15,7 +15,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.LayoutManager;
+import java.awt.Point;
 
 /**
  * Design-time support for a layout manager.

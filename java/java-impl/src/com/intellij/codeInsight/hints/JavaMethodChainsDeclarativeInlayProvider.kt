@@ -4,7 +4,11 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.chain.AbstractDeclarativeCallChainProvider
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiParenthesizedExpression
+import com.intellij.psi.PsiType
 import com.siyeh.ig.psiutils.ExpressionUtils
 
 public class JavaMethodChainsDeclarativeInlayProvider : AbstractDeclarativeCallChainProvider<PsiMethodCallExpression, PsiType, Unit>() {

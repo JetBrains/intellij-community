@@ -18,3 +18,5 @@ class C {
 
 // EXIST: { itemText: "createProperty", typeText: "Property<C, TValue4>" }
 // EXIST: { itemText: "Property", tailText: "(owner: C, value: TValue1) (<root>)" }
+
+// IGNORE_K2

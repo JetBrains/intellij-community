@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.assertEqualsToFile
-import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.junit.jupiter.api.Assertions
 import java.io.File
 
@@ -15,13 +14,12 @@ interface NewKotlinProjectTestUtils {
 
     fun getTestFolderName(): String
 
-    private fun getTestDataFolder(): File {
-        val testRoot = TestMetadataUtil.getTestRoot(GradleKotlinNewProjectWizardTest::class.java)
+    private fun getTestDataFolder(testRoot: File?): File {
         return File(testRoot, "$testDirectory/${getTestFolderName()}")
     }
 
-    fun Project.assertCorrectProjectFiles() {
-        val testDataFolder = getTestDataFolder()
+    fun Project.assertCorrectProjectFiles(testRoot: File?) {
+        val testDataFolder = getTestDataFolder(testRoot)
         val basePath = File(basePath!!)
         var foundExpectedFiles = 0
         testDataFolder.walkTopDown().forEach {
@@ -43,12 +41,6 @@ interface NewKotlinProjectTestUtils {
     }
 
     fun postprocessOutputFile(relativePath: String, fileContents: String): String
-
-    fun String.replaceFirstGroup(regex: Regex, replacement: String): String {
-        val matchResult = regex.find(this) ?: return this
-        val groupRange = matchResult.groups[1]?.range ?: return this
-        return this.replaceRange(groupRange, replacement)
-    }
 
     fun substituteArtifactsVersions(str: String): String
 

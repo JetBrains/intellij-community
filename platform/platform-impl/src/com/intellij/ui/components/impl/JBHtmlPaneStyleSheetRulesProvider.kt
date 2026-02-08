@@ -23,7 +23,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.*
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementProperty
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementStyleOverrides
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
@@ -33,7 +35,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import java.awt.Color
 import java.lang.Integer.toHexString
-import java.util.*
+import java.util.Objects
 import javax.swing.UIManager
 import javax.swing.text.html.StyleSheet
 import kotlin.math.roundToInt

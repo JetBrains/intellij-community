@@ -5,7 +5,11 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.todo.rpc.getFilesWithTodos
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.constrainedReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -17,8 +21,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 

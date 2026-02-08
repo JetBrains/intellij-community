@@ -17,11 +17,11 @@ import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfApi
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
+import fleet.kernel.rebase.shared
 import fleet.kernel.ref
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
-import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

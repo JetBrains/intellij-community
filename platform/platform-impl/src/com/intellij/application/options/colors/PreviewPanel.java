@@ -4,7 +4,7 @@ package com.intellij.application.options.colors;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface PreviewPanel {
   void blinkSelectedHighlightType(Object selected);

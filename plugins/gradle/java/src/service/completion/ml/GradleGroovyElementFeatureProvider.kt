@@ -7,7 +7,13 @@ import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.OriginInfoAwareElement
-import org.jetbrains.plugins.gradle.service.resolve.*
+import org.jetbrains.plugins.gradle.service.resolve.GradleArtifactHandlerContributor
+import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor
+import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
+import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor
+import org.jetbrains.plugins.gradle.service.resolve.GradleGroovyProperty
+import org.jetbrains.plugins.gradle.service.resolve.GradleNamedDomainCollectionContributor
+import org.jetbrains.plugins.gradle.service.resolve.GradleTaskContainerContributor
 
 class GradleGroovyElementFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "gradleGroovy"

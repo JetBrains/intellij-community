@@ -3,8 +3,12 @@
 package org.jetbrains.kotlin.idea.debugger.core.filter
 
 import com.intellij.debugger.engine.SyntheticTypeComponentProvider
-import com.sun.jdi.*
 import com.intellij.debugger.impl.DexDebugFacility
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.ClassType
+import com.sun.jdi.Method
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.TypeComponent
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.SUSPEND_IMPL_NAME_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector

@@ -8,8 +8,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
-import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
-import org.jetbrains.kotlin.idea.completion.lookups.addImportIfRequired
+import org.jetbrains.kotlin.idea.completion.impl.k2.doPostponedOperationsAndUnblockDocument
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.addImportIfRequired
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 

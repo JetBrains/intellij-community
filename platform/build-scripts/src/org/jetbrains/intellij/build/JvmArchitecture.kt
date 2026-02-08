@@ -8,9 +8,10 @@ enum class JvmArchitecture(
   @JvmField val archName: String,
   @JvmField val fileSuffix: String,
   @JvmField val dirName: String,
+  @JvmField val marketplaceName: String,
 ) {
-  x64("X86_64", "64", "amd64"),
-  aarch64("AArch64", "aarch64", "aarch64");
+  x64("X86_64", "64", "amd64", "x86_64"),
+  aarch64("AArch64", "aarch64", "aarch64", "arm64");
 
   companion object {
     @JvmField

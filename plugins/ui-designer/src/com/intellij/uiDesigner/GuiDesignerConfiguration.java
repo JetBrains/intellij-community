@@ -32,6 +32,12 @@ public final class GuiDesignerConfiguration implements PersistentStateComponent<
    */
   public boolean GENERATE_SOURCES_ON_SAVE = false;
 
+  /**
+   * Method of sources generation where all bound components fields are always marked as final
+   * to get more robust Java source code.
+   */
+  public boolean GENERATE_SOURCES_FINAL_FIELDS = false;
+
   public @NlsSafe String DEFAULT_LAYOUT_MANAGER = UIFormXmlConstants.LAYOUT_INTELLIJ;
 
   public @NlsSafe String DEFAULT_FIELD_ACCESSIBILITY = PsiModifier.PRIVATE;

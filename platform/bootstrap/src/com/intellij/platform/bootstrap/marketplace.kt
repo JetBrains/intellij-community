@@ -12,7 +12,7 @@ import com.intellij.util.system.OS
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.ServiceLoader
 
 private const val MARKETPLACE_PLUGIN_DIR: String = "marketplace"
 private const val MARKETPLACE_BOOTSTRAP_JAR: String = "marketplace-bootstrap.jar"

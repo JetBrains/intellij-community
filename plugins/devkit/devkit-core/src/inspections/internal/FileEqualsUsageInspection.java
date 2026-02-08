@@ -3,14 +3,24 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UIdentifier;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UastBinaryOperator;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.Set;

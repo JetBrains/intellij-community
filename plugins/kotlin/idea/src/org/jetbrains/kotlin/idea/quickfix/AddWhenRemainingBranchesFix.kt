@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.WhenChecker
 import org.jetbrains.kotlin.cfg.hasUnknown
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
+@K1Deprecation
 class AddWhenRemainingBranchesFix(
     expression: KtWhenExpression,
     val withImport: Boolean = false

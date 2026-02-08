@@ -22,10 +22,11 @@ import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
 public abstract class QuickFixManager <T extends JComponent>{

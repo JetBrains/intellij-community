@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.Path
 
@@ -139,7 +139,8 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     }
 
     @JvmName("setEnabledStateForIds")
-    internal fun setEnabledState(pluginIds: Set<PluginId>, enabled: Boolean): Boolean {
+    @ApiStatus.Internal
+    fun setEnabledState(pluginIds: Set<PluginId>, enabled: Boolean): Boolean {
       val disabled = getDisabledIds().toMutableSet()
       val changed = if (enabled) disabled.removeAll(pluginIds) else disabled.addAll(pluginIds)
       if (changed) {

@@ -24,7 +24,11 @@ import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.DElementPattern;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class CompositeDescriptor extends RngElementDescriptor {
   private final DElementPattern[] myPatterns;

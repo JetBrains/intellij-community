@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities
 

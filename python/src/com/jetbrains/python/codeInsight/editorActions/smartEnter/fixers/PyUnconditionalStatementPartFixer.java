@@ -8,7 +8,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElsePart;
+import com.jetbrains.python.psi.PyFinallyPart;
+import com.jetbrains.python.psi.PyTryPart;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 

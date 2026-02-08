@@ -11,4 +11,12 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="execution.filters.with.hyperlinks.allow.overlapping"
+                 description="Enable rendering of overlapping execution filters with hyperlinks."
+                 defaultValue="true"
+                 restartRequired="false"/>
+  </extensions>
+
 </idea-plugin>

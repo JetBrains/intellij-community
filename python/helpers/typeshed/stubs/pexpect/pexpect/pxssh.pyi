@@ -1,5 +1,5 @@
 from _typeshed import FileDescriptorOrPath
-from os import _Environ
+from collections.abc import Mapping
 from typing import AnyStr, Literal
 
 from .exceptions import ExceptionPexpect
@@ -28,7 +28,7 @@ class pxssh(spawn[AnyStr]):
         searchwindowsize: int | None = None,
         logfile: _Logfile | None = None,
         cwd: FileDescriptorOrPath | None = None,
-        env: _Environ[str] | None = None,
+        env: Mapping[str, str] | None = None,
         ignore_sighup: bool = True,
         echo: bool = True,
         options: dict[str, str] = {},

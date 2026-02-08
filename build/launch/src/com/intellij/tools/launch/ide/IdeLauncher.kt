@@ -6,7 +6,7 @@ import com.intellij.tools.launch.PathsProvider
 import com.intellij.tools.launch.environments.LaunchCommand
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
-import java.util.*
+import java.util.Locale
 
 data class IdeLaunchContext(
   /**

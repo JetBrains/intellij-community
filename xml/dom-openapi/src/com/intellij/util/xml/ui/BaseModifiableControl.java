@@ -16,7 +16,7 @@
 
 package com.intellij.util.xml.ui;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.lang.reflect.InvocationTargetException;
 
 public abstract class BaseModifiableControl<Bound extends JComponent, T> extends BaseControl<Bound,T> {

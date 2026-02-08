@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding
 
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.encoding.EncodingReference.Companion.DEFAULT
 import java.nio.charset.Charset
 
 /**

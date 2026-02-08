@@ -4,7 +4,6 @@ import fleet.modules.api.FleetModule
 import fleet.modules.api.FleetModuleLayer
 import fleet.util.modules.ModuleInfo
 import java.lang.module.ModuleFinder
-import java.util.ServiceLoader
 import kotlin.io.path.Path
 import kotlin.reflect.KClass
 

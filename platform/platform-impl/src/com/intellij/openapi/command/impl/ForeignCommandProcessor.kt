@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.impl.cmd.CmdEvent
@@ -143,10 +142,7 @@ class ForeignCommandProcessor {
 
   companion object {
     @JvmStatic
-    fun getInstance(): ForeignCommandProcessor {
-      val application = ApplicationManager.getApplication()
-      return application.service()
-    }
+    fun getInstance(): ForeignCommandProcessor = service()
   }
 }
 

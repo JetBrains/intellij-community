@@ -115,7 +115,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   @Override
   public String toString() {
     return ((isValid() ? "" : "[INVALID] ") + "PyCollectionClassType: " + getClassQName()) +
-           "[" + StringUtil.join(getElementTypes(), ", ") + "]";
+           "[" + StringUtil.join(getElementTypes(), item -> item == null ? "Any" : item.toString(), ", ") + "]";
   }
 
   @Override

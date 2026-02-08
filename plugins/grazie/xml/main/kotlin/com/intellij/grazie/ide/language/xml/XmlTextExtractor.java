@@ -16,7 +16,11 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -24,16 +28,29 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import static com.intellij.grazie.text.TextContent.TextDomain.*;
+import static com.intellij.grazie.text.TextContent.TextDomain.COMMENTS;
+import static com.intellij.grazie.text.TextContent.TextDomain.LITERALS;
+import static com.intellij.grazie.text.TextContent.TextDomain.PLAIN_TEXT;
 
 public class XmlTextExtractor extends TextExtractor {
   private static final Pattern ESCAPE_EXCLUSIONS = Pattern.compile("\\\\[nt]");

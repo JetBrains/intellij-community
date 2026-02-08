@@ -15,7 +15,7 @@ import com.intellij.ui.components.ActionLink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

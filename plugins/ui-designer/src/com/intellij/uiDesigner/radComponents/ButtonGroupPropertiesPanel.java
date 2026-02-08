@@ -6,7 +6,11 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;

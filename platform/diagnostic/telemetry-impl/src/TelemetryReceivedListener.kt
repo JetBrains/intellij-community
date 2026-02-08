@@ -4,7 +4,7 @@ package com.intellij.platform.diagnostic.telemetry.impl
 import com.intellij.util.messages.Topic
 import io.opentelemetry.sdk.trace.data.SpanData
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Listener for open telemetry data (spans) being sent from backend to client side after backend initialisation and controller connection

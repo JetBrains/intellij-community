@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 
+@K1Deprecation
 class AddReflectionQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, LibraryJarDescriptor.REFLECT_JAR, DependencyScope.COMPILE) {
     override fun getText(): String = KotlinJvmBundle.message("classpath.add.reflection")
     override fun getFamilyName(): String = text
@@ -46,6 +48,7 @@ class AddReflectionQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, 
     }
 }
 
+@K1Deprecation
 class AddScriptRuntimeQuickFix(element: KtElement) : AddKotlinLibQuickFix(
     element,
     LibraryJarDescriptor.SCRIPT_RUNTIME_JAR,
@@ -67,6 +70,7 @@ class AddScriptRuntimeQuickFix(element: KtElement) : AddKotlinLibQuickFix(
     }
 }
 
+@K1Deprecation
 class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, LibraryJarDescriptor.TEST_JAR, DependencyScope.TEST) {
     override fun getText(): String = KotlinJvmBundle.message("classpath.add.kotlin.test")
     override fun getFamilyName(): String = text
@@ -121,6 +125,7 @@ class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, Lib
     }
 }
 
+@K1Deprecation
 abstract class AddKotlinLibQuickFix(
     element: KtElement,
     private val libraryJarDescriptor: LibraryJarDescriptor,

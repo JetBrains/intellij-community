@@ -17,7 +17,19 @@ package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElsePart;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFinallyPart;
+import com.jetbrains.python.psi.PyForPart;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyIfPart;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyTryExceptStatement;
+import com.jetbrains.python.psi.PyTryPart;
+import com.jetbrains.python.psi.PyWhilePart;
+import com.jetbrains.python.psi.PyWhileStatement;
 import junit.framework.Assert;
 
 import java.util.Map;

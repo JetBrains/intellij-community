@@ -39,8 +39,7 @@ internal class MockGitRepositoryModel(repo: GitRepository) : GitRepositoryModel 
     override val operationState: GitOperationState
       get() = throw UnsupportedOperationException()
     private val trackingInfo: Map<String, GitStandardRemoteBranch> = convertTrackingInfo(repo.info.branchTrackInfosMap)
-    override val workingTrees: Collection<GitWorkingTree>
-      get() = throw UnsupportedOperationException()
+    override val workingTrees: Collection<GitWorkingTree> = repo.workingTreeHolder.getWorkingTrees()
 
     override fun getDisplayableBranchText(): @Nls String =
       throw UnsupportedOperationException()

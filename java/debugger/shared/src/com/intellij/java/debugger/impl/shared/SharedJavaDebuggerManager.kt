@@ -6,10 +6,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest

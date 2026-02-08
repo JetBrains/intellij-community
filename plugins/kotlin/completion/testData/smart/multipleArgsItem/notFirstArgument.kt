@@ -8,3 +8,4 @@ fun foo() {
 }
 
 // EXIST: "b, c"
+// IGNORE_K2

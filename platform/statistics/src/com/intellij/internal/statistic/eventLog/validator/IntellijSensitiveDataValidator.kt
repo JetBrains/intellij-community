@@ -6,7 +6,12 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.*
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RecorderDataValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.internal.statistic.eventLog.validator.storage.IntellijValidationRulesStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil

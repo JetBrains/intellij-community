@@ -58,8 +58,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - *sf:combineStates(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.StateFlow
 - sf:computationStateFlow(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - sf:disposingMainScope(com.intellij.openapi.Disposable):kotlinx.coroutines.CoroutineScope
-- sf:disposingScope(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext):kotlinx.coroutines.CoroutineScope
-- bs:disposingScope$default(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext,I,java.lang.Object):kotlinx.coroutines.CoroutineScope
 - sf:inverted(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
 - sf:launchNow(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - bs:launchNow$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job
@@ -1035,6 +1033,14 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged
 - a:adjustRange(java.lang.Integer,java.lang.Integer):V
 - bs:adjustRange$default(com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable,java.lang.Integer,java.lang.Integer,I,java.lang.Object):V
+- a:getAdjustmentDisabledReason():kotlinx.coroutines.flow.StateFlow
+*e:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
+- java.lang.Enum
+- sf:SINGLE_COMMIT_REVIEW:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
+- sf:SUGGESTED_CHANGE:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
+- s:values():com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason[]
 *f:com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt
 - sf:controlInlaysIn(com.intellij.openapi.editor.ex.EditorEx,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:insertComponentAfter(com.intellij.openapi.editor.ex.EditorEx,I,javax.swing.JComponent,I,kotlin.jvm.functions.Function1):com.intellij.openapi.editor.Inlay
@@ -1213,14 +1219,10 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - a:getErrorTitle(java.lang.Object):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
-- f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,javax.swing.ListCellRenderer,kotlin.jvm.functions.Function5,kotlin.coroutines.Continuation):java.lang.Object
-- f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.jvm.functions.Function5,kotlin.coroutines.Continuation):java.lang.Object
-- f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function5,kotlin.coroutines.Continuation):java.lang.Object
 - f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
 - f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
 - f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,kotlin.coroutines.Continuation):java.lang.Object
 - f:showAsyncChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- bs:showAsyncChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,javax.swing.ListCellRenderer,kotlin.jvm.functions.Function5,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - bs:showAsyncChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - bs:showAsyncChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:showChooserPopup(com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
@@ -1229,6 +1231,12 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:showChooserPopup(com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - bs:showChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - bs:showChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:showComputedResultChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
+- f:showComputedResultChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation):java.lang.Object
+- f:showComputedResultChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,kotlin.coroutines.Continuation):java.lang.Object
+- f:showComputedResultChooserPopup(com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- bs:showComputedResultChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- bs:showComputedResultChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *f:com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 - <init>(kotlinx.coroutines.flow.MutableStateFlow):V
 - f:create(kotlinx.coroutines.CoroutineScope,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):javax.swing.JComponent
@@ -1275,20 +1283,39 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:getDEFAULT():com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 *:com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
 - a:getFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
+*f:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory
+- f:create(kotlinx.coroutines.flow.StateFlow,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0):javax.swing.JComponent
+- f:create(kotlinx.coroutines.flow.StateFlow,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0):javax.swing.JComponent
+- f:create(kotlinx.coroutines.flow.StateFlow,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory,kotlinx.coroutines.flow.StateFlow,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory,kotlinx.coroutines.flow.StateFlow,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory,kotlinx.coroutines.flow.StateFlow,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
+*f:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersPanelFactory
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersPanelFactory
+- f:create(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersPanelViewModel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):javax.swing.JComponent
+*:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersPanelViewModel
+- a:clearSearchQuery():V
+- a:getQuickFilters():java.util.List
+- a:getSearchHistory():java.util.List
+- a:getSearchQueryState():kotlinx.coroutines.flow.StateFlow
+- a:getSearchTextState():kotlinx.coroutines.flow.StateFlow
+- a:resetSearchQuery():V
+- a:setSearchQuery(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):V
+- a:setSearchText(java.lang.String):V
+- a:submitSearchText():V
 *:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel
 - a:add(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):V
 - a:getHistory():java.util.List
 - a:getLastFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 - a:setLastFilter(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):V
 *a:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
-- *sf:Companion:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory$Companion
 - <init>(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel):V
 - f:create(kotlinx.coroutines.CoroutineScope):javax.swing.JComponent
 - pa:createFilters(kotlinx.coroutines.CoroutineScope):java.util.List
 - pa:getQuickFilterTitle(com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter):java.lang.String
 - pa:getShortText(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):java.lang.String
 - pf:getVm():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
-*f:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory$Companion
 *:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
 - a:getDefaultFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 - a:getEmptySearch():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
@@ -1593,6 +1620,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:bindTextIn(javax.swing.JEditorPane,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(javax.swing.JLabel,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
+- sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
 - sf:bindTooltipTextIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindVisibilityIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 *f:com.intellij.collaboration.ui.util.popup.CollaborationToolsPopupUtilKt

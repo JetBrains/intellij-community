@@ -7,6 +7,7 @@ import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
@@ -14,21 +15,41 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationUtils
 import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationData
+import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationUtils
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection.Util.renameLetParameter
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.anyArgumentEvaluatesTo
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.conditionHasIncompatibleTypes
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.elvisPattern
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.fromIfKeywordToRightParenthesisTextRangeInThis
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.hasFirstReceiverOf
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.hasImplicitReceiverReplaceableBySafeCall
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.hasNullableType
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.inlineLeftSideIfApplicable
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isStableSimpleExpression
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.replacedBaseClause
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.throwsNullPointerExceptionWithNoArguments
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtThrowExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class IfThenToElvisInspection @JvmOverloads constructor(
     @JvmField var highlightStatement: Boolean = false,
     private val inlineWithPrompt: Boolean = true

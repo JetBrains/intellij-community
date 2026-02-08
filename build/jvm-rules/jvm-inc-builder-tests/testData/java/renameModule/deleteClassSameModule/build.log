@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Iface.class
+  ppp/Impl1.class
+  ppp/Impl2.class
+End of files
+Compiling files:
+  java/renameModule/deleteClassSameModule/a/ppp/Iface.java
+  java/renameModule/deleteClassSameModule/a/ppp/Impl1.java
+End of files
+------------------------------------------
+Exit code: OK

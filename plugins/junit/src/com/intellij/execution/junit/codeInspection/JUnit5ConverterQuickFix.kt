@@ -3,7 +3,12 @@ package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.TestFrameworks
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.BatchQuickFix
+import com.intellij.codeInspection.CommonProblemDescriptor
+import com.intellij.codeInspection.InspectionEngine
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.actions.CleanupInspectionUtil
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.execution.JUnitBundle

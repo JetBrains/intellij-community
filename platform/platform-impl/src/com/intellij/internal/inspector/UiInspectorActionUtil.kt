@@ -2,7 +2,11 @@
 package com.intellij.internal.inspector
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionWithDelegate
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootAction
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import org.jetbrains.annotations.ApiStatus

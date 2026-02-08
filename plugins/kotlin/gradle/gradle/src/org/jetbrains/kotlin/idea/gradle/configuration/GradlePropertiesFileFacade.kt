@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.plugins.gradle.model.ExternalProject
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText

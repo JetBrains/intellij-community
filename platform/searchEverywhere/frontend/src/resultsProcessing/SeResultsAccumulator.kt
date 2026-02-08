@@ -2,8 +2,16 @@
 package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeResultAddedEvent
+import com.intellij.platform.searchEverywhere.SeResultEndEvent
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
+import com.intellij.platform.searchEverywhere.toProviderId
+import com.intellij.platform.searchEverywhere.withUuidToReplace
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus

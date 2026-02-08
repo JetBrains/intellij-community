@@ -22,6 +22,8 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5/eel",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.testFramework` end

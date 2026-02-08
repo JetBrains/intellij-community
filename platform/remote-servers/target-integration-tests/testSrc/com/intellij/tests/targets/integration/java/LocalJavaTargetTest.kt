@@ -3,7 +3,7 @@ package com.intellij.tests.targets.integration.java
 
 import com.intellij.tests.targets.java.JavaTargetTestBase
 import com.intellij.util.io.write
-import java.util.*
+import java.util.UUID
 
 class LocalJavaTargetTest(executionMode: ExecutionMode) : JavaTargetTestBase(executionMode) {
   override val targetName: String? = null

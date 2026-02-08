@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  package1/A.class
+End of files
+Compiling files:
+  java/imports/staticImportConstantFieldChanged/a/package1/A.java
+End of files
+Cleaning output files:
+  package1/B.class
+End of files
+Compiling files:
+  java/imports/staticImportConstantFieldChanged/a/package1/B.java
+End of files
+------------------------------------------
+Exit code: OK

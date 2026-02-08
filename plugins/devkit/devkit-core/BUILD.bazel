@@ -101,6 +101,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/buildData",
   ]
 )
 ### auto-generated section `build intellij.devkit.core` end

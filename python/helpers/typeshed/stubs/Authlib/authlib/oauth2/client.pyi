@@ -8,8 +8,8 @@ class OAuth2Client:
     client_auth_class = ClientAuth
     token_auth_class = TokenAuth
     oauth_error_class = OAuth2Error
-    EXTRA_AUTHORIZE_PARAMS: Incomplete
-    SESSION_REQUEST_PARAMS: Incomplete
+    EXTRA_AUTHORIZE_PARAMS: tuple[str, ...]
+    SESSION_REQUEST_PARAMS: list[str]
     session: Incomplete
     client_id: Incomplete
     client_secret: Incomplete
@@ -21,9 +21,9 @@ class OAuth2Client:
     code_challenge_method: Incomplete
     token_auth: Incomplete
     update_token: Incomplete
-    metadata: Incomplete
-    compliance_hook: Incomplete
-    leeway: Incomplete
+    metadata: dict[str, Incomplete]
+    compliance_hook: dict[str, set[Incomplete]]
+    leeway: int
     def __init__(
         self,
         session,
@@ -39,6 +39,11 @@ class OAuth2Client:
         token_placement: str = "header",
         update_token=None,
         leeway: int = 60,
+        *,
+        token_updater=None,
+        response_type=None,
+        grant_type: str | None = None,
+        token_endpoint=None,
         **metadata,
     ) -> None: ...
     def register_client_auth_method(self, auth) -> None: ...
@@ -47,11 +52,11 @@ class OAuth2Client:
     def token(self): ...
     @token.setter
     def token(self, token) -> None: ...
-    def create_authorization_url(self, url, state=None, code_verifier=None, **kwargs): ...
+    def create_authorization_url(self, url, state=None, code_verifier=None, **kwargs) -> tuple[str, Incomplete]: ...
     def fetch_token(
         self, url=None, body: str = "", method: str = "POST", headers=None, auth=None, grant_type=None, state=None, **kwargs
     ): ...
-    def token_from_fragment(self, authorization_response, state=None): ...
+    def token_from_fragment(self, authorization_response, state=None) -> dict[Incomplete, Incomplete]: ...
     def refresh_token(self, url=None, refresh_token=None, body: str = "", auth=None, headers=None, **kwargs): ...
     def ensure_active_token(self, token=None): ...
     def revoke_token(self, url, token=None, token_type_hint=None, body=None, auth=None, headers=None, **kwargs): ...

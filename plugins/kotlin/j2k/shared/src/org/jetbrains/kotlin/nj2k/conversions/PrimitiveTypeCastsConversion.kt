@@ -8,8 +8,21 @@ import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.callOn
 import org.jetbrains.kotlin.nj2k.moduleApiVersion
 import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
-import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.tree.JKArgumentList
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpression
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpressionImpl
+import org.jetbrains.kotlin.nj2k.tree.JKExpression
+import org.jetbrains.kotlin.nj2k.tree.JKFieldAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken
+import org.jetbrains.kotlin.nj2k.tree.JKPrefixExpression
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.JKTypeCastExpression
+import org.jetbrains.kotlin.nj2k.tree.copyTreeAndDetach
+import org.jetbrains.kotlin.nj2k.tree.detached
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
+import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.BOOLEAN
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.BYTE
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.CHAR
@@ -18,6 +31,12 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.FLOAT
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.INT
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.LONG
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.SHORT
+import org.jetbrains.kotlin.nj2k.types.JKType
+import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
+import org.jetbrains.kotlin.nj2k.types.isNumberType
+import org.jetbrains.kotlin.nj2k.types.isStrongerThan
+import org.jetbrains.kotlin.nj2k.types.kotlinName
+import org.jetbrains.kotlin.nj2k.types.toLiteralType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class PrimitiveTypeCastsConversion(context: ConverterContext) : RecursiveConversion(context) {

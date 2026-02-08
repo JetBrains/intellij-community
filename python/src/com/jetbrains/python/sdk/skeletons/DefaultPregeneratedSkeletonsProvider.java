@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -15,14 +14,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.regex.PatternSyntaxException;
 
@@ -145,41 +142,6 @@ public final class DefaultPregeneratedSkeletonsProvider implements PyPregenerate
 
     ArchivedSkeletons(VirtualFile archiveRoot) {
       myArchiveRoot = archiveRoot;
-    }
-
-    @Override
-    public boolean copyPregeneratedSkeleton(String moduleName, String skeletonDir) {
-      File targetDir;
-      final String modulePath = moduleName.replace('.', '/');
-      File skeletonsDir = new File(skeletonDir);
-      VirtualFile pregenerated = myArchiveRoot.findFileByRelativePath(modulePath + ".py");
-      if (pregenerated == null) {
-        pregenerated = myArchiveRoot.findFileByRelativePath(modulePath + "/" + PyNames.INIT_DOT_PY);
-        targetDir = new File(skeletonsDir, modulePath);
-      }
-      else {
-        int pos = modulePath.lastIndexOf('/');
-        if (pos < 0) {
-          targetDir = skeletonsDir;
-        }
-        else {
-          final String moduleParentPath = modulePath.substring(0, pos);
-          targetDir = new File(skeletonsDir, moduleParentPath);
-        }
-      }
-      if (pregenerated != null && (targetDir.exists() || targetDir.mkdirs())) {
-        LOG.info("Pre-generated skeleton for " + moduleName);
-        File target = new File(targetDir, pregenerated.getName());
-        try (FileOutputStream fos = new FileOutputStream(target)) {
-          FileUtil.copy(pregenerated.getInputStream(), fos);
-        }
-        catch (IOException e) {
-          LOG.info("Error copying pre-generated skeleton", e);
-          return false;
-        }
-        return true;
-      }
-      return false;
     }
 
     @Override

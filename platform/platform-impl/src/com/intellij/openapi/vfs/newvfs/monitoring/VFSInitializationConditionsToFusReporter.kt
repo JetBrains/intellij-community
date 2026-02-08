@@ -6,7 +6,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException
-import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.ATTRIBUTES_STORAGE_CORRUPTED
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.CONTENT_STORAGES_INCOMPLETE
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.CONTENT_STORAGES_NOT_MATCH
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.DEFRAGMENTATION_REQUESTED
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.HAS_ERRORS_IN_PREVIOUS_SESSION
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.IMPL_VERSION_MISMATCH
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.NAME_STORAGE_INCOMPLETE
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.NOT_CLOSED_PROPERLY
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.SCHEDULED_REBUILD
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.UNRECOGNIZED
 import kotlin.time.Duration.Companion.nanoseconds
 
 /**

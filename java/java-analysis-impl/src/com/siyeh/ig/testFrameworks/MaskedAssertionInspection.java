@@ -2,7 +2,17 @@
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAssertStatement;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -17,7 +27,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_ASSERTION_ERROR;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_ERROR;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_THROWABLE;
 
 public final class MaskedAssertionInspection extends BaseInspection {
 

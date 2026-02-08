@@ -13,7 +13,7 @@ import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Konstantin Bulenkov

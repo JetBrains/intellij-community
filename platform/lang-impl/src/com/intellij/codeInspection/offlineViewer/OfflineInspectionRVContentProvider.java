@@ -3,18 +3,32 @@
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionRVContentProvider;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.codeInspection.ui.InspectionTreeModel;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 @ApiStatus.Internal

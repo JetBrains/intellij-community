@@ -11,7 +11,7 @@ import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.V
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaException
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaParser
 import org.editorconfig.language.schema.parser.handlers.EditorConfigDescriptorParseHandlerBase
-import java.util.*
+import java.util.Locale
 
 class EditorConfigConstantDescriptorParseHandler : EditorConfigDescriptorParseHandlerBase() {
   override val requiredKeys: List<String> = listOf(TYPE, VALUE)

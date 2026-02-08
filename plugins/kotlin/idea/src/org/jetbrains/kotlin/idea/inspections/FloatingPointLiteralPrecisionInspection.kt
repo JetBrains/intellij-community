@@ -1,22 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.inspections.dfa.getKotlinType
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.expressionVisitor
-import org.jetbrains.kotlin.psi.stubs.ConstantValueKind
-import org.jetbrains.kotlin.psi.stubs.elements.KtConstantExpressionElementType
-import org.jetbrains.kotlin.types.typeUtil.isFloat
-import java.math.BigDecimal
-
 /**
  * Highlight floating point literals that exceed precision of the corresponding type.
  *
@@ -29,8 +13,25 @@ import java.math.BigDecimal
  * requires more precision than the floating point type can provide.
  * It does not try to detect rounding errors or otherwise check computation results.
  */
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.dfa.getKotlinType
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.expressionVisitor
+import org.jetbrains.kotlin.psi.stubs.ConstantValueKind
+import org.jetbrains.kotlin.psi.stubs.elements.KtConstantExpressionElementType
+import org.jetbrains.kotlin.types.typeUtil.isFloat
+import java.math.BigDecimal
 
+@K1Deprecation
 class FloatingPointLiteralPrecisionInspection : AbstractKotlinInspection() {
     private object Holder {
         val FLOAT_LITERAL: KtConstantExpressionElementType = KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)

@@ -1,16 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.editor
 
-import andel.operation.EditLog
 import andel.intervals.Interval
 import andel.intervals.Intervals
-import andel.lines.*
+import andel.lines.Fold
+import andel.lines.Inlay
+import andel.lines.Interline
+import andel.lines.LinesLayout
+import andel.lines.Postline
+import andel.operation.EditLog
 import andel.operation.Operation
 import andel.operation.Sticky
 import andel.text.Text
 import andel.text.TextRange
-import andel.undo.*
+import andel.undo.DefaultUndoGroupKey
 import andel.undo.NavigationUndoGroupKey
+import andel.undo.UndoGroupKey
+import andel.undo.UndoLog
+import andel.undo.UndoScope
 import fleet.util.UID
 import fleet.util.openmap.BoundedOpenMap
 import fleet.util.openmap.Key

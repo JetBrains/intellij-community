@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
+@K1Deprecation
 class DslKotlinHighlightingVisitorExtension : KotlinHighlightingVisitorExtension() {
     override fun highlightDeclaration(elementToHighlight: PsiElement, descriptor: DeclarationDescriptor): HighlightInfoType? {
         return null
@@ -49,6 +51,7 @@ class DslKotlinHighlightingVisitorExtension : KotlinHighlightingVisitorExtension
     }
 }
 
+@K1Deprecation
 @ApiStatus.Internal
 fun ClassDescriptor.isDslHighlightingMarker(): Boolean {
     return annotations.any {

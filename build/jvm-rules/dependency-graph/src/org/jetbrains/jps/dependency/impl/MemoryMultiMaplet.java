@@ -6,7 +6,12 @@ import org.jetbrains.jps.dependency.MultiMaplet;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public final class MemoryMultiMaplet<K, V, C extends Collection<V>> implements MultiMaplet<K, V> {

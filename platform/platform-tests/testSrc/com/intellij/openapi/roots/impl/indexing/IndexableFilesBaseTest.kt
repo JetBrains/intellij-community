@@ -17,8 +17,12 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
@@ -32,7 +36,6 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.TestName
-import kotlin.test.assertEquals
 
 @RunsInEdt
 abstract class IndexableFilesBaseTest {

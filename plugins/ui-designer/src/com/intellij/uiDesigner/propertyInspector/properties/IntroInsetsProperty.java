@@ -12,7 +12,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRendere
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 import java.lang.reflect.Method;
 
 public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {

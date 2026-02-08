@@ -6,7 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.log.data.VcsLogData
-import java.util.*
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn.Companion.isAvailable
+import java.util.EventListener
 
 /**
  * Extension point provides a way to add a new column to VCS Log (e.g. Build Status, Attached Reviews, Commit Verification Status)

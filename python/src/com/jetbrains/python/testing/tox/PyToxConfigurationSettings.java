@@ -13,9 +13,11 @@ import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.List;
 import java.util.regex.Pattern;
 

@@ -1,6 +1,10 @@
 package com.jetbrains.python.documentation.doctest
 
-import com.intellij.formatting.*
+import com.intellij.formatting.Block
+import com.intellij.formatting.CustomFormattingModelBuilder
+import com.intellij.formatting.FormattingContext
+import com.intellij.formatting.FormattingModel
+import com.intellij.formatting.Spacing
 import com.intellij.psi.PsiElement
 import com.intellij.psi.formatter.DocumentBasedFormattingModel
 import com.intellij.psi.formatter.common.AbstractBlock

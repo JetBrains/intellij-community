@@ -16,7 +16,14 @@ import org.intellij.lang.regexp.AsciiUtil;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.UnicodeCharacterNames;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpBoundary;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedCharacter;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

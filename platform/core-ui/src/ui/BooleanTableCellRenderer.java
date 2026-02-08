@@ -2,9 +2,11 @@
 
 package com.intellij.ui;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public class BooleanTableCellRenderer extends JCheckBox implements TableCellRenderer {
   private final TableCellState myCellState = new TableCellState();

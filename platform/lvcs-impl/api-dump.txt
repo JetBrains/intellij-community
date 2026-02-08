@@ -157,7 +157,6 @@ c:com.intellij.history.core.changes.PutLabelChange
 - <init>(java.io.DataInput):V
 - accept(com.intellij.history.core.changes.ChangeVisitor):V
 - affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
-- affectsMatching(java.util.regex.Pattern):Z
 - affectsPath(java.lang.String):Z
 - affectsProject(java.lang.String):Z
 - getContentsToPurge():java.util.List
@@ -194,7 +193,6 @@ a:com.intellij.history.core.changes.StructuralChange
 - p:<init>(J,java.lang.String):V
 - p:<init>(java.io.DataInput):V
 - affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
-- affectsMatching(java.util.regex.Pattern):Z
 - affectsPath(java.lang.String):Z
 - affectsProject(java.lang.String):Z
 - p:cannotRevert(java.lang.String,Z):V

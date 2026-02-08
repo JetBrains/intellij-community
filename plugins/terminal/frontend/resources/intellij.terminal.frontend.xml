@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.terminal.frontend">
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.inline.completion"/>
@@ -48,6 +48,12 @@
     <lookup.bottomPanelProvider implementation="com.intellij.terminal.frontend.view.completion.TerminalLookupBottomPanelProvider"/>
     <statistics.collectorExtension implementation="com.intellij.terminal.frontend.view.completion.TerminalCompletionUsageCollectorExtension"/>
     <lookup.usageDetails implementation="com.intellij.terminal.frontend.view.completion.TerminalCompletionUsageDescriptor"/>
+
+    <advancedSetting id="terminal.shift.enter.sends.esc.cr" default="true"
+                     bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
+
+    <platform.rpc.applicationRemoteTopicListener
+        implementation="com.intellij.terminal.frontend.settings.TerminalActionShortcutChangedListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -55,7 +61,6 @@
 
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
-    <escapeHandler implementation="com.intellij.terminal.frontend.action.SelectEditor"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.ClosePopupCompletion"/>
   </extensions>
 

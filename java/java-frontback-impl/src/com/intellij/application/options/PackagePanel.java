@@ -6,7 +6,7 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.table.AbstractTableModel;
 
 import static com.intellij.application.options.PackagePanelUIKt.doCreatePackagesPanel;

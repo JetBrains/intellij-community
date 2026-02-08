@@ -3,8 +3,11 @@
 package com.intellij.util.ui;
 
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLayeredPane;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.LayoutManager2;
 import java.util.ArrayList;
 
 public final class Layers extends JLayeredPane {

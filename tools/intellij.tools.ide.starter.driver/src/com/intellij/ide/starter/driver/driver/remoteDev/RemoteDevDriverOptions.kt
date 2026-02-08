@@ -2,8 +2,6 @@ package com.intellij.ide.starter.driver.driver.remoteDev
 
 import com.intellij.ide.starter.driver.engine.DriverOptions
 import com.intellij.ide.starter.utils.PortUtil.getAvailablePort
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 
 class RemoteDevDriverOptions {

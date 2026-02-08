@@ -35,7 +35,8 @@ fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collectio
     val isRelevantProperty = name.startsWith("rider.", ignoreCase = true) ||
                              name.startsWith("resharper.", ignoreCase = true) ||
                              name == "idea.platform.prefix" ||
-                             name == "idea.suppressed.plugins.set.selector"
+                             name == "idea.suppressed.plugins.set.selector" ||
+                             name == "awt.toolkit.name" // this one is resolved (rewritten) by JBR on startup, it shouldn't be updated after that
     if (isRelevantProperty && systemProperties.containsKey(name)) {
       continue
     }

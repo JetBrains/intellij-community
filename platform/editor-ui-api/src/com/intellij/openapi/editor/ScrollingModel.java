@@ -6,8 +6,9 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollPane;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * Provides services for getting the visible area of the editor and scrolling the editor.

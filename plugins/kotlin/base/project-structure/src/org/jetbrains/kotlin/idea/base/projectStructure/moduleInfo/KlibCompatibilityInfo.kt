@@ -7,11 +7,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.library.*
+import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.loader.KlibLoader
 import org.jetbrains.kotlin.library.loader.reportLoadingProblemsIfAny
 import org.jetbrains.kotlin.library.metadata.isCInteropLibrary
 import org.jetbrains.kotlin.library.metadata.isCommonizedCInteropLibrary
+import org.jetbrains.kotlin.library.metadataVersion
 import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.platform.TargetPlatform

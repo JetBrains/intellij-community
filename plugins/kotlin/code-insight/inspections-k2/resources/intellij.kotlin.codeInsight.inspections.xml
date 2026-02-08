@@ -345,6 +345,14 @@
                      language="kotlin"
                      key="inspection.enum.values.method.soft.deprecate.migration.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.EnumValuesTopLevelFunctionSoftDeprecateInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.enumValues.method.soft.deprecate.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveEmptyParenthesesFromAnnotationEntryInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
@@ -800,14 +808,6 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.boolean.literal.argument.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.ReplaceArrayEqualityOpWithArraysEqualsInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.replace.array.equality.op.with.arrays.equals.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedReceiverParameterInspection"
                      groupPath="Kotlin"
@@ -1300,6 +1300,14 @@
                      level="INFORMATION"
                      language="kotlin"
                      key="inspection.replace.with.import.alias.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertToExplicitBackingFieldsInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.convert.to.explicit.backing.fields.display.name" bundle="messages.KotlinBundle"/>
 
     </extensions>
 </idea-plugin>

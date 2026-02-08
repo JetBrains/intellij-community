@@ -89,6 +89,7 @@ project.jsV1Main
     org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (COMPILE)
     sharedJsMain (refines, COMPILE)
+    webMain (refines, COMPILE)
 
 project.jsV1Test
     commonMain (friend, TEST)
@@ -98,12 +99,15 @@ project.jsV1Test
     org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
     sharedJsMain (friend, TEST)
     sharedJsTest (refines, TEST)
+    webMain (friend, TEST)
+    webTest (refines, TEST)
 
 project.jsV2Main
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (COMPILE)
     sharedJsMain (refines, COMPILE)
+    webMain (refines, COMPILE)
 
 project.jsV2Test
     commonMain (friend, TEST)
@@ -113,6 +117,8 @@ project.jsV2Test
     org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
     sharedJsMain (friend, TEST)
     sharedJsTest (refines, TEST)
+    webMain (friend, TEST)
+    webTest (refines, TEST)
 
 project.jvmV1Main
     commonMain (refines, COMPILE)
@@ -161,12 +167,17 @@ project.nativeTest
 project.sharedJsMain
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (COMPILE)
 
 project.sharedJsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (TEST)
     sharedJsMain (friend, TEST)
+    webMain (friend, TEST)
 
 project.sharedJvmMain
     commonMain (refines, COMPILE)
@@ -177,6 +188,21 @@ project.sharedJvmTest
     commonTest (refines, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
     sharedJvmMain (friend, TEST)
+
+project.webMain
+    commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (COMPILE)
+
+project.webTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (TEST)
+    sharedJsMain (friend, TEST)
+    webMain (friend, TEST)
 
 
 Test configuration:

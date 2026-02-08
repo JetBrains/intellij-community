@@ -14,7 +14,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -81,6 +87,11 @@ class RemoveRedundantCallsOfConversionMethodsFix(
 ) : PsiUpdateModCommandAction<KtQualifiedExpression>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.calls.of.the.conversion.method")
+
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtQualifiedExpression,
+    ): Presentation = Presentation.of(familyName).withFixAllOption(this)
 
     override fun invoke(context: ActionContext, element: KtQualifiedExpression, updater: ModPsiUpdater) {
         element.replace(element.receiverExpression)

@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec;
 import com.jetbrains.python.serialization.AnnotationSerializationFilter;
 import com.jetbrains.python.serialization.CompoundFilter;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
@@ -32,6 +33,7 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration<PyToxConfiguration> {
+  private static final PackageAvailabilitySpec PACKAGE_SPEC = new PackageAvailabilitySpec("tox", "tox.run");
 
   private final @NotNull Project myProject;
 
@@ -41,7 +43,7 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
   private String @Nullable [] myRunOnlyEnvs;
 
   PyToxConfiguration(final @NotNull PyToxConfigurationFactory factory, final @NotNull Project project) {
-    super(project, factory, "tox");
+    super(project, factory, PACKAGE_SPEC);
     myProject = project;
     // Module will be stored with XmlSerializer
     //noinspection AssignmentToSuperclassField

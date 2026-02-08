@@ -19,7 +19,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.io.File
-import java.lang.reflect.*
+import java.lang.reflect.Constructor
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Member
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 class PatternInstrumenterTest {
   @Rule @JvmField val tempDir = TempDirectory()

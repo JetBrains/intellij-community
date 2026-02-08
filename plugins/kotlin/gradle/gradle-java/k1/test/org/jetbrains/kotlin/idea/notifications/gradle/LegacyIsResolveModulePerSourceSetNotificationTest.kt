@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceS
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.AssumptionViolatedException
-import java.util.*
+import java.util.Collections
 
 class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase() {
 

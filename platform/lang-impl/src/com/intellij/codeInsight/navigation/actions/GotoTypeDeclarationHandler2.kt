@@ -5,9 +5,13 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.impl.*
+import com.intellij.codeInsight.navigation.impl.LazyTargetWithPresentation
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.impl.elementTypeTargets
+import com.intellij.codeInsight.navigation.impl.gotoTypeDeclaration
+import com.intellij.codeInsight.navigation.impl.result
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbModeBlockedFunctionality

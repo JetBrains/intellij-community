@@ -3,7 +3,6 @@ package com.intellij.java.completion.modcommand;
 
 import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.modcompletion.ModCompletionItem;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.function.Consumer;
 
 @NotNullByDefault
-final class LabelReferenceItemProvider implements ModCompletionItemProvider {
+final class LabelReferenceItemProvider extends JavaModCompletionItemProvider {
   @Override
   public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
     if (context.getPosition() instanceof PsiIdentifier id && id.getParent().getReference() instanceof PsiLabelReference labelRef) {

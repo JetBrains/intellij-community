@@ -21,7 +21,10 @@ import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AWTPermissions
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.plaf.basic.BasicButtonUI

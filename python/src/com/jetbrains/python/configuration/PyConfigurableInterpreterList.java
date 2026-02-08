@@ -11,7 +11,9 @@ import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.run.TargetConfigurationWithLocalFsAccessExKt;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,7 +24,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.jetbrains.python.SdkUiUtilKt.*;
+import static com.jetbrains.python.SdkUiUtilKt.isCondaVirtualEnv;
+import static com.jetbrains.python.SdkUiUtilKt.isVirtualEnv;
 import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 
 /**

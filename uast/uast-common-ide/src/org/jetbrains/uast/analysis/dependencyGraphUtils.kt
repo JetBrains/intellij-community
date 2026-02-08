@@ -1,7 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.analysis
 
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.USwitchClauseExpression
+import org.jetbrains.uast.USwitchClauseExpressionWithBody
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.UYieldExpression
 
 internal fun UExpression.extractBranchesResultAsDependency(): Dependency {
   val branchResults = HashSet<UExpression>().apply { accumulateBranchesResult(this) }

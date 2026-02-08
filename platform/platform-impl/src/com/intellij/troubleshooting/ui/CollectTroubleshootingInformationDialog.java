@@ -13,8 +13,11 @@ import com.intellij.troubleshooting.TroubleInfoCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.Dimension;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 

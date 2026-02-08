@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -25,16 +25,33 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTarget
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
+import org.jetbrains.kotlin.idea.util.realName
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.renderer.render
@@ -202,10 +219,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                 val parameterIndexToText = buildMap {
                     valueParameters.forEachIndexed { index, parameter ->
-                        // TODO: Add hasSynthesizedParameterNames to HL API.
-                        // See resolveValueParameters() in core/descriptors.jvm/src/org/jetbrains/kotlin/load/java/lazy/descriptors/LazyJavaScope.kt
-                        val hasSynthesizedParameterNames = false
-                        val parameterText = renderParameter(parameter, includeName = !hasSynthesizedParameterNames)
+                        val parameterText = renderParameter(parameter)
                         put(index, parameterText)
                     }
                 }
@@ -304,7 +318,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
     @OptIn(KaExperimentalApi::class)
     private fun renderParameter(
         parameter: KaVariableSignature<KaValueParameterSymbol>,
-        includeName: Boolean
     ): String {
         return buildString {
             val annotationFqNames =
@@ -322,8 +335,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 append("vararg ")
             }
 
-            if (includeName) {
-                append(parameter.name)
+            parameter.realName?.let {
+                append(it)
                 append(": ")
             }
 

@@ -1,0 +1,7 @@
+import kotlin.enums.enumEntries
+
+enum class EnumClass { VAL }
+
+fun foo() {
+    enumEntries<EnumClass>().toTypedArray() == arrayOf(EnumClass.VAL)
+}

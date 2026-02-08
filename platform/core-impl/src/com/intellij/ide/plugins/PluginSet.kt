@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Collections
 
 // if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal

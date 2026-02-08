@@ -5,7 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.ByteBufferUtil;
+import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +35,9 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
-import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**

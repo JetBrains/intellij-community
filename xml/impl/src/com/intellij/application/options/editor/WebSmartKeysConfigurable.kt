@@ -3,7 +3,11 @@ package com.intellij.application.options.editor
 
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.BoundCompositeConfigurable
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableEP
+import com.intellij.openapi.options.ConfigurableWithOptionDescriptors
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel

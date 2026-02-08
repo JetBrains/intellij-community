@@ -38,12 +38,9 @@ jvm_library(
     "//plugins/kotlin/uast/uast-kotlin-fir/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//jps/jps-builders:build",
-    "//plugins/kotlin/compiler-plugins/parcelize/tests:tests_test_lib",
     "//plugins/kotlin/coverage/tests:tests_test_lib",
     "//plugins/kotlin/copyright/tests:tests_test_lib",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/tests:tests_test_lib",
     "//plugins/kotlin/code-insight/intentions-shared/tests/k2:k2_test_lib",
     "//plugins/kotlin/code-insight/inspections-k2/tests:tests_test_lib",
     "//plugins/kotlin/code-insight/intentions-k2/tests:tests_test_lib",
@@ -63,7 +60,6 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests_test_lib",
     "//plugins/kotlin/kotlin.searching/kotlin.searching.test.k2:test_test_lib",
     "//plugins/kotlin/compiler-reference-index/tests.k2:kotlin-compilerReferenceIndex-tests_test_lib",
-    "//plugins/kotlin/compiler-plugins/parcelize/tests/k2:kotlin-compilerPlugins-parcelize-tests_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move_test_lib",
     "//platform/testFramework",
@@ -85,6 +81,7 @@ jvm_library(
     "//plugins/kotlin/gradle/code-insight-groovy/tests.k2:kotlin-gradle-codeInsight-groovy-tests_test_lib",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//plugins/kotlin/compiler-plugins/parcelize/tests/k2:kotlin-compilerPlugins-parcelize-tests_test_lib",
   ],
   runtime_deps = [":test-generator-fir"]
 )

@@ -46,7 +46,16 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import org.jetbrains.annotations.ApiStatus
 import sun.awt.AWTAccessor
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.EventQueue
+import java.awt.Graphics
+import java.awt.GraphicsEnvironment
+import java.awt.Image
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.TexturePaint
+import java.awt.Window
 import java.awt.event.ActionEvent
 import java.awt.image.BufferedImage
 import java.lang.reflect.InvocationTargetException

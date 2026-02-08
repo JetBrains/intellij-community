@@ -4,6 +4,7 @@ package com.intellij.util.descriptors.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -35,7 +36,7 @@ public final class ConfigFileImpl extends SimpleModificationTracker implements C
       @Override
       public void validityChanged(final VirtualFilePointer @NotNull [] pointers) {
         myPsiFile = null;
-        onChange();
+        VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread(ConfigFileImpl.this::onChange);
       }
     });
     onChange();

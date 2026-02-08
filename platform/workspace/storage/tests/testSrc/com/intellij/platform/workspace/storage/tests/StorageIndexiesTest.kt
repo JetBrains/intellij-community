@@ -7,7 +7,16 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildSubEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildSubSubEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.FirstEntityWithPId
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentSubEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.VFUEntity2
+import com.intellij.platform.workspace.storage.testEntities.entities.VFUEntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.io.URLUtil
 import org.junit.jupiter.api.Test

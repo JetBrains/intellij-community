@@ -10,7 +10,7 @@ import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class PlainArtifactType extends ArtifactType {
   public static final @NonNls String ID = "plain";

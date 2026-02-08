@@ -8,8 +8,8 @@ import andel.rope.Metric
 import andel.rope.Rope
 import andel.text.Text
 import andel.text.charSequence
-import kotlin.math.min
 import fleet.util.CancellationToken
+import kotlin.math.min
 
 data class OffsetOfWidth(val offset: Long, val width: Float)
 

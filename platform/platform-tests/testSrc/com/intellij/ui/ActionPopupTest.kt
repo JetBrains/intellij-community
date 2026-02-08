@@ -2,7 +2,11 @@
 package com.intellij.ui
 
 import com.intellij.ide.ui.IdeUiService
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.ui.popup.JBPopupFactory

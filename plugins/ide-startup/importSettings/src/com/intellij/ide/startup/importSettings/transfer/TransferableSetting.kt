@@ -8,7 +8,14 @@ import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ide.startup.importSettings.data.Multiple
-import com.intellij.ide.startup.importSettings.models.*
+import com.intellij.ide.startup.importSettings.models.BuiltInFeature
+import com.intellij.ide.startup.importSettings.models.DummyKeyboardShortcut
+import com.intellij.ide.startup.importSettings.models.FeatureInfo
+import com.intellij.ide.startup.importSettings.models.ILookAndFeel
+import com.intellij.ide.startup.importSettings.models.Keymap
+import com.intellij.ide.startup.importSettings.models.PatchedKeymap
+import com.intellij.ide.startup.importSettings.models.PluginFeature
+import com.intellij.ide.startup.importSettings.models.RecentPathInfo
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.client.ClientSystemInfo

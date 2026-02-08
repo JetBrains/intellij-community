@@ -35,7 +35,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();

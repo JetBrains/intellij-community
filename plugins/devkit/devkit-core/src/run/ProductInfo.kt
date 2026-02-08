@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.*
+import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.Linux
+import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.Windows
+import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.macOS
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists

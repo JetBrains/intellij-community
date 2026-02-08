@@ -29,6 +29,10 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.getInstance()));
   private final Condition<RefactoringSupportProvider> myCondition = provider -> getRefactoringHandler(provider) != null;
 
+  public BasePlatformRefactoringAction() {
+    setInjectedContext(true);
+  }
+
   @Override
   protected final RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     PsiElement element = null;
@@ -80,7 +84,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   protected @Nullable RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
     List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
     if (providers.isEmpty()) return null;
-    if (element == null) return getRefactoringHandler(providers.get(0));
+    if (element == null) return getRefactoringHandler(providers.getFirst());
     for (RefactoringSupportProvider provider : providers) {
       if (provider.isAvailable(element)) {
         return getRefactoringHandler(provider, element);

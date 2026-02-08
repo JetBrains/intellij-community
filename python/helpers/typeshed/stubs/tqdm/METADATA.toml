@@ -1,4 +1,4 @@
-version = "4.67.*"
+version = "4.67.2"
 upstream_repository = "https://github.com/tqdm/tqdm"
 requires = ["types-requests"]
 

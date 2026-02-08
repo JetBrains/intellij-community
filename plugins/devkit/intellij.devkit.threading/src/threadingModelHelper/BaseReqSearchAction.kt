@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
-import java.util.*
+import java.util.EnumSet
 
 private const val TOOLWINDOW_ID: String = "LockReqs"
 

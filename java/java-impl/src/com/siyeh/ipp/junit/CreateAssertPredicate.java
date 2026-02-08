@@ -15,7 +15,12 @@
  */
 package com.siyeh.ipp.junit;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;

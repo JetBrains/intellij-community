@@ -3,7 +3,7 @@ package com.intellij.ui.jcef;
 
 import org.cef.misc.CefRange;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 interface JBCefCaretListener {
   void onImeCompositionRangeChanged(CefRange selectionRange, Rectangle[] characterBounds);

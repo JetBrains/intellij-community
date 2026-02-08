@@ -13,7 +13,12 @@ import org.jetbrains.kotlin.idea.codeInsight.replaceVarWithVal
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.declarationVisitor
 import kotlin.reflect.KClass
 
 internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDeclaration, KaFirDiagnostic.CanBeVal, Unit>() {

@@ -14,10 +14,18 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JTextArea;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
   private final TextComponentEmptyText myEmptyText;

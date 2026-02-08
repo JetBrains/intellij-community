@@ -11,8 +11,7 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Collection;
+import javax.swing.Icon;
 
 final class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBreakpointClassGroup> {
   XBreakpointGroupingByClassRule() {

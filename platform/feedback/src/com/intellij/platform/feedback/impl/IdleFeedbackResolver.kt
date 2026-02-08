@@ -5,6 +5,7 @@ import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -46,6 +47,11 @@ class IdleFeedbackResolver(private val cs: CoroutineScope) {
 
     if (AppMode.isRemoteDevHost()) {
       thisLogger().debug("Not showing idle feedback notification on remote-dev host")
+      return
+    }
+
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      thisLogger().debug("Not showing idle feedback notification in integration / E2E tests")
       return
     }
 

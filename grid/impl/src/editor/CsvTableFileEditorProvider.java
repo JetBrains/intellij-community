@@ -1,7 +1,11 @@
 package com.intellij.database.editor;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.database.csv.*;
+import com.intellij.database.csv.CsvFileType;
+import com.intellij.database.csv.CsvFormat;
+import com.intellij.database.csv.CsvFormatResolver;
+import com.intellij.database.csv.CsvFormatResolverCore;
+import com.intellij.database.csv.CsvFormats;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;

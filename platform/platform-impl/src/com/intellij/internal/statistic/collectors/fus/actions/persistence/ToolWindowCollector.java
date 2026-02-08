@@ -32,10 +32,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.*;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.ACTIVATED;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.HIDDEN;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.IS_MAXIMIZED;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.LOCATION;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.RESIZED;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.SHOWN;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.SOURCE;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.TOOLWINDOW_ID;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.VIEW_MODE;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.WEIGHT;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
-import static com.intellij.openapi.wm.ToolWindowId.*;
+import static com.intellij.openapi.wm.ToolWindowId.ANALYZE_DEPENDENCIES;
+import static com.intellij.openapi.wm.ToolWindowId.BUILD_DEPENDENCIES;
+import static com.intellij.openapi.wm.ToolWindowId.DEBUG;
+import static com.intellij.openapi.wm.ToolWindowId.DOCUMENTATION;
+import static com.intellij.openapi.wm.ToolWindowId.DUPLICATES;
+import static com.intellij.openapi.wm.ToolWindowId.ENDPOINTS;
+import static com.intellij.openapi.wm.ToolWindowId.EXTRACT_METHOD;
+import static com.intellij.openapi.wm.ToolWindowId.FIND;
+import static com.intellij.openapi.wm.ToolWindowId.HIERARCHY;
+import static com.intellij.openapi.wm.ToolWindowId.MESSAGES_WINDOW;
+import static com.intellij.openapi.wm.ToolWindowId.MODULES_DEPENDENCIES;
+import static com.intellij.openapi.wm.ToolWindowId.PREVIEW;
+import static com.intellij.openapi.wm.ToolWindowId.RUN;
+import static com.intellij.openapi.wm.ToolWindowId.SERVICES;
 
 /**
  * <p>

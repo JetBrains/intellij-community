@@ -14,8 +14,6 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 @ApiStatus.Internal
 @IntellijInternalApi
@@ -119,4 +117,4 @@ object MarketplaceUrls {
   private fun PluginId.urlEncode(): String = URLUtil.encodeURIComponent(idString)
 }
 
-internal fun buildOsParameter(): String? = "${OS.CURRENT} ${OS.CURRENT.version()}"
+internal fun buildOsParameter(): String = "${OS.CURRENT} ${OS.CURRENT.version()}"

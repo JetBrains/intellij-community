@@ -10,6 +10,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl.Companion.isSpecialKotlinCoreLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStat
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
+@K1Deprecation
 interface ResolutionAnchorCacheService {
     val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo>
 
@@ -64,6 +66,7 @@ interface ResolutionAnchorCacheService {
     }
 }
 
+@K1Deprecation
 class ResolutionAnchorCacheServiceImpl(
     val project: Project
 ) : ResolutionAnchorCacheService {

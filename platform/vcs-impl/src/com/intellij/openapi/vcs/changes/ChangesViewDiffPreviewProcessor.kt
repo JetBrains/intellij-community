@@ -9,10 +9,20 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWrapper
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.UnversionedFileWrapper
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.findAmendNode
+import com.intellij.openapi.vcs.changes.ui.findChangeListNode
+import com.intellij.openapi.vcs.changes.ui.isUnderTag
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
@@ -24,7 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 private fun wrap(
   project: Project,

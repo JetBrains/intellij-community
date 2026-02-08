@@ -10,7 +10,7 @@ import git4idea.config.GitExecutable
 import git4idea.editor.GitRebaseEditorApp
 import git4idea.editor.GitRebaseEditorAppHandler
 import kotlinx.coroutines.CoroutineScope
-import java.util.*
+import java.util.UUID
 import kotlin.io.path.Path
 
 @Service(Service.Level.APP)

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.formove;
 
-import com.intellij.history.*;
+import com.intellij.history.ActivityId;
+import com.intellij.history.Label;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.history.LocalHistoryException;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -17,7 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -40,11 +49,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
-import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.*;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_ALREADY_APPLIED;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_ABORTED;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_ROLLBACK_FAILED;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_SUCCESS;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_PARTIALLY_APPLIED;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**

@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.console.gutter
 
 import com.intellij.execution.console.BasicGutterContentProvider
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class ConsoleGutterContentProvider : BasicGutterContentProvider() {
     /**
      *  This method overriding is needed to prevent [BasicGutterContentProvider] from adding some strange unicode

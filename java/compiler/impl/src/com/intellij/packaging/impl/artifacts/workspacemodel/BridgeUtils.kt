@@ -3,7 +3,22 @@ package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
-import com.intellij.java.workspace.entities.*
+import com.intellij.java.workspace.entities.ArchivePackagingElementEntity
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactId
+import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
+import com.intellij.java.workspace.entities.ArtifactRootElementEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.CustomPackagingElementEntity
+import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.DirectoryPackagingElementEntity
+import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity
+import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity
+import com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity
+import com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
+import com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity
+import com.intellij.java.workspace.entities.PackagingElementEntity
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.project.Project
@@ -19,7 +34,11 @@ import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.ArtifactLoadingErrorDescription
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
-import com.intellij.packaging.impl.elements.*
+import com.intellij.packaging.impl.elements.LibraryElementType
+import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl
+import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType
+import com.intellij.packaging.impl.elements.ProductionModuleSourceElementType
+import com.intellij.packaging.impl.elements.TestModuleOutputElementType
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage

@@ -1,8 +1,9 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.platform.vcs.impl"/>
-    <plugin id="com.intellij.modules.lang"/>
     <module name="intellij.platform.todo"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.vcs.impl"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"

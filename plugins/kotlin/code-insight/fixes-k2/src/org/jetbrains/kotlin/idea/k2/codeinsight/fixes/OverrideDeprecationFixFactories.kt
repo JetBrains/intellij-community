@@ -12,9 +12,15 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.quickfix.*
+import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix
+import org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFix
 import org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFix.ArgumentsData
 import org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFix.ArgumentsData.ReplaceWithData
+import org.jetbrains.kotlin.idea.quickfix.EXPRESSION_ARGUMENT
+import org.jetbrains.kotlin.idea.quickfix.IMPORTS_ARGUMENT
+import org.jetbrains.kotlin.idea.quickfix.LEVEL_ARGUMENT
+import org.jetbrains.kotlin.idea.quickfix.MESSAGE_ARGUMENT
+import org.jetbrains.kotlin.idea.quickfix.REPLACE_WITH_ARGUMENT
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.renderer.render

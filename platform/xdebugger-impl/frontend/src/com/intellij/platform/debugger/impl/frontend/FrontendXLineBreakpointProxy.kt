@@ -2,7 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
-import com.intellij.ide.rpc.util.TextRangeId
+import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
@@ -263,5 +263,5 @@ internal class FrontendXLineBreakpointProxy(
   }
 }
 
-private val UNAVAILABLE_RANGE = TextRangeId(-1, -1)
+private val UNAVAILABLE_RANGE = TextRangeDto(-1, -1)
 private fun XLineBreakpointInfo.invalidateHighlightingRangeOrNull() = if (highlightingRange == null) null else UNAVAILABLE_RANGE

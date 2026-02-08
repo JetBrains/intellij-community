@@ -3,7 +3,14 @@ package org.jetbrains.plugins.cucumber.java.run;
 
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
-import gherkin.formatter.model.*;
+import gherkin.formatter.model.Background;
+import gherkin.formatter.model.Examples;
+import gherkin.formatter.model.Feature;
+import gherkin.formatter.model.Match;
+import gherkin.formatter.model.Result;
+import gherkin.formatter.model.Scenario;
+import gherkin.formatter.model.ScenarioOutline;
+import gherkin.formatter.model.Step;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +19,21 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 
-import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.*;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.FILE_RESOURCE_PREFIX;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_ENTER_THE_MATRIX;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_COUNTING_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_COUNTING_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_FAILED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_FAILED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_PENDING;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_SUITE_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_SUITE_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.escapeCommand;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.getCurrentTime;
 
 public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public static final int MILLION = 1000000;

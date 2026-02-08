@@ -4,7 +4,11 @@
 package org.jetbrains.plugins.groovy.transformations.immutable
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation

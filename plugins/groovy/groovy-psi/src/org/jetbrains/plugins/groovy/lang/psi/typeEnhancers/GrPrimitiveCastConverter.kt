@@ -9,7 +9,15 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.ERROR
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BIG_DECIMAL_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BIG_INTEGER_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BYTE_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.DOUBLE_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.FLOAT_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.INTEGER_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.LONG_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.SHORT_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.getTypeRank
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCharConverter.checkSingleSymbolLiteral
 
 class GrPrimitiveCastConverter : GrTypeConverter() {

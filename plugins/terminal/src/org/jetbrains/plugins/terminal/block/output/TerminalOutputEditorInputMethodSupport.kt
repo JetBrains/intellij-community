@@ -17,8 +17,12 @@ import com.intellij.openapi.editor.impl.EditorInputMethodSupport
 import com.intellij.openapi.editor.impl.InputMethodInlayRenderer
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension

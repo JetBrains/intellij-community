@@ -19,14 +19,14 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtOutsideTowerScopeKinds
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
@@ -75,13 +75,13 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
                 namesNeedDisambiguation = namesNeedDisambiguation,
                 importStrategyDetector = context.importStrategyDetector,
             )
-        }.forEach { context.addElement(it) }
+        }.forEach { addElement(it) }
 
         collectDelegateCallToSuperMember(
             superReceiver = superReceiver,
             nonExtensionMembers = nonExtensionMembers,
             namesNeedDisambiguation = namesNeedDisambiguation,
-        ).forEach { context.addElement(it) }
+        ).forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>)

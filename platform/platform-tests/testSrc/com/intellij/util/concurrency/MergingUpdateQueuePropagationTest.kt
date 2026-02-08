@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.observation.dumpObservedComputations
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
@@ -21,7 +22,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.util.concurrent.atomic.AtomicInteger
@@ -61,6 +64,7 @@ class MergingUpdateQueuePropagationTest {
   }
 
   @Test
+  @IJIgnore(issue = "IJPL-231207")
   fun `normal queuing is not tracked`() : Unit = testWaitCompletion(MergingUpdateQueue::queue, false)
 
   @Test

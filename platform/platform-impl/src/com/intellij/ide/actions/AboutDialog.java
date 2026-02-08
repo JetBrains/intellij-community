@@ -35,7 +35,12 @@ import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.platform.buildData.productInfo.CustomProperty;
 import com.intellij.platform.buildData.productInfo.CustomPropertyNames;
 import com.intellij.platform.ide.productInfo.IdeProductInfo;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -45,17 +50,28 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.SwingHelper;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLDocument;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -67,8 +83,11 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -201,13 +220,16 @@ public final class AboutDialog extends DialogWrapper {
     Properties properties = System.getProperties();
     String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     String arch = properties.getProperty("os.arch", "");
-    String jcefSuffix = getJcefVersion();
-    if (!jcefSuffix.isEmpty()) {
-      jcefSuffix = " (" + jcefSuffix + ")";
-    }
-    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch) + jcefSuffix;
-    lines.add(jreInfo);
-    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch) + jcefSuffix);
+
+    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
+
+    String jcefVersion = getJcefVersion();
+    String jcefNativeBundleVersion = getJcefNativeBundleVersion();
+    // check JBR bundled JCEF
+    String jreJcefSuffix = jcefVersion != null && jcefNativeBundleVersion == null ? " (JCEF " + jcefVersion + ")" : "";
+
+    lines.add(jreInfo + jreJcefSuffix);
+    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch) + jcefVersion);
 
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");
@@ -215,6 +237,14 @@ public final class AboutDialog extends DialogWrapper {
     lines.add(vmVendorInfo);
     lines.add("");
     myInfo.add(MessageFormat.format("VM: {0} by {1}", vmVersion, vmVendor));
+
+    // check if there is a standalone JCEF bundle
+    if (jcefVersion != null && jcefNativeBundleVersion != null) {
+      String jcefVersionValue = jcefVersion.equals(jcefNativeBundleVersion) ? jcefVersion : jcefVersion + " (native " + jcefNativeBundleVersion + ")";
+      myInfo.add("JCEF version: " + jcefVersionValue);
+      lines.add(IdeBundle.message("about.box.jcef.version", jcefVersionValue));
+      lines.add("");
+    }
 
     // Print extra information from plugins
     for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensionList()) {
@@ -448,15 +478,47 @@ public final class AboutDialog extends DialogWrapper {
     return IdeBundle.message("dialog.message.jetbrains.client.for.ide", ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
-  private static @NotNull String getJcefVersion() {
+  private static @Nullable String getJcefVersion() {
     if (JBCefApp.isSupported()) {
       try {
         JCefVersionDetails version = JCefAppConfig.getVersionDetails();
-        return IdeBundle.message("about.box.jcef", version.cefVersion.major, version.cefVersion.api, version.cefVersion.patch);
+        return shortenJcefVersion(version.toString());
       }
       catch (JCefVersionDetails.VersionUnavailableException ignored) {
       }
     }
-    return "";
+    return null;
   }
+
+  private static @Nullable String getJcefNativeBundleVersion() {
+    if (JBCefApp.isSupported()) {
+       String detailedVersionString = JBCefApp.getNativeBundleVersionString();
+       if (detailedVersionString != null) {
+         return shortenJcefVersion(detailedVersionString);
+       }
+    }
+
+    return null;
+  }
+
+  private static @NotNull String shortenJcefVersion(@NotNull String detailedVersionString) {
+    final Pattern detailedVersionPattern = Pattern.compile(
+      "#.#.#-g([0-9a-f]{7})-chromium-#.#.#.#-api-#.#(?:-([^-]+)-([^-]+))?"
+        .replaceAll("\\.", "\\\\.").replaceAll("#", "(\\\\d+)"));
+
+    var matcher = detailedVersionPattern.matcher(detailedVersionString);
+    if (!matcher.matches()) {
+      Logger.getInstance(AboutDialog.class).warn("Cannot parse JCEF version string: " + detailedVersionString);
+      return detailedVersionString;
+    }
+
+    String branch = matcher.group(11);
+    String buildNumber = matcher.group(12);
+    if (branch != null && buildNumber != null) {
+      return MessageFormat.format("{0}.{1}.{2}-{3}-{4}", matcher.group(1), matcher.group(2), matcher.group(3), branch, buildNumber);
+    } else {
+      return MessageFormat.format("{0}.{1}.{2}", matcher.group(1), matcher.group(2), matcher.group(3));
+    }
+  }
+
 }

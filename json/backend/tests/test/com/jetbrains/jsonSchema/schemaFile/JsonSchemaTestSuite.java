@@ -1,9 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.schemaFile;
 
-import com.jetbrains.jsonSchema.*;
+import com.jetbrains.jsonSchema.JsonSchemaCrossReferencesTest;
+import com.jetbrains.jsonSchema.JsonSchemaDocumentationTest;
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest;
+import com.jetbrains.jsonSchema.JsonSchemaInjectionTest;
+import com.jetbrains.jsonSchema.JsonSchemaPatternComparatorTest;
+import com.jetbrains.jsonSchema.JsonSchemaPerformanceTest;
+import com.jetbrains.jsonSchema.JsonSchemaReSharperHighlightingTest;
+import com.jetbrains.jsonSchema.JsonSchemaSelfHighlightingTest;
 import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTest;
-import com.jetbrains.jsonSchema.impl.*;
+import com.jetbrains.jsonSchema.impl.JsonBySchemaCompletionTest;
+import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTest;
+import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyNestedCompletionTest;
+import com.jetbrains.jsonSchema.impl.JsonBySchemaNestedCompletionTest;
+import com.jetbrains.jsonSchema.impl.JsonSchemaReadTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 

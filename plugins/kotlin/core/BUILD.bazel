@@ -1,11 +1,21 @@
 ### auto-generated section `build kotlin.core` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_core",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 jvm_library(
   name = "core",
   module_name = "kotlin.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",

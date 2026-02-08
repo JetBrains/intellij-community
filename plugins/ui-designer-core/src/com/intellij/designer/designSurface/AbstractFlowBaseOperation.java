@@ -20,7 +20,8 @@ import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 
 /**

@@ -6,8 +6,12 @@ import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 

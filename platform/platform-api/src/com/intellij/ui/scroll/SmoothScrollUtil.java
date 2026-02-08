@@ -4,7 +4,8 @@ package com.intellij.ui.scroll;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import java.awt.event.MouseWheelEvent;
 
 final class SmoothScrollUtil {

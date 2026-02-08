@@ -2,7 +2,9 @@
 package com.intellij.idea.extensions;
 
 import com.intellij.idea.IJIgnore;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.ConditionEvaluationResult;
+import org.junit.jupiter.api.extension.ExecutionCondition;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
 public class IJIgnoreExtension implements ExecutionCondition {

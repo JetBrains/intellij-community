@@ -6,12 +6,23 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiElementPattern
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.util.ProcessingContext
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.toml.getLibraries
 import org.jetbrains.plugins.gradle.toml.getVersions
-import org.toml.lang.psi.*
+import org.toml.lang.psi.TomlArray
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlKeySegment
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.TomlTable
+import org.toml.lang.psi.TomlValue
 
 class VersionCatalogReferenceContributor : PsiReferenceContributor() {
 

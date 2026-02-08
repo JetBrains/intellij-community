@@ -13,7 +13,13 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -23,8 +29,20 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.CommonClassNames.*;
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_ITERABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAYS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COMPARATOR;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_BI_FUNCTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_CONSUMER;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public final class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher ARRAY_METHODS = staticCall(

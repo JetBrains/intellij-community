@@ -4,18 +4,31 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
-import com.intellij.psi.impl.java.stubs.impl.*;
+import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiJavaModuleStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiModifierListStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiPackageAccessibilityStatementStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiProvidesStatementStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiRequiresStatementStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiUsesStatementStubImpl;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.Attribute;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.ModuleVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.commons.ModuleResolutionAttribute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.psi.impl.java.stubs.JavaStubElementTypes.*;
+import static com.intellij.psi.impl.java.stubs.JavaStubElementTypes.EXPORTS_STATEMENT;
+import static com.intellij.psi.impl.java.stubs.JavaStubElementTypes.OPENS_STATEMENT;
+import static com.intellij.psi.impl.java.stubs.JavaStubElementTypes.PROVIDES_WITH_LIST;
 import static com.intellij.util.BitUtil.isSet;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 

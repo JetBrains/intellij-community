@@ -11,7 +11,7 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class ArtifactDeploymentSourceType extends DeploymentSourceType<ArtifactDeploymentSource> {
   private static final String NAME_ATTRIBUTE = "name";

@@ -10,7 +10,16 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.stats.completion.LookupState
-import com.intellij.stats.completion.events.*
+import com.intellij.stats.completion.events.BackspaceEvent
+import com.intellij.stats.completion.events.CompletionCancelledEvent
+import com.intellij.stats.completion.events.CompletionStartedEvent
+import com.intellij.stats.completion.events.CustomMessageEvent
+import com.intellij.stats.completion.events.DownPressedEvent
+import com.intellij.stats.completion.events.ExplicitSelectEvent
+import com.intellij.stats.completion.events.LookupStateLogData
+import com.intellij.stats.completion.events.TypeEvent
+import com.intellij.stats.completion.events.TypedSelectEvent
+import com.intellij.stats.completion.events.UpPressedEvent
 
 private val LOG = logger<CompletionFileLogger>()
 

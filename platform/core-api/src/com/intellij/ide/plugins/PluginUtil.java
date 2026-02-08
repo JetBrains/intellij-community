@@ -4,14 +4,12 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PluginUtil {
-  @RequiresBlockingContext
   static PluginUtil getInstance() {
     return ApplicationManager.getApplication().getService(PluginUtil.class);
   }

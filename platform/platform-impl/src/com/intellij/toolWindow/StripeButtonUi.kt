@@ -8,7 +8,13 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.BasicGraphicsUtils

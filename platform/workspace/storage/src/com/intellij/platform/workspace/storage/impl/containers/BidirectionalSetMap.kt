@@ -2,8 +2,6 @@
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.util.containers.CollectionFactory
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 internal class BidirectionalSetMap<K, V> private constructor(private val keyToValueMap: MutableMap<K, V>,
                                                              private val valueToKeysMap: MutableMap<V, MutableSet<K>>) : MutableMap<K, V> {

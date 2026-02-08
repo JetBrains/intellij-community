@@ -4,7 +4,12 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
@@ -16,9 +21,13 @@ import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 
 final class EditorColorSchemeDelegate extends DelegateColorScheme {

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compiler
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.resolve.LanguageVersionSettingsProvider
 
+@K1Deprecation
 class IdeLanguageVersionSettingsProvider : LanguageVersionSettingsProvider {
     override fun getModuleLanguageVersionSettings(module: ModuleDescriptor): LanguageVersionSettings? {
         // downcast to module source info, as we're not interested in non-source classes

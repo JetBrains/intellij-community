@@ -10,7 +10,12 @@ import com.intellij.serviceContainer.TestComponentManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.application
 import com.intellij.util.concurrency.ClientIdPropagationTest.TestClientAppSession
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class ComponentManagerCancellationTest : LightPlatformTestCase() {
   override fun runInDispatchThread() = false

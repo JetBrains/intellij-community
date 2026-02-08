@@ -15,7 +15,11 @@
  */
 package com.siyeh.ipp.commutative;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;

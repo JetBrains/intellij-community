@@ -10,10 +10,11 @@ import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
-import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.chainCommits
 import git4idea.inMemory.getTreeFromEntry
+import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.rebase.log.GitInMemoryCommitEditingOperation
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 internal class GitExtractSelectedChangesOperation(
@@ -26,9 +27,8 @@ internal class GitExtractSelectedChangesOperation(
     private val LOG = logger<GitExtractSelectedChangesOperation>()
   }
 
-  @NonNls
-  override val reflogMessage: String = "extract changes from $targetCommitMetadata"
-  override val failureTitle: String = GitBundle.message("in.memory.rebase.log.changes.extract.failed.title")
+  override val operationName: @Nls String = GitBundle.message("action.Git.InMemory.Extract.Selected.Changes.operation.name", targetCommitMetadata)
+  override val failureTitle: @NonNls String = GitBundle.message("in.memory.rebase.log.changes.extract.failed.title")
 
   override suspend fun editCommits(): CommitEditingResult {
     val targetCommit = baseToHeadCommitsRange.first()

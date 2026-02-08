@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.google.common.collect.Lists
-import com.intellij.debugger.PositionManager
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.text.StringUtil
@@ -17,25 +17,22 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
-import org.jetbrains.kotlin.codegen.GenerationUtils
-import org.jetbrains.kotlin.codegen.state.GenerationState
-import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.config.JvmAnalysisFlags.suppressMissingBuiltinsError
+import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockLocation
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockVirtualMachine
 import org.jetbrains.kotlin.idea.debugger.test.mock.SmartMockReferenceTypeContext
-import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.TestJdkKind
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.nio.file.Files.createTempDirectory
 import java.util.regex.Pattern
+import java.util.zip.ZipFile
 
 abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCase() {
     public override fun setUp() {
@@ -75,32 +72,36 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
             breakpoints.addAll(extractBreakpointsInfo(file, file.text))
         }
 
-        val configuration = KotlinTestUtilsImpl.newConfiguration(ConfigurationKind.STDLIB, TestJdkKind.MOCK_JDK)
-        // TODO: delete this once IDEVirtualFileFinder supports loading .kotlin_builtins files
-        configuration.languageVersionSettings = LanguageVersionSettingsImpl(
-            LanguageVersion.LATEST_STABLE,
-            ApiVersion.LATEST_STABLE,
-            mapOf(suppressMissingBuiltinsError to true),
-        )
-
-        val state = getCompileFiles(files, configuration)
-
-        val referencesByName = getReferenceMap(state.factory)
-
-        debugProcess = createDebugProcess(referencesByName)
-
-        val positionManager: PositionManager = createPositionManager(debugProcess!!)
-
-        runBlocking {
-            for (breakpoint in breakpoints) {
-                assertBreakpointIsHandledCorrectly(breakpoint, positionManager)
+        val tempDir = createTempDirectory("debugger-test-").toFile()
+        try {
+            val sourceFiles = files.map { ktFile ->
+                val file = File(tempDir, ktFile.name)
+                file.writeText(ktFile.text)
+                file
             }
+
+            val compiler = KotlinCompilerStandalone(
+                sources = sourceFiles
+            )
+            val jarFile = compiler.compile()
+
+            val outputFiles = jarToOutputFiles(jarFile)
+
+            val referencesByName = getReferenceMap(outputFiles)
+
+            debugProcess = createDebugProcess(referencesByName)
+
+            val positionManager: KotlinPositionManager = createPositionManager(debugProcess!!)
+
+            runBlocking {
+                for (breakpoint in breakpoints) {
+                    assertBreakpointIsHandledCorrectly(breakpoint, positionManager)
+                }
+            }
+        } finally {
+            tempDir.deleteRecursively()
         }
 
-    }
-
-    protected open fun getCompileFiles(files: List<KtFile>, configuration: CompilerConfiguration): GenerationState {
-        return GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, { PackagePartProvider.Empty }).first
     }
 
     public override fun tearDown() {
@@ -122,14 +123,18 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
 
     private fun createDebugProcess(referencesByName: Map<String, ReferenceType>): DebugProcessEvents {
         return object : DebugProcessEvents(project) {
-            private var virtualMachineProxy: VirtualMachineProxyImpl? = null
+            private var virtualMachineProxy: VirtualMachineProxyImpl = MockVirtualMachineProxy(this, referencesByName)
 
-            override fun getVirtualMachineProxy(): VirtualMachineProxyImpl {
-                if (virtualMachineProxy == null) {
-                    virtualMachineProxy = MockVirtualMachineProxy(this, referencesByName)
-                }
-                return virtualMachineProxy!!
+            init {
+                val dmt = managerThread
+                dmt.invokeAndWait(object : DebuggerCommandImpl() {
+                    override fun action() {
+                        dmt.setVmProxy(virtualMachineProxy)
+                    }
+                })
             }
+
+            override fun getVirtualMachineProxy(): VirtualMachineProxyImpl = virtualMachineProxy
 
             override fun getSearchScope(): GlobalSearchScope {
                 return GlobalSearchScope.allScope(project)
@@ -158,9 +163,12 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
-    private suspend fun assertBreakpointIsHandledCorrectly(breakpoint: Breakpoint, positionManager: PositionManager) {
+    private suspend fun assertBreakpointIsHandledCorrectly(breakpoint: Breakpoint, positionManager: KotlinPositionManager) {
         val position = readAction { SourcePosition.createFromLine(breakpoint.file, breakpoint.lineNumber)  }
-        val classes = positionManager.getAllClasses(position)
+        val managerThread = debugProcess!!.managerThread
+        val classes = withDebugContext(managerThread) {
+            positionManager.getAllClasses(position)
+        }
         assertNotNull(classes)
         assertFalse(
             "Classes not found for line " + (breakpoint.lineNumber + 1) + ", expected " + breakpoint.classNameRegexp,
@@ -177,12 +185,9 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
         val typeWithFqName = classes[0]
         val location: Location = MockLocation(typeWithFqName, breakpoint.file.name, breakpoint.lineNumber + 1)
 
-        var actualPosition: SourcePosition? = null
-        debugProcess!!.managerThread.invokeAndWait(object : DebuggerCommandImpl() {
-            override fun action() {
-                actualPosition = positionManager.getSourcePosition(location)
-            }
-        })
+        val actualPosition: SourcePosition? = withDebugContext(managerThread) {
+            positionManager.getSourcePositionAsync(location)
+        }
 
         assertNotNull(actualPosition)
         assertEquals(position.file, actualPosition!!.file)
@@ -193,6 +198,24 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
         // Breakpoint is given as a line comment on a specific line, containing the regexp to match the name of the class where that line
         // can be found. This pattern matches against these line comments and saves the class name in the first group
         private val BREAKPOINT_PATTERN: Pattern = Pattern.compile("^.*//\\s*(.+)\\s*$")
+
+        private fun jarToOutputFiles(jarFile: File): List<OutputFile> {
+            val outputFiles = mutableListOf<OutputFile>()
+            ZipFile(jarFile).use { zip ->
+                zip.entries().asIterator().forEach { entry ->
+                    if (entry.name.endsWith(".class")) {
+                        val bytes = zip.getInputStream(entry).readAllBytes()
+                        outputFiles.add(object : OutputFile {
+                            override val relativePath: String = entry.name
+                            override val sourceFiles: List<File> = emptyList()
+                            override fun asByteArray(): ByteArray = bytes
+                            override fun asText(): String = String(bytes)
+                        })
+                    }
+                }
+            }
+            return outputFiles
+        }
 
         private fun createPositionManager(process: DebugProcess): KotlinPositionManager {
             val positionManager = KotlinPositionManagerFactory().createPositionManager(process) as KotlinPositionManager?
@@ -224,7 +247,7 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
             return breakpoints
         }
 
-        private fun getReferenceMap(outputFiles: OutputFileCollection): Map<String, ReferenceType> {
+        private fun getReferenceMap(outputFiles: List<OutputFile>): Map<String, ReferenceType> {
             return SmartMockReferenceTypeContext(outputFiles).referenceTypesByName
         }
     }

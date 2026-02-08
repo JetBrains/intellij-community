@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 public final class FileTypeAssociationDialog extends DialogWrapper {

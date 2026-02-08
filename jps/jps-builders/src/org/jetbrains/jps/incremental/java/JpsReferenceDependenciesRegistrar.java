@@ -10,7 +10,15 @@ import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import javax.lang.model.element.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * register dependencies that are not discoverable from bytecode:

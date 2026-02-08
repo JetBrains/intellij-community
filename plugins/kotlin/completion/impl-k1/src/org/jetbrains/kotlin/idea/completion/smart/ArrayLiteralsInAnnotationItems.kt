@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.smart
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.fuzzyType
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
+@K1Deprecation
 object ArrayLiteralsInAnnotationItems {
 
     private fun MutableCollection<LookupElement>.addForUsage(

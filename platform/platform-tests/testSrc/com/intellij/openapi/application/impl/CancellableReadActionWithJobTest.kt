@@ -3,7 +3,13 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.assertJobIsChildOf
+import com.intellij.openapi.progress.blockingContextTest
+import com.intellij.openapi.progress.testExceptions
+import com.intellij.openapi.progress.testNoExceptions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

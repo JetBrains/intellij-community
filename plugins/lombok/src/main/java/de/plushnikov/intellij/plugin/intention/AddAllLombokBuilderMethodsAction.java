@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.intention;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.PsiAnnotation;

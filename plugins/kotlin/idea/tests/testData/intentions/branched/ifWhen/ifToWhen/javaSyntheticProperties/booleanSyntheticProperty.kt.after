@@ -1,0 +1,11 @@
+// WITH_STDLIB
+fun test(container: Container) {
+    when {
+        container.isEmpty -> {
+            println("empty")
+        }
+        !container.isEmpty -> {
+            println("not empty")
+        }
+    }
+}

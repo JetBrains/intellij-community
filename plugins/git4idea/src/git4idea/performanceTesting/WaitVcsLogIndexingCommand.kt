@@ -6,7 +6,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.Disposer
-import com.intellij.vcs.log.data.index.*
+import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
+import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.data.index.isIndexingPaused
+import com.intellij.vcs.log.data.index.isIndexingScheduled
+import com.intellij.vcs.log.data.index.needIndexing
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getInstance
 import com.intellij.vcs.log.impl.waitForRefresh
 import com.intellij.vcs.log.util.PersistentUtil

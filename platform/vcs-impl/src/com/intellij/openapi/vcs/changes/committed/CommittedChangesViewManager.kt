@@ -5,8 +5,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.CommittedChangesProvider
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.Companion.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.RepositoryLocation
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.VcsType
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache.COMMITTED_TOPIC
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE

@@ -19,7 +19,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,7 +35,9 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.PsiModifier.*;
+import static com.intellij.psi.PsiModifier.FINAL;
+import static com.intellij.psi.PsiModifier.PRIVATE;
+import static com.intellij.psi.PsiModifier.STATIC;
 
 public final class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 

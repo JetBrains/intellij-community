@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Derived.class
+End of files
+Compiling files:
+  java/fieldModifiers/hidePublicWithProtected/a/ppp/Derived.java
+End of files
+Cleaning output files:
+  ppp/ClientInside.class
+  qqq/ClientOutside.class
+  qqq/DerivedOutside.class
+End of files
+Compiling files:
+  java/fieldModifiers/hidePublicWithProtected/a/ppp/ClientInside.java
+  java/fieldModifiers/hidePublicWithProtected/a/qqq/ClientOutside.java
+  java/fieldModifiers/hidePublicWithProtected/a/qqq/DerivedOutside.java
+End of files
+------------------------------------------
+Exit code: ERROR

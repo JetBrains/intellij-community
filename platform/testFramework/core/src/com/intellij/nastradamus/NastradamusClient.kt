@@ -5,7 +5,14 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
-import com.intellij.nastradamus.model.*
+import com.intellij.nastradamus.model.BuildInfo
+import com.intellij.nastradamus.model.ChangeEntity
+import com.intellij.nastradamus.model.SortRequestEntity
+import com.intellij.nastradamus.model.TestCaseEntity
+import com.intellij.nastradamus.model.TestClassResultEntity
+import com.intellij.nastradamus.model.TestResultEntity
+import com.intellij.nastradamus.model.TestResultRequestEntity
+import com.intellij.nastradamus.model.TestStatus
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.HttpClient
 import com.intellij.tool.mapConcurrently

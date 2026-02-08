@@ -13,7 +13,11 @@ import org.gradle.internal.time.Time
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
-import org.gradle.tooling.internal.consumer.*
+import org.gradle.tooling.internal.consumer.ConnectionParameters
+import org.gradle.tooling.internal.consumer.DefaultConnectionParameters
+import org.gradle.tooling.internal.consumer.Distribution
+import org.gradle.tooling.internal.consumer.DistributionFactory
+import org.gradle.tooling.internal.consumer.ProjectConnectionCloseListener
 import org.gradle.tooling.internal.protocol.InternalBuildProgressListener
 import java.io.File
 import java.net.URI

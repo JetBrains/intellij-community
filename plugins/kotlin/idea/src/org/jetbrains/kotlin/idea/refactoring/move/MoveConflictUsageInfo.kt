@@ -3,5 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class MoveConflictUsageInfo(element: PsiElement, val messages: Collection<String>) : UsageInfo(element)

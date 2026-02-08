@@ -8,7 +8,13 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.CONFIGURE_LIBRARY_PREFIX
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.configureRegistryAndRun
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.platform.TargetPlatform
 import java.io.File
 

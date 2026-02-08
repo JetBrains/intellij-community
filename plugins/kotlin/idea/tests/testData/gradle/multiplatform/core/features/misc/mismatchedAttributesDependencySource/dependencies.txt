@@ -4,10 +4,8 @@ project
 project.consumer
 
 project.consumer.commonMain
-    producer.commonMain (COMPILE)
 
 project.consumer.commonTest
-    producer.commonMain (TEST)
 
 project.consumer.jsMain
     org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)

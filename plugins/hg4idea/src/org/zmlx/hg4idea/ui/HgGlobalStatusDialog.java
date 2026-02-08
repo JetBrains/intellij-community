@@ -18,7 +18,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 public class HgGlobalStatusDialog extends DialogWrapper {
   private JPanel contentPanel;

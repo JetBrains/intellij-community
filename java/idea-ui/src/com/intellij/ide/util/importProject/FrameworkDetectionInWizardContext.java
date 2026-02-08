@@ -17,7 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 public abstract class FrameworkDetectionInWizardContext extends FrameworkDetectionContextBase {
   protected FrameworkDetectionInWizardContext() {

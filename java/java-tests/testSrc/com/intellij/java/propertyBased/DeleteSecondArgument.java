@@ -15,7 +15,11 @@
  */
 package com.intellij.java.propertyBased;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.FilePsiMutation;
 import org.jetbrains.annotations.NotNull;

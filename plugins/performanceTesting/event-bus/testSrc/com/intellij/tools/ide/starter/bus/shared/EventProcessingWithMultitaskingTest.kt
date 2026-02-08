@@ -2,7 +2,11 @@ package com.intellij.tools.ide.starter.bus.shared
 
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.starter.bus.shared.events.SharedEvent
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

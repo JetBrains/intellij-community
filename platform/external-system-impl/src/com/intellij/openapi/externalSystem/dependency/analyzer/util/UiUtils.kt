@@ -2,7 +2,12 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -19,7 +24,11 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.JTree
 import javax.swing.border.Border
 
 

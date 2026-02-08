@@ -2,12 +2,24 @@
 package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.JavaStackFrame
+import com.intellij.debugger.engine.SourcePositionProvider
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.debugger.ui.impl.watch.*
-import com.intellij.debugger.ui.tree.*
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider
+import com.intellij.debugger.ui.impl.watch.ThisDescriptorImpl
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
+import com.intellij.debugger.ui.tree.ArrayElementDescriptor
+import com.intellij.debugger.ui.tree.FieldDescriptor
+import com.intellij.debugger.ui.tree.LocalVariableDescriptor
+import com.intellij.debugger.ui.tree.StackFrameDescriptor
+import com.intellij.debugger.ui.tree.StaticDescriptor
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
@@ -15,7 +27,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.XTestValueNode
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XNamedValue
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.XValueContainer
+import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import com.sun.jdi.ArrayType
 import kotlinx.coroutines.runBlocking
@@ -87,7 +103,8 @@ internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
                 return ValueInfo(name, kind, type, value, sourcePosition)
             }
             is XStackFrame -> {
-                val sourcePosition = DebuggerUtilsEx.toSourcePosition(container.sourcePosition, suspendContext.debugProcess.project)
+                val sourcePosition =
+                    runReadAction { DebuggerUtilsEx.toSourcePosition(container.sourcePosition, suspendContext.debugProcess.project) }
                 return ValueInfo(name, kind = null, type = null, value = null, sourcePosition)
             }
             else -> {

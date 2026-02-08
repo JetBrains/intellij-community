@@ -6,7 +6,7 @@ import org.jetbrains.idea.maven.server.security.MavenToken
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.IOException
 import java.rmi.server.UnicastRemoteObject
-import java.util.*
+import java.util.UUID
 
 abstract class MavenRemoteObjectWrapper<T> protected constructor() : RemoteObjectWrapper<T>() {
   private class RemoteMavenServerProgressIndicator(private val myProcess: MavenProgressIndicator) : MavenRemoteObject(), MavenServerProgressIndicator {

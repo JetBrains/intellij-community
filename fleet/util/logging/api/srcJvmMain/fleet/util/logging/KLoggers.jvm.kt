@@ -2,7 +2,7 @@
 package fleet.util.logging
 
 import fleet.util.multiplatform.Actual
-import java.util.*
+import java.util.ServiceLoader
 
 @Actual("getLoggerFactory")
 internal fun getLoggerFactoryJvm(): KLoggerFactory {

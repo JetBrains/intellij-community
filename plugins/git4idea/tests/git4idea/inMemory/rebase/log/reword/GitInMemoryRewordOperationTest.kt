@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.inMemory.rebase.log.reword
 
+import git4idea.config.GitConfigUtil
 import git4idea.inMemory.rebase.log.GitInMemoryOperationTest
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.test.assertLastMessage
+import git4idea.test.lastMessage
 import git4idea.test.message
 import org.junit.jupiter.api.Assertions.assertNotEquals
-import git4idea.config.GitConfigUtil
-import git4idea.test.lastMessage
 
 internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
   fun `test reword last commit`() {

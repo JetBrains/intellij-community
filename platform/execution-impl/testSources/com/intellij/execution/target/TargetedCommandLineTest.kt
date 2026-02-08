@@ -11,7 +11,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.IllegalFormatWidthException
 import javax.naming.NoPermissionException
 
 class TargetedCommandLineTest {

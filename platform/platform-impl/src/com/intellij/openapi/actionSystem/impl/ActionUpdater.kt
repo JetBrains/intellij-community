@@ -12,7 +12,24 @@ import com.intellij.diagnostic.ThreadDumpService
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ProhibitAWTEvents
 import com.intellij.internal.DebugAttachDetector
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionClassMetaData
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupUtil
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionUpdateThreadAware
+import com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.AnActionWrapper
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.UpdateSession
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.ALWAYS_VISIBLE_GROUP
 import com.intellij.openapi.actionSystem.ex.ActionUtil.HIDE_DISABLED_CHILDREN
@@ -21,6 +38,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.Utils.isLockRequired
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
@@ -34,20 +52,49 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.*
+import com.intellij.util.ObjectUtils
+import com.intellij.util.SlowOperations
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
+import com.intellij.util.takeWhileInclusive
 import com.intellij.util.ui.EDT
+import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.completeWith
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.flow.toCollection
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
-import java.util.*
+import java.util.ArrayDeque
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
@@ -156,7 +203,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }
     }
-    return computeOnEdt(opElement, updateThread == ActionUpdateThread.EDT) {
+    return computeOnEdt(opElement, updateThread == ActionUpdateThread.EDT, isRWLockRequired) {
       call()
     }
   }
@@ -169,9 +216,19 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
+  @Suppress("NOTHING_TO_INLINE")
+  private inline fun <R> conditionalBlockingReadAction(needRwLock: Boolean, noinline block: () -> R): R {
+    return if (!needRwLock) {
+      block()
+    } else {
+      runReadAction(block)
+    }
+  }
+
   private suspend fun <T> computeOnEdt(
     opElement: OpElement,
     noRulesInEDT: Boolean,
+    isRwLockRequired: Boolean,
     call: () -> T,
   ): T {
     val operationName = opElement.operationName
@@ -180,7 +237,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     var edtTraces: List<Throwable>? = null
     val start0 = System.nanoTime()
     return try {
-      computeOnEdt {
+      computeOnEdt(isRwLockRequired) {
         val start = System.nanoTime()
         edtCallsCount++
         edtWaitNanos += start - start0
@@ -257,7 +314,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         group, dataContext, place, uiKind, presentationFactory, asUpdateSession()) {
         removeUnnecessarySeparators(doExpandActionGroup(group, false))
       }
-      computeOnEdt {
+      computeOnEdt(Utils.isLockRequired(group)) {
         applyPresentationChanges()
       }
       return result
@@ -448,15 +505,16 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private suspend fun <T> computeOnEdt(supplier: () -> T): T {
+  private suspend fun <T> computeOnEdt(isRwLockRequired: Boolean, supplier: () -> T): T {
     // We need the block below to escape the current scope on WA to let the parent RA free
     // while the EDT block is still waiting to be cancelled in the EDT queue.
     // The target scope must not be cancelled by `AwaitSharedData` exception (SupervisorJob)!
     val scope = bgtScope ?: service<CoreUiCoroutineScopeHolder>().coroutineScope
     val deferred = scope.async(
       currentCoroutineContext().minusKey(Job) +
-      CoroutineName("computeOnEdt ($place)") + edtDispatcher) {
-      supplier()
+      CoroutineName("computeOnEdt ($place)") + Utils.adaptToLockPolicy(edtDispatcher, isRwLockRequired)) {
+      // explicit acquisition of RA here is needed for fast-track update sessions
+      conditionalBlockingReadAction(isRwLockRequired, supplier)
     }
     try {
       return deferred.await()

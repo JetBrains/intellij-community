@@ -2,7 +2,17 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.tools.ide.performanceTesting.commands.dto.*
+import com.intellij.tools.ide.performanceTesting.commands.dto.BuildToolsAutoReloadType
+import com.intellij.tools.ide.performanceTesting.commands.dto.BuildType
+import com.intellij.tools.ide.performanceTesting.commands.dto.GradleTaskInfoDto
+import com.intellij.tools.ide.performanceTesting.commands.dto.GradleTestRunner
+import com.intellij.tools.ide.performanceTesting.commands.dto.MavenArchetypeInfo
+import com.intellij.tools.ide.performanceTesting.commands.dto.MavenGoalConfigurationDto
+import com.intellij.tools.ide.performanceTesting.commands.dto.MoveDeclarationsData
+import com.intellij.tools.ide.performanceTesting.commands.dto.MoveFilesData
+import com.intellij.tools.ide.performanceTesting.commands.dto.NewGradleProjectDto
+import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
+import com.intellij.tools.ide.performanceTesting.commands.dto.NewSpringProjectDto
 import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.file.Path

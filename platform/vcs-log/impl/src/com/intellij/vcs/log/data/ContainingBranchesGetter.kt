@@ -15,7 +15,12 @@ import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogProperties
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.branches
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import org.jetbrains.annotations.CalledInAny

@@ -7,7 +7,7 @@ class PillWithBackgroundPresentation(
   presentation: InlayPresentation,
   color: Color? = null,
   backgroundAlpha : Float = 0.55f
-): RoundWithBackgroundPresentation(presentation, presentation.height, presentation.height, color, backgroundAlpha) {
+): AbstractRoundWithBackgroundPresentation(presentation, color, backgroundAlpha) {
   override val arcWidth: Int
     get() = presentation.height
   override val arcHeight: Int

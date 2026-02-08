@@ -17,7 +17,8 @@ import com.jetbrains.JBRFileDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.FileDialog;
 import java.util.List;
 import java.util.stream.Stream;
 

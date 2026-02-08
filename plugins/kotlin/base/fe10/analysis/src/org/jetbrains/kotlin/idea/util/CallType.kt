@@ -2,9 +2,17 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -12,7 +20,21 @@ import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.isImportDirectiveExpression
 import org.jetbrains.kotlin.psi.psiUtil.isPackageDirectiveExpression
@@ -26,7 +48,10 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import org.jetbrains.kotlin.resolve.scopes.receivers.*
+import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
+import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
+import org.jetbrains.kotlin.resolve.scopes.receivers.TypeAliasQualifier
 import org.jetbrains.kotlin.types.FlexibleType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
@@ -34,8 +59,8 @@ import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.util.supertypesWithAny
 import org.jetbrains.kotlin.util.unwrapIfTypeAlias
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import java.util.*
 
+@K1Deprecation
 @Suppress("ClassName")
 sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: DescriptorKindFilter) {
     object UNKNOWN : CallType<Nothing?>(DescriptorKindFilter.ALL)
@@ -124,6 +149,7 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
     }
 }
 
+@K1Deprecation
 @Suppress("ClassName")
 sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallType<TReceiver>>(
     val callType: TCallType,
@@ -235,6 +261,7 @@ sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallTyp
     }
 }
 
+@K1Deprecation
 data class ReceiverType(
     val type: KotlinType,
     val receiverIndex: Int,
@@ -247,6 +274,7 @@ data class ReceiverType(
             ?: DslMarkerUtils.extractDslMarkerFqNames(type)
 }
 
+@K1Deprecation
 fun CallTypeAndReceiver<*, *>.receiverTypes(
     bindingContext: BindingContext,
     contextElement: PsiElement,
@@ -257,6 +285,7 @@ fun CallTypeAndReceiver<*, *>.receiverTypes(
     return receiverTypesWithIndex(bindingContext, contextElement, moduleDescriptor, resolutionFacade, stableSmartCastsOnly)?.map { it.type }
 }
 
+@K1Deprecation
 fun CallTypeAndReceiver<*, *>.receiverTypesWithIndex(
     bindingContext: BindingContext,
     contextElement: PsiElement,
@@ -394,6 +423,7 @@ private fun receiverValueTypes(
     }
 }
 
+@K1Deprecation
 fun SmartCastManager.getSmartCastVariantsWithLessSpecificExcluded(
     receiverToCast: ReceiverValue,
     bindingContext: BindingContext,

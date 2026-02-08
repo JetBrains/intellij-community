@@ -11,7 +11,11 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;

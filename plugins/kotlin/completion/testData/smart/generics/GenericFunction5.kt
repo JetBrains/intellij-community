@@ -11,3 +11,5 @@ fun f(){
 }
 
 // EXIST: { lookupString: "create", itemText: "C.create", tailText: "(t: String) (<root>)", typeText: "C<String>" }
+
+// IGNORE_K2

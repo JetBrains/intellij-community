@@ -3,7 +3,11 @@ package com.intellij.codeInsight.externalAnnotation;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 

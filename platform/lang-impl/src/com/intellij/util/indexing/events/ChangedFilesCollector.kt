@@ -12,7 +12,11 @@ import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskE
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiManager
 import com.intellij.psi.stubs.StubIndex
@@ -29,8 +33,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.*
+import java.util.concurrent.Callable
+import java.util.concurrent.Phaser
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Lock
 import kotlin.concurrent.withLock

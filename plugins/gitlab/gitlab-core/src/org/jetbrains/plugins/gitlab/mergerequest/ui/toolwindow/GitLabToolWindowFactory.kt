@@ -21,9 +21,14 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel

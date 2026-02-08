@@ -26,8 +26,14 @@ import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.util.*
-import javax.swing.*
+import java.util.EventObject
+import javax.swing.AbstractAction
+import javax.swing.AbstractCellEditor
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.KeyStroke
+import javax.swing.SwingConstants
 import javax.swing.event.MouseInputAdapter
 import javax.swing.table.TableCellEditor
 import kotlin.math.max

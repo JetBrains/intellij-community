@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl
 
-import com.intellij.platform.eel.EelConnectionError.*
+import com.intellij.platform.eel.EelConnectionError.ConnectionProblem
+import com.intellij.platform.eel.EelConnectionError.ResolveFailure
+import com.intellij.platform.eel.EelConnectionError.SocketAllocationError
 
 data object PermissionDenied : SocketAllocationError("Permission denied")
 

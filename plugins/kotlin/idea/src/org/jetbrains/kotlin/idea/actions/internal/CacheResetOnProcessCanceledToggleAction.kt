@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.actions.internal
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled
 
+@K1Deprecation
 class CacheResetOnProcessCanceledToggleAction : ToggleAction() {
     override fun isSelected(e: AnActionEvent): Boolean =
         CacheResetOnProcessCanceled.enabled

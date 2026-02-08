@@ -2,12 +2,22 @@
 package com.jetbrains.python.sdk.add.v2.venv
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.venv.createVenv
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.ExistingSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.InstallableSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.ManuallyAddedSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.SdkWrapper
+import com.jetbrains.python.sdk.add.v2.existingSdks
+import com.jetbrains.python.sdk.add.v2.installBaseSdk
+import com.jetbrains.python.sdk.add.v2.setupSdk
 
 suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.setupVirtualenv(venvFolder: P, moduleOrProject: ModuleOrProject): PyResult<Sdk> {
   val baseSdkPath = when (val baseSdk = state.baseInterpreter.get()!!) {

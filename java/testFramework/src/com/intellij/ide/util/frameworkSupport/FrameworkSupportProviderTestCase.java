@@ -25,7 +25,11 @@ import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCase {
   private FrameworkSupportModelBase myFrameworkSupportModel;

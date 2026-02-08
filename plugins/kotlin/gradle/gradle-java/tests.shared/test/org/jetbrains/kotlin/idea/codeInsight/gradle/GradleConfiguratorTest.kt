@@ -27,7 +27,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionPr
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModules
+import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModulesWithKotlinFiles
+import org.jetbrains.kotlin.idea.configuration.getConfigurationPossibilitiesForConfigureNotification
+import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
 import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.configuration.notifications.dropHotfixPart
 import org.jetbrains.kotlin.idea.configuration.notifications.showNewKotlinCompilerAvailableNotificationIfNeeded

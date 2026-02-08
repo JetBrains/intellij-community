@@ -11,9 +11,9 @@ import com.intellij.vcs.git.actions.GitSingleRefActions
 import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitOperationsApi
+import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.GitStandardLocalBranch
 import git4idea.i18n.GitBundle
-import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

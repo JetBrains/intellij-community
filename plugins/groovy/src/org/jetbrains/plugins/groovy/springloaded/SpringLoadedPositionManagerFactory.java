@@ -38,7 +38,7 @@ public final class SpringLoadedPositionManagerFactory extends PositionManagerFac
     }
 
     // Check spring loaded for remote process
-    VirtualMachineProxy proxy = process.getVirtualMachineProxy();
+    VirtualMachineProxy proxy = VirtualMachineProxy.getCurrent();
     return !proxy.classesByName("com.springsource.loaded.agent.SpringLoadedAgent").isEmpty() ||
            !proxy.classesByName("org.springsource.loaded.agent.SpringLoadedAgent").isEmpty();
   }

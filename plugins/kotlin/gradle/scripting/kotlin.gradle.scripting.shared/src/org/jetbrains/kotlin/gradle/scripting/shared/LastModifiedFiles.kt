@@ -5,7 +5,11 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import org.jetbrains.kotlin.idea.core.script.v1.*
+import org.jetbrains.kotlin.idea.core.script.v1.readNullable
+import org.jetbrains.kotlin.idea.core.script.v1.readStringList
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingErrorLog
+import org.jetbrains.kotlin.idea.core.script.v1.writeNullable
+import org.jetbrains.kotlin.idea.core.script.v1.writeStringList
 import java.io.DataInputStream
 import java.io.DataOutput
 import java.io.DataOutputStream

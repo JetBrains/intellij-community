@@ -2,7 +2,6 @@
 package com.intellij.devkit.workspaceModel.k2
 
 import com.intellij.devkit.workspaceModel.AbstractAllIntellijEntitiesGenerationTest
-import com.intellij.idea.IJIgnore
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 class AllIntellijEntitiesGenerationTest : AbstractAllIntellijEntitiesGenerationTest() {

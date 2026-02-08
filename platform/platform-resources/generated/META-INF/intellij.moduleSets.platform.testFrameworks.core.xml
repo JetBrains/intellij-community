@@ -1,0 +1,13 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("platform.testFrameworks.core") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.testFramework.common"/>
+    <module name="intellij.platform.testFramework.core"/>
+    <module name="intellij.platform.testFramework.impl"/>
+    <module name="intellij.platform.testFramework.teamCity"/>
+  </content>
+</idea-plugin>

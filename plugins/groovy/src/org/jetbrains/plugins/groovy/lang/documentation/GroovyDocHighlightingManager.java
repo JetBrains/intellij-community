@@ -6,7 +6,11 @@ import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 

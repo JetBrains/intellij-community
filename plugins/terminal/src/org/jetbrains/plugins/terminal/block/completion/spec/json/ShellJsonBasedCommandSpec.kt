@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec.json
 
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCommandParserOptions
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.terminal.completion.ShellCommand
@@ -33,6 +37,8 @@ internal class ShellJsonBasedCommandSpec(
   override val prefixReplacementIndex: Int = 0
 
   override val isHidden: Boolean = false
+
+  override val shouldEscape: Boolean = true
 
   override val requiresSubcommand: Boolean
     get() = data.requiresSubcommand

@@ -1,9 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.uploader
 
-import com.intellij.internal.statistic.uploader.events.*
+import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger
+import com.intellij.internal.statistic.uploader.events.ExternalSystemErrorEvent
+import com.intellij.internal.statistic.uploader.events.ExternalSystemEvent
 import com.intellij.internal.statistic.uploader.events.ExternalSystemEventSerializer.deserialize
 import com.intellij.internal.statistic.uploader.events.ExternalSystemEventSerializer.serialize
+import com.intellij.internal.statistic.uploader.events.ExternalUploadFinishedEvent
+import com.intellij.internal.statistic.uploader.events.ExternalUploadSendEvent
+import com.intellij.internal.statistic.uploader.events.ExternalUploadStartedEvent
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import java.io.File

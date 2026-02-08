@@ -17,6 +17,9 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.junit" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.testng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.git" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" scope="RUNTIME" />
@@ -119,6 +122,7 @@
     <orderEntry type="module" module-name="kotlin.base.injection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.onboarding.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" />

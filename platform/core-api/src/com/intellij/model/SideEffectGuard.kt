@@ -7,7 +7,7 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.diagnostic.ControlFlowException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.EnumSet
 import kotlin.coroutines.CoroutineContext
 
 

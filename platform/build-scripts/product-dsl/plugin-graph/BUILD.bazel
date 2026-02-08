@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.platform.pluginGraph` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_plugin-graph",
+  opt_in = [
+    "kotlin.RequiresOptIn",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+jvm_library(
+  name = "plugin-graph",
+  module_name = "intellij.platform.pluginGraph",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_plugin-graph",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/androidx-collections",
+    "//platform/plugins/parser/impl",
+  ]
+)
+
+jvm_library(
+  name = "plugin-graph_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_plugin-graph",
+  associates = [":plugin-graph"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/junit5",
+    "//libraries/assertj-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/androidx-collections",
+    "//platform/plugins/parser/impl",
+    "//platform/plugins/parser/impl:impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.pluginGraph` end
+
+### auto-generated section `test intellij.platform.pluginGraph` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "plugin-graph_test",
+  runtime_deps = [":plugin-graph_test_lib"]
+)
+### auto-generated section `test intellij.platform.pluginGraph` end

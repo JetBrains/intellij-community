@@ -6,7 +6,15 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.Opcodes
-import org.jetbrains.org.objectweb.asm.tree.*
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.tree.InsnNode
+import org.jetbrains.org.objectweb.asm.tree.InvokeDynamicInsnNode
+import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode
+import org.jetbrains.org.objectweb.asm.tree.LabelNode
+import org.jetbrains.org.objectweb.asm.tree.LookupSwitchInsnNode
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode
+import org.jetbrains.org.objectweb.asm.tree.TableSwitchInsnNode
 
 interface ClassLoadingAdapter {
     companion object {

@@ -21,7 +21,8 @@ import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceDialog;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceForm;
 import org.intellij.plugins.xpathView.XPathBundle;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class IntroduceVariableDialog extends BaseIntroduceDialog implements IntroduceVariableOptions {
 

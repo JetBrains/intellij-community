@@ -7,14 +7,19 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 

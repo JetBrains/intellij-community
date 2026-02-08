@@ -18,10 +18,18 @@
 package com.pme.exe.res.icon;
 
 import com.pme.exe.Bin;
-import com.pme.exe.res.*;
+import com.pme.exe.res.DataEntry;
+import com.pme.exe.res.DirectoryEntry;
+import com.pme.exe.res.EntryDescription;
+import com.pme.exe.res.RawResource;
+import com.pme.exe.res.ResourceSectionReader;
 import com.pme.util.OffsetTrackingInputStream;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 

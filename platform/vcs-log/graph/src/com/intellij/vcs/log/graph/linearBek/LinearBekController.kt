@@ -22,7 +22,10 @@ import com.intellij.vcs.log.graph.utils.BfsSearch
 import com.intellij.vcs.log.graph.utils.IntHashSetFlags
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import it.unimi.dsi.fastutil.ints.IntSet
-import java.util.*
+import java.util.Collections
+import java.util.PriorityQueue
+import java.util.Queue
+import java.util.TreeSet
 
 class LinearBekController(controller: SortedBaseController, permanentGraphInfo: PermanentGraphInfo<*>) : CascadeController(controller,
                                                                                                                            permanentGraphInfo) {

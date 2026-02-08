@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
 
@@ -24,8 +23,3 @@ abstract class AbstractKotlinVariablePrintingTest : KotlinDescriptorTestCaseWith
         }
 }
 
-abstract class AbstractK1IdeK2CodeKotlinVariablePrintingTest : AbstractKotlinVariablePrintingTest() {
-    override val compileWithK2 = true
-
-    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-}

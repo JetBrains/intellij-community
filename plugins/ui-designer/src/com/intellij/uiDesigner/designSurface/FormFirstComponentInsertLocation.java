@@ -10,7 +10,8 @@ import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.RowSpec;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * FirstComponentInsertLocation customized for JGoodies Forms.

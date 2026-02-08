@@ -2,7 +2,14 @@
 package com.jetbrains.python.console;
 
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.PyCompatibilityInspection;
+import com.jetbrains.python.inspections.PyIncorrectDocstringInspection;
+import com.jetbrains.python.inspections.PyMandatoryEncodingInspection;
+import com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection;
+import com.jetbrains.python.inspections.PyPep8Inspection;
+import com.jetbrains.python.inspections.PySingleQuotedDocstringInspection;
+import com.jetbrains.python.inspections.PyStatementEffectInspection;
+import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import com.jetbrains.python.validation.PyDocStringHighlightingAnnotator;

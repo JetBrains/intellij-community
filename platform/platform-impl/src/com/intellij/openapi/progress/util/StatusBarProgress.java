@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.HashMap;
 import java.util.Map;
 

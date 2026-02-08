@@ -4,7 +4,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface ListItemDescriptor<T> {
   @NlsContexts.ListItem @Nullable String getTextFor(T value);

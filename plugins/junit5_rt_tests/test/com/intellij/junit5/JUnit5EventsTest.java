@@ -10,7 +10,11 @@ import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.reporting.ReportEntry;
-import org.junit.platform.engine.support.descriptor.*;
+import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.CompositeTestSource;
+import org.junit.platform.engine.support.descriptor.FilePosition;
+import org.junit.platform.engine.support.descriptor.FileSource;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestIdentifier;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
@@ -167,7 +171,7 @@ public class JUnit5EventsTest {
   @Test
   void singleMethodTestOneFromMyTest() {
     var request =
-      JUnit5TestRunnerUtil.buildRequest(new String[]{"com.intellij.junit5.testData.InitStaticField$MyTest,testOne"}, new String[1], null);
+      new JUnit5TestRunnerHelper().buildRequest(new String[]{"com.intellij.junit5.testData.InitStaticField$MyTest,testOne"}, new String[1], null);
     var selectors = request.getSelectorsByType(DiscoverySelector.class);
     Assertions.assertFalse(selectors.isEmpty(), "Selectors should not be empty");
 

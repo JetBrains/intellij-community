@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import com.intellij.codeWithMe.*
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientIdContextElement
+import com.intellij.codeWithMe.ClientIdContextElementPrecursor
+import com.intellij.codeWithMe.asContextElement
+import com.intellij.codeWithMe.clientIdContextElement
+import com.intellij.codeWithMe.currentThreadClientId
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.EDT

@@ -9,3 +9,5 @@ fun bar(o: Any) {
 // EXIST: String
 // EXIST: Int
 // NOTHING_ELSE
+
+// IGNORE_K2

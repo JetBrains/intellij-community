@@ -8,9 +8,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
-import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.search.toHumanReadableString
 
 
 fun SearchScope.findFiles(vFileRenderer: (VirtualFile) -> String): String {

@@ -19,6 +19,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/runtime/repository",
     "//platform/runtime/repository/tests:tests_test_lib",
+    "//libraries/assertj-core",
   ],
   runtime_deps = [":tests"]
 )

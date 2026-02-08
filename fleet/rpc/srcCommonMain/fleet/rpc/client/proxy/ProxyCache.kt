@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client.proxy
 
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.core.InstanceId
 import fleet.util.UID
-import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 
 interface ProxyCache<K : Any> {
   fun <T : Any> proxy(remoteApiDescriptor: RemoteApiDescriptor<*>, key: K, proxy: () -> T): T

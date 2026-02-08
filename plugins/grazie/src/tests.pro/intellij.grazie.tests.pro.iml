@@ -576,37 +576,37 @@
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.nlp.detect.jvm" type="repository">
-        <properties maven-id="ai.grazie.nlp:nlp-detect-jvm:0.8.106">
+        <properties maven-id="ai.grazie.nlp:nlp-detect-jvm:0.8.122">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.106/nlp-detect-jvm-0.8.106.jar">
-              <sha256sum>f3cb5e66f1fe7b8dccaf131dcc0d255df7ef274f3dae78aa7334376ec9334925</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.122/nlp-detect-jvm-0.8.122.jar">
+              <sha256sum>449dadd5e1f38019f0b868c0b594dba4b667e2a56c4eb46e236ae63f081f9cdb</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106.jar">
-              <sha256sum>b48b28dac51cd06bf617f0c35da8e3d3621dad259e7d058960e81c6cb4939c0f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.122/utils-common-jvm-0.8.122.jar">
+              <sha256sum>48899ec36737e9b9710c962c95ec35b053f0af58b96fb5c6246f0d2471809d31</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.106/nlp-common-jvm-0.8.106.jar">
-              <sha256sum>ae5a87215b268e612f209d9c97ced2f525fb6ff00479d2de40bb848658efdd5e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.122/nlp-common-jvm-0.8.122.jar">
+              <sha256sum>af1e898d6e261efcbbbd21a832594eaa324e4448ce7e8f8a495877cdbd289fa6</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106.jar">
-              <sha256sum>a0d5b1b818cc5a6e0a917fdeae062ea93b3e2c7c49024e64ca23e8d18172862a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.122/model-text-jvm-0.8.122.jar">
+              <sha256sum>eaa9ce037028e175c2015353a2796e9c620b9805b143168fc48538d80a85cf46</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106.jar">
-              <sha256sum>d81957cdfb1a432c4b3f13c5cdb92091344bc4c5cbe8490ca59792db8fd695d0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.122/model-common-jvm-0.8.122.jar">
+              <sha256sum>724ca83d6183b9b6c9d914436bfb4dba4744eb8493eaf1caaf093f401d610b6b</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.106/nlp-patterns-jvm-0.8.106.jar">
-              <sha256sum>480b68a94cd5b1f92d90a0aed9deca4305d6bd2d8d7dd293767adc2c011f3a0e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.122/nlp-patterns-jvm-0.8.122.jar">
+              <sha256sum>07c40b95644e7b8876a8a56627f87054e2ec11697896ad48592e157aeb460775</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.106/nlp-tokenizer-jvm-0.8.106.jar">
-              <sha256sum>b7047c7e77fff172e6345dbbd760236a98fea1805a416bcbfc8459dd06a333ee</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.122/nlp-tokenizer-jvm-0.8.122.jar">
+              <sha256sum>fc6e7a123f4c765a09aa9caa6fe9cc187f0c8c3a96a1ca60fa14474b98a90d77</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106.jar">
-              <sha256sum>73e9b4213617018350d76b3fa00ec9e073ff3764d691f14790c26163e79b4d58</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.122/nlp-similarity-jvm-0.8.122.jar">
+              <sha256sum>cf5bbaa09720933af21319c28ad08be8387b57bce93362fca10747c2aa17d49e</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.106/nlp-langs-jvm-0.8.106.jar">
-              <sha256sum>def8cafce5889ebd48ca7ebb8685ec2aa1234212c10fe662f06cf8c7c4015ca5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.122/nlp-langs-jvm-0.8.122.jar">
+              <sha256sum>4d0838862feb286a7da3e6a6aff57cb21a244fccca5e4a0a3d15453370b30624</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106.jar">
-              <sha256sum>bd280d1be432872ab552484dc5f7b6b2a96c1ffe6ceda4f1c55b39d64fefdd80</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.122/utils-multiplatform-jvm-0.8.122.jar">
+              <sha256sum>db952d025f1daaef7ba2f247999ac215d175aed3152b26ec7ade944dacc0aa7b</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -623,29 +623,29 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.106/nlp-detect-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.106/nlp-common-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.106/nlp-patterns-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.106/nlp-tokenizer-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.106/nlp-langs-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.122/nlp-detect-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.122/utils-common-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.122/nlp-common-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.122/model-text-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.122/model-common-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.122/nlp-patterns-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.122/nlp-tokenizer-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.122/nlp-similarity-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.122/nlp-langs-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.122/utils-multiplatform-jvm-0.8.122.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.106/nlp-detect-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.106/nlp-common-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.106/nlp-patterns-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.106/nlp-tokenizer-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.106/nlp-langs-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.122/nlp-detect-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.122/utils-common-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.122/nlp-common-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.122/model-text-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.122/model-common-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.122/nlp-patterns-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.122/nlp-tokenizer-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.122/nlp-similarity-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.122/nlp-langs-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.122/utils-multiplatform-jvm-0.8.122-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -658,28 +658,28 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module-library">
       <library name="ai.grazie.model.ner.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-ner-jvm:0.8.106">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-ner-jvm:0.8.122">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.106/model-ner-jvm-0.8.106.jar">
-              <sha256sum>4a9f9007f4ec5ae089c7870beef2f0bf93c4b66a363b23afce43f3ab3f5b9e19</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.122/model-ner-jvm-0.8.122.jar">
+              <sha256sum>283dcfcd6720f2547d78eb172a22d8291487f9caa37400b005508e054aa60dca</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.106/model-ner-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.122/model-ner-jvm-0.8.122.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.106/model-ner-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.122/model-ner-jvm-0.8.122-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.model.tree.jvm" type="repository">
-        <properties maven-id="ai.grazie.model:model-tree-jvm:0.8.106">
+        <properties maven-id="ai.grazie.model:model-tree-jvm:0.8.122">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.106/model-tree-jvm-0.8.106.jar">
-              <sha256sum>6cdc8dba76ff568781832397798f6459ba833c1da90e05eafdf6fabe1cfedd62</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.122/model-tree-jvm-0.8.122.jar">
+              <sha256sum>725af6ca47747d674f0809c4d13b9cdf3aab176e7eed04b91552f8c19ae8d15a</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -690,29 +690,29 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.106/model-tree-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.122/model-tree-jvm-0.8.122.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.106/model-tree-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.122/model-tree-jvm-0.8.122-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.spell.gec.engine.local.jvm" type="repository">
-        <properties maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.106">
+        <properties maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.122">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.106/gec-spell-engine-local-0.8.106.jar">
-              <sha256sum>4f74845fc575f166771252d771dd2ee38a9e9299e7d038bb3313120bb53a60b0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.122/gec-spell-engine-local-0.8.122.jar">
+              <sha256sum>2473c004da638741ac5f96586f1fadb0003bc2d08ae3c2341e24a71e4b0a314a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.106/model-gec-jvm-0.8.106.jar">
-              <sha256sum>71f9805f0cb479b1085fb6dbfac2f40b1f6fdad6ddf742db7c9c148cc195ebed</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.122/model-gec-jvm-0.8.122.jar">
+              <sha256sum>7e8754a2b92474d4704e8d4170f0653b2017c1046376ac3f9c71c334da8dc1e9</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106.jar">
-              <sha256sum>73e9b4213617018350d76b3fa00ec9e073ff3764d691f14790c26163e79b4d58</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.122/nlp-similarity-jvm-0.8.122.jar">
+              <sha256sum>cf5bbaa09720933af21319c28ad08be8387b57bce93362fca10747c2aa17d49e</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.106/nlp-phonetics-jvm-0.8.106.jar">
-              <sha256sum>0e7835181ef83bf80c0868636d5273517ec58ab9dbe6f83285378d84866d6d5e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.122/nlp-phonetics-jvm-0.8.122.jar">
+              <sha256sum>fbd0ea1c6b7c408858f0def5636a9f702934336f3fed4b2b8bd38f7f8107c6a6</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -728,17 +728,17 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.106/gec-spell-engine-local-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.106/model-gec-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.106/nlp-phonetics-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.122/gec-spell-engine-local-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.122/model-gec-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.122/nlp-similarity-jvm-0.8.122.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.122/nlp-phonetics-jvm-0.8.122.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.106/gec-spell-engine-local-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.106/model-gec-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.106/nlp-phonetics-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.122/gec-spell-engine-local-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.122/model-gec-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.122/nlp-similarity-jvm-0.8.122-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.122/nlp-phonetics-jvm-0.8.122-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -748,37 +748,37 @@
     <orderEntry type="module" module-name="intellij.libraries.stream" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.model.def.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-def-jvm:0.8.106">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-def-jvm:0.8.122">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.106/model-def-jvm-0.8.106.jar">
-              <sha256sum>b7cbf2ac02dd5819f5714b70b6ffa52832e685fb90db6fee9cb61d32b5962e15</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.122/model-def-jvm-0.8.122.jar">
+              <sha256sum>ab67b565d0d3129b5c365a6230dd23393fae5855c807d5514f6383c6e0865658</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.106/model-def-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.122/model-def-jvm-0.8.122.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.106/model-def-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.122/model-def-jvm-0.8.122-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.model.swagger.annotations.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.model:swagger-annotations-jvm:0.8.106">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:swagger-annotations-jvm:0.8.122">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106.jar">
-              <sha256sum>1690bb907a8a60b2b2ca20f921603a5ec161b4e2c5ff7b71740c8e11745c28b2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.122/swagger-annotations-jvm-0.8.122.jar">
+              <sha256sum>b2a31e8e5403557b7acd68f48bce247533c2170c7a43ecbcc0efc19055df1ef2</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.122/swagger-annotations-jvm-0.8.122.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.122/swagger-annotations-jvm-0.8.122-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

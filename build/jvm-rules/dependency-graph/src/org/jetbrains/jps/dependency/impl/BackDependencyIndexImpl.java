@@ -2,11 +2,19 @@
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.ComparableTypeExternalizer;
+import org.jetbrains.jps.dependency.MapletFactory;
+import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.util.Iterators;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   private final String myName;

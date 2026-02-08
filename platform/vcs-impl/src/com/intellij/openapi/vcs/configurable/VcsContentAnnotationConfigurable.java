@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.SpinnerNumberModel;
 
 public final class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   public VcsContentAnnotationConfigurable(Project project) {

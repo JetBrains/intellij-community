@@ -8,3 +8,5 @@ fun bar(p: String.(Int) -> Unit) {
 // EXIST: "{ i -> ... }"
 // EXIST: "{ i: Int -> ... }"
 // ABSENT: p
+
+// IGNORE_K2

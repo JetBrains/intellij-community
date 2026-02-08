@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * History must be provided via {@link History#KEY}.

@@ -11,7 +11,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -19,6 +24,9 @@ import java.util.function.Predicate;
  * If accessed from multiple threads, it needs to take care of proper synchronization itself.
  */
 public abstract class LookupArranger implements WeighingContext {
+  //not static!
+  private final Key<Runnable> ADDING_CALLBACK = Key.create("on_adding_callback");
+
   protected final List<LookupElement> myItems = new ArrayList<>();
   private final List<LookupElement> myMatchingItems = new ArrayList<>();
   private final List<LookupElement> myExactPrefixItems = new ArrayList<>();
@@ -31,6 +39,7 @@ public abstract class LookupArranger implements WeighingContext {
   public void addElement(@NotNull LookupElement item, @NotNull LookupElementPresentation presentation) {
     myItems.add(item);
     updateCache(item);
+    runAddingCallback(item);
   }
 
   private void updateCache(@NotNull LookupElement item) {
@@ -212,7 +221,14 @@ public abstract class LookupArranger implements WeighingContext {
     return Collections.unmodifiableList(myTopPriorityItems);
   }
 
-  protected boolean isPrefixItem(@NotNull LookupElement item, final boolean exactly) {
+  /**
+   * Returns true if one of the item's lookup strings equals to the prefix exactly or in a case-insensitive manner if `exactly` is false.
+   *
+   * @param item    lookup element to check
+   * @param exactly whether to match exactly or in a case-insensitive manner
+   * @return true if the item matches the prefix, false otherwise
+   */
+  protected boolean isPrefixItem(@NotNull LookupElement item, boolean exactly) {
     final String pattern = itemPattern(item);
     for (String s : item.getAllLookupStrings()) {
       if (!s.equalsIgnoreCase(pattern)) continue;
@@ -226,6 +242,23 @@ public abstract class LookupArranger implements WeighingContext {
 
   public @NotNull List<LookupElement> getMatchingItems() {
     return myMatchingItems;
+  }
+
+  /**
+   * Invokes the specified callback when the specified item is added to this arranger.
+   * Is useful when using {@link com.intellij.codeInsight.completion.BaseCompletionLookupArranger} in batch mode, see {@link com.intellij.codeInsight.completion.BaseCompletionLookupArranger#batchUpdate}.
+   * In batch mode, items are added with a delay, so it's useful to invoke this method to get notified when the item is actually added.
+   */
+  @ApiStatus.Internal
+  public void invokeWhenLookupElementAdded(@NotNull LookupElement item, @NotNull Runnable callback) {
+    item.putUserData(ADDING_CALLBACK, callback);
+  }
+
+  private void runAddingCallback(@NotNull LookupElement item) {
+    Runnable callback = item.getUserData(ADDING_CALLBACK);
+    if (callback == null) return;
+    item.putUserData(ADDING_CALLBACK, null);
+    callback.run();
   }
 
   /**

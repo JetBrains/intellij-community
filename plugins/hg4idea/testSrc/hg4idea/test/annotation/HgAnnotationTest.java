@@ -17,7 +17,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgAnnotationTest extends HgPlatformTest {

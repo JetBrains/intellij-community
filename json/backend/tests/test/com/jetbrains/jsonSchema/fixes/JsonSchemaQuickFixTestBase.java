@@ -9,7 +9,6 @@ import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;

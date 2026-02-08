@@ -9,7 +9,15 @@ import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.source.PostprocessReformattingAspect

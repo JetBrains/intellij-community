@@ -4,7 +4,11 @@ package com.jetbrains.python.run;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.InputRedirectAware;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +39,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
   implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider, InputRedirectAware {
   public static final String SCRIPT_NAME = "SCRIPT_NAME";
   public static final String PARAMETERS = "PARAMETERS";
-  public static final String MULTIPROCESS = "MULTIPROCESS";
   public static final String SHOW_COMMAND_LINE = "SHOW_COMMAND_LINE";
   public static final String EMULATE_TERMINAL = "EMULATE_TERMINAL";
   public static final String MODULE_MODE = "MODULE_MODE";

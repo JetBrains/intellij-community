@@ -6,9 +6,38 @@ import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static org.jetbrains.org.objectweb.asm.Opcodes.AASTORE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_INTERFACE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.jetbrains.org.objectweb.asm.Opcodes.API_VERSION;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ATHROW;
+import static org.jetbrains.org.objectweb.asm.Opcodes.BIPUSH;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP_X1;
+import static org.jetbrains.org.objectweb.asm.Opcodes.GOTO;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_0;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_1;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_2;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_3;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_4;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_5;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ILOAD;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.NEW;
+import static org.jetbrains.org.objectweb.asm.Opcodes.SIPUSH;
+import static org.jetbrains.org.objectweb.asm.Opcodes.SWAP;
 
 final class AuxiliaryMethodGenerator {
   private static final String STRING_CLASS_NAME = "java/lang/String";

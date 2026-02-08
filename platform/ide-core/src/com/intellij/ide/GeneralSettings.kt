@@ -1,14 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.ide.GeneralSettings.Companion.OPEN_PROJECT_ASK
+import com.intellij.ide.GeneralSettings.Companion.OPEN_PROJECT_NEW_WINDOW
+import com.intellij.ide.GeneralSettings.Companion.OPEN_PROJECT_SAME_WINDOW
+import com.intellij.ide.GeneralSettings.Companion.OPEN_PROJECT_SAME_WINDOW_ATTACH
 import com.intellij.ide.ui.UINumericRange
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.util.PlatformUtils
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.xmlb.annotations.OptionTag
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +25,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemDependent
-
 
 @State(name = "GeneralSettings", storages = [Storage(GeneralSettings.IDE_GENERAL_XML)], category = SettingsCategory.SYSTEM)
 class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
@@ -37,6 +44,12 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     get() = ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup && state.reopenLastProject
     set(value) {
       state.reopenLastProject = value
+    }
+
+  var isDeletingToBin: Boolean
+    get() = state.deleteToBin
+    set(value) {
+      state.deleteToBin = value
     }
 
   var isSyncOnFrameActivation: Boolean
@@ -139,13 +152,11 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     const val OPEN_PROJECT_NEW_WINDOW: Int = 0
     const val OPEN_PROJECT_SAME_WINDOW: Int = 1
     const val OPEN_PROJECT_SAME_WINDOW_ATTACH: Int = 2
-    @Suppress("SpellCheckingInspection")
     const val SUPPORT_SCREEN_READERS: String = "ide.support.screenreaders.enabled"
 
     val SAVE_FILES_AFTER_IDLE_SEC: UINumericRange = UINumericRange(15, 1, 300)
 
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(): GeneralSettings = ApplicationManager.getApplication().service<GeneralSettings>()
 
     fun defaultConfirmNewProject(): Int = OPEN_PROJECT_ASK
@@ -215,6 +226,8 @@ data class GeneralSettingsState(
   var showTipsOnStartup: Boolean? = null,
   @JvmField
   var reopenLastProject: Boolean = true,
+  @JvmField
+  var deleteToBin: Boolean = true,
   @JvmField
   var autoSyncFiles: Boolean = true,
   @JvmField

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.isIOS
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.isNativeDesktop
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
-import java.util.*
+import java.util.Locale
 
 interface NativeTargetConfigurator : TargetConfigurator {
     val isDesktopTarget: Boolean

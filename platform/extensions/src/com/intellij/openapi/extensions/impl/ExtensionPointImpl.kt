@@ -10,11 +10,19 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.ExtensionDescriptor
+import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointAdapter
+import com.intellij.openapi.extensions.ExtensionPointAndAreaListener
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointPriorityListener
+import com.intellij.openapi.extensions.ExtensionsArea
+import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.containers.Java11Shim
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.Java11Shim
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CancellationException
@@ -24,7 +32,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -838,7 +847,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   @Synchronized
   fun registerExtensions(descriptors: List<ExtensionDescriptor>,
                          pluginDescriptor: PluginDescriptor,
-                         listenerCallbacks: MutableList<in Runnable>?) {
+                         listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>?) {
     adaptersAreSorted = false
 
     val oldAdapters = adapters
@@ -882,7 +891,9 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       break
     }
 
-    listenerCallbacks.add { notifyListeners(isRemoved = false, adapters = addedAdapters, listeners = listeners) }
+    listenerCallbacks.add(ExtensionPointDeferredListenersNotification(this) {
+      notifyListeners(isRemoved = false, adapters = addedAdapters, listeners = listeners)
+    })
   }
 
   @TestOnly

@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.codeInsight.actions;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 
 import java.io.File;
 

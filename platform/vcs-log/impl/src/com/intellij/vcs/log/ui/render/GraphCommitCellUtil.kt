@@ -28,6 +28,7 @@ object GraphCommitCellUtil {
     maxIndex++
     maxIndex = max(maxIndex, min(MAX_GRAPH_WIDTH.toDouble(), table.visibleGraph.recommendedWidth.toDouble()))
 
-    return (maxIndex * PaintParameters.getElementWidth(table.rowHeight)).toInt()
+    val rowHeight = table.rowHeight
+    return (maxIndex * PaintParameters.getElementWidth(rowHeight)).toInt() + PaintParameters.getGraphTextGap(rowHeight).toInt()
   }
 }

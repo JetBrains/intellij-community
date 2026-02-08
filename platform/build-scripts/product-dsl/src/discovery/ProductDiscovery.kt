@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.productLayout.discovery
 
 import kotlinx.serialization.SerialName
@@ -74,7 +76,7 @@ fun findProductPropertiesSourceFile(
   val className = productPropertiesClass.name
 
   // Handle special cases where class name != file name
-  val fileName = CLASS_TO_FILE_NAME_OVERRIDES[className] ?: "${className.substringAfterLast('.')}.kt"
+  val fileName = CLASS_TO_FILE_NAME_OVERRIDES.get(className) ?: "${className.substringAfterLast('.')}.kt"
   val packagePath = className.substringBeforeLast('.').replace('.', '/')
   val relativePath = "$packagePath/$fileName"
 

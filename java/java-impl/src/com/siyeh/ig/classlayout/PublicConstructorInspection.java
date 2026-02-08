@@ -3,7 +3,9 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.intention.ReplaceConstructorWithFactoryAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

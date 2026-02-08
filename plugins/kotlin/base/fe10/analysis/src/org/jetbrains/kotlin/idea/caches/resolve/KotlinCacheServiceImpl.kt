@@ -16,6 +16,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.uast.UastModificationTracker
 import com.intellij.util.containers.SLRUCache
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForLibrariesName
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForModulesName
@@ -42,11 +43,19 @@ import org.jetbrains.kotlin.idea.caches.project.isLibraryClasses
 import org.jetbrains.kotlin.idea.caches.resolve.util.GlobalFacadeModuleFilters
 import org.jetbrains.kotlin.idea.caches.resolve.util.contextWithCompositeExceptionTracker
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
-import org.jetbrains.kotlin.idea.core.script.v1.*
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesSourceInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.KotlinSuppressCache
@@ -56,13 +65,16 @@ import org.jetbrains.kotlin.utils.addToStdlib.sumByLong
 
 internal val LOG = Logger.getInstance(KotlinCacheService::class.java)
 
+@K1Deprecation
 data class PlatformAnalysisSettingsImpl(
     val platform: TargetPlatform,
     val sdk: Sdk?
 ) : PlatformAnalysisSettings
 
+@K1Deprecation
 object CompositeAnalysisSettings : PlatformAnalysisSettings
 
+@K1Deprecation
 fun createPlatformAnalysisSettings(
     project: Project,
     platform: TargetPlatform,
@@ -75,6 +87,7 @@ fun createPlatformAnalysisSettings(
     }
 }
 
+@K1Deprecation
 class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getResolutionFacade(element: KtElement): ResolutionFacade {
         val file = element.fileForElement()

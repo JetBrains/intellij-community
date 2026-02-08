@@ -17,7 +17,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpUtil
+import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
 import org.jetbrains.builtInWebServer.hasAccess
 import org.jetbrains.io.send

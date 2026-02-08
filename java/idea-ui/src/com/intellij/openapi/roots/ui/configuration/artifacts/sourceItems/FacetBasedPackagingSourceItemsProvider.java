@@ -9,11 +9,19 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.ui.*;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.PackagingSourceItemsProvider;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.TreeNodePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E extends PackagingElement<?>> extends PackagingSourceItemsProvider {
   private final FacetTypeId<F> myFacetTypeId;

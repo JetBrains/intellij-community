@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.tools.composeProjectWizard
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import com.intellij.ide.starters.shared.KOTLIN_STARTER_LANGUAGE
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.Verifier

@@ -2,7 +2,11 @@
 package org.jetbrains.protocolReader
 
 import org.jetbrains.io.JsonReaderEx
-import org.jetbrains.jsonProtocol.*
+import org.jetbrains.jsonProtocol.JsonArray
+import org.jetbrains.jsonProtocol.JsonField
+import org.jetbrains.jsonProtocol.JsonSubtype
+import org.jetbrains.jsonProtocol.Optional
+import org.jetbrains.jsonProtocol.StringIntPair
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type

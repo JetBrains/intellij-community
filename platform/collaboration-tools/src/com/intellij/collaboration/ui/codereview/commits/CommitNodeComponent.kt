@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.commits
 
-import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent.Type.*
+import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent.Type.FIRST
+import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent.Type.LAST
+import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent.Type.MIDDLE
+import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent.Type.SINGLE
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.MacUIUtil

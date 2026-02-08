@@ -17,11 +17,11 @@ package com.intellij.java.codeInsight.actions;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.actions.FileInEditorProcessor;
-import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.actions.LayoutCodeOptions;
 import com.intellij.codeInsight.actions.ReformatCodeRunOptions;
-import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
@@ -29,7 +29,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-import static com.intellij.codeInsight.actions.TextRangeType.*;
+import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
+import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
+import static com.intellij.codeInsight.actions.TextRangeType.WHOLE_FILE;
 
 public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
 

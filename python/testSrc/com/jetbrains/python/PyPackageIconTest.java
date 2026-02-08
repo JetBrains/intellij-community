@@ -11,7 +11,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 

@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils
 
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 /**
  * Applies the FROM 'with' conversion: with(receiver) -> receiver.counterpartName

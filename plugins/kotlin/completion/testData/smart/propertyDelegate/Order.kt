@@ -14,3 +14,5 @@ class C {
 // EXIST: { itemText: "Delegates.vetoable", tailText:"(initialValue: T, crossinline onChange: (KProperty<*>, T, T) -> Boolean) (kotlin.properties)", typeText: "ReadWriteProperty<Any?, T>", attributes:"" }
 // EXIST: lazy
 // EXIST: X
+
+// IGNORE_K2

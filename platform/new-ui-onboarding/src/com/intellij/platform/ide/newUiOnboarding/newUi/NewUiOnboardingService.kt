@@ -58,12 +58,13 @@ internal class NewUiOnboardingService(private val project: Project, private val 
   }
 
   private fun getDefaultStepsOrder(): List<String> {
-    return listOf("mainMenu",
+    return listOf("toolWindowsNames",
+                  "moreToolWindows",
+                  "settingsAndCustomization",
+                  "mainMenu",
                   "projectWidget",
                   "gitWidget",
                   "runWidget",
-                  "toolWindowLayouts",
-                  "moreToolWindows",
                   "navigationBar")
   }
 

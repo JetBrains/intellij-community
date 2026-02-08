@@ -12,6 +12,7 @@ import com.intellij.psi.search.PackageScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.ClassInheritorsSearch.SearchParameters
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.utils.closure
 
+@K1Deprecation
 object IdeSealedClassInheritorsProvider : SealedClassInheritorsProvider() {
 
     override fun computeSealedSubclasses(

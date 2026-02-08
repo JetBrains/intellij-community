@@ -1,0 +1,1329 @@
+{
+  "meta": {
+    "timestamp": "2026-01-21",
+    "cwd": "/Users/develar/projects/idea-1",
+    "claude_code_version": null,
+    "model": "claude-opus-4-5-20251101",
+    "schema_source": "exact"
+  },
+  "tools": [
+    {
+      "name": "Task",
+      "description": "Launch a new agent to handle complex, multi-step tasks autonomously. \n\nThe Task tool launches specialized agents (subprocesses) that autonomously handle complex tasks. Each agent type has specific capabilities and tools available to it.\n\nAvailable agent types and the tools they have access to:\n- Bash: Command execution specialist for running bash commands. Use this for git operations, command execution, and other terminal tasks. (Tools: Bash)\n- general-purpose: General-purpose agent for researching complex questions, searching for code, and executing multi-step tasks. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries use this agent to perform the search for you. (Tools: *)\n- statusline-setup: Use this agent to configure the user's Claude Code status line setting. (Tools: Read, Edit)\n- Explore: Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. \"src/components/**/*.tsx\"), search code for keywords (eg. \"API endpoints\"), or answer questions about the codebase (eg. \"how do API endpoints work?\"). When calling this agent, specify the desired thoroughness level: \"quick\" for basic searches, \"medium\" for moderate exploration, or \"very thorough\" for comprehensive analysis across multiple locations and naming conventions. (Tools: All tools except Task, ExitPlanMode, Edit, Write, NotebookEdit)\n- Plan: Software architect agent for designing implementation plans. Use this when you need to plan the implementation strategy for a task. Returns step-by-step plans, identifies critical files, and considers architectural trade-offs. (Tools: All tools except Task, ExitPlanMode, Edit, Write, NotebookEdit)\n- claude-code-guide: Use this agent when the user asks questions (\"Can Claude...\", \"Does Claude...\", \"How do I...\") about: (1) Claude Code (the CLI tool) - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) Claude Agent SDK - building custom agents; (3) Claude API (formerly Anthropic API) - API usage, tool use, Anthropic SDK usage. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed claude-code-guide agent that you can resume using the \"resume\" parameter. (Tools: Glob, Grep, Read, WebFetch, WebSearch)",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "A short (3-5 word) description of the task"
+          },
+          "max_turns": {
+            "type": "integer",
+            "description": "Maximum number of agentic turns (API round-trips) before stopping. Used internally for warmup.",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "model": {
+            "type": "string",
+            "description": "Optional model to use for this agent. If not specified, inherits from parent. Prefer haiku for quick, straightforward tasks to minimize cost and latency.",
+            "enum": ["sonnet", "opus", "haiku"]
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The task for the agent to perform"
+          },
+          "resume": {
+            "type": "string",
+            "description": "Optional agent ID to resume from. If provided, the agent will continue from the previous execution transcript."
+          },
+          "run_in_background": {
+            "type": "boolean",
+            "description": "Set to true to run this agent in the background. The tool result will include an output_file path - use Read tool or Bash tail to check on output."
+          },
+          "subagent_type": {
+            "type": "string",
+            "description": "The type of specialized agent to use for this task"
+          }
+        },
+        "required": ["description", "prompt", "subagent_type"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "TaskOutput",
+      "description": "- Retrieves output from a running or completed task (background shell, agent, or remote session)\n- Takes a task_id parameter identifying the task\n- Returns the task output along with status information\n- Use block=true (default) to wait for task completion\n- Use block=false for non-blocking check of current status\n- Task IDs can be found using the /tasks command\n- Works with all task types: background shells, async agents, and remote sessions",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "block": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to wait for completion"
+          },
+          "task_id": {
+            "type": "string",
+            "description": "The task ID to get output from"
+          },
+          "timeout": {
+            "type": "number",
+            "default": 30000,
+            "description": "Max wait time in ms",
+            "minimum": 0,
+            "maximum": 600000
+          }
+        },
+        "required": ["task_id", "block", "timeout"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "Bash",
+      "description": "Executes a given bash command with optional timeout. Working directory persists between commands; shell state (everything else) does not. The shell environment is initialized from the user's profile (bash or zsh).\n\nIMPORTANT: This tool is for terminal operations like git, npm, docker, etc. DO NOT use it for file operations (reading, writing, editing, searching, finding files) - use the specialized tools for this instead.\n\nBefore executing the command, please follow these steps:\n\n1. Directory Verification:\n   - If the command will create new directories or files, first use `ls` to verify the parent directory exists and is the correct location\n   - For example, before running \"mkdir foo/bar\", first use `ls foo` to check that \"foo\" exists and is the intended parent directory\n\n2. Command Execution:\n   - Always quote file paths that contain spaces with double quotes (e.g., cd \"path with spaces/file.txt\")\n   - Examples of proper quoting:\n     - cd \"/Users/name/My Documents\" (correct)\n     - cd /Users/name/My Documents (incorrect - will fail)\n     - python \"/path/with spaces/script.py\" (correct)\n     - python /path/with spaces/script.py (incorrect - will fail)\n   - After ensuring proper quoting, execute the command.\n   - Capture the output of the command.\n\nUsage notes:\n  - The command argument is required.\n  - You can specify an optional timeout in milliseconds (up to 600000ms / 10 minutes). If not specified, commands will timeout after 120000ms (2 minutes).\n  - It is very helpful if you write a clear, concise description of what this command does. For simple commands, keep it brief (5-10 words). For complex commands (piped commands, obscure flags, or anything hard to understand at a glance), add enough context to clarify what it does.\n  - If the output exceeds 30000 characters, output will be truncated before being returned to you.\n  \n  - You can use the `run_in_background` parameter to run the command in the background. Only use this if you don't need the result immediately and are OK being notified when the command completes later. You do not need to check the output right away - you'll be notified when it finishes. You do not need to use '&' at the end of the command when using this parameter.\n  \n  - Avoid using Bash with the `find`, `grep`, `cat`, `head`, `tail`, `sed`, `awk`, or `echo` commands, unless explicitly instructed or when these commands are truly necessary for the task. Instead, always prefer using the dedicated tools for these commands:\n    - File search: Use Glob (NOT find or ls)\n    - Content search: Use Grep (NOT grep or rg)\n    - Read files: Use Read (NOT cat/head/tail)\n    - Edit files: Use Edit (NOT sed/awk)\n    - Write files: Use Write (NOT echo >/cat <<EOF)\n    - Communication: Output text directly (NOT echo/printf)\n  - When issuing multiple commands:\n    - If the commands are independent and can run in parallel, make multiple Bash tool calls in a single message. For example, if you need to run \"git status\" and \"git diff\", send a single message with two Bash tool calls in parallel.\n    - If the commands depend on each other and must run sequentially, use a single Bash call with '&&' to chain them together (e.g., `git add . && git commit -m \"message\" && git push`). For instance, if one operation must complete before another starts (like mkdir before cp, Write before Bash for git operations, or git add before git commit), run these operations sequentially instead.\n    - Use ';' only when you need to run commands sequentially but don't care if earlier commands fail\n    - DO NOT use newlines to separate commands (newlines are ok in quoted strings)\n  - Try to maintain your current working directory throughout the session by using absolute paths and avoiding usage of `cd`. You may use `cd` if the User explicitly requests it.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "_simulatedSedEdit": {
+            "type": "object",
+            "description": "Internal: pre-computed sed edit result from preview",
+            "properties": {
+              "filePath": { "type": "string" },
+              "newContent": { "type": "string" }
+            },
+            "required": ["filePath", "newContent"],
+            "additionalProperties": false
+          },
+          "command": {
+            "type": "string",
+            "description": "The command to execute"
+          },
+          "dangerouslyDisableSandbox": {
+            "type": "boolean",
+            "description": "Set this to true to dangerously override sandbox mode and run commands without sandboxing."
+          },
+          "description": {
+            "type": "string",
+            "description": "Clear, concise description of what this command does in active voice."
+          },
+          "run_in_background": {
+            "type": "boolean",
+            "description": "Set to true to run this command in the background. Use TaskOutput to read the output later."
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Optional timeout in milliseconds (max 600000)"
+          }
+        },
+        "required": ["command"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "Glob",
+      "description": "- Fast file pattern matching tool that works with any codebase size\n- Supports glob patterns like \"**/*.js\" or \"src/**/*.ts\"\n- Returns matching file paths sorted by modification time\n- Use this tool when you need to find files by name patterns\n- When you are doing an open ended search that may require multiple rounds of globbing and grepping, use the Agent tool instead\n- You can call multiple tools in a single response. It is always better to speculatively perform multiple searches in parallel if they are potentially useful.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter \"undefined\" or \"null\" - simply omit it for the default behavior. Must be a valid directory path if provided."
+          },
+          "pattern": {
+            "type": "string",
+            "description": "The glob pattern to match files against"
+          }
+        },
+        "required": ["pattern"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "Grep",
+      "description": "A powerful search tool built on ripgrep\n\n  Usage:\n  - ALWAYS use Grep for search tasks. NEVER invoke `grep` or `rg` as a Bash command. The Grep tool has been optimized for correct permissions and access.\n  - Supports full regex syntax (e.g., \"log.*Error\", \"function\\s+\\w+\")\n  - Filter files with glob parameter (e.g., \"*.js\", \"**/*.tsx\") or type parameter (e.g., \"js\", \"py\", \"rust\")\n  - Output modes: \"content\" shows matching lines, \"files_with_matches\" shows only file paths (default), \"count\" shows match counts\n  - Use Task tool for open-ended searches requiring multiple rounds\n  - Pattern syntax: Uses ripgrep (not grep) - literal braces need escaping (use `interface\\{\\}` to find `interface{}` in Go code)\n  - Multiline matching: By default patterns match within single lines only. For cross-line patterns like `struct \\{[\\s\\S]*?field`, use `multiline: true`",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "-A": {
+            "type": "number",
+            "description": "Number of lines to show after each match (rg -A). Requires output_mode: \"content\", ignored otherwise."
+          },
+          "-B": {
+            "type": "number",
+            "description": "Number of lines to show before each match (rg -B). Requires output_mode: \"content\", ignored otherwise."
+          },
+          "-C": {
+            "type": "number",
+            "description": "Number of lines to show before and after each match (rg -C). Requires output_mode: \"content\", ignored otherwise."
+          },
+          "-i": {
+            "type": "boolean",
+            "description": "Case insensitive search (rg -i)"
+          },
+          "-n": {
+            "type": "boolean",
+            "description": "Show line numbers in output (rg -n). Requires output_mode: \"content\", ignored otherwise. Defaults to true."
+          },
+          "glob": {
+            "type": "string",
+            "description": "Glob pattern to filter files (e.g. \"*.js\", \"*.{ts,tsx}\") - maps to rg --glob"
+          },
+          "head_limit": {
+            "type": "number",
+            "description": "Limit output to first N lines/entries, equivalent to \"| head -N\". Works across all output modes: content (limits output lines), files_with_matches (limits file paths), count (limits count entries). Defaults to 0 (unlimited)."
+          },
+          "multiline": {
+            "type": "boolean",
+            "description": "Enable multiline mode where . matches newlines and patterns can span lines (rg -U --multiline-dotall). Default: false."
+          },
+          "offset": {
+            "type": "number",
+            "description": "Skip first N lines/entries before applying head_limit, equivalent to \"| tail -n +N | head -N\". Works across all output modes. Defaults to 0."
+          },
+          "output_mode": {
+            "type": "string",
+            "description": "Output mode: \"content\" shows matching lines (supports -A/-B/-C context, -n line numbers, head_limit), \"files_with_matches\" shows file paths (supports head_limit), \"count\" shows match counts (supports head_limit). Defaults to \"files_with_matches\".",
+            "enum": ["content", "files_with_matches", "count"]
+          },
+          "path": {
+            "type": "string",
+            "description": "File or directory to search in (rg PATH). Defaults to current working directory."
+          },
+          "pattern": {
+            "type": "string",
+            "description": "The regular expression pattern to search for in file contents"
+          },
+          "type": {
+            "type": "string",
+            "description": "File type to search (rg --type). Common types: js, py, rust, go, java, etc. More efficient than include for standard file types."
+          }
+        },
+        "required": ["pattern"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ExitPlanMode",
+      "description": "Use this tool when you are in plan mode and have finished writing your plan to the plan file and are ready for user approval.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "allowedPrompts": {
+            "type": "array",
+            "description": "Prompt-based permissions needed to implement the plan. These describe categories of actions rather than specific commands.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "prompt": {
+                  "type": "string",
+                  "description": "Semantic description of the action, e.g. \"run tests\", \"install dependencies\""
+                },
+                "tool": {
+                  "type": "string",
+                  "description": "The tool this prompt applies to",
+                  "enum": ["Bash"]
+                }
+              },
+              "required": ["tool", "prompt"],
+              "additionalProperties": false
+            }
+          },
+          "pushToRemote": {
+            "type": "boolean",
+            "description": "Whether to push the plan to a remote Claude.ai session"
+          },
+          "remoteSessionId": {
+            "type": "string",
+            "description": "The remote session ID if pushed to remote"
+          },
+          "remoteSessionTitle": {
+            "type": "string",
+            "description": "The remote session title if pushed to remote"
+          },
+          "remoteSessionUrl": {
+            "type": "string",
+            "description": "The remote session URL if pushed to remote"
+          }
+        },
+        "additionalProperties": {}
+      }
+    },
+    {
+      "name": "Read",
+      "description": "Reads a file from the local filesystem. You can access any file directly by using this tool.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to read"
+          },
+          "limit": {
+            "type": "number",
+            "description": "The number of lines to read. Only provide if the file is too large to read at once."
+          },
+          "offset": {
+            "type": "number",
+            "description": "The line number to start reading from. Only provide if the file is too large to read at once"
+          }
+        },
+        "required": ["file_path"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "Edit",
+      "description": "Performs exact string replacements in files.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to modify"
+          },
+          "new_string": {
+            "type": "string",
+            "description": "The text to replace it with (must be different from old_string)"
+          },
+          "old_string": {
+            "type": "string",
+            "description": "The text to replace"
+          },
+          "replace_all": {
+            "type": "boolean",
+            "default": false,
+            "description": "Replace all occurences of old_string (default false)"
+          }
+        },
+        "required": ["file_path", "old_string", "new_string"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "Write",
+      "description": "Writes a file to the local filesystem.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The content to write to the file"
+          },
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to write (must be absolute, not relative)"
+          }
+        },
+        "required": ["file_path", "content"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "NotebookEdit",
+      "description": "Completely replaces the contents of a specific cell in a Jupyter notebook (.ipynb file) with new source.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "cell_id": {
+            "type": "string",
+            "description": "The ID of the cell to edit. When inserting a new cell, the new cell will be inserted after the cell with this ID, or at the beginning if not specified."
+          },
+          "cell_type": {
+            "type": "string",
+            "description": "The type of the cell (code or markdown). If not specified, it defaults to the current cell type. If using edit_mode=insert, this is required.",
+            "enum": ["code", "markdown"]
+          },
+          "edit_mode": {
+            "type": "string",
+            "description": "The type of edit to make (replace, insert, delete). Defaults to replace.",
+            "enum": ["replace", "insert", "delete"]
+          },
+          "new_source": {
+            "type": "string",
+            "description": "The new source for the cell"
+          },
+          "notebook_path": {
+            "type": "string",
+            "description": "The absolute path to the Jupyter notebook file to edit (must be absolute, not relative)"
+          }
+        },
+        "required": ["notebook_path", "new_source"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "WebFetch",
+      "description": "Fetches content from a specified URL and processes it using an AI model.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "The prompt to run on the fetched content"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to fetch content from"
+          }
+        },
+        "required": ["url", "prompt"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "TodoWrite",
+      "description": "Use this tool to create and manage a structured task list for your current coding session.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "todos": {
+            "type": "array",
+            "description": "The updated todo list",
+            "items": {
+              "type": "object",
+              "properties": {
+                "activeForm": { "type": "string", "minLength": 1 },
+                "content": { "type": "string", "minLength": 1 },
+                "status": { "type": "string", "enum": ["pending", "in_progress", "completed"] }
+              },
+              "required": ["content", "status", "activeForm"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["todos"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "WebSearch",
+      "description": "Allows Claude to search the web and use the results to inform responses.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "allowed_domains": {
+            "type": "array",
+            "description": "Only include search results from these domains",
+            "items": { "type": "string" }
+          },
+          "blocked_domains": {
+            "type": "array",
+            "description": "Never include search results from these domains",
+            "items": { "type": "string" }
+          },
+          "query": {
+            "type": "string",
+            "description": "The search query to use",
+            "minLength": 2
+          }
+        },
+        "required": ["query"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "KillShell",
+      "description": "Kills a running background bash shell by its ID.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "shell_id": {
+            "type": "string",
+            "description": "The ID of the background shell to kill"
+          }
+        },
+        "required": ["shell_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "AskUserQuestion",
+      "description": "Use this tool when you need to ask the user questions during execution.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "object",
+            "description": "User answers collected by the permission component",
+            "additionalProperties": { "type": "string" },
+            "propertyNames": { "type": "string" }
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Optional metadata for tracking and analytics purposes. Not displayed to user.",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Optional identifier for the source of this question (e.g., \"remember\" for /remember command). Used for analytics tracking."
+              }
+            },
+            "additionalProperties": false
+          },
+          "questions": {
+            "type": "array",
+            "description": "Questions to ask the user (1-4 questions)",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "string",
+                  "description": "Very short label displayed as a chip/tag (max 12 chars). Examples: \"Auth method\", \"Library\", \"Approach\"."
+                },
+                "multiSelect": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Set to true to allow the user to select multiple options instead of just one. Use when choices are not mutually exclusive."
+                },
+                "options": {
+                  "type": "array",
+                  "description": "The available choices for this question. Must have 2-4 options.",
+                  "minItems": 2,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "description": {
+                        "type": "string",
+                        "description": "Explanation of what this option means or what will happen if chosen."
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "The display text for this option that the user will see and select. Should be concise (1-5 words) and clearly describe the choice."
+                      }
+                    },
+                    "required": ["label", "description"],
+                    "additionalProperties": false
+                  }
+                },
+                "question": {
+                  "type": "string",
+                  "description": "The complete question to ask the user."
+                }
+              },
+              "required": ["question", "header", "options", "multiSelect"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["questions"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "Skill",
+      "description": "Execute a skill within the main conversation.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "args": {
+            "type": "string",
+            "description": "Optional arguments for the skill"
+          },
+          "skill": {
+            "type": "string",
+            "description": "The skill name. E.g., \"commit\", \"review-pr\", or \"pdf\""
+          }
+        },
+        "required": ["skill"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "EnterPlanMode",
+      "description": "Use this tool proactively when you're about to start a non-trivial implementation task.",
+      "input_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__PluginModelAnalyzer__analyze_module_structure",
+      "description": "High-level overview with counts and statistics. Use search_products/search_module_sets for details.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "mcp__PluginModelAnalyzer__get_module_info",
+      "description": "Module operations: info (sets/products), dependencies (JPS), paths (to products), reachability (in set), find_by_loading (filter by rule), dependency_path (between modules)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "includeTransitive": {
+            "type": "boolean",
+            "description": "For dependencies: include transitive. Default: false"
+          },
+          "loadingRule": {
+            "type": "string",
+            "description": "For find_by_loading",
+            "enum": ["EMBEDDED", "REQUIRED", "OPTIONAL", "ON_DEMAND", "UNSPECIFIED"]
+          },
+          "moduleName": {
+            "type": "string",
+            "description": "Module name (e.g., \"intellij.platform.vcs.impl\")"
+          },
+          "moduleSetName": {
+            "type": "string",
+            "description": "For reachability: module set context"
+          },
+          "operation": {
+            "type": "string",
+            "description": "info=containing sets/products, dependencies=JPS deps, paths=trace to products, reachability=check deps in set, find_by_loading=filter by rule, dependency_path=shortest path between modules",
+            "enum": ["info", "dependencies", "paths", "reachability", "find_by_loading", "dependency_path"]
+          },
+          "toModule": {
+            "type": "string",
+            "description": "For dependency_path: target module"
+          }
+        },
+        "required": ["operation"]
+      }
+    },
+    {
+      "name": "mcp__PluginModelAnalyzer__get_module_set_info",
+      "description": "Module set operations: info (details), search (find by criteria), hierarchy (nesting), overlap (redundant sets), graph (ASCII), suggest_for_modules (which set contains modules)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "includeDetails": {
+            "type": "boolean",
+            "description": "For info: include full arrays. Default: false"
+          },
+          "includeSubsets": {
+            "type": "boolean",
+            "description": "For overlap: include subset relationships. Default: true"
+          },
+          "limit": {
+            "type": "number",
+            "description": "For search: max results. Default: 10"
+          },
+          "location": {
+            "type": "string",
+            "description": "For search: filter by location",
+            "enum": ["community", "ultimate"]
+          },
+          "minModuleCount": {
+            "type": "number",
+            "description": "For search: min module count"
+          },
+          "minOverlapPercent": {
+            "type": "number",
+            "description": "For overlap: min overlap 0-100. Default: 50"
+          },
+          "moduleNames": {
+            "type": "array",
+            "description": "For suggest_for_modules: modules to find",
+            "items": { "type": "string" }
+          },
+          "moduleSetName": {
+            "type": "string",
+            "description": "For info/hierarchy: module set name"
+          },
+          "nameFilter": {
+            "type": "string",
+            "description": "For search: filter by name"
+          },
+          "operation": {
+            "type": "string",
+            "description": "info=details, search=find by criteria, hierarchy=nesting, overlap=find redundant sets, graph=ASCII, suggest_for_modules=which set contains modules",
+            "enum": ["info", "search", "hierarchy", "overlap", "graph", "suggest_for_modules"]
+          }
+        },
+        "required": ["operation"]
+      }
+    },
+    {
+      "name": "mcp__PluginModelAnalyzer__validate",
+      "description": "Validation checks: community_products (ultimate module usage), module_set_locations (correct directories), loading_inconsistencies (conflicting rules)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "type": "string",
+            "description": "community_products=check ultimate usage, module_set_locations=check directories, loading_inconsistencies=conflicting rules",
+            "enum": ["community_products", "module_set_locations", "loading_inconsistencies"]
+          }
+        },
+        "required": ["check"]
+      }
+    },
+    {
+      "name": "mcp__PluginModelAnalyzer__get_product_info",
+      "description": "Product operations: info (details), search (find products), compare (diff two), similar (find alike), composition (breakdown), trace_path (inclusion chain), deprecated_includes (xi:include), full_analysis (raw JSON)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "includeDetails": {
+            "type": "boolean",
+            "description": "For info: full arrays. Default: false"
+          },
+          "limit": {
+            "type": "number",
+            "description": "For search/similar: max results"
+          },
+          "metric": {
+            "type": "string",
+            "description": "For similar. Default: moduleSets",
+            "enum": ["moduleSets", "modules", "both"]
+          },
+          "minModuleCount": {
+            "type": "number",
+            "description": "For search: min modules"
+          },
+          "moduleSetName": {
+            "type": "string",
+            "description": "For trace_path: filter to paths containing this set"
+          },
+          "nameFilter": {
+            "type": "string",
+            "description": "For search: filter by name"
+          },
+          "operation": {
+            "type": "string",
+            "description": "info=details, search=find products, compare=diff two, similar=find alike, composition=breakdown, trace_path=inclusion chain, deprecated_includes=xi:include, full_analysis=raw JSON",
+            "enum": ["info", "search", "compare", "similar", "composition", "trace_path", "deprecated_includes", "full_analysis"]
+          },
+          "product2": {
+            "type": "string",
+            "description": "For compare: second product"
+          },
+          "productName": {
+            "type": "string",
+            "description": "For info/composition/trace_path/deprecated_includes"
+          },
+          "similarityThreshold": {
+            "type": "number",
+            "description": "For similar: min 0.0-1.0. Default: 0.7"
+          },
+          "usesModuleSet": {
+            "type": "string",
+            "description": "For search: show direct/indirect usage with chains"
+          }
+        },
+        "required": ["operation"]
+      }
+    },
+    {
+      "name": "mcp__PluginModelAnalyzer__optimize",
+      "description": "Optimization: redundant_refs (transitively included), unification (merge/split suggestions), merge_impact (analyze safety), patterns (usage patterns), loading_modes (EMBEDDED/REQUIRED/etc)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "filterByLoading": {
+            "type": "string",
+            "description": "For loading_modes: filter to rule"
+          },
+          "maxSuggestions": {
+            "type": "number",
+            "description": "For unification. Default: 10"
+          },
+          "mergeOperation": {
+            "type": "string",
+            "description": "For merge_impact. Default: merge",
+            "enum": ["merge", "move", "inline"]
+          },
+          "operation": {
+            "type": "string",
+            "description": "redundant_refs=transitively included sets, unification=merge/split suggestions, merge_impact=analyze safety, patterns=usage patterns, loading_modes=analyze modes",
+            "enum": ["redundant_refs", "unification", "merge_impact", "patterns", "loading_modes"]
+          },
+          "pattern": {
+            "type": "string",
+            "description": "For patterns: direct-ssh, uses-trial, uses-commercial, or module set name"
+          },
+          "productName": {
+            "type": "string",
+            "description": "For redundant_refs: filter to product"
+          },
+          "sourceSet": {
+            "type": "string",
+            "description": "For merge_impact: source module set"
+          },
+          "strategy": {
+            "type": "string",
+            "description": "For unification. Default: all",
+            "enum": ["merge", "split", "refactor", "all"]
+          },
+          "targetSet": {
+            "type": "string",
+            "description": "For merge_impact: target set (null for inline)"
+          }
+        },
+        "required": ["operation"]
+      }
+    },
+    {
+      "name": "mcp__task__task_status",
+      "description": "Get issue state or full details",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Issue ID for full details" },
+          "memory_limit": { "type": "integer", "default": 0, "description": "Max entries per memory list in response (0 to omit memory)" },
+          "meta_max_chars": { "type": "integer", "default": 400, "description": "Max chars for description/design/acceptance in meta view (default: 400)" },
+          "user_request": { "type": "string", "description": "Not supported for task_status; use task_start" },
+          "view": { "type": "string", "default": "summary", "description": "Issue view (default: summary)", "enum": ["summary", "meta"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__task__task_start",
+      "description": "Start task workflow (status + optional epic creation)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "acceptance": { "type": "string" },
+          "description": { "type": "string" },
+          "design": { "type": "string" },
+          "id": { "type": "string", "description": "Issue ID for full details" },
+          "memory_limit": { "type": "integer", "default": 0, "description": "Max entries per memory list in response (0 to omit memory)" },
+          "meta_max_chars": { "type": "integer", "default": 400, "description": "Max chars for description/design/acceptance in meta view (default: 400)" },
+          "user_request": { "type": "string", "description": "User task description" },
+          "view": { "type": "string", "default": "summary", "description": "Issue view (default: summary)", "enum": ["summary", "meta"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__task__task_progress",
+      "description": "Update findings/decisions/status",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "decisions": { "type": "array", "description": "Decisions made", "items": { "type": "string" } },
+          "findings": { "type": "array", "description": "Discoveries", "items": { "type": "string" } },
+          "id": { "type": "string", "description": "Issue ID" },
+          "memory_limit": { "type": "integer", "default": 0, "description": "Max entries per memory list in response (0 to omit memory)" },
+          "status": { "type": "string", "enum": ["in_progress", "blocked", "deferred"] }
+        },
+        "required": ["id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__task__task_update_meta",
+      "description": "Update description/design/acceptance",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "acceptance": { "type": "string" },
+          "description": { "type": "string" },
+          "design": { "type": "string" },
+          "id": { "type": "string", "description": "Issue ID" },
+          "memory_limit": { "type": "integer", "default": 0, "description": "Max entries per memory list in response (0 to omit memory)" },
+          "meta_max_chars": { "type": "integer", "default": 400, "description": "Max chars for description/design/acceptance in meta view (default: 400)" },
+          "view": { "type": "string", "default": "summary", "description": "Issue view (default: summary)", "enum": ["summary", "meta"] }
+        },
+        "required": ["id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__task__task_decompose",
+      "description": "Create sub-issues under epic (auto-starts single child)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "epic_id": { "type": "string", "description": "Parent epic ID" },
+          "sub_issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "acceptance": { "type": "string" },
+                "dep_type": { "type": "string" },
+                "depends_on": { "type": "array", "items": { "anyOf": [{ "type": "integer" }, { "type": "string" }] } },
+                "description": { "type": "string" },
+                "design": { "type": "string" },
+                "title": { "type": "string" },
+                "type": { "type": "string" }
+              },
+              "required": ["title", "description", "acceptance", "design"],
+              "additionalProperties": false
+            }
+          },
+          "update_epic_acceptance": { "type": "string" }
+        },
+        "required": ["epic_id", "sub_issues"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__task__task_create",
+      "description": "Create issue",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "acceptance": { "type": "string" },
+          "dep_type": { "type": "string" },
+          "depends_on": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "description": { "type": "string" },
+          "design": { "type": "string" },
+          "parent": { "type": "string" },
+          "priority": { "type": "string" },
+          "title": { "type": "string" },
+          "type": { "type": "string", "default": "task" }
+        },
+        "required": ["title", "description", "design", "acceptance"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__task__task_link",
+      "description": "Add dependencies between existing issues",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dep_type": { "type": "string" },
+          "depends_on": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "id": { "type": "string" }
+        },
+        "required": ["id", "depends_on"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__task__task_done",
+      "description": "Close issue",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "decisions": { "type": "array", "items": { "type": "string" } },
+          "findings": { "type": "array", "items": { "type": "string" } },
+          "id": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["id", "reason"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__task__task_reopen",
+      "description": "Reopen closed issue",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Issue ID" },
+          "memory_limit": { "type": "integer", "default": 0, "description": "Max entries per memory list in response (0 to omit memory)" },
+          "meta_max_chars": { "type": "integer", "default": 400, "description": "Max chars for description/design/acceptance in meta view (default: 400)" },
+          "reason": { "type": "string", "description": "Reason for reopening" },
+          "view": { "type": "string", "default": "summary", "description": "Issue view (default: summary)", "enum": ["summary", "meta"] }
+        },
+        "required": ["id", "reason"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__ide__getDiagnostics",
+      "description": "Gets diagnostic info.",
+      "input_schema": {
+        "type": "object",
+        "properties": { "uri": { "type": "string" } },
+        "required": []
+      }
+    },
+    {
+      "name": "mcp__jetbrains__execute_run_configuration",
+      "description": "Run a specific run configuration in the current project and wait up to specified timeout for it to finish.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "configurationName": { "type": "string", "description": "Name of the run configuration to execute" },
+          "maxLinesCount": { "type": "integer", "description": "Maximum number of lines to return" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" },
+          "truncateMode": { "type": "string", "description": "How to truncate the text", "enum": ["START", "MIDDLE", "END", "NONE"] }
+        },
+        "required": ["configurationName"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__get_run_configurations",
+      "description": "Returns a list of run configurations for the current project.",
+      "input_schema": {
+        "type": "object",
+        "properties": { "projectPath": { "type": "string", "description": "The project path." } },
+        "required": []
+      }
+    },
+    {
+      "name": "mcp__jetbrains__build_project",
+      "description": "Triggers building of the project or specified files, waits for completion, and returns build errors.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "filesToRebuild": { "type": "array", "description": "If specified, only compile files with the specified paths.", "items": { "type": "string" } },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "rebuild": { "type": "boolean", "description": "Whether to perform full rebuild the project. Defaults to false." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "mcp__jetbrains__get_file_problems",
+      "description": "Analyzes the specified file for errors and warnings using IntelliJ's inspections.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "errorsOnly": { "type": "boolean", "description": "Whether to include only errors or include both errors and warnings" },
+          "filePath": { "type": "string", "description": "Path relative to the project root" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": ["filePath"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__get_project_dependencies",
+      "description": "Get a list of all dependencies defined in the project.",
+      "input_schema": {
+        "type": "object",
+        "properties": { "projectPath": { "type": "string", "description": "The project path." } },
+        "required": []
+      }
+    },
+    {
+      "name": "mcp__jetbrains__get_project_modules",
+      "description": "Get a list of all modules in the project with their types.",
+      "input_schema": {
+        "type": "object",
+        "properties": { "projectPath": { "type": "string", "description": "The project path." } },
+        "required": []
+      }
+    },
+    {
+      "name": "mcp__jetbrains__create_new_file",
+      "description": "Creates a new file at the specified path within the project directory.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "overwrite": { "type": "boolean", "description": "Whether to overwrite an existing file if exists." },
+          "pathInProject": { "type": "string", "description": "Path where the file should be created relative to the project root" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "text": { "type": "string", "description": "Content to write into the new file" }
+        },
+        "required": ["pathInProject"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__find_files_by_glob",
+      "description": "Searches for all files in the project whose relative paths match the specified glob pattern.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "addExcluded": { "type": "boolean", "description": "Whether to add excluded/ignored files to the search results." },
+          "fileCountLimit": { "type": "integer", "description": "Maximum number of files to return." },
+          "globPattern": { "type": "string", "description": "Glob pattern to search for." },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "subDirectoryRelativePath": { "type": "string", "description": "Optional subdirectory relative to the project to search in." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": ["globPattern"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__find_files_by_name_keyword",
+      "description": "Searches for all files in the project whose names contain the specified keyword (case-insensitive).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fileCountLimit": { "type": "integer", "description": "Maximum number of files to return." },
+          "nameKeyword": { "type": "string", "description": "Substring to search for in file names" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": ["nameKeyword"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__get_all_open_file_paths",
+      "description": "Returns active editor's and other open editors' file paths relative to the project root.",
+      "input_schema": {
+        "type": "object",
+        "properties": { "projectPath": { "type": "string", "description": "The project path." } },
+        "required": []
+      }
+    },
+    {
+      "name": "mcp__jetbrains__list_directory_tree",
+      "description": "Provides a tree representation of the specified directory in the pseudo graphic format like `tree` utility does.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "directoryPath": { "type": "string", "description": "Path relative to the project root" },
+          "maxDepth": { "type": "integer", "description": "Maximum recursion depth" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": ["directoryPath"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__open_file_in_editor",
+      "description": "Opens the specified file in the JetBrains IDE editor.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "filePath": { "type": "string", "description": "Path relative to the project root" },
+          "projectPath": { "type": "string", "description": "The project path." }
+        },
+        "required": ["filePath"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__reformat_file",
+      "description": "Reformats a specified file in the JetBrains IDE.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Path relative to the project root" },
+          "projectPath": { "type": "string", "description": "The project path." }
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__get_file_text_by_path",
+      "description": "Retrieves the text content of a file using its path relative to project root.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "maxLinesCount": { "type": "integer", "description": "Max number of lines to return." },
+          "pathInProject": { "type": "string", "description": "Path relative to the project root" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "truncateMode": { "type": "string", "description": "How to truncate the text", "enum": ["START", "MIDDLE", "END", "NONE"] }
+        },
+        "required": ["pathInProject"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__replace_text_in_file",
+      "description": "Replaces text in a file with flexible options for find and replace operations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "caseSensitive": { "type": "boolean", "description": "Case-sensitive search" },
+          "newText": { "type": "string", "description": "Replacement text" },
+          "oldText": { "type": "string", "description": "Text to be replaced" },
+          "pathInProject": { "type": "string", "description": "Path to target file relative to project root" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "replaceAll": { "type": "boolean", "description": "Replace all occurrences" }
+        },
+        "required": ["pathInProject", "oldText", "newText"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__search_in_files_by_regex",
+      "description": "Searches with a regex pattern within all files in the project using IntelliJ's search engine.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "caseSensitive": { "type": "boolean", "description": "Whether to search for the text in a case-sensitive manner" },
+          "directoryToSearch": { "type": "string", "description": "Directory to search in, relative to project root." },
+          "fileMask": { "type": "string", "description": "File mask to search for." },
+          "maxUsageCount": { "type": "integer", "description": "Maximum number of entries to return." },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "regexPattern": { "type": "string", "description": "Regex patter to search for" },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": ["regexPattern"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__search_in_files_by_text",
+      "description": "Searches for a text substring within all files in the project using IntelliJ's search engine.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "caseSensitive": { "type": "boolean", "description": "Whether to search for the text in a case-sensitive manner" },
+          "directoryToSearch": { "type": "string", "description": "Directory to search in, relative to project root." },
+          "fileMask": { "type": "string", "description": "File mask to search for." },
+          "maxUsageCount": { "type": "integer", "description": "Maximum number of entries to return." },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "searchText": { "type": "string", "description": "Text substring to search for" },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": ["searchText"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__get_symbol_info",
+      "description": "Retrieves information about the symbol at the specified position in the specified file.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "column": { "type": "integer", "description": "1-based column number" },
+          "filePath": { "type": "string", "description": "Path relative to the project root" },
+          "line": { "type": "integer", "description": "1-based line number" },
+          "projectPath": { "type": "string", "description": "The project path." }
+        },
+        "required": ["filePath", "line", "column"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__rename_refactoring",
+      "description": "Renames a symbol (variable, function, class, etc.) in the specified file.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "newName": { "type": "string", "description": "New name for the symbol" },
+          "pathInProject": { "type": "string", "description": "Path relative to the project root" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "symbolName": { "type": "string", "description": "Name of the symbol to rename" }
+        },
+        "required": ["pathInProject", "symbolName", "newName"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__execute_terminal_command",
+      "description": "Executes a specified shell command in the IDE's integrated terminal.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "command": { "type": "string", "description": "Shell command to execute" },
+          "executeInShell": { "type": "boolean", "description": "Whether to execute the command in a default user's shell (bash, zsh, etc.)." },
+          "maxLinesCount": { "type": "integer", "description": "Maximum number of lines to return" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "reuseExistingTerminalWindow": { "type": "boolean", "description": "Whether to reuse an existing terminal window." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" },
+          "truncateMode": { "type": "string", "description": "How to truncate the text", "enum": ["START", "MIDDLE", "END", "NONE"] }
+        },
+        "required": ["command"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__get_repositories",
+      "description": "Retrieves the list of VCS roots in the project.",
+      "input_schema": {
+        "type": "object",
+        "properties": { "projectPath": { "type": "string", "description": "The project path." } },
+        "required": []
+      }
+    },
+    {
+      "name": "mcp__jetbrains__find_lock_requirements_usages",
+      "description": "Analyzes the usage of the Read/Write lock for the method under the caret.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "column": { "type": "integer", "description": "Column where cursor is located" },
+          "filePath": { "type": "string", "description": "Path relative to the project root" },
+          "line": { "type": "integer", "description": "Line where cursor is located" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": ["filePath", "line", "column"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__find_threading_requirements_usages",
+      "description": "Analyzes the usage of threading constraints for the method under the caret.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "column": { "type": "integer", "description": "Column where cursor is located" },
+          "filePath": { "type": "string", "description": "Path relative to the project root" },
+          "line": { "type": "integer", "description": "Line where cursor is located" },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "timeout": { "type": "integer", "description": "Timeout in milliseconds" }
+        },
+        "required": ["filePath", "line", "column"]
+      }
+    },
+    {
+      "name": "mcp__jetbrains__permission_prompt",
+      "description": "permission_prompt",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input": { "type": "object", "additionalProperties": { "type": "object", "properties": {}, "required": [] } },
+          "projectPath": { "type": "string", "description": "The project path." },
+          "tool_name": { "type": "string" },
+          "tool_use_id": { "type": "string" }
+        },
+        "required": ["tool_use_id", "tool_name"]
+      }
+    },
+    {
+      "name": "mcp__Context7__resolve-library-id",
+      "description": "Resolves a package/product name to a Context7-compatible library ID and returns matching libraries.",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "libraryName": { "type": "string", "description": "Library name to search for and retrieve a Context7-compatible library ID." },
+          "query": { "type": "string", "description": "The user's original question or task." }
+        },
+        "required": ["query", "libraryName"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__Context7__query-docs",
+      "description": "Retrieves and queries up-to-date documentation and code examples from Context7 for any programming library or framework.",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "libraryId": { "type": "string", "description": "Exact Context7-compatible library ID." },
+          "query": { "type": "string", "description": "The question or task you need help with." }
+        },
+        "required": ["libraryId", "query"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mcp__mcp-codex__codex_plan_review",
+      "description": "Review an implementation plan using Codex.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "clarifications": { "type": "string", "description": "Q&A exchanges and clarifications gathered from the user" },
+          "plan": { "type": "string", "description": "The implementation plan to review" },
+          "relevant_files": { "type": "array", "description": "Paths to files relevant to the plan for context", "items": { "type": "string" } },
+          "user_prompt": { "type": "string", "description": "The original user request/task description" },
+          "working_dir": { "type": "string", "description": "Working directory for the review (the project root to review)" }
+        },
+        "required": ["user_prompt", "plan"]
+      }
+    },
+    {
+      "name": "mcp__mcp-codex__codex_implementation_review",
+      "description": "Review completed code implementation using Codex.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "changed_files": { "type": "array", "description": "Paths to files that were modified", "items": { "type": "string" } },
+          "clarifications": { "type": "string", "description": "All clarifications gathered during planning and implementation" },
+          "diff": { "type": "string", "description": "Git diff of the changes made (or description of changes)" },
+          "plan": { "type": "string", "description": "The approved implementation plan that was followed" },
+          "user_prompt": { "type": "string", "description": "The original user request/task description" },
+          "working_dir": { "type": "string", "description": "Working directory for the review (the project root to review)" }
+        },
+        "required": ["user_prompt", "plan"]
+      }
+    }
+  ]
+}

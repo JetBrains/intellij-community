@@ -22,7 +22,9 @@ import com.intellij.util.ObjectUtils.consumeIfCast
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.TestRunner.*
+import org.jetbrains.plugins.gradle.settings.TestRunner.CHOOSE_PER_TEST
+import org.jetbrains.plugins.gradle.settings.TestRunner.GRADLE
+import org.jetbrains.plugins.gradle.settings.TestRunner.PLATFORM
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.nio.file.Files

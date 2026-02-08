@@ -7,13 +7,16 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
+import com.jetbrains.python.packaging.common.toPythonPackages
+
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.pipenv.PipEnvFileHelper
 import com.jetbrains.python.sdk.pipenv.runPipEnv
+import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -31,12 +34,6 @@ class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   suspend fun lock(): PyResult<Unit> {
     return runPipEnv(modulePath, "lock").mapSuccess { }
   }
-
-
-  override fun getDependencyManager(): PythonDependenciesManager {
-    return PipEnvDependenciesManager.getInstance(project, sdk)
-  }
-
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     return when (installRequest) {
@@ -80,4 +77,13 @@ class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return PyResult.success(emptyList())
   }
 
+  override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
+    val pipFileLock =  getDependencyFile() ?: return null
+    val requirements = SdkPipEnvParser.getPipFileLockRequirements(pipFileLock) ?: return null
+    return PyResult.success(requirements.toPythonPackages())
+  }
+
+  override fun getDependencyFile(): com.intellij.openapi.vfs.VirtualFile? {
+    return PipEnvFileHelper.getPipFileLock(sdk)
+  }
 }

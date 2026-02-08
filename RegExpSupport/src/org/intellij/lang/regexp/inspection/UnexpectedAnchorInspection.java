@@ -11,7 +11,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.inspection.ShredManager.ShredInfo;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpBoundary;
+import org.intellij.lang.regexp.psi.RegExpBranch;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpClosure;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpPattern;
+import org.intellij.lang.regexp.psi.RegExpSetOptions;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 
 /**

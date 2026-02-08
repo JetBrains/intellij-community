@@ -3,7 +3,14 @@ package org.jetbrains.jps.incremental.storage
 
 import java.io.File
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.FileStore
+import java.nio.file.FileSystem
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.WatchEvent
+import java.nio.file.WatchKey
+import java.nio.file.WatchService
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 

@@ -11,7 +11,15 @@ import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.convertOpt
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
 
 @ApiStatus.Internal

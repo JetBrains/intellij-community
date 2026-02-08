@@ -10,7 +10,12 @@ import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -21,7 +26,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOOLEAN;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.FALSE;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.NULL;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.TRUE;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.typedObject;
 
 public class InstanceofInstruction extends ExpressionPushingInstruction {
   private final boolean myClassObjectCheck;

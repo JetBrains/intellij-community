@@ -17,7 +17,13 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryContent
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase(),
                                                      ExpectedPluginModeProvider {

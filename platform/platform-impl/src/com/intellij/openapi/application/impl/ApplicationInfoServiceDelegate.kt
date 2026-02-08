@@ -4,7 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import java.util.*
+import java.util.Calendar
 
 @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
 internal class ApplicationInfoServiceDelegate : ApplicationInfoEx() {

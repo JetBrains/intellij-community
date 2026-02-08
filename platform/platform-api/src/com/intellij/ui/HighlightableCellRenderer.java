@@ -18,9 +18,11 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.JTree;
+import javax.swing.ListCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public class HighlightableCellRenderer extends HighlightableComponent implements TreeCellRenderer, ListCellRenderer {
   @Override

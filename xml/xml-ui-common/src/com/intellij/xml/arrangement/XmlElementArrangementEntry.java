@@ -2,7 +2,11 @@
 package com.intellij.xml.arrangement;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.arrangement.*;
+import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.DefaultArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.NamespaceAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -6,8 +6,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Color;
 
 public class CaptionComponent extends JPanel implements Committable, Highlightable {
   private JPanel myRootPanel;

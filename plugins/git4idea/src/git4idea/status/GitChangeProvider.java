@@ -12,7 +12,13 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.ChangelistBuilder;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.util.paths.RootDirtySet;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +34,13 @@ import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Git repository change provider

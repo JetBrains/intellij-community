@@ -3,8 +3,8 @@ package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.compiler.Utils;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ListModel;
+import java.awt.Component;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;

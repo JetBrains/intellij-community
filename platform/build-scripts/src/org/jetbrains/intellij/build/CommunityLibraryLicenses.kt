@@ -8,7 +8,6 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
  * Defines information about licenses of libraries located in 'community', 'contrib' and 'android' repositories.
  */
 object CommunityLibraryLicenses {
-  @JvmStatic
   @Suppress("SpellCheckingInspection", "NonAsciiCharacters")
   val LICENSES_LIST: List<LibraryLicense> = listOf(
     LibraryLicense("A fast Java JSON schema validator", libraryName = "json-schema-validator", url = "https://github.com/networknt/json-schema-validator")
@@ -50,6 +49,11 @@ object CommunityLibraryLicenses {
       .newBsd("https://github.com/webmproject/libwebp/blob/main/COPYING"),
 
     androidDependency("Android Studio Platform", libraryName = "studio-platform"),
+
+    LibraryLicense(name = "androidx-collection", libraryName = "androidx-collection", url = "https://source.android.com/")
+      .apache("https://github.com/androidx/androidx/blob/androidx-main/LICENSE.txt")
+      .copyrightText("Copyright (C) The Android Open Source Project")
+      .suppliedByOrganizations(Suppliers.GOOGLE),
 
     LibraryLicense("antlr4-runtime", libraryName = "antlr4-runtime", url = "https://github.com/antlr/antlr4")
       .newBsd("https://github.com/antlr/antlr4/blob/dev/LICENSE.txt"),
@@ -387,6 +391,10 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/3breadt/dd-plist/blob/master/LICENSE.txt"),
 
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/")
+      .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
+      .suppliedByOrganizations("Gradle Inc."),
+
+    LibraryLicense(libraryName = "Gradle Tooling API", url = "https://gradle.org/")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
       .suppliedByOrganizations("Gradle Inc."),
 
@@ -1270,6 +1278,10 @@ object CommunityLibraryLicenses {
     LibraryLicense("thriftpy2", version = "0.4.13", attachedTo = "intellij.python", url = "https://github.com/Thriftpy/thriftpy2/")
       .mit("https://github.com/Thriftpy/thriftpy2/blob/master/LICENSE"),
 
+    LibraryLicense("toml4j", libraryName = "toml4j", url = "https://github.com/mwanji/toml4j")
+      .mit("https://github.com/mwanji/toml4j/blob/master/LICENSE")
+      .suppliedByPersons("Moandji Ezana"),
+
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     LibraryLicense("Trang", libraryName = "trang-core.jar", version = LibraryLicense.CUSTOM_REVISION, url = "https://relaxng.org/jclark/trang.html")
       .newBsd("https://opensource.org/license/bsd-3-clause/"),
@@ -1502,20 +1514,27 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("workspace-model-codegen"),
     jetbrainsLibrary("RMI Stubs").copy(name = "XSLT Debugger RMI Stubs"),
   )
+}
 
-  private fun ffmpegLibraryLicense(name: String): LibraryLicense =
-    LibraryLicense(name, libraryName = name, url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco")
-      .lgpl21plus("https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
-      .suppliedByOrganizations(Suppliers.GOOGLE)
+private fun ffmpegLibraryLicense(name: String): LibraryLicense {
+  return LibraryLicense(
+    name = name,
+    libraryName = name,
+    url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco"
+  )
+    .lgpl21plus("https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
+    .suppliedByOrganizations(Suppliers.GOOGLE)
+}
 
-  private fun androidDependency(name: String, libraryName: String? = name, version: String? = null): LibraryLicense =
-    LibraryLicense(name, libraryName = libraryName, version = version, url = "https://source.android.com/")
-      .apache("https://source.android.com/setup/start/licenses")
-      .copyrightText("Copyright (C) The Android Open Source Project")
-      .suppliedByOrganizations(Suppliers.GOOGLE)
+private fun androidDependency(name: String, libraryName: String? = name, version: String? = null): LibraryLicense {
+  return LibraryLicense(name = name, libraryName = libraryName, version = version, url = "https://source.android.com/")
+    .apache("https://source.android.com/setup/start/licenses")
+    .copyrightText("Copyright (C) The Android Open Source Project")
+    .suppliedByOrganizations(Suppliers.GOOGLE)
+}
 
-  private fun netty(libraryName: String): LibraryLicense =
-    LibraryLicense(libraryName, libraryName = libraryName, url = "https://netty.io")
-      .apache("https://github.com/netty/netty/blob/4.1/LICENSE.txt")
-      .suppliedByOrganizations("The Netty project")
+private fun netty(libraryName: String): LibraryLicense {
+  return LibraryLicense(name = libraryName, libraryName = libraryName, url = "https://netty.io")
+    .apache("https://github.com/netty/netty/blob/4.1/LICENSE.txt")
+    .suppliedByOrganizations("The Netty project")
 }

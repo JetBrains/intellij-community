@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Allows user to configure visible gutter icons (<em>Settings/Preferences | Editor | General | Gutter Icons</em>).

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /**
  * Programmatic content DSL for defining product module content in Kotlin instead of static XML.
@@ -7,13 +7,18 @@
  * to define their module composition, XML includes, and module sets using type-safe Kotlin code.
  *
  * For comprehensive documentation on how to use this system:
- * @see <a href="../programmatic-content.md">Programmatic Content Documentation</a> - Complete guide with examples
- * @see <a href="../module-sets.md">Module Sets Documentation</a> - How module sets work and best practices
+ * - [Programmatic Content](../docs/programmatic-content.md) - Complete guide with examples
+ * - [Module Sets](../docs/module-sets.md) - How module sets work and best practices
+ *
+ * @see ProductModulesContentSpecBuilder
  */
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.serialization.Serializable
 
@@ -27,14 +32,14 @@ annotation class ProductDslMarker
 /**
  * Represents an XML include directive that references a resource within a module.
  *
- * @param moduleName The name of the module containing the resource (e.g., "intellij.platform.resources")
+ * @param contentModuleName The JPS module name containing the resource (e.g., "intellij.platform.resources")
  * @param resourcePath The path to the resource within the module (e.g., "META-INF/PlatformLangPlugin.xml")
  * @param ultimateOnly If true, this include is only processed in Ultimate builds (skipped in Community builds)
  * @param optional If true, this include is always generated with xi:fallback and never inlined (safe for files that may not exist)
  */
 @Serializable
 data class DeprecatedXmlInclude(
-  @JvmField val moduleName: String,
+  val contentModuleName: ContentModuleName,
   @JvmField val resourcePath: String,
   @JvmField val ultimateOnly: Boolean = false,
   @JvmField val optional: Boolean = false,
@@ -101,11 +106,12 @@ data class SpecMetadata(
 @Serializable
 class ProductModulesContentSpec(
   /**
-   * Product module aliases for `<module value="..."/>` declarations (e.g., "com.jetbrains.gateway", "com.intellij.modules.idea").
-   * These will be generated as the first elements in the programmatic content.
+   * Product plugin aliases for `<module value="..."/>` declarations (e.g., "com.jetbrains.gateway", "com.intellij.modules.idea").
+   * These declare plugin aliases that can be used in `<depends>` or `<dependencies><plugin id="..."/>`.
    * Multiple aliases can be specified by calling alias() multiple times in the DSL.
+   * @see <a href="../../docs/IntelliJ-Platform/4_man/Plugin-Model/Plugin-Model-v1-v2.md#plugin-aliases">Plugin Aliases Documentation</a>
    */
-  @JvmField val productModuleAliases: List<String>,
+  @JvmField val productModuleAliases: List<PluginId>,
 
   /**
    * Product vendor name for the `<vendor>` tag in plugin.xml.
@@ -134,19 +140,19 @@ class ProductModulesContentSpec(
   @JvmField val additionalModules: List<ContentModule>,
 
   /**
-   * List of bundled plugin module names for dependency generation.
+   * List of bundled plugin JPS module names for dependency generation.
    * These are JPS modules that contain META-INF/plugin.xml.
    * Used ONLY for automatic dependency generation in plugin.xml files,
    * not for determining which plugins are bundled (that's done via productLayout.bundledPluginModules).
    */
-  @JvmField val bundledPlugins: List<String> = emptyList(),
+  @JvmField val bundledPlugins: List<TargetName> = emptyList(),
 
   /**
-   * Modules that are allowed to be missing during validation.
+   * JPS modules that are allowed to be missing during validation.
    * These are typically provided by plugin layouts rather than module sets.
    * Example: CIDR modules for CLion/AppCode that come from plugin bundles.
    */
-  @JvmField val allowedMissingDependencies: Set<String> = emptySet(),
+  @JvmField val allowedMissingDependencies: Set<ContentModuleName> = emptySet(),
 
   /**
    * Composition graph tracking how this spec was assembled.
@@ -160,6 +166,13 @@ class ProductModulesContentSpec(
    * Useful for debugging and tracing where a spec was created.
    */
   @JvmField val metadata: SpecMetadata? = null,
+
+  /**
+   * Test plugins to generate programmatically.
+   * Each spec defines a test plugin's ID, name, XML path, and content modules.
+   * @see <a href="../test-plugins.md">Test Plugin Generation Documentation</a>
+   */
+  @JvmField val testPlugins: List<TestPluginSpec> = emptyList(),
 )
 
 /**
@@ -167,13 +180,14 @@ class ProductModulesContentSpec(
  */
 @ProductDslMarker
 class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
-  private val productModuleAliases = mutableListOf<String>()
+  private val productModuleAliases = mutableListOf<PluginId>()
   private var vendor: String? = null
   private val xmlIncludes = mutableListOf<DeprecatedXmlInclude>()
   private val moduleSets = mutableListOf<ModuleSetWithOverrides>()
   private val additionalModules = mutableListOf<ContentModule>()
-  private val bundledPlugins = mutableListOf<String>()
-  private val allowedMissingDeps = LinkedHashSet<String>()
+  private val bundledPlugins = mutableListOf<TargetName>()
+  private val allowedMissingDeps = LinkedHashSet<ContentModuleName>()
+  private val testPlugins = mutableListOf<TestPluginSpec>()
 
   // Composition tracking
   private val compositionGraph = mutableListOf<SpecComposition>()
@@ -183,13 +197,14 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   internal var metadata: SpecMetadata? = null
 
   /**
-   * Add a product module alias for `<module value="..."/>` declaration.
+   * Add a product plugin alias for `<module value="..."/>` declaration.
+   * These declare plugin aliases that can be used in `<depends>` or `<dependencies><plugin id="..."/>`.
    * Can be called multiple times to add multiple aliases.
    * Example: alias("com.jetbrains.gateway")
    * Example: alias("com.intellij.modules.idea")
    */
   fun alias(value: String) {
-    productModuleAliases.add(value)
+    productModuleAliases.add(PluginId(value))
     compositionGraph.add(SpecComposition(
       type = CompositionType.ALIAS,
       reference = value,
@@ -254,7 +269,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * For optional includes that may not exist in all builds (always uses xi:fallback):
    * Example: deprecatedInclude("intellij.rider.languages", "intellij.rider.languages.xml", optional = true)
    *
-   * @param moduleName The name of the module containing the resource
+   * @param moduleName The JPS module name containing the resource
    * @param resourcePath The path to the resource within the module
    * @param ultimateOnly If true, this include is only processed in Ultimate builds.
    *   - When inlining: Skipped in Community builds
@@ -265,7 +280,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * @see <a href="programmatic-content.md#ultimate-only-includes">Ultimate-Only Includes Documentation</a>
    */
   fun deprecatedInclude(moduleName: String, resourcePath: String, ultimateOnly: Boolean = false, optional: Boolean = false) {
-    xmlIncludes.add(DeprecatedXmlInclude(moduleName, resourcePath, ultimateOnly, optional))
+    xmlIncludes.add(DeprecatedXmlInclude(ContentModuleName(moduleName), resourcePath, ultimateOnly, optional))
     compositionGraph.add(SpecComposition(
       type = CompositionType.DEPRECATED_XML,
       reference = "$moduleName:$resourcePath",
@@ -300,7 +315,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   }
 
   @PublishedApi
-  internal fun addModuleSet(set: ModuleSet, overrides: Map<String, ModuleLoadingRuleValue>) {
+  internal fun addModuleSet(set: ModuleSet, overrides: Map<ContentModuleName, ModuleLoadingRuleValue>) {
     moduleSets.add(ModuleSetWithOverrides(set, overrides))
     compositionGraph.add(SpecComposition(
       type = CompositionType.MODULE_SET_REF,
@@ -312,9 +327,22 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
 
   /**
    * Add an individual module to additionalModules.
+   *
+   * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for auto-added dependencies
+   *   discovered from this module (DSL test plugins only).
    */
-  fun module(name: String, loading: ModuleLoadingRuleValue? = null) {
-    additionalModules.add(ContentModule(name, loading))
+  fun module(
+    name: String,
+    loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
+    allowedMissingPluginIds: List<String> = emptyList(),
+  ) {
+    additionalModules.add(
+      ContentModule(
+        ContentModuleName(name),
+        loading,
+        allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+      )
+    )
     compositionGraph.add(SpecComposition(
       type = CompositionType.DIRECT_MODULE,
       reference = name,
@@ -325,9 +353,18 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
 
   /**
    * Add an individual module with EMBEDDED loading to additionalModules.
+   *
+   * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for auto-added dependencies
+   *   discovered from this module (DSL test plugins only).
    */
-  fun embeddedModule(name: String) {
-    additionalModules.add(ContentModule(name, ModuleLoadingRuleValue.EMBEDDED))
+  fun embeddedModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+    additionalModules.add(
+      ContentModule(
+        ContentModuleName(name),
+        ModuleLoadingRuleValue.EMBEDDED,
+        allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+      )
+    )
     compositionGraph.add(SpecComposition(
       type = CompositionType.DIRECT_MODULE,
       reference = name,
@@ -338,9 +375,18 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
 
   /**
    * Add an individual module with REQUIRED loading to additionalModules.
+   *
+   * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for auto-added dependencies
+   *   discovered from this module (DSL test plugins only).
    */
-  fun requiredModule(name: String) {
-    additionalModules.add(ContentModule(name, ModuleLoadingRuleValue.REQUIRED))
+  fun requiredModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+    additionalModules.add(
+      ContentModule(
+        ContentModuleName(name),
+        ModuleLoadingRuleValue.REQUIRED,
+        allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+      )
+    )
     compositionGraph.add(SpecComposition(
       type = CompositionType.DIRECT_MODULE,
       reference = name,
@@ -357,7 +403,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * @param pluginModules List of JPS module names containing META-INF/plugin.xml
    */
   fun bundledPlugins(pluginModules: List<String>) {
-    bundledPlugins.addAll(pluginModules)
+    pluginModules.mapTo(bundledPlugins) { TargetName(it) }
   }
 
   /**
@@ -367,7 +413,9 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * @param modules Module names that are allowed to be missing
    */
   fun allowMissingDependencies(vararg modules: String) {
-    allowedMissingDeps.addAll(modules)
+    for (module in modules) {
+      allowedMissingDeps.add(ContentModuleName(module))
+    }
   }
 
   /**
@@ -377,7 +425,73 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * @param modules Module names that are allowed to be missing
    */
   fun allowMissingDependencies(modules: List<String>) {
-    allowedMissingDeps.addAll(modules)
+    modules.mapTo(allowedMissingDeps) { ContentModuleName(it) }
+  }
+
+  /**
+   * Define a test plugin to be generated programmatically.
+   * Test plugins provide test framework modules and have plugin.xml in `testResources/META-INF/`.
+   *
+   * Example:
+   * ```
+   * testPlugin(
+   *   pluginId = "intellij.python.junit5Tests.plugin",
+   *   name = "Python Tests Plugin",
+   *   pluginXmlPath = "python/junit5Tests/plugin/testResources/META-INF/plugin.xml"
+   * ) {
+   *   module("intellij.libraries.junit5")
+   *   module("intellij.platform.testFramework")
+   * }
+   * ```
+   *
+   * @param pluginId The plugin ID (e.g., "intellij.python.junit5Tests.plugin")
+   * @param name Human-readable plugin name
+   * @param pluginXmlPath Path to the plugin.xml file relative to project root
+   * @param additionalBundledPluginTargetNames Additional plugin JPS module target names to treat as bundled for this test plugin's
+   *   dependency resolution and auto-add (useful for conditional/runtime plugin inclusion)
+   * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for this test plugin.
+   *   If a plugin dependency is inferred but not resolvable, it will be skipped and reported as an error unless listed here.
+   *   Use module-level allowedMissingPluginIds for more precise suppression scoped to a single module.
+   * @param block DSL block to define the test plugin's content modules
+   * @see <a href="../test-plugins.md">Test Plugin Generation Documentation</a>
+   */
+  inline fun testPlugin(
+    pluginId: String,
+    name: String,
+    pluginXmlPath: String,
+    additionalBundledPluginTargetNames: List<String> = emptyList(),
+    allowedMissingPluginIds: List<String> = emptyList(),
+    block: ProductModulesContentSpecBuilder.() -> Unit,
+  ) {
+    addTestPlugin(
+      pluginId = pluginId,
+      name = name,
+      pluginXmlPath = pluginXmlPath,
+      additionalBundledPluginTargetNames = additionalBundledPluginTargetNames,
+      allowedMissingPluginIds = allowedMissingPluginIds,
+      spec = ProductModulesContentSpecBuilder().apply(block).build()
+    )
+  }
+
+  @PublishedApi
+  internal fun addTestPlugin(
+    pluginId: String,
+    name: String,
+    pluginXmlPath: String,
+    additionalBundledPluginTargetNames: List<String>,
+    allowedMissingPluginIds: List<String>,
+    spec: ProductModulesContentSpec,
+  ) {
+    testPlugins.add(
+      TestPluginSpec(
+        pluginId = PluginId(pluginId),
+        name = name,
+        pluginXmlPath = pluginXmlPath,
+        spec = spec,
+        additionalBundledPluginTargetNames = additionalBundledPluginTargetNames.map { TargetName(it) },
+        allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+      )
+    )
   }
 
   @PublishedApi
@@ -392,6 +506,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
       allowedMissingDependencies = java.util.Set.copyOf(allowedMissingDeps),
       compositionGraph = java.util.List.copyOf(compositionGraph),
       metadata = metadata,
+      testPlugins = java.util.List.copyOf(testPlugins),
     )
   }
 }
@@ -423,3 +538,25 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
 inline fun productModules(block: ProductModulesContentSpecBuilder.() -> Unit): ProductModulesContentSpec {
   return ProductModulesContentSpecBuilder().apply(block).build()
 }
+
+/**
+ * Specification for a test plugin that will have its plugin.xml generated programmatically.
+ * Test plugins are used for running tests and provide test framework modules.
+ *
+ * @param pluginId The plugin XML ID (e.g., "intellij.python.junit5Tests.plugin")
+ * @param name Human-readable plugin name for the `<name>` tag
+ * @param pluginXmlPath Path to the plugin.xml file relative to project root
+ * @param spec The content specification using the same DSL as products
+ * @param additionalBundledPluginTargetNames Extra plugin JPS module target names to treat as bundled for this test plugin's
+ *   dependency resolution and auto-add
+ * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for this test plugin
+ */
+@Serializable
+data class TestPluginSpec(
+  val pluginId: PluginId,
+  @JvmField val name: String,
+  @JvmField val pluginXmlPath: String,
+  @JvmField val spec: ProductModulesContentSpec,
+  @JvmField val additionalBundledPluginTargetNames: List<TargetName> = emptyList(),
+  @JvmField val allowedMissingPluginIds: List<PluginId> = emptyList(),
+)

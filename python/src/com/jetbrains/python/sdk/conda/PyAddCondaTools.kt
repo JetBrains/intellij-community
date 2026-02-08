@@ -7,7 +7,14 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
-import com.intellij.execution.target.*
+import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetProgressIndicatorAdapter
+import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.createProcessWithResult
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
@@ -17,7 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
@@ -30,7 +36,13 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.conda.*
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +51,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
@@ -137,10 +148,8 @@ private suspend fun getCondaInterpreterOutput(
  */
 suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   newCondaEnvInfo: NewCondaEnvRequest,
-  uiContext: CoroutineContext,
   existingSdks: List<Sdk>,
   project: Project,
-  reporter: RawProgressReporter? = null,
 ): PyResult<Sdk> {
   PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
   val sdk = createCondaSdkFromExistingEnv(

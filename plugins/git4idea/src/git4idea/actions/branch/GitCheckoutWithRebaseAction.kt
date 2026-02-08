@@ -13,7 +13,10 @@ import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchPopupActions.*
+import git4idea.ui.branch.GitBranchPopupActions.addTooltipText
+import git4idea.ui.branch.GitBranchPopupActions.getCurrentBranchFullPresentation
+import git4idea.ui.branch.GitBranchPopupActions.getCurrentBranchTruncatedPresentation
+import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentation
 import git4idea.ui.branch.GitCheckoutAndRebaseRemoteBranchWorkflow
 import git4idea.ui.branch.hasTrackingConflicts
 

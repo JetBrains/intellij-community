@@ -9,15 +9,19 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.Path
-import kotlin.io.path.writeText
-import kotlin.script.experimental.annotations.KotlinScript
-import kotlin.script.experimental.api.*
-import kotlin.script.experimental.host.ScriptingHostConfiguration
+import kotlin.script.experimental.api.KotlinType
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.dependenciesSources
+import kotlin.script.experimental.api.displayName
+import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
-import kotlin.script.experimental.host.getScriptingClass
-import kotlin.script.experimental.jvm.*
+import kotlin.script.experimental.jvm.JvmDependency
+import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
+import kotlin.script.experimental.jvm.jdkHome
+import kotlin.script.experimental.jvm.jvm
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 val scriptClassPath: List<File> = listOf(

@@ -2,7 +2,6 @@ package com.intellij.terminal.frontend.action
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion

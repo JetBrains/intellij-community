@@ -11,16 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ConstructorInjectionTest {
-  @Test
-  fun `constructor with bool`() {
-    val componentManager = TestComponentManager()
-    componentManager.registerService(ConstructorWithBoolean::class.java, ConstructorWithBoolean::class.java, DefaultPluginDescriptor("test"), false)
-    componentManager.getService(ConstructorWithBoolean::class.java)
-  }
-}
-
-@PerformanceUnitTest
-class ConstructorInjectionPerformanceTest {
+  @PerformanceUnitTest
   @Test
   fun `light service getService() performance`() {
     val componentManager = TestComponentManager()
@@ -31,6 +22,13 @@ class ConstructorInjectionPerformanceTest {
         componentManager.getService(BarService::class.java)!!
       }
     }.runAsStressTest().start()
+  }
+
+  @Test
+  fun `constructor with bool`() {
+    val componentManager = TestComponentManager()
+    componentManager.registerService(ConstructorWithBoolean::class.java, ConstructorWithBoolean::class.java, DefaultPluginDescriptor("test"), false)
+    componentManager.getService(ConstructorWithBoolean::class.java)
   }
 }
 @Service

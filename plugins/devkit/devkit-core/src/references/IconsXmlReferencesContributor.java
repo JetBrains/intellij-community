@@ -2,7 +2,15 @@
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.patterns.XmlPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.XmlAttribute;
@@ -16,7 +24,10 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.function.Function;
 
-import static org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor.*;
+import static org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor.COM_INTELLIJ_ICONS_PREFIX;
+import static org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor.ICONS_PACKAGE_PREFIX;
+import static org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor.IconPsiReferenceBase;
+import static org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor.resolveIconPath;
 
 final class IconsXmlReferencesContributor extends PsiReferenceContributor {
   @Override

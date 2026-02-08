@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.AdjustableUndoableAction;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.ImmutableActionChangeRange;
+import com.intellij.openapi.command.undo.MutableActionChangeRange;
+import com.intellij.openapi.command.undo.MutableActionChangeRangeImpl;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.vfs.VirtualFile;

@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.svn.NestedCopyType
 import org.jetbrains.idea.svn.SvnVcs
-import java.util.*
+import java.util.Collections
 
 internal class SvnStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP

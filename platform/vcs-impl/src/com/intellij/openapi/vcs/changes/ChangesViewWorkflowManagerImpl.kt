@@ -9,7 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.ChangesViewCommitPanel
+import com.intellij.vcs.commit.ChangesViewCommitWorkflow
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitMode
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
 import kotlinx.coroutines.flow.MutableStateFlow
 

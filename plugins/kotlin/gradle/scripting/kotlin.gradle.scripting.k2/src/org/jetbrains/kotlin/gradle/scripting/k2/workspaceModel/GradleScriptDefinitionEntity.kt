@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity

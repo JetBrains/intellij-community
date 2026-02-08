@@ -7,8 +7,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import java.awt.BorderLayout;
 
 import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboard;
 

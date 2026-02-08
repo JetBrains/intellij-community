@@ -19,7 +19,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceClosureParameterProcessor;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceExpressionSettingsImpl;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterProcessor;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;

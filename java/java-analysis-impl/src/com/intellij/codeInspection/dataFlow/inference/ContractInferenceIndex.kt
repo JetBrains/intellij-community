@@ -13,7 +13,21 @@ import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
-import com.intellij.psi.impl.source.tree.JavaElementType.*
+import com.intellij.psi.impl.source.tree.JavaElementType.ANNOTATION_METHOD
+import com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS
+import com.intellij.psi.impl.source.tree.JavaElementType.CLASS
+import com.intellij.psi.impl.source.tree.JavaElementType.CLASS_INITIALIZER
+import com.intellij.psi.impl.source.tree.JavaElementType.CODE_BLOCK
+import com.intellij.psi.impl.source.tree.JavaElementType.DECLARATION_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.ENUM_CONSTANT
+import com.intellij.psi.impl.source.tree.JavaElementType.ENUM_CONSTANT_INITIALIZER
+import com.intellij.psi.impl.source.tree.JavaElementType.EXTENDS_LIST
+import com.intellij.psi.impl.source.tree.JavaElementType.FIELD
+import com.intellij.psi.impl.source.tree.JavaElementType.JAVA_CODE_REFERENCE
+import com.intellij.psi.impl.source.tree.JavaElementType.LAMBDA_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.METHOD
+import com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST
+import com.intellij.psi.impl.source.tree.JavaElementType.TYPE
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.stubs.StubInconsistencyReporter
@@ -21,7 +35,7 @@ import com.intellij.psi.stubs.StubTextInconsistencyException
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.gist.GistManager
-import java.util.*
+import java.util.BitSet
 
 internal fun indexFile(tree: LighterAST): Map<Int, MethodData> {
   val visitor = InferenceVisitor(tree)

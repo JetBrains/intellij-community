@@ -12,11 +12,11 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
-import com.intellij.python.community.impl.huggingFace.icons.PythonCommunityImplHuggingFaceIcons
 import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierPsiElement
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceApi.fetchOrRetrieveModelCard
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsCache
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCache
+import com.intellij.python.community.impl.huggingFace.icons.PythonCommunityImplHuggingFaceIcons
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import com.jetbrains.python.psi.PyTargetExpression

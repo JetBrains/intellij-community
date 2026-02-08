@@ -3,7 +3,9 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.changes.CompositeFilePathHolder.*
+import com.intellij.openapi.vcs.changes.CompositeFilePathHolder.IgnoredFilesCompositeHolder
+import com.intellij.openapi.vcs.changes.CompositeFilePathHolder.ResolvedFilesCompositeHolder
+import com.intellij.openapi.vcs.changes.CompositeFilePathHolder.UnversionedFilesCompositeHolder
 
 internal class FileHolderComposite private constructor(
   private val project: Project,

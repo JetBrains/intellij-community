@@ -4,11 +4,14 @@ package git4idea.inMemory.rebase.log.changes
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
-import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.rebase.GitSingleCommitEditingAction
-import git4idea.rebase.log.*
+import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.rebase.log.GitNewCommitMessageActionDialog
+import git4idea.rebase.log.focusCommitWhenReady
+import git4idea.rebase.log.getOrLoadSingleCommitDetails
+import git4idea.rebase.log.notifySuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

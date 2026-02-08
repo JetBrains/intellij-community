@@ -2,7 +2,11 @@
 package com.intellij.xdebugger;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.testFramework.PlatformLiteFixture;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.TestDisposable;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -10,18 +14,31 @@ import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class XDebuggerSettingsTest extends PlatformLiteFixture {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    initApplication();
-    registerExtensionPoint(XDebuggerSettingManagerImpl.getSettingsEP(), XDebuggerSettings.class);
-    registerExtension(XDebuggerSettingManagerImpl.getSettingsEP(), new MyDebuggerSettings());
-    getApplication().registerService(XDebuggerUtil.class, XDebuggerUtilImpl.class);
-    getApplication().registerService(XDebuggerSettingsManager.class, XDebuggerSettingManagerImpl.class);
+import java.util.List;
+
+import static com.intellij.testFramework.ServiceContainerUtil.registerOrReplaceServiceInstance;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+@TestApplication
+public class XDebuggerSettingsTest {
+
+  @TestDisposable
+  private Disposable testDisposable;
+
+  @BeforeEach
+  public void setUp() {
+    var application = ApplicationManager.getApplication();
+    ExtensionTestUtil.addExtensions(XDebuggerSettingManagerImpl.getSettingsEP(), List.of(new MyDebuggerSettings()), testDisposable);
+    registerOrReplaceServiceInstance(application, XDebuggerUtil.class, new XDebuggerUtilImpl(), testDisposable);
+    registerOrReplaceServiceInstance(application, XDebuggerSettingsManager.class, new XDebuggerSettingManagerImpl(), testDisposable);
   }
 
+  @Test
   public void testSerialize() {
     XDebuggerSettingManagerImpl settingsManager = XDebuggerSettingManagerImpl.getInstanceImpl();
 

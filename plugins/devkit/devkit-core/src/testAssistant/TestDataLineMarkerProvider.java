@@ -31,11 +31,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class TestDataLineMarkerProvider extends LineMarkerProviderDescriptor {

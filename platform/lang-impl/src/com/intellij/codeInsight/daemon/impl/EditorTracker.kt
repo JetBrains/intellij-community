@@ -10,7 +10,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.EventListener
 
 @Internal
 interface EditorTracker {

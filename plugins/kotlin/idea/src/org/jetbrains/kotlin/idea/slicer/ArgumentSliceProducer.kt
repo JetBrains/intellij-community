@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.source.getPsi
 
+@K1Deprecation
 @Suppress("DataClassPrivateConstructor") // we have modifier data to get equals&hashCode only
 @ConsistentCopyVisibility
 data class ArgumentSliceProducer private constructor(

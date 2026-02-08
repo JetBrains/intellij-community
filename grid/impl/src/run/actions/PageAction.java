@@ -1,15 +1,24 @@
 package com.intellij.database.run.actions;
 
 import com.intellij.database.DatabaseDataKeys;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DocumentDataHookUp;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridLoader;
+import com.intellij.database.datagrid.GridMutator;
+import com.intellij.database.datagrid.GridPagingModel;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ImmutableDataHookUp;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.FloatingPagingManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification.Frontend;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification.Frontend;
 
 import static com.intellij.database.datagrid.GridUtil.hidePageActions;
 

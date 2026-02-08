@@ -21,7 +21,10 @@ import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.*
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Invalid
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Success
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Undefined
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Unsupported
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.pathString

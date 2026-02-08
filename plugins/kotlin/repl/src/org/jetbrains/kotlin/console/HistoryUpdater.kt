@@ -7,9 +7,11 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.console.gutter.ConsoleIndicatorRenderer
 import org.jetbrains.kotlin.console.gutter.ReplIcons
 
+@K1Deprecation
 class HistoryUpdater(private val runner: KotlinConsoleRunner) {
     private val consoleView: LanguageConsoleImpl by lazy { runner.consoleView as LanguageConsoleImpl }
 

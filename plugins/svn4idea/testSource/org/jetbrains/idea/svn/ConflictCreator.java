@@ -20,7 +20,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.openapi.util.io.FileUtil.*;
+import static com.intellij.openapi.util.io.FileUtil.delete;
+import static com.intellij.openapi.util.io.FileUtil.ensureExists;
+import static com.intellij.openapi.util.io.FileUtil.writeToFile;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;

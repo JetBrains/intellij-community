@@ -7,8 +7,9 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.LayoutManager;
 
 public abstract class AdditionalTabComponent extends JPanel implements ComponentContainer, ComponentWithActions {
   protected AdditionalTabComponent(LayoutManager layout) {

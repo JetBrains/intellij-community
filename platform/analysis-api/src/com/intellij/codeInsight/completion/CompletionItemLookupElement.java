@@ -36,7 +36,7 @@ public final class CompletionItemLookupElement extends LookupElement implements 
   private final ModCompletionItem item;
   private volatile @Nullable ModCommand myCachedCommand;
 
-  CompletionItemLookupElement(ModCompletionItem item) {
+  public CompletionItemLookupElement(ModCompletionItem item) {
     this.item = item;
   }
 

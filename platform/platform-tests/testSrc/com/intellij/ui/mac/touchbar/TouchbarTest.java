@@ -4,7 +4,10 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;

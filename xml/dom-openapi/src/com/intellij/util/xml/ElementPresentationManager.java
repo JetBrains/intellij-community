@@ -17,7 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Optional;

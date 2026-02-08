@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  packageA/Base.class
+End of files
+Compiling files:
+  java/generics/overrideAnnotatedAnonymous/a/packageA/Base.java
+End of files
+Cleaning output files:
+  packageA/Derived$1.class
+  packageA/Derived.class
+End of files
+Compiling files:
+  java/generics/overrideAnnotatedAnonymous/a/packageA/Derived.java
+End of files
+------------------------------------------
+Exit code: ERROR

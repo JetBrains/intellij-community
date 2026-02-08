@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.roots.ui
 
-import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.JavaModuleSourceRootEditHandler
+import com.intellij.openapi.roots.ui.configuration.JavaResourceRootEditHandler
+import com.intellij.openapi.roots.ui.configuration.JavaTestResourceRootEditHandler
+import com.intellij.openapi.roots.ui.configuration.JavaTestSourceRootEditHandler
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties

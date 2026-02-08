@@ -5,7 +5,15 @@ package org.jetbrains.kotlin.idea.script.definition
 
 import java.io.File
 import kotlin.script.experimental.annotations.KotlinScript
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptAcceptedLocation
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.acceptedLocations
+import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.ide
+import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.ScriptingHostConfigurationKeys
 import kotlin.script.experimental.jvm.JvmDependency

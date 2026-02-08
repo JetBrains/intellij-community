@@ -27,7 +27,11 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.kohsuke.rngom.parse.compact.*;
+import org.kohsuke.rngom.parse.compact.CharStream;
+import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
+import org.kohsuke.rngom.parse.compact.CompactSyntaxTokenManager;
+import org.kohsuke.rngom.parse.compact.Token;
+import org.kohsuke.rngom.parse.compact.TokenMgrError;
 
 import java.io.FileReader;
 import java.io.IOException;

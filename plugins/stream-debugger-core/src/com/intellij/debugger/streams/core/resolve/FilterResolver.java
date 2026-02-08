@@ -6,7 +6,11 @@ import com.intellij.debugger.streams.core.trace.TraceInfo;
 import com.intellij.debugger.streams.core.trace.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Vitaliy.Bibaev

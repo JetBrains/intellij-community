@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
@@ -30,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import kotlin.io.path.Path
 
 //TODO::
 // [] Different tag name for library root and SDK roots e.g sources, classes
@@ -38,8 +40,13 @@ import org.jetbrains.annotations.TestOnly
 // [] Strange to have type `SDK` but methods - `updateJDK`
 
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
+
+private fun Sdk.getEelDescriptor(): EelDescriptor? {
+  return homeDirectory?.toNioPath()?.getEelDescriptor() ?: homePath?.let(::Path)?.getEelDescriptor()
+}
+
 @ApiStatus.Internal
-class SdkTableBridgeImpl: SdkTableImplementationDelegate {
+class SdkTableBridgeImpl : SdkTableImplementationDelegate {
 
   override fun findSdkByName(name: String): Sdk? {
     val globalWorkspaceModels = GlobalWorkspaceModel.getInstancesBlocking()
@@ -80,7 +87,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun addNewSdk(sdk: Sdk) {
     val delegateSdk = (sdk as ProjectJdkImpl).delegate as SdkBridgeImpl
-    val machine = delegateSdk.homeDirectory?.toNioPath()?.getEelDescriptor()?.getResolvedEelMachine() ?: LocalEelMachine
+    val machine = delegateSdk.getEelDescriptor()?.getResolvedEelMachine() ?: LocalEelMachine
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(machine)
     val existingSdkEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(sdk)
 
@@ -112,7 +119,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   }
 
   override fun removeSdk(sdk: Sdk) {
-    val descriptor = sdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
+    val descriptor = sdk.getEelDescriptor() ?: LocalEelDescriptor
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor.getResolvedEelMachine() ?: LocalEelMachine)
 
     // It's absolutely OK if we try to remove what does not yet exist in `ProjectJdkTable` SDK
@@ -126,7 +133,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   override fun updateSdk(originalSdk: Sdk, modifiedSdk: Sdk) {
     modifiedSdk as ProjectJdkImpl
     originalSdk as ProjectJdkImpl
-    val descriptor = modifiedSdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
+    val descriptor = modifiedSdk.getEelDescriptor() ?: LocalEelDescriptor
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor.getResolvedEelMachine() ?: LocalEelMachine)
     val sdkEntity = (globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java)
                        .firstOrNull { it.name == originalSdk.name && it.type == originalSdk.sdkType.name }

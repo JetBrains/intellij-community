@@ -3,7 +3,12 @@ package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.TestFrameworks
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.isJUnit4InScope
 import com.intellij.execution.junit.isJUnit5Or6InScope

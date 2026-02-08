@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 
 final class TypeEditor extends DialogWrapper {
   private final UserFileType<?> myFileType;

@@ -5,7 +5,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusImpl.MessageHandlerHolder
-import java.util.*
+import java.util.Arrays
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 

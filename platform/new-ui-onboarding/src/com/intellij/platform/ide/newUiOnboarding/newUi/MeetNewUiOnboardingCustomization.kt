@@ -24,7 +24,7 @@ internal class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
   }
 
   override fun shouldCreateToolWindow(): Boolean {
-    return NewUiOnboardingUtil.shouldProposeOnboarding()
+    return NewUiOnboardingUtil.shouldProposeOnboarding(NewUiOnboardingUtil.OnboardingType.MEET_NEW_UI_TOOL_WINDOW)
   }
 
   override fun showToolWindowOnStartup(): Boolean {

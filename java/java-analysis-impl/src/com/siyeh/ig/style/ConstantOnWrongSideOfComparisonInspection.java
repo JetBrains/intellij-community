@@ -22,7 +22,10 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.dropdown;
+import static com.intellij.codeInspection.options.OptPane.option;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class ConstantOnWrongSideOfComparisonInspection extends BaseInspection implements CleanupLocalInspectionTool {
 

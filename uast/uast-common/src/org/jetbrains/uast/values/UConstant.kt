@@ -4,7 +4,11 @@ package org.jetbrains.uast.values
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.name
 
 interface UConstant : UValue {
   val value: Any?

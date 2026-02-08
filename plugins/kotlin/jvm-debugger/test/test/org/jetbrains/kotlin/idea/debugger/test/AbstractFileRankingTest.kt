@@ -4,14 +4,15 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.openapi.application.runReadAction
+import com.intellij.util.ThrowableRunnable
+import com.sun.jdi.Location
 import com.sun.jdi.ThreadReference
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.junit.Assert
 import java.io.File
 
@@ -22,15 +23,30 @@ private const val PRODUCED_CLASS_NAMES_DIRECTIVE = "// PRODUCED_CLASS_NAMES:"
 private const val PRODUCED_CLASS_NAME_OPTIONAL_SUFFIX = "(optional)"
 
 abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
+    override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
+        val file = File(getTestsRoot(this::class.java), getTestDataFileName(this::class.java, this.name) ?: (getTestName(false) + ".kt"))
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            file.toPath(),
+            when {
+                pluginMode == KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
+                compileWithK2 && pluginMode == KotlinPluginMode.K2 -> "// IGNORE_K2"
+                pluginMode == KotlinPluginMode.K2 -> "// IGNORE_K2_K1"
+                else -> IgnoreTests.DIRECTIVES.IGNORE_K2
+            },
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) {
+            super.runBare(testRunnable)
+        }
+    }
+
     override fun doTest(
         options: Set<String>,
         mainThread: ThreadReference,
         sourceFiles: List<KtFile>,
-        bindingContext: BindingContext,
         jvmSrcDir: File,
         outputFiles: List<CompiledClassFile>,
+        ranker: (List<KtFile>, Location) -> Map<KtFile, Int>,
     ) {
-        val doNotCheckClassFqName = "DO_NOT_CHECK_CLASS_FQNAME" in options
         val strictMode = "DISABLE_STRICT_MODE" !in options
 
         val classNameToKtFile = collectClassNamesToKtFiles(sourceFiles, outputFiles)
@@ -54,10 +70,6 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
                 .filterNotNull()
         }.toMap()
 
-        val calculator = object : FileRankingCalculator(checkClassFqName = !doNotCheckClassFqName) {
-            override fun analyze(element: KtElement) = bindingContext
-        }
-
         val problems = mutableListOf<String>()
 
         val skipClasses = skipLoadingClasses(options)
@@ -79,9 +91,7 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
             for (location in locations) {
                 if (location.method().isBridge || location.method().isSynthetic) continue
 
-                val fileWithRankings: Map<KtFile, Int> = runBlocking {
-                    calculator.rankFiles(allFilesWithSameName, location)
-                }
+                val fileWithRankings: Map<KtFile, Int> = ranker(allFilesWithSameName, location)
 
                 for ((ktFile, rank) in fileWithRankings) {
                     val expectedRank = expectedRanks[ktFile to (location.lineNumber())]
@@ -154,8 +164,3 @@ private fun collectClassNamesToKtFiles(
         }
     }
 
-abstract class AbstractK1IdeK2CodeFileRankingTest : AbstractFileRankingTest() {
-    override val compileWithK2 = true
-
-    override val lambdasGenerationScheme = JvmClosureGenerationScheme.INDY
-}

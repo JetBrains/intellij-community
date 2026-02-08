@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +48,10 @@ interface JarRepositoryAuthenticationDataProvider {
 
 @RequiresBackgroundThread
 internal fun obtainAuthenticationData(description: RemoteRepositoryDescription): ArtifactRepositoryManager.ArtifactAuthenticationData? {
+  // Unfortunately, right now @RequiresBackgroundThread does not trigger exceptions
+  // Sync call of resolver on EDT is not allowed
+  SlowOperations.assertSlowOperationsAreAllowed()
+
   for (extension in JarRepositoryAuthenticationDataProvider.KEY.extensionList) {
     val authData = extension.provideAuthenticationData(description)
     if (authData != null) {

@@ -11,7 +11,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 
 internal class BackendProcessHandlerApi : ProcessHandlerApi {
   override suspend fun startNotify(handlerId: ProcessHandlerId) {

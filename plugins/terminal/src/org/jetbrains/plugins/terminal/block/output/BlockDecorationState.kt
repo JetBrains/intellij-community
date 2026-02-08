@@ -6,7 +6,13 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.terminal.BlockTerminalColors
-import org.jetbrains.plugins.terminal.block.ui.*
+import org.jetbrains.plugins.terminal.block.ui.BlockSeparatorRenderer
+import org.jetbrains.plugins.terminal.block.ui.GradientTextureCache
+import org.jetbrains.plugins.terminal.block.ui.TerminalBlockBackgroundRenderer
+import org.jetbrains.plugins.terminal.block.ui.TerminalBlockCornersRenderer
+import org.jetbrains.plugins.terminal.block.ui.TerminalBlockLeftAreaRenderer
+import org.jetbrains.plugins.terminal.block.ui.TerminalBlockLeftErrorRenderer
+import org.jetbrains.plugins.terminal.block.ui.TerminalBlockLeftErrorRendererWrapper
 import java.awt.Graphics
 import java.awt.Rectangle
 

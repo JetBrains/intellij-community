@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLDocument;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Objects;
 

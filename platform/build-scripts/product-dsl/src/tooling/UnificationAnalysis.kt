@@ -3,41 +3,46 @@
 
 package org.jetbrains.intellij.build.productLayout.tooling
 
+import com.intellij.platform.pluginGraph.PluginGraph
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversal
-import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
+import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetModuleNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleSetNames
+import org.jetbrains.intellij.build.productLayout.traversal.findModuleSetInclusionChain
+import org.jetbrains.intellij.build.productLayout.traversal.isModuleSetTransitivelyNested
 
 /**
  * Index for O(1) lookup of products by module set name.
  * Built once and reused across all analysis functions.
  */
-internal class ProductModuleSetIndex(products: List<ProductSpec>) {
+internal class ProductModuleSetIndex(products: List<ProductSpec>, pluginGraph: PluginGraph) {
   private val productsByModuleSet: Map<String, List<ProductSpec>>
 
   init {
     val index = HashMap<String, MutableList<ProductSpec>>()
     for (product in products) {
-      for (msRef in (product.contentSpec?.moduleSets ?: emptyList())) {
-        index.computeIfAbsent(msRef.moduleSet.name) { ArrayList() }.add(product)
+      if (product.contentSpec == null) continue
+      for (moduleSetName in collectProductModuleSetNames(pluginGraph, product.name)) {
+        index.computeIfAbsent(moduleSetName) { ArrayList() }.add(product)
       }
     }
     productsByModuleSet = index
   }
 
   /** O(1) lookup of products using a module set */
-  fun getProductsUsing(moduleSetName: String): List<ProductSpec> =
-    productsByModuleSet.get(moduleSetName) ?: emptyList()
+  fun getProductsUsing(moduleSetName: String): List<ProductSpec> {
+    return productsByModuleSet.get(moduleSetName) ?: emptyList()
+  }
 }
 
 /**
  * Suggests module set unification opportunities based on overlap, similarity, and usage patterns.
  * 
  * Strategies:
- * - merge: Combine overlapping module sets (especially subsets/supersets)
- * - inline: Inline rarely used small module sets directly into products
- * - factor: Extract common patterns from similar products
- * - split: Split oversized module sets for better maintainability
+ * - Merge: Combine overlapping module sets (especially subsets/supersets)
+ * - Inline: Inline rarely used small module sets directly into products
+ * - Factor: Extract common patterns from similar products
+ * - Split: Split oversized module sets for better maintainability
  * 
  * @param allModuleSets All module sets with metadata
  * @param products All products
@@ -52,51 +57,51 @@ internal suspend fun suggestModuleSetUnification(
   products: List<ProductSpec>,
   overlaps: List<ModuleSetOverlap>,
   similarityPairs: List<ProductSimilarityPair>,
+  pluginGraph: PluginGraph,
   maxSuggestions: Int = 10,
   strategy: String = "all"
-): List<UnificationSuggestion> = coroutineScope {
-  // Build index for O(1) product lookups
-  val productIndex = ProductModuleSetIndex(products)
+): List<UnificationSuggestion> {
+  return coroutineScope {
+    // Build index for O(1) product lookups
+    val productIndex = ProductModuleSetIndex(products, pluginGraph)
 
-  // Build cache for O(1) module name lookups
-  val cache = ModuleSetTraversalCache(allModuleSets.map { it.moduleSet })
-
-  // Run all 4 strategies in parallel
-  val mergeJob = async {
-    if (strategy == "merge" || strategy == "all") computeMergeSuggestions(overlaps) else emptyList()
-  }
-
-  val inlineJob = async {
-    if (strategy == "inline" || strategy == "all") computeInlineSuggestions(allModuleSets, productIndex, cache) else emptyList()
-  }
-
-  val factorJob = async {
-    if (strategy == "factor" || strategy == "all") computeFactorSuggestions(similarityPairs) else emptyList()
-  }
-
-  val splitJob = async {
-    if (strategy == "split" || strategy == "all") computeSplitSuggestions(allModuleSets, cache) else emptyList()
-  }
-
-  // Await all and flatten
-  val suggestions = mergeJob.await() + inlineJob.await() + factorJob.await() + splitJob.await()
-
-  // Remove duplicates and sort by priority
-  val uniqueSuggestions = ArrayList<UnificationSuggestion>()
-  val seen = HashSet<String>()
-  for (suggestion in suggestions) {
-    val key = listOf(suggestion.strategy, suggestion.moduleSet1, suggestion.moduleSet2, suggestion.moduleSet).toString()
-    if (!seen.contains(key)) {
-      seen.add(key)
-      uniqueSuggestions.add(suggestion)
+    // Run all 4 strategies in parallel
+    val mergeJob = async {
+      if (strategy == "merge" || strategy == "all") computeMergeSuggestions(overlaps) else emptyList()
     }
+
+    val inlineJob = async {
+      if (strategy == "inline" || strategy == "all") computeInlineSuggestions(allModuleSets, productIndex, pluginGraph) else emptyList()
+    }
+
+    val factorJob = async {
+      if (strategy == "factor" || strategy == "all") computeFactorSuggestions(similarityPairs) else emptyList()
+    }
+
+    val splitJob = async {
+      if (strategy == "split" || strategy == "all") computeSplitSuggestions(allModuleSets, pluginGraph) else emptyList()
+    }
+
+    // Await all and flatten
+    val suggestions = mergeJob.await() + inlineJob.await() + factorJob.await() + splitJob.await()
+
+    // Remove duplicates and sort by priority
+    val uniqueSuggestions = ArrayList<UnificationSuggestion>()
+    val seen = HashSet<String>()
+    for (suggestion in suggestions) {
+      val key = listOf(suggestion.strategy, suggestion.moduleSet1, suggestion.moduleSet2, suggestion.moduleSet).toString()
+      if (!seen.contains(key)) {
+        seen.add(key)
+        uniqueSuggestions.add(suggestion)
+      }
+    }
+
+    // Sort by priority: high > medium > low
+    val priorityOrder = mapOf("high" to 3, "medium" to 2, "low" to 1)
+    uniqueSuggestions.sortByDescending { priorityOrder.get(it.priority) ?: 0 }
+
+    uniqueSuggestions.take(maxSuggestions)
   }
-
-  // Sort by priority: high > medium > low
-  val priorityOrder = mapOf("high" to 3, "medium" to 2, "low" to 1)
-  uniqueSuggestions.sortByDescending { priorityOrder.get(it.priority) ?: 0 }
-
-  uniqueSuggestions.take(maxSuggestions)
 }
 
 /** Strategy 1: Merge overlapping module sets */
@@ -136,11 +141,11 @@ private fun computeMergeSuggestions(overlaps: List<ModuleSetOverlap>): List<Unif
 private fun computeInlineSuggestions(
   allModuleSets: List<ModuleSetMetadata>,
   productIndex: ProductModuleSetIndex,
-  cache: ModuleSetTraversalCache
+  pluginGraph: PluginGraph
 ): List<UnificationSuggestion> {
   return allModuleSets.mapNotNull { msEntry ->
     val usedByProducts = productIndex.getProductsUsing(msEntry.moduleSet.name)
-    val totalModuleCount = cache.getModuleNames(msEntry.moduleSet).size
+    val totalModuleCount = collectModuleSetModuleNames(pluginGraph, msEntry.moduleSet.name).size
 
     if (usedByProducts.size <= 1 && totalModuleCount <= 5) {
       UnificationSuggestion(
@@ -186,10 +191,10 @@ private fun computeFactorSuggestions(similarityPairs: List<ProductSimilarityPair
 /** Strategy 4: Split large module sets */
 private fun computeSplitSuggestions(
   allModuleSets: List<ModuleSetMetadata>,
-  cache: ModuleSetTraversalCache
+  pluginGraph: PluginGraph
 ): List<UnificationSuggestion> {
   return allModuleSets.mapNotNull { msEntry ->
-    val totalModuleCount = cache.getModuleNames(msEntry.moduleSet).size
+    val totalModuleCount = collectModuleSetModuleNames(pluginGraph, msEntry.moduleSet.name).size
     if (totalModuleCount > 200) {
       UnificationSuggestion(
         priority = "low",
@@ -216,10 +221,12 @@ private fun computeSplitSuggestions(
  */
 fun findProductsUsingModuleSet(
   products: List<ProductSpec>,
-  moduleSetName: String
+  moduleSetName: String,
+  pluginGraph: PluginGraph
 ): List<ProductSpec> {
   return products.filter { p ->
-    p.contentSpec?.moduleSets?.any { it.moduleSet.name == moduleSetName } == true
+    if (p.contentSpec == null) return@filter false
+    collectProductModuleSetNames(pluginGraph, p.name).contains(moduleSetName)
   }
 }
 
@@ -230,21 +237,19 @@ fun findProductsUsingModuleSet(
  * 
  * @param moduleSetName Name of the module set to analyze
  * @param products All products
- * @param allModuleSets All module sets with metadata (includes directNestedSets)
  * @return Analysis result with direct/indirect usage and inclusion chains
  */
 internal fun analyzeProductUsage(
   moduleSetName: String,
   products: List<ProductSpec>,
-  allModuleSets: List<ModuleSetMetadata>,
-  cache: ModuleSetTraversalCache,
+  pluginGraph: PluginGraph,
 ): ProductUsageAnalysis {
-  val moduleSetsList = allModuleSets.map { it.moduleSet }
   val directUsage = ArrayList<ProductUsageEntry>()
   val indirectUsage = ArrayList<ProductUsageEntry>()
   
   for (product in products) {
-    val topLevelSets = product.contentSpec?.moduleSets?.map { it.moduleSet.name } ?: emptyList()
+    if (product.contentSpec == null) continue
+    val topLevelSets = collectProductModuleSetNames(pluginGraph, product.name)
     
     // Check if product directly references the target module set
     if (topLevelSets.contains(moduleSetName)) {
@@ -257,9 +262,9 @@ internal fun analyzeProductUsage(
     else {
       // Check if any top-level set transitively includes the target
       for (topLevelSet in topLevelSets) {
-        if (cache.isTransitivelyNested(topLevelSet, moduleSetName)) {
+        if (isModuleSetTransitivelyNested(pluginGraph, topLevelSet, moduleSetName)) {
           // Build the inclusion chain
-          val chain = ModuleSetTraversal.buildInclusionChain(topLevelSet, moduleSetName, moduleSetsList)
+          val chain = findModuleSetInclusionChain(pluginGraph, topLevelSet, moduleSetName)
           indirectUsage.add(ProductUsageEntry(
             product = product.name,
             usageType = "indirect",
@@ -296,7 +301,7 @@ internal fun analyzeMergeImpact(
   operation: MergeOperation,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
-  cache: ModuleSetTraversalCache,
+  pluginGraph: PluginGraph,
 ): MergeImpactResult {
   val operationStr = operation.name.lowercase()
   // O(1) lookup for metadata by name
@@ -385,19 +390,19 @@ internal fun analyzeMergeImpact(
   }
   
   // Find products using source
-  val productsUsingSource = findProductsUsingModuleSet(products, sourceSet)
+  val productsUsingSource = findProductsUsingModuleSet(products, sourceSet, pluginGraph)
   
   // Find products using target
   val productsUsingTarget = if (targetSet != null) {
-    findProductsUsingModuleSet(products, targetSet)
+    findProductsUsingModuleSet(products, targetSet, pluginGraph)
   } else {
     emptyList()
   }
   
   // Calculate module changes
-  val sourceModules = cache.getModuleNames(sourceEntry.moduleSet)
+  val sourceModules = collectModuleSetModuleNames(pluginGraph, sourceEntry.moduleSet.name)
   val targetModules = if (targetEntry != null) {
-    cache.getModuleNames(targetEntry.moduleSet)
+    collectModuleSetModuleNames(pluginGraph, targetEntry.moduleSet.name)
   }
   else {
     emptySet()
@@ -423,7 +428,7 @@ internal fun analyzeMergeImpact(
     
     // Check if any community products would gain ultimate modules
     val communityProductsUsingTarget = productsUsingTarget.filter { p ->
-      val productSets = p.contentSpec?.moduleSets?.map { it.moduleSet.name } ?: emptyList()
+      val productSets = collectProductModuleSetNames(pluginGraph, p.name)
       !productSets.contains("commercialIdeBase") && !productSets.contains("ide.ultimate")
     }
     

@@ -3,7 +3,11 @@ package com.intellij.collaboration.ui.codereview.list.search
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue, Q: ReviewListQuickFilter<S>>(

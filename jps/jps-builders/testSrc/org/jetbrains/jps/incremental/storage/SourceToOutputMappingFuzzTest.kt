@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
-import net.jqwik.api.*
+import net.jqwik.api.Arbitraries
+import net.jqwik.api.Arbitrary
+import net.jqwik.api.ForAll
+import net.jqwik.api.Property
+import net.jqwik.api.Provide
 import net.jqwik.api.lifecycle.AfterProperty
 import net.jqwik.api.lifecycle.BeforeProperty
 import org.assertj.core.api.Assertions.assertThat

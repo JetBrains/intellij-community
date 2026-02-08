@@ -2,7 +2,10 @@
 package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.Disposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier

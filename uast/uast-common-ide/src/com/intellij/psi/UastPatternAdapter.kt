@@ -13,7 +13,7 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.toUElementOfExpectedTypes
-import java.util.*
+import java.util.Optional
 
 internal class UastPatternAdapter(private val pattern: (UElement, ProcessingContext) -> Boolean,
                                   private val supportedUElementTypes: List<Class<out UElement>>) : ElementPattern<PsiElement> {

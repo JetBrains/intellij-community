@@ -3,16 +3,41 @@ package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
-import kotlin.metadata.*;
+import kotlin.metadata.KmClass;
+import kotlin.metadata.KmDeclarationContainer;
+import kotlin.metadata.KmFunction;
+import kotlin.metadata.KmPackage;
+import kotlin.metadata.KmProperty;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.dependency.GraphConfiguration;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.NodeSourcePathMapper;
+import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.java.ClassUsage;
+import org.jetbrains.jps.dependency.java.FieldUsage;
+import org.jetbrains.jps.dependency.java.FileNode;
+import org.jetbrains.jps.dependency.java.ImportPackageOnDemandUsage;
+import org.jetbrains.jps.dependency.java.ImportStaticMemberUsage;
+import org.jetbrains.jps.dependency.java.ImportStaticOnDemandUsage;
+import org.jetbrains.jps.dependency.java.JvmClass;
+import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
+import org.jetbrains.jps.dependency.java.KotlinMeta;
+import org.jetbrains.jps.dependency.java.LookupNameUsage;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 

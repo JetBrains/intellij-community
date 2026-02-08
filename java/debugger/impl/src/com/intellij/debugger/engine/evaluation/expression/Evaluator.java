@@ -8,16 +8,18 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import org.jetbrains.annotations.NotNull;
 
 public interface Evaluator {
   default Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     throw new AbstractMethodError("evaluate or evaluateModifiable must be implemented");
   }
 
+
   /**
    * Implement if the value may be modified (like local variable or a field)
    */
-  default ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
+  default @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
     return new ModifiableValue(evaluate(context), getModifier());
   }
 
@@ -30,7 +32,7 @@ public interface Evaluator {
    * @deprecated implement {@link #evaluateModifiable(EvaluationContextImpl)} instead
    * @see ModifiableEvaluator
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default Modifier getModifier() {
     return null;
   }

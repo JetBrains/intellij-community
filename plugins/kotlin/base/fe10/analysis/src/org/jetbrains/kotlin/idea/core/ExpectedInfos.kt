@@ -3,30 +3,79 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ParameterDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyGetterDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.ideService
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.FuzzyType
+import org.jetbrains.kotlin.idea.util.combineIfNoConflicts
+import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
+import org.jetbrains.kotlin.idea.util.fuzzyReturnType
+import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.Call
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyDelegate
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.LambdaArgument
+import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
 import org.jetbrains.kotlin.resolve.calls.CallTransformer
-import org.jetbrains.kotlin.resolve.calls.util.allArgumentsMapped
-import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.DelegatingCall
+import org.jetbrains.kotlin.resolve.calls.util.allArgumentsMapped
+import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.typeUtil.*
-import java.util.*
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeSubstitutor
+import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.replace
+import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.types.typeUtil.containsError
+import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.makeNullable
+import org.jetbrains.kotlin.types.typeUtil.nullability
 
+@K1Deprecation
 enum class Tail {
     COMMA,
     RPARENTH,
@@ -35,6 +84,7 @@ enum class Tail {
     RBRACE
 }
 
+@K1Deprecation
 data class ItemOptions(val starPrefix: Boolean) {
     companion object {
         val DEFAULT = ItemOptions(false)
@@ -42,6 +92,7 @@ data class ItemOptions(val starPrefix: Boolean) {
     }
 }
 
+@K1Deprecation
 interface ByTypeFilter {
     fun matchingSubstitutor(descriptorType: FuzzyType): TypeSubstitutor?
 
@@ -60,6 +111,7 @@ interface ByTypeFilter {
     }
 }
 
+@K1Deprecation
 class ByExpectedTypeFilter(override val fuzzyType: FuzzyType) : ByTypeFilter {
     override fun matchingSubstitutor(descriptorType: FuzzyType) = descriptorType.checkIsSubtypeOf(fuzzyType)
 
@@ -68,6 +120,7 @@ class ByExpectedTypeFilter(override val fuzzyType: FuzzyType) : ByTypeFilter {
     override fun hashCode() = fuzzyType.hashCode()
 }
 
+@K1Deprecation
 data /* for copy() */
 class ExpectedInfo(
     val filter: ByTypeFilter,
@@ -121,12 +174,15 @@ class ExpectedInfo(
     }
 }
 
+@K1Deprecation
 val ExpectedInfo.fuzzyType: FuzzyType?
     get() = filter.fuzzyType
 
+@K1Deprecation
 val ExpectedInfo.multipleFuzzyTypes: Collection<FuzzyType>
     get() = filter.multipleFuzzyTypes
 
+@K1Deprecation
 sealed class ArgumentPositionData(val function: FunctionDescriptor, val callType: Call.CallType) : ExpectedInfo.AdditionalData {
     class Positional(
         function: FunctionDescriptor,
@@ -139,16 +195,22 @@ sealed class ArgumentPositionData(val function: FunctionDescriptor, val callType
     class Named(function: FunctionDescriptor, callType: Call.CallType, val argumentName: Name) : ArgumentPositionData(function, callType)
 }
 
+@K1Deprecation
 class ReturnValueAdditionalData(val callable: CallableDescriptor) : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 class WhenEntryAdditionalData(val whenWithSubject: Boolean) : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 object IfConditionAdditionalData : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 object PropertyDelegateAdditionalData : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 class ComparisonOperandAdditionalData(val suppressNullLiteral: Boolean) : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 class ExpectedInfos(
     private val bindingContext: BindingContext,
     private val resolutionFacade: ResolutionFacade,
@@ -728,5 +790,6 @@ class ExpectedInfos(
     }
 }
 
+@K1Deprecation
 val COMPARISON_TOKENS = setOf(KtTokens.EQEQ, KtTokens.EXCLEQ, KtTokens.EQEQEQ, KtTokens.EXCLEQEQEQ)
 

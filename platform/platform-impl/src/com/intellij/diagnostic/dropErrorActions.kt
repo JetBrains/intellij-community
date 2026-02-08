@@ -13,7 +13,7 @@ import com.intellij.util.TimeoutUtil
 import java.awt.event.ActionEvent.CTRL_MASK
 import java.awt.event.ActionEvent.SHIFT_MASK
 import java.io.RandomAccessFile
-import java.util.*
+import java.util.Random
 
 private const val TEST_LOGGER = "TEST.LOGGER"
 private const val TEST_MESSAGE = "test exception; please ignore"

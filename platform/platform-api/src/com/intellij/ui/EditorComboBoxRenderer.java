@@ -3,9 +3,11 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.ComboBoxEditor;
+import javax.swing.JList;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Font;
 
 public class EditorComboBoxRenderer extends BasicComboBoxRenderer {
   private final ComboBoxEditor myEditor;

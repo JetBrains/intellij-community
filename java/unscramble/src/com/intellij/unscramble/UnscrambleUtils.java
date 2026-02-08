@@ -12,7 +12,7 @@ import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;

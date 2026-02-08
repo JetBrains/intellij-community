@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.jetbrains.jdi.VirtualMachineImpl
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class AbstractKotlinSteppingPacketsNumberTest : AbstractIrKotlinSteppingTestWithVariablePrinting() {
@@ -32,9 +30,3 @@ abstract class AbstractKotlinSteppingPacketsNumberTest : AbstractIrKotlinSteppin
     }
 }
 
-abstract class AbstractK1IdeK2CodeKotlinSteppingPacketsNumberTest : AbstractKotlinSteppingPacketsNumberTest() {
-    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-    override val compileWithK2 = true
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
-}

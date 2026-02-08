@@ -8,6 +8,7 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellChecki
 class PlainTextSpellcheckingStrategy: SpellcheckingStrategy() {
   override fun getTokenizer(element: PsiElement, scope: Set<SpellCheckingScope>): Tokenizer<*> {
     if (element.containingFile.name.endsWith(".sha1")) return EMPTY_TOKENIZER
+    if (element.containingFile.name.endsWith(".txt") && useTextLevelSpellchecking(element)) return EMPTY_TOKENIZER
     return super.getTokenizer(element, scope)
   }
 

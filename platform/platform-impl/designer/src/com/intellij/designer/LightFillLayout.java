@@ -3,8 +3,11 @@ package com.intellij.designer;
 
 import com.intellij.util.Function;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.LayoutManager2;
 
 /**
  * @author Alexander Lobas

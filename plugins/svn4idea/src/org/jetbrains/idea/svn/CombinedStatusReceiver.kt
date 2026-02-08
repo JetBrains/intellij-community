@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 import org.jetbrains.idea.svn.status.Status
-import kotlin.jvm.Throws
 
 class CombinedStatusReceiver(val delegates: List<StatusReceiver>) : StatusReceiver {
   @Throws(SvnBindException::class)

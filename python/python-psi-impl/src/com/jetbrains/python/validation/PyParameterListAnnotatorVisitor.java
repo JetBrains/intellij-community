@@ -17,7 +17,13 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 

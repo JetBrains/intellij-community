@@ -10,8 +10,12 @@ import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.Window;
 
 final class RulerGuideAction extends ToggleAction implements DumbAware {
 

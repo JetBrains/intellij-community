@@ -25,7 +25,25 @@ import org.jetbrains.plugins.groovy.lang.psi.util.StringKind;
 import org.jetbrains.plugins.groovy.lang.psi.util.StringUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.REGEX;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_INJECTION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TDQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TSQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DOLLAR;
 
 public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProcessor {
 

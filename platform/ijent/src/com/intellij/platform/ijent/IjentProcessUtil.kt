@@ -5,23 +5,17 @@ package com.intellij.platform.ijent
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
-import com.intellij.util.containers.map2Array
 
 /**
  * If [selfDeleteOnExit] is true, IJent tries to delete itself AND its parent directory during/after it has exited.
  */
 fun getIjentGrpcArgv(
   remotePathToIjent: String,
-  additionalEnv: Map<String, String> = mapOf(),
   selfDeleteOnExit: Boolean = false,
   noShutdownOnDisconnect: Boolean = false,
-  usrBinEnv: String = "/usr/bin/env",
   deployInfo: TcpDeployInfo? = null,
 ): List<String> {
   return listOfNotNull(
-    usrBinEnv,
-    *additionalEnv.entries.map2Array { (k, v) -> "$k=$v" },
-    // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html
     remotePathToIjent,
     "grpc-server",
     if (deployInfo != null) "--address=${deployInfo.host}" else null,

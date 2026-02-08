@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text
 
-import kotlin.jvm.JvmStatic
-
 object NameUtilCore {
   private const val KANA_START = 0x3040
   private const val KANA_END = 0x3358

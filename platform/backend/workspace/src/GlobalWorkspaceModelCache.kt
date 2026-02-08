@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -30,7 +29,6 @@ public interface GlobalWorkspaceModelCache {
   public fun registerCachePartition(environmentName: InternalEnvironmentName)
 
   public companion object {
-    @RequiresBlockingContext
     public fun getInstance(): GlobalWorkspaceModelCache? {
       return ApplicationManager.getApplication().getService(GlobalWorkspaceModelCache::class.java)
     }

@@ -5,7 +5,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxGroupBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
+import com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.DescriptionBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.SegmentedButtonBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import kotlinx.serialization.json.JsonObject
 
 class DemoFeedbackDialogWithEmail(

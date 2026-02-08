@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class SimpleDiffPanel extends DiffPanelBase {
   private static final @NonNls String GOOD_CONTENT = "GoodContent";

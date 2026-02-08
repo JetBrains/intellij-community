@@ -20,9 +20,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.ListCellRenderer;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Point;
 import java.util.List;
 import java.util.function.Function;
 

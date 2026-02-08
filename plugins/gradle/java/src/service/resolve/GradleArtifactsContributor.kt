@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import groovy.lang.Closure
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACT_HANDLER
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern

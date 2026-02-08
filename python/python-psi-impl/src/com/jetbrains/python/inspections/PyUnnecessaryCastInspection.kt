@@ -33,7 +33,7 @@ class PyUnnecessaryCastInspection : PyInspection() {
 
         val args = callExpression.getArguments()
         if (args.size != 2) return
-        val targetTypeRef: Ref<PyType>? = PyTypingTypeProvider.getType(args[0], myTypeEvalContext)
+        val targetTypeRef = PyTypingTypeProvider.getType(args[0], myTypeEvalContext)
         val targetType = Ref.deref(targetTypeRef)
         val actualType: PyType? = myTypeEvalContext.getType(args[1])
 

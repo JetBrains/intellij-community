@@ -15,7 +15,13 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.awt.Point
 import javax.swing.JList
 import javax.swing.ListModel

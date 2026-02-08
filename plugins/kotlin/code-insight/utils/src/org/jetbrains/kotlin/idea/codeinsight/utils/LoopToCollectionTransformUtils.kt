@@ -4,10 +4,14 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Utility functions for transforming index-based loops to collection loops.

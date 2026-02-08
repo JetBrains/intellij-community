@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;

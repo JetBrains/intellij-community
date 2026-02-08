@@ -3,8 +3,20 @@ package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.UnhandledExceptions;
-import com.intellij.codeInspection.reference.*;
-import com.intellij.psi.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefFunctionalExpression;
+import com.intellij.codeInspection.reference.RefGraphAnnotatorEx;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefMethodImpl;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.util.ObjectUtils;
 
 import java.util.Arrays;

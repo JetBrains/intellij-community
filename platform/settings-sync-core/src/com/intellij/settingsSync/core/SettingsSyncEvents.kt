@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 // used by rider
 @ApiStatus.Internal

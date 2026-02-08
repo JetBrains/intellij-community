@@ -9,16 +9,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 class MultipleBreakpointGutterIconRenderer extends CommonBreakpointGutterIconRenderer implements DumbAware {

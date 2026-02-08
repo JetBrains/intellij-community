@@ -6,7 +6,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Event;
 
 /** A dialog that includes a "Do not ask again" checkbox. */
 public abstract class OptionsDialog extends DialogWrapper {

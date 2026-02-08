@@ -3,7 +3,6 @@ package git4idea.ui.branch
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pair

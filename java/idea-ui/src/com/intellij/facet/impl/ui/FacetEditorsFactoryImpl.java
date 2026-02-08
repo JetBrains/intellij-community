@@ -2,12 +2,21 @@
 
 package com.intellij.facet.impl.ui;
 
-import com.intellij.facet.impl.ui.libraries.*;
+import com.intellij.facet.impl.ui.libraries.DelegatingLibrariesValidatorContext;
+import com.intellij.facet.impl.ui.libraries.FacetLibrariesValidatorImpl;
+import com.intellij.facet.impl.ui.libraries.FrameworkLibraryValidatorImpl;
+import com.intellij.facet.impl.ui.libraries.LibrariesValidationComponentImpl;
+import com.intellij.facet.impl.ui.libraries.LibrariesValidatorContext;
+import com.intellij.facet.impl.ui.libraries.LibrariesValidatorContextImpl;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorsFactory;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.MultipleFacetEditorHelper;
-import com.intellij.facet.ui.libraries.*;
+import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
+import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
+import com.intellij.facet.ui.libraries.FrameworkLibraryValidator;
+import com.intellij.facet.ui.libraries.LibrariesValidationComponent;
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;

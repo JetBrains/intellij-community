@@ -3,6 +3,9 @@ package com.intellij.junit6;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.idea.IJIgnore;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -18,6 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -102,6 +109,77 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
                    ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' error='true' message='##message##' details='##details##']
                    ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0']""",
                  tests);
+  }
+
+  @IJIgnore(issue = "TW-71208")
+  public void testStopExecution() throws Exception {
+    ProcessOutput output =
+      doStartTestsProcessAsync(createRunClassConfiguration("com.intellij.junit6.testData.CancelCheckTest"), Collections.emptySet());
+    OSProcessHandler process = output.process;
+
+    {
+      // tests should be started - wait for lock file path in output
+      Path lock = getLock(output);
+
+      // stop process (SIGINT)
+      OSProcessUtil.terminateProcessGracefully(process.getProcess());
+
+      // wait for shutdown hook to execute
+      Thread.sleep(1000);
+      unlock(lock);
+
+      // wait finalization
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      process.waitFor(10000);
+      process.destroyProcess();
+    }
+    String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
+      .map(m -> normalizedTestOutput(m, Map.of(
+        "message", "##message##",
+        "details", "##details##"
+      ))).collect(Collectors.joining("\n"));
+
+    assertEmpty(output.err);
+    assertEquals(
+      """
+        ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test1()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.CancelCheckTest/test1' metainfo='']
+        ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test1()|]' parentNodeId='0' duration='##duration##']
+        ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.CancelCheckTest/test2' metainfo='']
+        ##TC[testIgnored id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' parentNodeId='0' message='##message##']
+        ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test2()|]' parentNodeId='0']
+        ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' name='test3()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.CancelCheckTest/test3' metainfo='']
+        ##TC[testIgnored id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' name='test3()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' parentNodeId='0' message='##message##']
+        ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' name='test3()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.CancelCheckTest|]/|[method:test3()|]' parentNodeId='0']""",
+      tests);
+    assertTrue("@AfterAll must finish the tests correctly", output.out.contains("finish"));
+  }
+
+  private static void unlock(@NotNull Path lock) throws IOException {
+    // unlock tests
+    if (Files.exists(lock)) {
+      Files.delete(lock);
+    }
+    else {
+      fail("tests not started");
+    }
+  }
+
+  private static @NotNull Path getLock(ProcessOutput output) throws InterruptedException {
+    int maxIterations = 100;
+    Path lock = null;
+    while (lock == null && maxIterations-- > 0) {
+      Thread.sleep(100);
+      lock = output.out.stream()
+        .filter(line -> line.startsWith("lock:"))
+        .map(line -> line.substring("lock:".length()).trim())
+        .map(Path::of)
+        .findFirst()
+        .orElse(null);
+    }
+    if (lock == null) {
+      fail("tests not started - lock file path not received in time");
+    }
+    return lock;
   }
 
   public void testEscaping() throws Exception {

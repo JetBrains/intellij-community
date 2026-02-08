@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiTypeParameterListOwner
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightModifierList
 import org.jetbrains.kotlin.idea.KotlinLanguage

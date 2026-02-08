@@ -7,7 +7,11 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.test.env.kotlin.assertEqualsToFile
 import java.io.File
 

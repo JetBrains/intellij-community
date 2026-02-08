@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.durablemap;
 
-import com.intellij.platform.util.io.storages.*;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.StorageFactory;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;

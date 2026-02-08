@@ -10,7 +10,7 @@ import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class RunAnythingRunProfile implements RunProfile {
   private final @NotNull String myOriginalCommand;

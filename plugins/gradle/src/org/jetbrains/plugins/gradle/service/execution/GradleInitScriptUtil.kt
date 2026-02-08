@@ -39,7 +39,11 @@ import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import java.util.regex.Matcher
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.fileSize
+import kotlin.io.path.readBytes
+import kotlin.io.path.writeBytes
 
 private val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil")
 private val EXCLUDED_JAR_SUFFIXES = setOf(

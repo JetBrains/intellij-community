@@ -4,7 +4,11 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.Gray
 import com.intellij.util.ui.StartupUiUtil
-import java.awt.*
+import java.awt.Dialog
+import java.awt.Dimension
+import java.awt.Frame
+import java.awt.Graphics
+import java.awt.Toolkit
 import java.awt.image.BufferedImage
 
 /**

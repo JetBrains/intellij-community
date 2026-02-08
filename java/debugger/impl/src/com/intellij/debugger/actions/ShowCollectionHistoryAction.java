@@ -3,13 +3,13 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.breakpoints.JavaCollectionBreakpointType;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebugSession;
@@ -34,7 +34,7 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!Registry.is("debugger.collection.watchpoints.enabled")) {
+    if (!JavaCollectionBreakpointType.isEnabled()) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(false);
       return;

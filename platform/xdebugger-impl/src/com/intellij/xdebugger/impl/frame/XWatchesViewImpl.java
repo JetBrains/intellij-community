@@ -10,7 +10,18 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,11 +36,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
-import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.toolWindow.InternalDecoratorImpl;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListenerUtil;
+import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -38,13 +55,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XEvaluationListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -57,24 +74,42 @@ import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
 import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
-import com.intellij.xdebugger.impl.ui.*;
+import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
+import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
-import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -97,8 +132,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    * @deprecated Use {@link XWatchesViewImpl#XWatchesViewImpl(XDebugSessionProxy, boolean)} instead
    */
   @Deprecated
-  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
-    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables);
+  public XWatchesViewImpl(@NotNull XDebugSession session, boolean watchesInVariables) {
+    this(XDebuggerEntityConverter.asProxy(session), watchesInVariables);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables) {
@@ -109,8 +144,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    * @deprecated Use {@link XWatchesViewImpl#XWatchesViewImpl(XDebugSessionProxy, boolean, boolean)} instead
    */
   @Deprecated
-  protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
-    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables, vertical);
+  protected XWatchesViewImpl(@NotNull XDebugSession session, boolean watchesInVariables, boolean vertical) {
+    this(XDebuggerEntityConverter.asProxy(session), watchesInVariables, vertical);
   }
 
   protected XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical) {
@@ -121,8 +156,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    * @deprecated Use {@link XWatchesViewImpl#XWatchesViewImpl(XDebugSessionProxy, boolean, boolean, boolean)} instead
    */
   @Deprecated
-  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
-    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables, vertical, withToolbar);
+  public XWatchesViewImpl(@NotNull XDebugSession session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
+    this(XDebuggerEntityConverter.asProxy(session), watchesInVariables, vertical, withToolbar);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
@@ -329,6 +364,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   protected void beforeTreeBuild(@NotNull SessionEvent event) {
     if (event != SessionEvent.SETTINGS_CHANGED) {
       myRootNode.removeResultNode();
+    }
+    else {
+      if (myEvaluateComboBox != null) {
+        myEvaluateComboBox.rebuildDocument();
+      }
     }
   }
 

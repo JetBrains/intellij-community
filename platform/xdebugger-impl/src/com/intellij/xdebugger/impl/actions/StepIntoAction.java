@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
-import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerStepIntoHandler;
 import org.jetbrains.annotations.NotNull;
 

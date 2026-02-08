@@ -7,7 +7,14 @@ import com.intellij.ide.scratch.ScratchFileCreationHelper;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.SyntaxTraverser;
 import org.jetbrains.annotations.NotNull;
 
 /**

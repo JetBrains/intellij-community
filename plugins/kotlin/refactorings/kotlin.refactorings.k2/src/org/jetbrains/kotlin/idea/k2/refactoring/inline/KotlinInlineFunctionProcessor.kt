@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
-import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CallableUsageReplacementStrategy
-import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
-import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlineNamedDeclarationProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CallableUsageReplacementStrategy
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
+import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlineNamedDeclarationProcessor
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline

@@ -34,7 +34,11 @@ import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.SemVer;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +49,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.intellij.platform.eel.EelPlatformKt.*;
+import static com.intellij.platform.eel.EelPlatformKt.isArm64;
+import static com.intellij.platform.eel.EelPlatformKt.isLinux;
+import static com.intellij.platform.eel.EelPlatformKt.isMac;
+import static com.intellij.platform.eel.EelPlatformKt.isWindows;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 import static com.intellij.sh.ShBundle.message;

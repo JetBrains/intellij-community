@@ -22,7 +22,7 @@ fun main() {
     }
     val sdkHome = python.absolutePath
 
-    val executable =  VirtualEnvReader.Instance.findPythonInPythonRoot(Path(sdkHome))?.toFile()
+    val executable =  VirtualEnvReader().findPythonInPythonRoot(Path(sdkHome))?.toFile()
 
     if (executable == null) {
       println("No python on $sdkHome")

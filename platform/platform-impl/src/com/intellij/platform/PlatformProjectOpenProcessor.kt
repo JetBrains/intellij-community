@@ -2,7 +2,12 @@
 package com.intellij.platform
 
 import com.intellij.configurationStore.ProjectStorePathManager
-import com.intellij.ide.impl.*
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.OpenProjectTaskBuilder
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.impl.TrustedPaths
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -40,7 +45,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<PlatformProjectOpenProcessor>()

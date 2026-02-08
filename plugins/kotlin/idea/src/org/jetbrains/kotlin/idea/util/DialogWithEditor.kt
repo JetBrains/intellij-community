@@ -11,11 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.testFramework.LightVirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@K1Deprecation
 open class DialogWithEditor(
   val project: Project,
   @NlsContexts.DialogTitle title: String,

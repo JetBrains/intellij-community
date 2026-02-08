@@ -13,7 +13,13 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Pair
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModules
@@ -131,6 +137,7 @@ class ChooseModulePanel(
                         val comboBox = comboBox(modules.naturalSorted() as List<Module?>, textListCellRenderer { it?.name })
                             .bindItem(selectedModule)
                             .align(AlignX.FILL)
+                        comboBox.component.isSwingPopup = false
                         comboBox.enabledIf(singleModuleButton.selected)
                     }
                 )

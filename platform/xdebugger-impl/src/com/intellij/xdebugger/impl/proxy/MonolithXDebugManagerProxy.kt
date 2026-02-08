@@ -7,7 +7,11 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -16,15 +20,16 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
@@ -38,7 +43,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val sessionImpl = (session as MonolithSessionProxy).sessionImpl
+    val sessionImpl = findSessionImpl(session)
     return withTemporaryXValueId(value, sessionImpl, block)
   }
 
@@ -53,7 +58,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
-    val sessionImpl = (session as MonolithSessionProxy).sessionImpl
+    val sessionImpl = findSessionImpl(session)
     return withCoroutineScopeForId(block) { scope ->
       val (_, id) = stack.getOrStoreGlobally(scope, sessionImpl)
       id
@@ -85,6 +90,13 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun hasBackendCounterpart(xValue: XValue): Boolean {
     return true
   }
+
+  private fun findSessionImpl(session: XDebugSessionProxy): XDebugSessionImpl {
+    val monolithSession = XDebuggerEntityConverter.getSessionNonSplitOnly(session) ?: error("Expected to have monolith session: $session")
+    val sessionImpl = monolithSession as XDebugSessionImpl
+    return sessionImpl
+  }
+
 }
 
 @ApiStatus.Internal

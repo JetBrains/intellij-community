@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory.Padding
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.codeInsight.hints.presentation.SpacePresentation
+import com.intellij.codeInsight.hints.presentation.VerticalListInlayPresentation
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.ui.JBUI.scale

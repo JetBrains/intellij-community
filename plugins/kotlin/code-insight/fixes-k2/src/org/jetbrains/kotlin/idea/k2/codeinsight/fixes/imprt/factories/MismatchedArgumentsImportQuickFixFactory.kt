@@ -9,11 +9,25 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.imports.KtFileWithReplacedImports
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.AbstractImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ClassifierImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.DefaultImportContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionType
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.MismatchedArgumentsImportQuickFixFactory.FILE_WITH_REPLACED_IMPORTS_CACHE
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.fqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 
 internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFixFactory() {

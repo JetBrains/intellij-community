@@ -21,7 +21,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.mergerequest.action.*
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCloseAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestMergeAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestPostReviewAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestReRequestReviewAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRebaseAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestReopenAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRequestReviewAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestSetMyselfAsReviewerAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestSquashAndMergeAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestSubmitReviewAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModelImpl.Companion.toReviewState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewPopup

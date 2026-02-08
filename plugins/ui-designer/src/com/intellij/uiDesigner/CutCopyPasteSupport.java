@@ -24,8 +24,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.io.StringReader;
 import java.util.ArrayList;

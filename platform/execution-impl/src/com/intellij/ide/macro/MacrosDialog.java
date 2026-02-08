@@ -30,10 +30,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.ListSelectionModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.HashMap;

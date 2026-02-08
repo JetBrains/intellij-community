@@ -14,7 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.0/kotlin-compose-compiler-plugin-2.3.0.jar</args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.10-RC/kotlin-compose-compiler-plugin-2.3.10-RC.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -41,5 +41,6 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>

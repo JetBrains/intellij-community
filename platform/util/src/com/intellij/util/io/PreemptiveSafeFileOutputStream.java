@@ -8,7 +8,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.*;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 
 /**
  * <p>A somewhat weaker version of {@link SafeFileOutputStream} suitable for writing huge files whose content can't fit into memory.

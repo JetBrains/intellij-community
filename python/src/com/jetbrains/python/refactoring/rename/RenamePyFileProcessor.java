@@ -3,7 +3,11 @@ package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiFileProcessor;

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declarati
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.render
@@ -24,13 +25,13 @@ internal object CompilerPluginDeclarationInlayFactory {
         if (members.isEmpty()) return null
 
         val kotlinCode = renderToString(members)
-        return renderGeneratedMembersToInlay(kotlinCode)
+        return renderGeneratedMembersToInlay(kotlinCode, ktClassOrObject)
     }
 
     context(_: KaSession, factory: GeneratedCodeInlayFactory)
     private fun renderToString(members: List<CompilerGeneratedMembersCollector.CompileGeneratedMember>): String {
         fun PrettyPrinter.renderRecursively(generatedMember: CompilerGeneratedMembersCollector.CompileGeneratedMember) {
-            append(generatedMember.member.render(KaDeclarationRendererForSource.WITH_SHORT_NAMES))
+            append(generatedMember.member.render(KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES))
             if (generatedMember.subMembers.isNotEmpty()) {
                 append(" ")
                 withIndentInBraces {
@@ -45,8 +46,8 @@ internal object CompilerPluginDeclarationInlayFactory {
 
 
     context(_: KaSession, _: CodeInlaySession, factory: GeneratedCodeInlayFactory)
-    private fun renderGeneratedMembersToInlay(kotlinCode: String): InlayPresentation {
-        val lines = CompilerPluginDeclarationHighlighter.highlightKotlinSyntax(kotlinCode, factory.project, factory.editor.colorsScheme)
+    private fun renderGeneratedMembersToInlay(kotlinCode: String, context: PsiElement): InlayPresentation {
+        val lines = CompilerPluginDeclarationHighlighter.highlightCode(kotlinCode, context, factory.editor.colorsScheme)
         return lines.map { it.render() }.vertical()
     }
 
@@ -55,8 +56,22 @@ internal object CompilerPluginDeclarationInlayFactory {
         return tokens.map { it.render() }.horizontal()
     }
 
-    context(_: CodeInlaySession)
+    context(_: CodeInlaySession, factory: GeneratedCodeInlayFactory)
     private fun CompilerPluginDeclarationHighlighter.ColoredToken.render(): InlayPresentation {
-        return code(text, attributes)
+        var presentation = code(text, attributes)
+        for (tag in tags) {
+            when (tag) {
+                is CompilerPluginDeclarationHighlighter.TokenTag.Target -> {
+                    val hoverListener = InlayDocumentationHoverHandler.createHoverListener(
+                        targetPointer = tag.targetPointer,
+                        editor = factory.editor,
+                        project = factory.project
+                    )
+
+                    presentation = factory.factory.mouseHandling(presentation, clickListener = null, hoverListener = hoverListener)
+                }
+            }
+        }
+        return presentation
     }
 }

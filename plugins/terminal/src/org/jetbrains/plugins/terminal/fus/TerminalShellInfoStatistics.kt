@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.shellVersionField
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Internal
 object TerminalShellInfoStatistics {

@@ -19,7 +19,9 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

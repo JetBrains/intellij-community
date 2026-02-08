@@ -17,6 +17,7 @@ internal class ShellAliasSuggestionImpl(
   override val icon: Icon? = null,
   override val prefixReplacementIndex: Int = 0,
   override val isHidden: Boolean = false,
+  override val shouldEscape: Boolean = true,
 ) : ShellAliasSuggestion {
   override val description: String by lazy {
     description ?: TerminalBundle.message("doc.popup.alias.text", aliasValue)

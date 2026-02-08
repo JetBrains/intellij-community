@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -18,7 +18,7 @@ class AddJdkAction : AnAction() {
 
     SdkConfigurationUtil.selectSdkHome(sdk) { path ->
       service<AddJdkService>().createJdkFromPath(path) {
-        e.project?.service<ConfigureJdkService>()?.setProjectJdkIfNull(it, true)
+        e.project?.service<ConfigureJdkService>()?.setProjectJdkIfNull(it)
       }
     }
   }

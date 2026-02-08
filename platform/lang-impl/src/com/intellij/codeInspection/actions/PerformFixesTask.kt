@@ -5,8 +5,12 @@ import com.intellij.codeInspection.CommonProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.QuickFix
 import com.intellij.lang.LangBundle
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult
+import com.intellij.modcommand.ModCommandQuickFix
+import com.intellij.modcommand.ModCommandService
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project

@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.java.testFramework.backend.CompilerTestUtil
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
+import com.intellij.java.testFramework.backend.CompilerTestUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpec
@@ -21,7 +21,11 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.externalSystem.test.JavaExternalSystemImportingTestCase
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.environment.Environment.Companion.getVariable
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
@@ -68,7 +72,11 @@ import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver.Companion.resolveG
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.getGradleDistributionJarPath
+import org.jetbrains.plugins.gradle.util.getGradleDistributionRoot
+import org.jetbrains.plugins.gradle.util.getLocalGradleDistributionRoot
+import org.jetbrains.plugins.gradle.util.validateGradleJar
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.rules.TestName

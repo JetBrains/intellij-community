@@ -3,7 +3,11 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 import com.intellij.ide.IdeView
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil

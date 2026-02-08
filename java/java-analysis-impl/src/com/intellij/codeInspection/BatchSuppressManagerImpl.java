@@ -2,7 +2,12 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.*;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressAllForClassFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressLocalWithCommentFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressParameterFix;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;

@@ -8,7 +8,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
+import javax.swing.TransferHandler;
 import java.awt.datatransfer.Clipboard;
 
 

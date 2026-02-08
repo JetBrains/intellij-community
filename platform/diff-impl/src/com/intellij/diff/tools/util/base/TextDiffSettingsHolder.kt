@@ -5,7 +5,11 @@ import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
@@ -13,7 +17,8 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.EventListener
+import java.util.TreeMap
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty

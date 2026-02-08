@@ -11,11 +11,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus

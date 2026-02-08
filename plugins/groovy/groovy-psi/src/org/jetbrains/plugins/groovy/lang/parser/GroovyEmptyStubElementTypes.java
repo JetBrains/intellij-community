@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationArgumentListElementType;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantListElementType;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterListElementType;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterListElementType;
 
 public interface GroovyEmptyStubElementTypes {
   GrAnnotationArgumentListElementType ANNOTATION_ARGUMENT_LIST = GroovyElementTypes.ANNOTATION_ARGUMENT_LIST;

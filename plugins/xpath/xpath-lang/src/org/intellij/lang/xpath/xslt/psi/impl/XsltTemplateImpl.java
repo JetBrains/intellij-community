@@ -30,7 +30,7 @@ import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.namespace.QName;
 import java.util.Arrays;
 

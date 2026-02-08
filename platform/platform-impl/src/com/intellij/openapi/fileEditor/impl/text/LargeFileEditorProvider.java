@@ -15,7 +15,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import java.beans.PropertyChangeListener;
 
 import static com.intellij.openapi.fileEditor.impl.text.TextEditorImplKt.createAsyncEditorLoader;

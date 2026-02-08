@@ -3,8 +3,8 @@ package com.intellij.jvm.analysis.internal.testFramework.logging
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.logging.LoggingStatementNotGuardedByLogConditionInspection
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 import com.intellij.codeInspection.logging.LoggingUtil
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 
 abstract class LoggingStatementNotGuardedByLogConditionInspectionTestBase : LoggingInspectionTestBase() {
   override val inspection: LoggingStatementNotGuardedByLogConditionInspection = LoggingStatementNotGuardedByLogConditionInspection()

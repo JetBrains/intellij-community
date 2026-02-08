@@ -6,8 +6,10 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
-import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.AbstractNewProjectWizardMultiStep
+import com.intellij.ide.wizard.LanguageNewProjectWizardData
 import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
+import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Row

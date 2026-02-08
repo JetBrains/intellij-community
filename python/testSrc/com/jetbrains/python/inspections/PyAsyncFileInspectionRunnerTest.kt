@@ -12,8 +12,14 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.psi.PyFile
-import kotlinx.coroutines.*
-import org.junit.jupiter.api.Assertions.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertIterableEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.random.Random

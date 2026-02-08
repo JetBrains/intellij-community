@@ -2,8 +2,8 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.jetbrains.rd.util.lifetime.Lifetime
 
 object LogFactoryHandler {

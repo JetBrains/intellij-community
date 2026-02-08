@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.pushDown;
 
@@ -90,6 +90,21 @@ public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
         @TestMetadata("noCaret.kt")
         public void testNoCaret() throws Exception {
             runTest("../../idea/tests/testData/refactoring/pushDown/k2k/noCaret.kt");
+        }
+
+        @TestMetadata("noInheritors.kt")
+        public void testNoInheritors() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/noInheritors.kt");
+        }
+
+        @TestMetadata("noInheritorsNestedClass.kt")
+        public void testNoInheritorsNestedClass() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/noInheritorsNestedClass.kt");
+        }
+
+        @TestMetadata("noInheritorsNestedInterface.kt")
+        public void testNoInheritorsNestedInterface() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/pushDown/k2k/noInheritorsNestedInterface.kt");
         }
 
         @TestMetadata("objectDeclaration.kt")

@@ -8,12 +8,18 @@ import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogg
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.WidthBasedLayout;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
@@ -28,10 +34,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.net.URL;
 import java.util.ArrayList;
@@ -287,7 +310,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
           String description = e.getDescription();
           if (description != null &&
-              handle(description, editor)) {
+              WriteIntentReadAction.compute(() -> handle(description, editor))) {
             hint.hide();
             return;
           }

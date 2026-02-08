@@ -47,6 +47,7 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/gradle/java",
     "//plugins/gradle/java:java-tests_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "//java/testFramework",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "@lib//:kotlinc-kotlin-compiler-common",

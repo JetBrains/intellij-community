@@ -2,7 +2,11 @@
 package com.intellij.json.editor.smartEnter;
 
 import com.intellij.json.JsonDialectUtil;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonReferenceExpression;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;

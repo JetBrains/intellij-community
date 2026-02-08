@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components.common
 
 import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.ui.components.common.toolwindows.TerminalToolWindowUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowUiComponent
 import com.intellij.driver.sdk.ui.components.elements.fileChooser
 import java.nio.file.Path
@@ -26,8 +27,8 @@ fun IdeaFrameUI.mesonToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): 
 
 fun IdeaFrameUI.messagesToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent = toolWindow("Build", action)
 
-fun IdeaFrameUI.terminalToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
-  x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byType("org.jetbrains.plugins.terminal.TerminalToolWindowPanel")) }.apply(action)
+fun IdeaFrameUI.terminalToolWindow(action: TerminalToolWindowUi.() -> Unit = {}): TerminalToolWindowUi =
+  x(TerminalToolWindowUi::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byType("org.jetbrains.plugins.terminal.TerminalToolWindowPanel")) }.apply(action)
 
 fun IdeaFrameUI.problemsToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
   x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Problems")) }.apply(action)

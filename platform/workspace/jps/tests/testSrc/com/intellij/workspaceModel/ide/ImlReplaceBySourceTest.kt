@@ -26,7 +26,11 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import org.junit.*
+import org.junit.Assert
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.io.File
 
 @OptIn(EntityStorageInstrumentationApi::class)

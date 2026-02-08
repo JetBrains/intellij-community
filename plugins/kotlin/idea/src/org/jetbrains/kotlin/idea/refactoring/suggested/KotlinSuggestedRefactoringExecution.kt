@@ -4,9 +4,15 @@ package org.jetbrains.kotlin.idea.refactoring.suggested
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignature
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureConfiguration
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureProcessor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinTypeInfo
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
@@ -14,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 class KotlinSuggestedRefactoringExecution(
     refactoringSupport: KotlinSuggestedRefactoringSupportBase
 ) : SuggestedRefactoringExecution(refactoringSupport) {

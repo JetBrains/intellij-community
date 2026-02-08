@@ -6,3 +6,5 @@ fun foo(p1: Any, p2: Any) {
 
 // EXIST: p1
 // ABSENT: p2
+
+// IGNORE_K2

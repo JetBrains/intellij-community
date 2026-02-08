@@ -19,7 +19,7 @@ import org.mockito.Mockito.`when`
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.StandardWatchEventKinds
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class FileLoggerTest : HeavyPlatformTestCase() {

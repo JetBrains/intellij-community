@@ -1,14 +1,14 @@
-<idea-plugin visibility="internal" package="com.intellij.notebooks.jupyter.core">
+<idea-plugin visibility="internal">
   <!-- Jupyter language -->
-    <extensions defaultExtensionNs="com.intellij">
-      <fileType name="Jupyter"
-                language="Jupyter"
-                extensions="ipynb"
-                implementationClass="com.intellij.notebooks.jupyter.core.jupyter.JupyterFileType"
-                fieldName="INSTANCE"/>
-      <lang.substitutor language="Jupyter"
-                        implementationClass="com.intellij.notebooks.jupyter.core.jupyter.JupyterTemplateLanguageSubstitutor"/>
-    </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Jupyter"
+              language="Jupyter"
+              extensions="ipynb"
+              implementationClass="com.intellij.notebooks.jupyter.core.jupyter.JupyterFileType"
+              fieldName="INSTANCE"/>
+    <lang.substitutor language="Jupyter"
+                      implementationClass="com.intellij.notebooks.jupyter.core.jupyter.JupyterTemplateLanguageSubstitutor"/>
+  </extensions>
 
 
   <applicationListeners>

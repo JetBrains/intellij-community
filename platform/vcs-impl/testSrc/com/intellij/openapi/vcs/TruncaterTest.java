@@ -5,8 +5,9 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase;
 import org.junit.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import java.awt.Font;
+import java.awt.FontMetrics;
 
 public class TruncaterTest extends LightPlatformCodeInsightFixture4TestCase {
   @Test

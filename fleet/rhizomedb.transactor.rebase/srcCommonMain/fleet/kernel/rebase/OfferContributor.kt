@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.Novelty
 
 fun interface OfferContributor {
   fun ChangeScope.contribute(novelty: Novelty)

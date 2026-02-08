@@ -5,7 +5,14 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatureListItem
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.plus
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.jetbrains.python.icons.PythonIcons

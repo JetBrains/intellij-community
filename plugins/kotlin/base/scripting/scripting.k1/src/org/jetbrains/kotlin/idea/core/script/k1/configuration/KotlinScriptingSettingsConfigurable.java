@@ -19,7 +19,9 @@ import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition;
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 

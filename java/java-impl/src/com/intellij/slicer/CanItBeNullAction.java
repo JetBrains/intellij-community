@@ -15,7 +15,12 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 class CanItBeNullAction extends GroupByNullnessActionBase {

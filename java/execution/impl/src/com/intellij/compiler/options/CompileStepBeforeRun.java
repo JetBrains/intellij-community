@@ -1,8 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaRunConfigurationBase;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -36,7 +44,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> implements DumbAware {
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");

@@ -3,8 +3,20 @@ package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorBase;
+import com.intellij.codeInspection.ex.DynamicGroupTool;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
@@ -31,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Function;
@@ -44,6 +57,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
 
   public static final String SHORT_NAME = "CustomRegExpInspection";
   public final List<RegExpInspectionConfiguration> myConfigurations = new SmartList<>();
+  private volatile @Unmodifiable List<LocalInspectionToolWrapper> myChildrenCached = null;
   private InspectionProfileImpl mySessionProfile;
 
   public static CustomRegExpInspection getCustomRegExpInspection(@NotNull InspectionProfile profile) {
@@ -168,26 +182,29 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
 
   @Override
   public @NotNull List<LocalInspectionToolWrapper> getChildren() {
-    return ContainerUtil.map(myConfigurations, CustomRegExpInspectionToolWrapper::new);
+    if (myChildrenCached == null) {
+      myChildrenCached = ContainerUtil.map(myConfigurations, CustomRegExpInspectionToolWrapper::new);
+    }
+    return myChildrenCached;
   }
 
   public void addConfiguration(RegExpInspectionConfiguration configuration) {
     if (!myConfigurations.contains(configuration)) {
       myConfigurations.add(configuration);
+      myChildrenCached = null;
     }
   }
 
   public void updateConfiguration(RegExpInspectionConfiguration configuration) {
     myConfigurations.remove(configuration);
     myConfigurations.add(configuration);
+    myChildrenCached = null;
   }
 
   public void removeConfigurationWithUuid(String uuid) {
-    myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
-  }
-
-  public List<RegExpInspectionConfiguration> getConfigurations() {
-    return myConfigurations;
+    if (myConfigurations.removeIf(c -> c.getUuid().equals(uuid))) {
+      myChildrenCached = null;
+    }
   }
 
   public @NotNull InspectionMetaDataDialog createMetaDataDialog(@NotNull Project project, 
@@ -195,8 +212,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
                                                                 @Nullable RegExpInspectionConfiguration configuration) {
     Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
       for (RegExpInspectionConfiguration current : myConfigurations) {
-        if ((configuration == null || !configuration.getUuid().equals(current.getUuid())) &&
-            current.getName().equals(name)) {
+        if ((configuration == null || !configuration.getUuid().equals(current.getUuid())) && current.getName().equals(name)) {
           return RegExpBundle.message("dialog.message.inspection.with.name.exists.warning", name);
         }
       }

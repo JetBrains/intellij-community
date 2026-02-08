@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object VcsStatisticsCollector : CounterUsagesCollector() {
-  internal val GROUP = EventLogGroup("vcs", 17)
+  internal val GROUP = EventLogGroup("vcs", 18)
 
   @JvmField
   internal val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -40,6 +41,9 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
 
   @JvmField
   val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
+
+  @JvmField
+  val MORE_VCS_PLUGINS_LINK_CLICKED: EventId = GROUP.registerEvent("more.vcs.plugins.link.clicked", "User clicked 'More VCS plugins' link in VCS dialogs")
 
   private val CHANGE_LIST_EDITED_PLACE = EventFields.Enum("editingPlace", EditChangeListPlace::class.java)
   @JvmField

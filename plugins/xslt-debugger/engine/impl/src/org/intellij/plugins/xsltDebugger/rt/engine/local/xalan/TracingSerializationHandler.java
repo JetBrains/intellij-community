@@ -5,7 +5,11 @@ import org.apache.xml.serializer.NamespaceMappings;
 import org.apache.xml.serializer.SerializationHandler;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.LocalDebugger;
 import org.w3c.dom.Node;
-import org.xml.sax.*;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.transform.SourceLocator;
 import javax.xml.transform.Transformer;

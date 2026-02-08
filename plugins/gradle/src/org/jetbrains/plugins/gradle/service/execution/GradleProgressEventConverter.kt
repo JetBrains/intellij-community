@@ -8,26 +8,43 @@ import com.intellij.build.events.impl.StartEventImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-import com.intellij.openapi.externalSystem.model.task.event.*
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEvent
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStartEvent
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
+import com.intellij.openapi.externalSystem.model.task.event.Failure
 import com.intellij.openapi.externalSystem.model.task.event.OperationResult
+import com.intellij.openapi.externalSystem.model.task.event.TestAssertionFailure
+import com.intellij.openapi.externalSystem.model.task.event.TestFailure
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PathUtil
-import org.gradle.tooling.events.*
 import org.gradle.tooling.events.FailureResult
 import org.gradle.tooling.events.OperationDescriptor
+import org.gradle.tooling.events.ProgressEvent
 import org.gradle.tooling.events.SkippedResult
+import org.gradle.tooling.events.StatusEvent
 import org.gradle.tooling.events.SuccessResult
 import org.gradle.tooling.events.task.TaskFinishEvent
 import org.gradle.tooling.events.task.TaskProgressEvent
 import org.gradle.tooling.events.task.TaskStartEvent
 import org.gradle.tooling.events.task.TaskSuccessResult
-import org.gradle.tooling.events.test.*
+import org.gradle.tooling.events.test.Destination
+import org.gradle.tooling.events.test.JvmTestOperationDescriptor
+import org.gradle.tooling.events.test.TestFailureResult
+import org.gradle.tooling.events.test.TestFinishEvent
+import org.gradle.tooling.events.test.TestOperationResult
+import org.gradle.tooling.events.test.TestOutputEvent
+import org.gradle.tooling.events.test.TestSkippedResult
+import org.gradle.tooling.events.test.TestStartEvent
+import org.gradle.tooling.events.test.TestSuccessResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Collections
+import java.util.StringJoiner
 
 /**
  * @author Vladislav.Soroka

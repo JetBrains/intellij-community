@@ -5,7 +5,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult

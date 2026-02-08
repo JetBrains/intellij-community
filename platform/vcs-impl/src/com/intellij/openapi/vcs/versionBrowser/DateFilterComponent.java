@@ -9,7 +9,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;

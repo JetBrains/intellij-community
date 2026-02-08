@@ -8,7 +8,11 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.InitialConfigImportState
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.actions.CtrlYActionChooser
@@ -66,7 +70,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       }
 
       override fun reloaded(schemeManager: SchemeManager<Keymap>, schemes: Collection<Keymap>) {
-        if (schemeManager.activeScheme == null) {
+        if (schemeManager.currentSchemeName == null) {
           // listeners expect that event will be fired in EDT
           AppUIUtil.invokeOnEdt {
             schemeManager.setCurrentSchemeName(DefaultKeymap.getInstance().defaultKeymapName, true)
@@ -181,10 +185,10 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
   override fun getState(): Element {
     val result = Element("state")
-    schemeManager.activeScheme?.let {
-      if (it.name != DefaultKeymap.getInstance().defaultKeymapName) {
+    schemeManager.currentSchemeName?.let {
+      if (it != DefaultKeymap.getInstance().defaultKeymapName) {
         val e = Element(ACTIVE_KEYMAP)
-        e.setAttribute(NAME_ATTRIBUTE, it.name)
+        e.setAttribute(NAME_ATTRIBUTE, it)
         result.addContent(e)
       }
     }

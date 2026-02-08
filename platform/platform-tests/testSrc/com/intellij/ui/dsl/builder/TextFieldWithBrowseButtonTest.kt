@@ -3,7 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.dsl.generateLongString
 import org.junit.Test
-import java.util.*
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 

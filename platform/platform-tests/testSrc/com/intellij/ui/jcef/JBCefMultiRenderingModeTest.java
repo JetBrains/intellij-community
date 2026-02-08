@@ -5,13 +5,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import kotlin.jvm.JvmField;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
-import org.junit.rules.TestName;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.BorderLayout;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 

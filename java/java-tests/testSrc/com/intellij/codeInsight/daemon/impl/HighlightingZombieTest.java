@@ -9,9 +9,14 @@ import com.intellij.ui.icons.CachedImageIcon;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import javax.swing.*;
-import java.awt.*;
-import java.io.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.Font;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;

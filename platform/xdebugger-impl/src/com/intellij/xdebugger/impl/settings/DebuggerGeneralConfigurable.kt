@@ -5,14 +5,20 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.toBooleanProperty
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 
 internal class DebuggerGeneralConfigurable : BoundSearchableConfigurable("", "debugger.general") {
 
 
   override fun createPanel(): DialogPanel {
-    val settings = XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings
+    val settings = XDebuggerSettingsManager.getInstance().generalSettings
 
     return panel {
       lateinit var showDebugWindow: Cell<JBCheckBox>

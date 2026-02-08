@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.dnd;
 
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * @author Konstantin Bulenkov

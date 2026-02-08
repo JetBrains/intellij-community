@@ -2,7 +2,12 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadActionListener;
+import com.intellij.openapi.application.WriteActionListener;
+import com.intellij.openapi.application.WriteIntentReadActionListener;
+import com.intellij.openapi.application.WriteLockReacquisitionListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -10,13 +15,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.function.Consumer;
 
 public interface ApplicationEx extends Application {

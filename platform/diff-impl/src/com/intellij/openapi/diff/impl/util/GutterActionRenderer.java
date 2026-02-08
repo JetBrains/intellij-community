@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Used in TC plugin.

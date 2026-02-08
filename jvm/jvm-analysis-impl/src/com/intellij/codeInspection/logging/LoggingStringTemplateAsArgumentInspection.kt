@@ -2,12 +2,17 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.logging.LoggingUtil.Companion
 import com.intellij.codeInspection.logging.LoggingUtil.Companion.LOG_MATCHERS
 import com.intellij.codeInspection.logging.LoggingUtil.Companion.countPlaceHolders
 import com.intellij.codeInspection.logging.LoggingUtil.Companion.isGuarded
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
@@ -16,10 +21,17 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UPolyadicExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.getQualifiedParentOrThis
+import org.jetbrains.uast.getUastParentOfType
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectionTool() {

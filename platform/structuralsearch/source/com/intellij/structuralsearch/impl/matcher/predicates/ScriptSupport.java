@@ -6,7 +6,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchScriptException;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
@@ -19,7 +24,12 @@ import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Maxim.Mossienko

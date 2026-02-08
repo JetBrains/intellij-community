@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.refIndex;
 
@@ -5540,6 +5540,25 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
         public abstract static class Variable extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
+            public static class TestDestructuringEntry extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("destructuringEntry.0.kt")
+                public void testDestructuringEntry() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/variable/destructuringEntry.0.kt");
+                }
+            }
+
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
             public static class TestPlusAssignFun extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {

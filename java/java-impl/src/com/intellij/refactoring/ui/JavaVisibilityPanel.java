@@ -11,7 +11,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JRadioButton;
 import javax.swing.event.ChangeEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;

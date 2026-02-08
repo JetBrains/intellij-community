@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.ifEmpty
 
+@K1Deprecation
 object RenameUnresolvedReferenceActionFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val ref = diagnostic.psiElement as? KtNameReferenceExpression ?: return null
@@ -33,6 +35,7 @@ object RenameUnresolvedReferenceActionFactory : KotlinSingleIntentionActionFacto
     }
 }
 
+@K1Deprecation
 class RenameUnresolvedReferenceFix(element: KtNameReferenceExpression) : AbstractRenameUnresolvedReferenceFix(element) {
     override fun KtExpression.findOccurrences(container: KtElement, isCallee: Boolean): List<KtNameReferenceExpression> = toRange()
         .match(container, KotlinPsiUnifier.DEFAULT)

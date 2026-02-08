@@ -12,7 +12,10 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestResourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.*
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.Android
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.Generated
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.Other
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.RegularRoot
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.RegularRoot.Java
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.RegularRoot.Kotlin
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData

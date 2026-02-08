@@ -4,7 +4,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBCardLayout;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * @author Konstantin Bulenkov

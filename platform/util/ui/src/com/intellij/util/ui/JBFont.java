@@ -9,9 +9,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.UIManager;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Font;
 import java.awt.geom.AffineTransform;
 import java.text.AttributedCharacterIterator;
 import java.util.Map;

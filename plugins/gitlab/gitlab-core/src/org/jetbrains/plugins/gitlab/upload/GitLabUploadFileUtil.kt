@@ -7,15 +7,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.ui.ImageUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.notification.GitLabNotificationIds.GL_NOTIFICATION_UPLOAD_FILE_ERROR
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import java.awt.Image
-import java.nio.file.Path
 import java.nio.file.AccessDeniedException
 import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 
 
 internal object GitLabUploadFileUtil {

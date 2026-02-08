@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -34,7 +34,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).prepareForTest();
+    new TestDaemonCodeAnalyzerImpl(getProject()).prepareForTest();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
   }
 
@@ -43,10 +43,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     try {
       // return default value to avoid unnecessary save
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-      if (daemonCodeAnalyzer != null) {
-        daemonCodeAnalyzer.cleanupAfterTest();
-      }
+      new TestDaemonCodeAnalyzerImpl(getProject()).cleanupAfterTest();
     }
     catch (Throwable e) {
       addSuppressedException(e);

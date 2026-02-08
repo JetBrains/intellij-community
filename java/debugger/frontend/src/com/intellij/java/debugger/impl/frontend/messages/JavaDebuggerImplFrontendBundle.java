@@ -2,7 +2,12 @@
 package com.intellij.java.debugger.impl.frontend.messages;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 

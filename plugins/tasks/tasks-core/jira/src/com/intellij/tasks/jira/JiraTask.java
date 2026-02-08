@@ -3,14 +3,18 @@ package com.intellij.tasks.jira;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskState;
+import com.intellij.tasks.TaskType;
 import com.intellij.ui.DeferredIconImpl;
 import com.intellij.util.ObjectUtils;
 import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Date;
 
 /**

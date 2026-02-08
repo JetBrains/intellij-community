@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.Collections;
 
 @ApiStatus.Internal

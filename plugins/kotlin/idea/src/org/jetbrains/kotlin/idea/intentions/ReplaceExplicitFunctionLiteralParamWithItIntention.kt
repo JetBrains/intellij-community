@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -14,12 +15,18 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.ParamRenamingProcessor
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ReplaceExplicitFunctionLiteralParamWithItIntention : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = KotlinBundle.message("replace.explicit.lambda.parameter.with.it")
 

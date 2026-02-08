@@ -1,0 +1,22 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.gradle"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.repository.search.common"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer"
+      serviceImplementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerImpl"
+      testServiceImplementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl"/>
+    <backgroundPostStartupActivity
+      implementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexInitializer"/>
+    <externalSystemTaskNotificationListener
+      implementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexUpdater"/>
+    <lookup.charFilter id="GradleCompletionCharFilter" order="first" implementation="com.intellij.gradle.completion.GradleCompletionCharFilter" />
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
+    <contributor implementation="com.intellij.gradle.completion.GradleDependencyCompletionContributor"/>
+  </extensions>
+</idea-plugin>

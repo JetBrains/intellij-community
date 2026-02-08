@@ -5,7 +5,22 @@ import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.intellij.openapi.externalSystem.model.project.dependencies.*;
+import com.intellij.openapi.externalSystem.model.project.dependencies.AbstractDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependencies;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependenciesImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.FileCollectionDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.FileCollectionDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependenciesImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ReferenceNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ResolutionState;
+import com.intellij.openapi.externalSystem.model.project.dependencies.UnknownDependencyNode;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
@@ -18,7 +33,15 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertFieldName;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readLong;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeLong;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
 
 /**
  * @author Vladislav.Soroka

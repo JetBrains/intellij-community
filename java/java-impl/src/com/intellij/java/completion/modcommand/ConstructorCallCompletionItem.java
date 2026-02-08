@@ -12,11 +12,24 @@ import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -120,6 +133,8 @@ final class ConstructorCallCompletionItem extends PsiUpdateCompletionItem<Object
    * Inserts {@code <>()}.
    */
   private static void insertTail(ModPsiUpdater updater, PsiClass psiClass) {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    if (settings != null && !settings.isInsertParenthesesAutomatically()) return;
     int inparens = 1;
     int caret = updater.getCaretOffset();
     Document document = updater.getDocument();

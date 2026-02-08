@@ -33,7 +33,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.test" />
-    <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
@@ -42,15 +41,11 @@
     <orderEntry type="module" module-name="intellij.kotlin.maven" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.allopen.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.samWithReceiver.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.dataframe.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.maven" />

@@ -7,7 +7,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Font;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 

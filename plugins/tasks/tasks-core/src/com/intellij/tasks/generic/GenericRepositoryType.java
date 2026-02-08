@@ -15,7 +15,7 @@ import icons.TasksCoreIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;

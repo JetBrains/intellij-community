@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings
+import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
@@ -21,8 +22,6 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.String
-import com.intellij.execution.configurations.RunnerSettings
 
 abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
 

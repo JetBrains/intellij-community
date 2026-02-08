@@ -4,7 +4,6 @@ package com.intellij.diff.tools.fragmented;
 import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.util.Range;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 

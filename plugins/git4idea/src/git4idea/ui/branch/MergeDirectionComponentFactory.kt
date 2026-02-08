@@ -6,7 +6,9 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.*
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.MutableCollectionComboBoxModel
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
@@ -26,7 +28,11 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Container
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.ComboBoxModel
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 

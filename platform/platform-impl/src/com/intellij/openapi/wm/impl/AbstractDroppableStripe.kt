@@ -12,7 +12,13 @@ import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
-import java.awt.*
+import java.awt.BasicStroke
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.LayoutManager
+import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 import kotlin.math.max

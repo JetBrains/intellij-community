@@ -15,9 +15,9 @@
  */
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Spacing;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import org.jetbrains.annotations.NotNull;
 

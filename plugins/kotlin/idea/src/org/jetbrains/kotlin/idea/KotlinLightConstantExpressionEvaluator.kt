@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea
 import com.intellij.psi.PsiConstantEvaluationHelper
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.ConstantExpressionEvaluator
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.computeExpression
 
+@K1Deprecation
 class KotlinLightConstantExpressionEvaluator : ConstantExpressionEvaluator {
 
     override fun computeConstantExpression(expression: PsiElement, throwExceptionOnOverflow: Boolean): Any? {

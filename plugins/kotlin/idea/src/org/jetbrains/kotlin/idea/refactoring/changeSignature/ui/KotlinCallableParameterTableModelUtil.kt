@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.render
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@K1Deprecation
 fun createRowItem(parameterInfo: KotlinParameterInfo?,
                   method: KotlinMethodDescriptor,
                   typeContext: PsiElement,

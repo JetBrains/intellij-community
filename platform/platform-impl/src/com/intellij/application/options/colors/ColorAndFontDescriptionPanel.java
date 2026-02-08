@@ -28,8 +28,15 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextPane;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,6 +67,7 @@ public final class ColorAndFontDescriptionPanel extends JPanel implements Option
     map.put(ApplicationBundle.message("combobox.effect.bordered"), EffectType.BOXED);
     map.put(ApplicationBundle.message("combobox.effect.strikeout"), EffectType.STRIKEOUT);
     map.put(ApplicationBundle.message("combobox.effect.bold.dottedline"), EffectType.BOLD_DOTTED_LINE);
+    map.put(ApplicationBundle.message("combobox.effect.faded"), EffectType.FADED);
     myEffectsMap = Collections.unmodifiableMap(map);
   }
   private JComboBox<String> myEffectsCombo;

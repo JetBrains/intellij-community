@@ -7,7 +7,12 @@ import fleet.kernel.dbSource
 import fleet.kernel.timestamp
 import fleet.kernel.transactor
 import fleet.kernel.waitForDbSourceToCatchUpWithTimestamp
-import fleet.util.*
+import fleet.util.Causal
+import fleet.util.CompressedVectorClock
+import fleet.util.LocalDbTimestamp
+import fleet.util.VectorClock
+import fleet.util.letIf
+import fleet.util.precedesOrEqual
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CopyableThrowable
 import kotlinx.coroutines.flow.firstOrNull

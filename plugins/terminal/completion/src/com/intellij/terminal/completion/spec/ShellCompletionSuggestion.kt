@@ -71,4 +71,12 @@ interface ShellCompletionSuggestion {
    * Both options are acceptable, but only one of them should be shown in the completion popup.
    */
   val isHidden: Boolean
+
+  /**
+   * If true, the [name] or [insertValue] will be automatically escaped according to the shell syntax
+   * (e.g., handling whitespaces or special characters) before being inserted.
+   *
+   * If false, the value is inserted exactly as provided.
+   */
+  val shouldEscape: Boolean
 }

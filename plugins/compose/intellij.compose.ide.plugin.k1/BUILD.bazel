@@ -4,6 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_ide-plugin-k1",
+  opt_in = ["org.jetbrains.kotlin.K1Deprecation"],
   x_context_parameters = True
 )
 
@@ -45,6 +46,14 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.k1` end
 
 ### auto-generated section `build intellij.compose.ide.plugin.k1.tests` start
+create_kotlinc_options(
+  name = "custom_ide-plugin-k1-tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
 jvm_library(
   name = "ide-plugin-k1-tests",
   visibility = ["//visibility:public"],
@@ -55,6 +64,7 @@ jvm_library(
   name = "ide-plugin-k1-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_ide-plugin-k1-tests",
   associates = ["//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1"],
   deps = [
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",

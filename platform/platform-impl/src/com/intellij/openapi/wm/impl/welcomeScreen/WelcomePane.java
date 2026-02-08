@@ -9,9 +9,13 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.wm.WelcomeScreen;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 @ApiStatus.Internal
 public final class WelcomePane extends JPanel {

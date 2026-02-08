@@ -8,7 +8,8 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.downloadAsText
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
-import java.util.*
+import java.util.TreeMap
+import java.util.TreeSet
 
 private const val MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.com/files/brokenPlugins.json"
 

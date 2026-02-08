@@ -12,12 +12,25 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.*;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.BIG_INTEGER_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.BOOLEAN_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.DOUBLE_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.INTEGER_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.STRING_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.getType;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.reverse;
 

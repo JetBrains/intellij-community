@@ -28,7 +28,12 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TemporaryDirectory;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.jetbrains.annotations.NotNull;
 

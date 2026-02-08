@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.FormBuilder;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;

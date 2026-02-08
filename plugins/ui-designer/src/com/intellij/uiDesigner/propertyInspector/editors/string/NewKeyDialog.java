@@ -5,10 +5,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.Component;
 
 
 public class NewKeyDialog extends DialogWrapper {

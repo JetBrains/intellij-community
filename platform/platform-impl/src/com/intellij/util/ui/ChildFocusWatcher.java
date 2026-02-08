@@ -3,8 +3,11 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 

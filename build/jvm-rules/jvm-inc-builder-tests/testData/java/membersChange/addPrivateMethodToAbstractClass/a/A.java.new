@@ -1,0 +1,7 @@
+public abstract class A {
+    void method (Integer x) {
+      methodImpl();
+    }
+
+    private void methodImpl() {}
+}

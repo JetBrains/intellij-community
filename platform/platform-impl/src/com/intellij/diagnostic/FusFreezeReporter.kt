@@ -27,11 +27,11 @@ internal class FusFreezeReporter : PerformanceListener {
     val elapsedMs = TimeUnit.NANOSECONDS.toMillis(currentTime - previousLoggedUiResponse)
     if (elapsedMs >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
       previousLoggedUiResponse = currentTime
-      UILatencyLogger.LATENCY.log(latencyMs)
+      UILatencyLogger.logLatency(latencyMs)
     }
     if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
       val hasIndexingGoingOn = ProjectManager.getInstance().openProjects.any { DumbService.isDumb(it) }
-      UILatencyLogger.LAGGING.log(latencyMs, hasIndexingGoingOn)
+      UILatencyLogger.logLagging(latencyMs, hasIndexingGoingOn)
     }
   }
 }

@@ -72,8 +72,14 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
-import training.ui.*
+import training.ui.LEARN_TOOL_WINDOW_ID
+import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiManager
+import training.ui.LearningUiUtil
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.ui.LessonMessagePane
+import training.ui.UISettings
+import training.ui.showOnboardingFeedbackNotification
 import training.util.LessonEndInfo
 import training.util.getActionById
 import training.util.learningToolWindow
@@ -84,7 +90,7 @@ import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent

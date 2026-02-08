@@ -6,8 +6,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
 import org.junit.After
 import org.junit.Before
 import org.junit.ClassRule

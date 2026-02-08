@@ -25,7 +25,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.PatternContext;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.ui.EditorTextField;
@@ -34,7 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Maxim.Mossienko

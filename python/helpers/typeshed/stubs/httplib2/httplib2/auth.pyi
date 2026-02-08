@@ -16,4 +16,3 @@ scheme: Incomplete
 challenge: Incomplete
 authentication_info: Incomplete
 www_authenticate: Incomplete
-downcaseTokens: Incomplete

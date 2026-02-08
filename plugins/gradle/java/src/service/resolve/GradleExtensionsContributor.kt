@@ -4,7 +4,15 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.IProperty
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
 import icons.GradleIcons

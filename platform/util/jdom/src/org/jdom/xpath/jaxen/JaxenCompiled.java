@@ -54,7 +54,12 @@
 
 package org.jdom.xpath.jaxen;
 
-import org.jaxen.*;
+import org.jaxen.BaseXPath;
+import org.jaxen.JaxenException;
+import org.jaxen.NamespaceContext;
+import org.jaxen.UnresolvableException;
+import org.jaxen.VariableContext;
+import org.jaxen.XPath;
 import org.jdom.Namespace;
 import org.jdom.filter2.Filter;
 import org.jdom.xpath.util.AbstractXPathCompiled;

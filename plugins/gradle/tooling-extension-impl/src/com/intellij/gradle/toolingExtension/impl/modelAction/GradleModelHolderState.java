@@ -2,7 +2,6 @@
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

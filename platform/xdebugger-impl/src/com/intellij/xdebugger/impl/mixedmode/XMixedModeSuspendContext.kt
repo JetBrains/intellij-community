@@ -5,12 +5,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
-import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
-import com.intellij.xdebugger.mixedMode.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
-import com.intellij.xdebugger.mixedMode.nativeThreadId
 import com.intellij.xdebugger.impl.util.notifyOnFrameChanged
+import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
+import com.intellij.xdebugger.mixedMode.XMixedModeSuspendContextBase
+import com.intellij.xdebugger.mixedMode.nativeThreadId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred

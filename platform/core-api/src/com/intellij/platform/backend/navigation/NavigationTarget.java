@@ -5,7 +5,6 @@ import com.intellij.model.Pointer;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents a minimal entity participating in navigation actions.
  * The entity is expected to be valid if it exists.
  */
-@Experimental
 @OverrideOnly
 public interface NavigationTarget {
 
@@ -31,7 +29,7 @@ public interface NavigationTarget {
    * <p/>
    * This method is called in read action.
    *
-   * @return presentation to render this target in navigation popup
+   * @return presentation to render this target in the navigation popup
    */
   @RequiresReadLock
   @RequiresBackgroundThread
@@ -50,7 +48,7 @@ public interface NavigationTarget {
 
   /**
    * Two different symbols may have the same navigation target.
-   * #equals and #hashCode are used to filter out same targets to hide them in navigation popup.
+   * #equals and #hashCode are used to filter out the same targets to hide them in the navigation popup.
    */
   @Override
   boolean equals(Object obj);

@@ -22,7 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFilePatchInProgress<?>> {
   protected final Project myProject;

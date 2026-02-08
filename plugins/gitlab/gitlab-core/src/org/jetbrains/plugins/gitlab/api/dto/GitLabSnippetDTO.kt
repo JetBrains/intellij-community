@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.api.dto
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
-import java.util.*
+import java.util.Date
 
 @SinceGitLab("12.6")
 @GraphQLFragment("graphql/fragment/snippet.graphql")

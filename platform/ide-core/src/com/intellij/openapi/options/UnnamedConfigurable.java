@@ -3,7 +3,7 @@ package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * This interface represents a configurable component that provides a Swing form to configure some settings.

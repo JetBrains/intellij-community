@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.FileAssociation
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.MacDistributionCustomizer
@@ -13,6 +14,9 @@ open class PyCharmMacDistributionCustomizer(projectHome: Path) : MacDistribution
     icnsPathForEAP = projectHome.resolve("python/build/resources/PyCharmCore_EAP.icns")
     bundleIdentifier = "com.jetbrains.pycharm.ce"
     dmgImagePath = projectHome.resolve("python/build/resources/dmg_background.tiff")
+    fileAssociations = PyCharmPropertiesBase.SUPPORTED_FILE_EXTENSIONS.map {
+      FileAssociation(it)
+    }
   }
 
   override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {

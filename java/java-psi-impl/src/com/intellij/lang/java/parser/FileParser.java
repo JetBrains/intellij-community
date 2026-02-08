@@ -18,8 +18,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.java.parser.JavaParserUtil.*;
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
+import static com.intellij.lang.java.parser.JavaParserUtil.getLanguageLevel;
+import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CLASS_INITIALIZER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FIELD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPLICIT_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_MODULE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_STATIC_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PACKAGE_STATEMENT;
 
 /**
  * @deprecated Use the new Java syntax library instead.

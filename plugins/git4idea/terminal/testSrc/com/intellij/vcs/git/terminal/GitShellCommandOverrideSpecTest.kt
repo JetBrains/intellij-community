@@ -26,7 +26,9 @@ import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTe
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.mockito.Mockito.*
+import org.mockito.Mockito.any
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 
 @RunWith(Parameterized::class)
 class GitShellCommandOverrideSpecTest(private val engine: TerminalEngine) : BasePlatformTestCase() {

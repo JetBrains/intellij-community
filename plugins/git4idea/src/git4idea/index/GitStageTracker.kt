@@ -34,7 +34,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
 import git4idea.util.toShortenedLogString
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.EventListener
 
 open class GitStageTracker(val project: Project) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()

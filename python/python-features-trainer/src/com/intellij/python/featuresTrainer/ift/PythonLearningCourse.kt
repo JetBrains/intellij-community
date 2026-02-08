@@ -7,7 +7,11 @@ import com.intellij.python.featuresTrainer.ift.lesson.assistance.PythonEditorCod
 import com.intellij.python.featuresTrainer.ift.lesson.basic.PythonContextActionsLesson
 import com.intellij.python.featuresTrainer.ift.lesson.basic.PythonSelectLesson
 import com.intellij.python.featuresTrainer.ift.lesson.basic.PythonSurroundAndUnwrapLesson
-import com.intellij.python.featuresTrainer.ift.lesson.completion.*
+import com.intellij.python.featuresTrainer.ift.lesson.completion.FStringCompletionLesson
+import com.intellij.python.featuresTrainer.ift.lesson.completion.PythonBasicCompletionLesson
+import com.intellij.python.featuresTrainer.ift.lesson.completion.PythonPostfixCompletionLesson
+import com.intellij.python.featuresTrainer.ift.lesson.completion.PythonSmartCompletionLesson
+import com.intellij.python.featuresTrainer.ift.lesson.completion.PythonTabCompletionLesson
 import com.intellij.python.featuresTrainer.ift.lesson.essensial.PythonOnboardingTourLesson
 import com.intellij.python.featuresTrainer.ift.lesson.navigation.PythonDeclarationAndUsagesLesson
 import com.intellij.python.featuresTrainer.ift.lesson.navigation.PythonFileStructureLesson
@@ -28,7 +32,12 @@ import training.learn.course.IftModule
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
 import training.learn.course.LessonType
-import training.learn.lesson.general.*
+import training.learn.lesson.general.CollapseLesson
+import training.learn.lesson.general.CommentUncommentLesson
+import training.learn.lesson.general.DuplicateLesson
+import training.learn.lesson.general.GotoActionLesson
+import training.learn.lesson.general.MoveLesson
+import training.learn.lesson.general.MultipleSelectionHtmlLesson
 import training.learn.lesson.general.assistance.CodeFormatLesson
 import training.learn.lesson.general.assistance.LocalHistoryLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson

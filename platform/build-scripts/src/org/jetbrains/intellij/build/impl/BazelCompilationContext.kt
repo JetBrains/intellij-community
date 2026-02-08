@@ -37,7 +37,13 @@ class BazelCompilationContext(
   private val scope: CoroutineScope?,
 ) : CompilationContext {
   override val outputProvider: ModuleOutputProvider by lazy {
-    BazelModuleOutputProvider(modules = delegate.project.modules, projectHome = delegate.paths.projectHome, bazelOutputRoot = bazelOutputRoot!!, scope = scope)
+    BazelModuleOutputProvider(
+      modules = delegate.project.modules,
+      projectHome = delegate.paths.projectHome,
+      bazelOutputRoot = bazelOutputRoot!!,
+      scope = scope,
+      useTestCompilationOutput = options.useTestCompilationOutput,
+    )
   }
 
   override val options: BuildOptions

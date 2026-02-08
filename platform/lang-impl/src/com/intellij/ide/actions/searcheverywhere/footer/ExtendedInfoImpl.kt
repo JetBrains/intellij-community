@@ -2,10 +2,23 @@
 package com.intellij.ide.actions.searcheverywhere.footer
 
 import com.intellij.find.impl.SearchEverywhereItem
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ModalityState

@@ -35,6 +35,11 @@ class PluginDependenciesValidationOptions(
    * treated as loaded by the plugin descriptor's classloader.
    */
   val pluginVariantsWithDynamicIncludes: List<PluginVariantWithDynamicIncludes> = emptyList(),
+
+  /**
+   * Specifies plugin ids which should be excluded from the validation.
+   */
+  val pluginsToIgnore: List<PluginId> = emptyList(),
 )
 
 /**

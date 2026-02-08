@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.actions.searcheverywhere
@@ -10,17 +10,28 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.ide.util.ElementsChooser
-import com.intellij.ide.util.gotoByName.*
+import com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider
+import com.intellij.ide.util.gotoByName.ChooseByNameModel
+import com.intellij.ide.util.gotoByName.ChooseByNameModelEx
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
+import com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
+import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeOption
 import com.intellij.ide.util.scopeChooser.ScopeService
 import com.intellij.navigation.AnonymousElementProvider
 import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -40,7 +51,7 @@ import com.intellij.util.containers.map2Array
 import com.intellij.util.indexing.FindSymbolParameters
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EnumSet
 import java.util.regex.Pattern
 import javax.swing.ListCellRenderer
 
@@ -428,7 +439,9 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
       if (LOG.isTraceEnabled) {
         LOG.trace("Selected item for $searchText is not PsiElement, it is: ${selected}; performing non-suspending navigation")
       }
-      EditSourceUtil.navigate((selected as NavigationItem), true, false)
+      WriteIntentReadAction.run {
+        EditSourceUtil.navigate((selected as NavigationItem), true, false)
+      }
       return true
     }
 

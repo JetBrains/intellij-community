@@ -3,7 +3,12 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefGraphAnnotator;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;

@@ -20,7 +20,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.psi.xml.XmlTokenType.*;
+import static com.intellij.psi.xml.XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
+import static com.intellij.psi.xml.XmlTokenType.XML_CDATA_START;
+import static com.intellij.psi.xml.XmlTokenType.XML_CHAR_ENTITY_REF;
+import static com.intellij.psi.xml.XmlTokenType.XML_COMMENT_CHARACTERS;
+import static com.intellij.psi.xml.XmlTokenType.XML_COMMENT_START;
+import static com.intellij.psi.xml.XmlTokenType.XML_DATA_CHARACTERS;
+import static com.intellij.psi.xml.XmlTokenType.XML_EMPTY_ELEMENT_END;
+import static com.intellij.psi.xml.XmlTokenType.XML_END_TAG_START;
+import static com.intellij.psi.xml.XmlTokenType.XML_ENTITY_REF_TOKEN;
+import static com.intellij.psi.xml.XmlTokenType.XML_NAME;
+import static com.intellij.psi.xml.XmlTokenType.XML_REAL_WHITE_SPACE;
+import static com.intellij.psi.xml.XmlTokenType.XML_START_TAG_START;
+import static com.intellij.psi.xml.XmlTokenType.XML_TAG_CHARACTERS;
+import static com.intellij.psi.xml.XmlTokenType.XML_TAG_END;
+import static com.intellij.psi.xml.XmlTokenType.XML_WHITE_SPACE;
 
 public abstract class BaseHtmlLexer extends DelegateLexer implements RestartableLexer {
   protected static final int BASE_STATE_MASK = HtmlLexerConstants.BASE_STATE_MASK;

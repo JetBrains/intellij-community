@@ -3,7 +3,7 @@ package com.intellij.util.ui;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
 
 public interface SortableColumnModel {
   ColumnInfo[] getColumnInfos();

@@ -4,7 +4,8 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.Convertor;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
 public abstract class TreeUIHelper {

@@ -10,9 +10,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LazyExtension
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.CollectionFactory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
 

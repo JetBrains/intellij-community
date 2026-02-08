@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SshSettingConfigurableUi;
 
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
 import java.util.function.Supplier;
 

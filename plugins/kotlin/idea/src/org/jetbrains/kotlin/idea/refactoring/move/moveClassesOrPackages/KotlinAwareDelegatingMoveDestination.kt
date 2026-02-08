@@ -11,6 +11,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.MoveDestination
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRenameUsage
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
+@K1Deprecation
 class KotlinAwareDelegatingMoveDestination(
     private val delegate: MoveDestination,
     private val targetPackage: PsiPackage?,

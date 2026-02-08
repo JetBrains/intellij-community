@@ -6,13 +6,13 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import com.jetbrains.python.remote.RemoteProcessControl;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ServerSocket;

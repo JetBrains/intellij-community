@@ -2,13 +2,9 @@
 package com.intellij.java.syntax.parser
 
 import com.intellij.java.syntax.JavaSyntaxBundle
-import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import org.jetbrains.annotations.PropertyKey
-import kotlin.jvm.JvmStatic
 
 class ExpressionParser(
   private val myNewExpressionParser: PrattExpressionParser,

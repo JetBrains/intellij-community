@@ -15,10 +15,22 @@ import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 
-import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.*;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_BLOCK_COMMENT;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_BRACES;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_BRACKETS;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_COLON;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_COMMA;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_INVALID_ESCAPE;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_KEYWORD;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_LINE_COMMENT;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_NUMBER;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_PARAMETER;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_STRING;
+import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.JSON_VALID_ESCAPE;
 
 /**
  * @author Mikhail Golubev

@@ -10,7 +10,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V>, ReferenceQueueable {
   private final Int2ObjectMap<MyReference<V>> myMap = new Int2ObjectOpenHashMap<>();

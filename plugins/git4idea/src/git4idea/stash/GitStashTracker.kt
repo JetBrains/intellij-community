@@ -24,7 +24,7 @@ import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.ui.GitStashUIHandler
 import git4idea.ui.StashInfo
-import java.util.*
+import java.util.EventListener
 
 class GitStashTracker(private val project: Project) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()

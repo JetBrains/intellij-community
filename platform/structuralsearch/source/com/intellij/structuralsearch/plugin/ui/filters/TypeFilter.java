@@ -18,7 +18,11 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.lang.regexp.RegExpFileType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.GroupLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.LayoutStyle;
 import java.util.List;
 
 /**

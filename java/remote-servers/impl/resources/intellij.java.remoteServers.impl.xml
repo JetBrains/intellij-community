@@ -17,7 +17,6 @@
 
     <plugin id="com.intellij.modules.remoteServers"/>
     <plugin id="com.intellij.modules.java-capable"/>
-
   </dependencies>
 
   <extensionPoints>

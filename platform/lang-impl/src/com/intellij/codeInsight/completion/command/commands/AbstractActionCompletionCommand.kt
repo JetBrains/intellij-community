@@ -1,12 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandCompletionService
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.codeInsight.completion.command.getDataContext
+import com.intellij.codeInsight.completion.command.getTargetContext
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.components.serviceOrNull
@@ -19,7 +32,11 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.SlowOperations
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus

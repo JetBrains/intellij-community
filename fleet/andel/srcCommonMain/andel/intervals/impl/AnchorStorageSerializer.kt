@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.intervals.impl
 
-import andel.intervals.*
+import andel.intervals.AnchorStorage
+import andel.intervals.Interval
+import andel.intervals.Intervals
+import andel.intervals.fromIntervals
 import fleet.util.UID
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.Serializable

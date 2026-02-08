@@ -5,14 +5,34 @@ import fleet.buildtool.fs.extractZip
 import fleet.buildtool.platform.Arch
 import fleet.buildtool.platform.Platform
 import fleet.buildtool.platform.toS3DistributionSlug
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
+import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.writeZipUsingTempFile
+import org.jetbrains.intellij.build.io.zip
 import org.slf4j.Logger
-import org.jetbrains.intellij.build.io.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.moveTo
+import kotlin.io.path.name
 
 const val allowedLicenseClientConsumerModule: String = "fleet.plugins.ship.common"
 private fun allowedLicenseClientConsumerJar(version: String) = "fleet.common-$version.jar" // fleet.common jar

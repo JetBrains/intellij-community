@@ -2,7 +2,11 @@
 package com.intellij.ide.startup.importSettings.wizard.pluginChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.chooser.ui.*
+import com.intellij.ide.startup.importSettings.chooser.ui.BaseController
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
+import com.intellij.ide.startup.importSettings.chooser.ui.ScrollSnapToFocused
+import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.ide.startup.importSettings.data.PluginService
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.SystemInfo
@@ -15,7 +19,12 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 internal class WizardPluginsPage(
   val controller: BaseController,

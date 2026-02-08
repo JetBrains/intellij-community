@@ -10,7 +10,11 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 

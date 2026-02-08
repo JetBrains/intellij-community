@@ -17,8 +17,8 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiClassOwner extends PsiFile {
   /**

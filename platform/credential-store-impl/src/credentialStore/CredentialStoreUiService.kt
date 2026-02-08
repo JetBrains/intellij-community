@@ -4,7 +4,10 @@ package com.intellij.credentialStore
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.DialogTitle
+import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import java.awt.Component
 
 interface CredentialStoreUiService {

@@ -5,7 +5,15 @@ import com.intellij.internal.performance.LatencyDistributionRecord;
 import com.intellij.internal.performance.LatencyDistributionRecordKey;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowUtilValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.IntEventField;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.EventRateThrottleResult;
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle;
@@ -19,7 +27,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.LatencyListener;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,13 +54,10 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
   private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max_ms");
   private static final IntEventField LATENCY_90 = EventFields.Int("latency_90_ms");
   private static final EventId3<Integer, Integer, FileType> LATENCY = GROUP.registerEvent("latency", LATENCY_MAX, LATENCY_90, EventFields.FileType);
-  private static final EventId2<Language, Language> TYPED_IN_INJECTED =
-    GROUP.registerEvent("typed.in.injected.language",
-                        EventFields.Language("original_lang"),
-                        EventFields.Language("injected_lang"),
-                        "Logs typing when the first language is the original language and the second language is injected language. " +
-                        "In case of multiple carets, logged for each caret individually"
-    );
+  private static final EventId2<Language, Language> TYPED_IN_INJECTED = GROUP.registerEvent(
+    "typed.in.injected.language",
+    EventFields.Language("original_lang"), EventFields.Language("injected_lang")
+  );
   private static final EventId TOO_MANY_INJECTED_EVENTS = GROUP.registerEvent("too.many.injected.events");
 
   private static final EventsRateWindowThrottle ourThrottle =

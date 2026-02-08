@@ -15,9 +15,13 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
+import com.intellij.testFramework.useProject
 import com.intellij.util.io.createDirectories
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.toPath

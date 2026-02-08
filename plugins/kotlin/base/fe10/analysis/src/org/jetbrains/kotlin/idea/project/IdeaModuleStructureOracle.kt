@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.project
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
@@ -12,11 +13,14 @@ import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.unwrapModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
+import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
+import org.jetbrains.kotlin.idea.caches.project.toDescriptor
 import org.jetbrains.kotlin.resolve.ModulePath
 import org.jetbrains.kotlin.resolve.ModuleStructureOracle
-import java.util.*
+import java.util.Stack
 
+@K1Deprecation
 class IdeaModuleStructureOracle : ModuleStructureOracle {
     override fun hasImplementingModules(module: ModuleDescriptor): Boolean {
         return module.implementingDescriptors.isNotEmpty()
@@ -92,6 +96,7 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
         })
 }
 
+@K1Deprecation
 object DependsOnGraphHelper {
     fun ModuleDescriptor.predecessorsInDependsOnGraph(): List<ModuleDescriptor> {
         return moduleSourceInfo

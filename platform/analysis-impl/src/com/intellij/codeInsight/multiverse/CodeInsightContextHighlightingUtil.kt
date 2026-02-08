@@ -37,5 +37,5 @@ fun CodeInsightContext.acceptRangeHighlighter(rangeHighlighter: RangeHighlighter
     return true
   }
 
-  return rangeHighlighterContext == this
+  return rangeHighlighterContext == this || rangeHighlighterContext == anyContext()
 }

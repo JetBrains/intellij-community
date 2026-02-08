@@ -2,7 +2,6 @@
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.ide.vfs.rpcId
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
@@ -10,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
-import org.jetbrains.annotations.ApiStatus
 
 private val LOG by lazy {
   fileLogger()

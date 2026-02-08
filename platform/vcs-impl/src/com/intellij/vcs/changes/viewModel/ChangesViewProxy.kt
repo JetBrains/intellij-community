@@ -7,7 +7,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ChangesViewDiffAction
+import com.intellij.openapi.vcs.changes.ChangesViewSplitComponentBinding
+import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
+import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges

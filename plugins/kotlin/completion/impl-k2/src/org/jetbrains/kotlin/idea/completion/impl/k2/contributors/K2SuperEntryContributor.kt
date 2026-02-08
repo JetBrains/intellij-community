@@ -7,9 +7,9 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinClassIdSerializer
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.SuperCallInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.SuperCallLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperTypeCallNameReferencePositionContext
@@ -26,7 +26,7 @@ internal class K2SuperEntryContributor : K2SimpleCompletionContributor<KotlinSup
             LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classId), superType.name.asString())
                 .withTailText(tailText)
                 .withInsertHandler(SuperCallInsertionHandler)
-                .let { context.addElement(it) }
+                .let { addElement(it) }
         }
     }
 }

@@ -17,7 +17,12 @@ import com.intellij.usages.similarity.clustering.UsageCluster
 import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logLinkToSimilarUsagesLinkFromUsagePreviewClicked
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.FlowLayout

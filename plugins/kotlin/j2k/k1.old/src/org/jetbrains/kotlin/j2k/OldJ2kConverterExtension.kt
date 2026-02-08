@@ -9,7 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
-import org.jetbrains.kotlin.j2k.copyPaste.*
+import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
+import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
+import org.jetbrains.kotlin.j2k.copyPaste.K1J2KCopyPasteConverter
+import org.jetbrains.kotlin.j2k.copyPaste.K1PlainTextPasteImportResolver
+import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
+import org.jetbrains.kotlin.j2k.copyPaste.TargetData
 import org.jetbrains.kotlin.psi.KtFile
 
 private class OldJ2kConverterExtension : J2kConverterExtension() {

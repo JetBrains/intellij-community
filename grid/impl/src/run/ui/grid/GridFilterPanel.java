@@ -19,7 +19,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import static com.intellij.database.datagrid.GridFilterAndSortingComponent.FILTER_PREFERRED_SIZE;
 

@@ -5,12 +5,12 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.FontUtil
-import com.intellij.util.PathUtil
 import com.intellij.platform.vcs.impl.frontend.VcsFrontendBundle
 import com.intellij.platform.vcs.impl.frontend.changes.findFileStatusById
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.FontUtil
+import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 

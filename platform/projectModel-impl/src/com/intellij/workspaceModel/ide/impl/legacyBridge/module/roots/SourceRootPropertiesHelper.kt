@@ -1,7 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
-import com.intellij.java.workspace.entities.*
+import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.asJavaResourceRoot
+import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.javaResourceRoots
+import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.java.workspace.entities.modifyJavaResourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.modifyJavaSourceRootPropertiesEntity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity

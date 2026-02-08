@@ -18,7 +18,12 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Actions;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.OverrideText;
+import org.jetbrains.idea.devkit.dom.Separator;
+import org.jetbrains.idea.devkit.dom.Synonym;
 
 import java.util.List;
 

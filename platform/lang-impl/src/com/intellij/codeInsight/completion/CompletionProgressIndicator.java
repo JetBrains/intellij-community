@@ -11,7 +11,12 @@ import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -65,13 +70,22 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -523,26 +537,25 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       myHasPsiElements = true;
     }
 
-    boolean forceMiddleMatch = lookupElement.getUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH) != null;
-    if (forceMiddleMatch) {
-      myArranger.associateSorter(lookupElement, (CompletionSorterImpl)item.getSorter());
-      addItemToLookup(item);
-      return;
-    }
+    myArranger.associateSorter(lookupElement, (CompletionSorterImpl)item.getSorter());
 
     boolean allowMiddleMatches = count > BaseCompletionLookupArranger.MAX_PREFERRED_COUNT * 2;
     if (allowMiddleMatches) {
       addDelayedMiddleMatches();
     }
 
-    myArranger.associateSorter(lookupElement, (CompletionSorterImpl)item.getSorter());
-    if (item.isStartMatch() || allowMiddleMatches) {
+    if (item.isStartMatch() || allowMiddleMatches || isForceMiddleMatch(lookupElement)) {
       addItemToLookup(item);
-    } else {
+    }
+    else {
       synchronized (delayedMiddleMatches) {
         delayedMiddleMatches.add(item);
       }
     }
+  }
+
+  private static boolean isForceMiddleMatch(LookupElement lookupElement) {
+    return lookupElement.getUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH) != null;
   }
 
   private void addItemToLookup(@NotNull CompletionResult item) {
@@ -998,9 +1011,9 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       CompletionThreadingKt.tryReadOrCancel(this, () -> scheduleAdvertising(parameters));
     });
 
-    WeighingDelegate weigher = threading.delegateWeighing(this);
+    CompletionConsumer consumer = threading.createConsumer(this);
     try {
-      calculateItems(initContext, weigher, parameters);
+      calculateItems(initContext, consumer, parameters);
     }
     catch (ProcessCanceledException ignore) {
       cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
@@ -1012,17 +1025,17 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private void calculateItems(@NotNull CompletionInitializationContext initContext,
-                              @NotNull WeighingDelegate weigher,
+                              @NotNull CompletionConsumer consumer,
                               @NotNull CompletionParameters parameters) {
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       duringCompletion(initContext, parameters);
       ProgressManager.checkCanceled();
 
-      CompletionService.getCompletionService().performCompletion(parameters, weigher);
+      CompletionService.getCompletionService().performCompletion(parameters, consumer);
     });
     ProgressManager.checkCanceled();
 
-    weigher.waitFor();
+    consumer.waitFor();
     ProgressManager.checkCanceled();
   }
 

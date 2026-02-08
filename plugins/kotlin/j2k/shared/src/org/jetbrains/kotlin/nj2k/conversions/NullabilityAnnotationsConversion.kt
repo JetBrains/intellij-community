@@ -7,7 +7,12 @@ import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABLE_ANNOTATIONS
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotation
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationListOwner
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.JKTypeElement
+import org.jetbrains.kotlin.nj2k.tree.JKVariable
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
 class NullabilityAnnotationsConversion(context: ConverterContext) : RecursiveConversion(context) {

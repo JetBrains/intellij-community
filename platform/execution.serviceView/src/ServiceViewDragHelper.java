@@ -7,7 +7,14 @@ import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewDnDDescriptor;
 import com.intellij.execution.services.ServiceViewDnDDescriptor.Position;
 import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.DnDAction;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDDropHandler;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDSource;
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.ide.dnd.DnDTargetChecker;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
@@ -28,9 +35,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -39,7 +51,9 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
-import static com.intellij.execution.services.ServiceViewDnDDescriptor.Position.*;
+import static com.intellij.execution.services.ServiceViewDnDDescriptor.Position.ABOVE;
+import static com.intellij.execution.services.ServiceViewDnDDescriptor.Position.BELOW;
+import static com.intellij.execution.services.ServiceViewDnDDescriptor.Position.INTO;
 
 final class ServiceViewDragHelper {
   static DnDSource createSource(@NotNull ServiceView serviceView) {

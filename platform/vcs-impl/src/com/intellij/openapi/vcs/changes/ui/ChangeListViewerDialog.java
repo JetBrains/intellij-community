@@ -19,8 +19,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Window;
 
 public final class ChangeListViewerDialog extends DialogWrapper {
   private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";

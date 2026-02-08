@@ -2,7 +2,13 @@
 package com.intellij.grazie.spellchecker.inspector;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.spellchecker.inspections.*;
+import com.intellij.spellchecker.inspections.CommentSplitter;
+import com.intellij.spellchecker.inspections.IdentifierSplitter;
+import com.intellij.spellchecker.inspections.PlainTextSplitter;
+import com.intellij.spellchecker.inspections.PropertiesSplitter;
+import com.intellij.spellchecker.inspections.Splitter;
+import com.intellij.spellchecker.inspections.TextSplitter;
+import com.intellij.spellchecker.inspections.WordSplitter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 

@@ -30,7 +30,7 @@ import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.WeakHashMap
 import java.util.concurrent.CompletableFuture
 
 @ApiStatus.NonExtendable

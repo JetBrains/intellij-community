@@ -16,7 +16,12 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiWhileStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

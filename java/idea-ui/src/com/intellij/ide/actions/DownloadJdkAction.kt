@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
@@ -28,7 +28,7 @@ class DownloadJdkAction: AnAction() {
       downloadExtension.showDownloadUI(sdkType, ProjectSdksModel(), null, project, null, { true }) { task: SdkDownloadTask ->
         val sdk = JdkDownloadService.setupInstallableSdk(task)
         project.service<JdkDownloadService>().scheduleDownloadSdk(sdk)
-        project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk, true)
+        project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk)
       }
     } else {
       log.warn("No download extension found to download a JDK")

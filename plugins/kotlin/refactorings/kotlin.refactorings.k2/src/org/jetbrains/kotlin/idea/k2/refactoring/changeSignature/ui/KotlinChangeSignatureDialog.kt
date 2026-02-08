@@ -32,11 +32,25 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.defaultValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor.Kind
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinBaseChangeSignatureDialog
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallableParameterTableModel
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinFunctionParameterTableModel
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinPrimaryConstructorParameterTableModel
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinSecondaryConstructorParameterTableModel
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtTypeCodeFragment
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.types.Variance
 
 @OptIn(KaAllowAnalysisOnEdt::class)

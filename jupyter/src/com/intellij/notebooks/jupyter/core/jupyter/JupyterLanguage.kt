@@ -2,9 +2,9 @@
 package com.intellij.notebooks.jupyter.core.jupyter
 
 import com.intellij.lang.Language
+import com.intellij.notebooks.jupyter.core.lang.NotebookLanguage
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
-import com.intellij.notebooks.jupyter.core.lang.NotebookLanguage
 
 object JupyterLanguage : Language(NotebookLanguage, "Jupyter")
 

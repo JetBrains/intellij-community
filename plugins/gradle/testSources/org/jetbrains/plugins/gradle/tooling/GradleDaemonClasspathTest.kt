@@ -5,7 +5,9 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.gradle.service.execution.GRADLE_TOOLING_EXTENSION_CLASSES
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.BufferedInputStream
 import java.io.DataInputStream

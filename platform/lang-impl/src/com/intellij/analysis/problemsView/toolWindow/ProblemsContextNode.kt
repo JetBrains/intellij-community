@@ -8,50 +8,33 @@ import com.intellij.openapi.editor.impl.multiverse.createCodeInsightContextPrese
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
-import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
 
-@ApiStatus.Experimental
-class ProblemsContextNode(
+internal class ProblemsContextNode(
   val parent: FileNode,
   val contextGroup: CodeInsightContext,
   val problems: Collection<Problem>,
-  val isGroupIdToolSwitchedOn: () -> Boolean
+  val groupByToolId: Boolean,
 ) : Node(parent) {
-  val myIcon: Icon? = createCodeInsightContextPresentation(contextGroup, parent.project).icon
+  private val presentation = createCodeInsightContextPresentation(contextGroup, parent.project)
 
   override fun getLeafState(): LeafState = LeafState.NEVER
 
-  override fun getName(): String {
-    val presentation = createCodeInsightContextPresentation(contextGroup, parent.project)
-    return presentation.text
-  }
+  override fun getName(): String =
+    presentation.text
 
   override fun update(project: Project, presentation: PresentationData) {
     presentation.addText(name, REGULAR_ATTRIBUTES)
-    presentation.setIcon(myIcon)
+    presentation.setIcon(this.presentation.icon)
   }
 
-  private fun getNodesForContext(problems: List<Problem>): Collection<Node> {
-    return problems.map { ProblemNode(this, parent.file, it) }
-  }
-
-  override fun getChildren(): List<Node> {
-    if (!isGroupIdToolSwitchedOn()) {
-      return problems.map { ProblemNode(this, parent.file, it) }
-    }
-    else {
-      return problems.groupBy { it.group }.flatMap { (group, problems) ->
-        if (group != null) {
-          listOf(ProblemsContextGroupNode(this, group, problems))
-        }
-        else {
-          getNodesForContext(problems)
-        }
-      }
-    }
-
-  }
+  override fun getChildren(): List<Node> =
+    ProblemsViewHighlightingChildrenBuilder.prepareChildrenWithToolIdGroupingIfEnabled(
+      problems = problems,
+      groupByToolId = groupByToolId,
+      parent = this,
+      virtualFile = parent.file,
+      groupNodeBuilder = { problems, group, parent -> ProblemsContextGroupNode(this, group, problems) }
+    )
 
   override fun hashCode(): Int = contextGroup.hashCode()
 

@@ -12,7 +12,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.DataGetter
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**

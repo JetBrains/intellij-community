@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 
+@K1Deprecation
 class KotlinMutableMethodDescriptor(override val original: KotlinMethodDescriptor) : KotlinMethodDescriptor by original, KotlinModifiableMethodDescriptor<KotlinParameterInfo, DescriptorVisibility> {
     private val parameters: MutableList<KotlinParameterInfo> = original.parameters
 

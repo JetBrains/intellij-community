@@ -4,7 +4,10 @@ package com.intellij.openapi.project
 import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.ClassEventField
+import com.intellij.internal.statistic.eventLog.events.EnumEventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
 import org.jetbrains.annotations.ApiStatus

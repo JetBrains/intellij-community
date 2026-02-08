@@ -30,3 +30,5 @@ class C {
 // ABSENT: createX1
 // EXIST: createX2
 // ABSENT: createX3
+
+// IGNORE_K2

@@ -13,7 +13,19 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiDocCommentOwner
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
@@ -25,7 +37,11 @@ import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDe
 import org.junit.Ignore
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.extension
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
 
 /**
  * Generator which is used to generate required api files for [com.intellij.codeInspection.JavaApiUsageInspection].

@@ -5,7 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitCommit
 

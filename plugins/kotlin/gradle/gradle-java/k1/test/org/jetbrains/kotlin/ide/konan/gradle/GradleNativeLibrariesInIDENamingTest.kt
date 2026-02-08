@@ -18,7 +18,9 @@ import org.jetbrains.kotlin.konan.library.konanCommonLibraryPath
 import org.jetbrains.kotlin.konan.library.konanPlatformLibraryPath
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.AssumptionViolatedException
 import org.junit.Test
 import java.io.File

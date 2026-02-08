@@ -17,7 +17,6 @@ package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.refactoring.classMembers.AbstractMemberInfoStorage;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import java.util.HashSet;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -26,6 +25,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * @author Dennis.Ushakov

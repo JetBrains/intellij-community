@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import java.util.concurrent.Callable
 
+@K1Deprecation
 class K1KotlinScratchFile(project: Project, file: VirtualFile) : ScratchFile(project, file) {
     var replScratchExecutor: SequentialScratchExecutor? = null
     var compilingScratchExecutor: ScratchExecutor? = null

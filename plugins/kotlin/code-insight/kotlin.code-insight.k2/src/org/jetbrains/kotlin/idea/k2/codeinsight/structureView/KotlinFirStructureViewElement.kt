@@ -20,10 +20,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
-import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
 import org.jetbrains.kotlin.idea.structureView.getStructureViewChildren
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnonymousInitializer
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import javax.swing.Icon
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

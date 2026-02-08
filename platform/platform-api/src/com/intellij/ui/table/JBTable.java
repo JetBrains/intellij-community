@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +10,16 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.CellRendererPanel;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ComponentWithExpandableItems;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ExpandableItemsHandlerFactory;
+import com.intellij.ui.ExpandedItemRendererComponentWrapper;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.TableCell;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -18,7 +27,19 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ValueScaler;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -28,15 +49,55 @@ import sun.swing.SwingUtilities2;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.Action;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTable;
+import javax.swing.JViewport;
+import javax.swing.KeyStroke;
+import javax.swing.RowSorter;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.MouseInputListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
-import javax.swing.table.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.table.TableStringConverter;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -82,6 +143,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private boolean myShowLastHorizontalLine;
 
   private ValueScaler myValueScaler;
+
+  private final MyCellEditorRemover myCellEditorRemover;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -182,7 +245,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     myUiUpdating = false;
 
-    new MyCellEditorRemover().setupListeners();
+    myCellEditorRemover = new MyCellEditorRemover();
+    myCellEditorRemover.setupListeners();
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
@@ -533,6 +597,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         remove(myBusyIcon);
         Disposer.dispose(myBusyIcon);
         myBusyIcon = null;
+      }
+      if (myCellEditorRemover != null) {
+        myCellEditorRemover.deactivate();
       }
     }
   }

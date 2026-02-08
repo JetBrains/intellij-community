@@ -22,7 +22,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
-import com.intellij.tasks.*;
+import com.intellij.tasks.CustomTaskState;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.TaskManagerTestCase;
+import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
@@ -45,7 +49,11 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Vector;
 
 import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0;
 import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0_ALPHA;

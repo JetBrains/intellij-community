@@ -19,7 +19,7 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
 import java.util.Arrays;
 import java.util.Collections;
 

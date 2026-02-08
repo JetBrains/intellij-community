@@ -77,7 +77,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   fun getTargetModuleResidesOnImpl(module: Module): TargetConfigurationWithLocalFsAccess? = null
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    if (!service<Available>().isAvailable(this, pluginDescriptor)) {
+    if (!service<Available>().isAvailable(this)) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -87,11 +87,11 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
    * every [PythonInterpreterTargetEnvironmentFactory].
    */
   interface Available {
-    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean
+    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory): Boolean
 
     /** It is supposed that PyCharm Pro supports all available Run Target interpreters. */
     class Default : Available {
-      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean = true
+      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory): Boolean = true
     }
   }
 

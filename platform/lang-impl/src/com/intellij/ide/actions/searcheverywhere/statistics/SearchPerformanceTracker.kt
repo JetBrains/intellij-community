@@ -6,8 +6,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.ide.actions.searcheverywhere.SearchListener
 import com.intellij.internal.statistic.utils.StartMoment
 import com.intellij.util.TimeoutUtil
-import java.util.concurrent.atomic.AtomicReference
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchPerformanceTracker(private val startMoment: StartMoment?, private val tabIdProvider: () -> String) : SearchListener {
   private val initTime = System.nanoTime()

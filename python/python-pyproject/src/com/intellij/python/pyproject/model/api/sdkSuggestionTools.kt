@@ -7,6 +7,7 @@ import com.intellij.python.pyproject.model.internal.suggestSdkImpl
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.configuration.findPythonVirtualEnvironments
 import com.jetbrains.python.venvReader.Directory
 
 
@@ -36,23 +37,33 @@ suspend fun Module.suggestSdk(): SuggestedSdk? = suggestSdkImpl(this)
  */
 suspend fun Module.getModuleInfo(
   configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension> = PyProjectSdkConfigurationExtension.createMap(),
-): ModuleCreateInfo? = // Save on module level
-  when (val r = suggestSdk()) {
+): ModuleCreateInfo? { // Save on module level
+  val venvsInModule = findPythonVirtualEnvironments()
+
+  val suggestedByPyProjectToml = when (val suggestedSdk = suggestSdk()) {
     is SuggestedSdk.PyProjectIndependent -> {
-      val tools = r.preferTools.map { configuratorsByTool[it]!! }
-      tools.firstNotNullOfOrNull { tool ->
-        val createInfo = (tool.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this)
-                          ?: tool.checkEnvironmentAndPrepareSdkCreator(this)) ?: return@firstNotNullOfOrNull null
-        CreateSdkInfoWithTool(createInfo, tool.toolId).asDTO(r.moduleDir)
-      }
+      configuratorsByTool
+        .filter { it.key in suggestedSdk.preferTools }
+        .firstNotNullOfOrNull { (toolId, extension) ->
+          extension.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this, venvsInModule)?.let {
+            CreateSdkInfoWithTool(it, toolId).asDTO(suggestedSdk.moduleDir)
+          }
+        }
     }
     is SuggestedSdk.SameAs -> {
-      ModuleCreateInfo.SameAs(r.parentModule)
+      ModuleCreateInfo.SameAs(suggestedSdk.parentModule)
     }
     null -> null
-  } // No tools or not pyproject.toml at all? Use EP as a fallback
-  ?: PyProjectSdkConfigurationExtension.findAllSortedForModule(this).firstOrNull()
-    ?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(guessModuleDir()?.toNioPath()) }
+  }
+  suggestedByPyProjectToml?.let { return it }
+
+  // No tools or not pyproject.toml at all? Use EP as a fallback
+  val bestProposalFromTools = PyProjectSdkConfigurationExtension.findAllSortedForModule(this, venvsInModule).firstOrNull()
+
+  return bestProposalFromTools?.let {
+    CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(guessModuleDir()?.toNioPath())
+  }
+}
 
 sealed interface ModuleCreateInfo {
   data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId, val moduleDir: Directory?) : ModuleCreateInfo

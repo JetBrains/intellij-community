@@ -2,7 +2,13 @@
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.io.*;
+import com.intellij.util.io.ByteSequenceDataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.MeasurableIndexStore;
+import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.PersistentMap;
+import com.intellij.util.io.PersistentMapBuilder;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

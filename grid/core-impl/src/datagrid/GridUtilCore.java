@@ -11,7 +11,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.util.ObjectUtils;

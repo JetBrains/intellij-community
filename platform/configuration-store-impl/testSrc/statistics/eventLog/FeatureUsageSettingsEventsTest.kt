@@ -2,7 +2,11 @@
 package com.intellij.configurationStore.statistics.eventLog
 
 import com.intellij.configurationStore.getStateSpec
-import com.intellij.configurationStore.statistic.eventLog.*
+import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
+import com.intellij.configurationStore.statistic.eventLog.SettingsChangesCollector
+import com.intellij.configurationStore.statistic.eventLog.SettingsCollector
+import com.intellij.configurationStore.statistic.eventLog.SettingsFields
+import com.intellij.configurationStore.statistic.eventLog.isComponentOptionNameWhitelisted
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ReportValue

@@ -9,7 +9,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.TokenType
 import com.intellij.psi.util.parentOfType
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.psi.reference.EditorConfigVirtualFileDescriptor

@@ -4,7 +4,13 @@ package com.intellij.ui.popup.list
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
 import javax.accessibility.AccessibleContext
 import javax.swing.JPanel
 

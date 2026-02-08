@@ -4,6 +4,7 @@ package org.editorconfig.language.codeinsight
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.assertIterableEquals
@@ -61,6 +62,7 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
   fun doTest(vararg required: String) = with(myFixture) {
     val name = getTestName(true)
     configureByFile("$name/.editorconfig")
+    Registry.get("ide.completion.variant.limit").setValue(10000, testRootDisposable)
     assertTrue(required.all(completeBasic().map(LookupElement::getLookupString)::contains))
   }
 

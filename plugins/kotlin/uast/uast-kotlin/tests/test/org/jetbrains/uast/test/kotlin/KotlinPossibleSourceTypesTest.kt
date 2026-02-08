@@ -4,7 +4,13 @@ package org.jetbrains.uast.test.kotlin
 import com.intellij.platform.uast.testFramework.common.PossibleSourceTypesTestBase
 import com.intellij.platform.uast.testFramework.common.allUElementSubtypes
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.junit.Test
 
 

@@ -7,7 +7,11 @@ import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.equalsExpression
 import org.jetbrains.kotlin.nj2k.parenthesize
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpression
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKSuperExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
 

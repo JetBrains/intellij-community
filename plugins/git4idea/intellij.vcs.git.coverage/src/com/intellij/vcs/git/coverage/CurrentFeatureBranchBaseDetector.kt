@@ -25,7 +25,7 @@ import git4idea.GitRemoteBranch
 import git4idea.config.GitSharedSettings
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.WeakHashMap
 
 private data class CachedResult(val status: Status, val state: CachedState)
 private data class CachedState(val headHash: String, val protectedBranchHashes: List<Pair<String, String>>)

@@ -1,7 +1,16 @@
 package com.intellij.python.junit5Tests.unit.pyproject
 
-import com.intellij.python.pyproject.*
-import com.intellij.python.pyproject.PyProjectIssue.*
+import com.intellij.python.pyproject.PyProjectContact
+import com.intellij.python.pyproject.PyProjectDependencies
+import com.intellij.python.pyproject.PyProjectFile
+import com.intellij.python.pyproject.PyProjectIssue
+import com.intellij.python.pyproject.PyProjectIssue.InvalidContact
+import com.intellij.python.pyproject.PyProjectIssue.MissingName
+import com.intellij.python.pyproject.PyProjectIssue.MissingVersion
+import com.intellij.python.pyproject.PyProjectIssue.SafeGetError
+import com.intellij.python.pyproject.PyProjectTable
+import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.PyProjectToolFactory
 import com.intellij.python.pyproject.TomlTableSafeGetError.RequiredValueMissing
 import com.intellij.python.pyproject.TomlTableSafeGetError.UnexpectedType
 import org.apache.tuweni.toml.TomlArray

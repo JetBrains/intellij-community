@@ -9,10 +9,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.StateRestoringCheckBox;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.List;
 
-import static com.intellij.find.findUsages.JavaFindUsagesCollector.*;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.CONSTRUCTOR_USAGES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.DERIVED_INTERFACES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.DERIVED_USAGES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.FIELD_USAGES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.FIND_CLASS_STARTED;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.IMPLEMENTING_CLASSES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.METHOD_USAGES;
 
 public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsagesOptions> {
   private StateRestoringCheckBox myCbUsages;

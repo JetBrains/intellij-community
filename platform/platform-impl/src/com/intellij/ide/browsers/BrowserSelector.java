@@ -13,7 +13,8 @@ import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 

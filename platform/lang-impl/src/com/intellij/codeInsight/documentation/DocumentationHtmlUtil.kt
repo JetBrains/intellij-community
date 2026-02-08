@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation
 
-import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_BOTTOM
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_DEFINITION
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTION
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_TOP
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleTypeManager
@@ -17,11 +22,15 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
-import org.jsoup.nodes.*
+import org.jsoup.nodes.Comment
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
+import org.jsoup.nodes.TextNode
 import org.jsoup.parser.Parser
 import org.jsoup.parser.TagSet
 import org.jsoup.select.QueryParser
-import java.util.*
+import java.util.Locale
 import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.text.html.StyleSheet

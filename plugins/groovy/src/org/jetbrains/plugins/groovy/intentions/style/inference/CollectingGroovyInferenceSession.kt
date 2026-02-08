@@ -4,7 +4,12 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.psi.*
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
@@ -19,7 +24,14 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Posit
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.addExpression
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.findExpression
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class CollectingGroovyInferenceSession(
   private val typeParams: Array<PsiTypeParameter>,

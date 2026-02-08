@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.io.InputStream
-import java.util.*
+import java.util.Objects
 
 class ChannelInputStream(private val readChannel: ReceiveChannel<ByteString>) : InputStream() {
   private var carryChunk: ByteString = ByteString.EMPTY

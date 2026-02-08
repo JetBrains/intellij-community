@@ -17,7 +17,11 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import kotlin.io.path.*
+import kotlin.io.path.fileStore
+import kotlin.io.path.getPosixFilePermissions
+import kotlin.io.path.setPosixFilePermissions
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable

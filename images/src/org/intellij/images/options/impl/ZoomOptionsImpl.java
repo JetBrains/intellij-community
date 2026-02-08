@@ -17,7 +17,7 @@ package org.intellij.images.options.impl;
 
 import org.intellij.images.options.ZoomOptions;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.beans.PropertyChangeSupport;
 import java.util.Objects;
 

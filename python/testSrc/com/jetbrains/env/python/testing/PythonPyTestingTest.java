@@ -30,7 +30,14 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.testing.*;
+import com.jetbrains.python.testing.ConfigurationTarget;
+import com.jetbrains.python.testing.PyAbstractTestConfiguration;
+import com.jetbrains.python.testing.PyAbstractTestFactory;
+import com.jetbrains.python.testing.PyTestConfiguration;
+import com.jetbrains.python.testing.PyTestFactory;
+import com.jetbrains.python.testing.PyTestFixtureAndParametrizedTest;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
+import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -52,8 +59,14 @@ import java.util.List;
 
 import static com.intellij.execution.testframework.sm.runner.ui.MockPrinter.fillPrinter;
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * User : catherine

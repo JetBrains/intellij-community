@@ -4,7 +4,7 @@ package com.intellij.dvcs.push;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public abstract class VcsPushOptionsPanel extends JPanel {
 

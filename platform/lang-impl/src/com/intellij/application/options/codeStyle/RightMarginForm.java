@@ -22,8 +22,11 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Dimension;
 import java.util.List;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;

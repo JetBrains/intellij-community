@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.ClickListener
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Objects
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel

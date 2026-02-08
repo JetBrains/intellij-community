@@ -1,13 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -51,9 +56,10 @@ internal class MainFunctionReturnUnitInspection : LocalInspectionTool(), Cleanup
             if (function.hasBlockBody()) {
                 function.typeReference = null
             } else {
-                val newTypeReference = KtPsiFactory(project).createType(StandardClassIds.Unit.asFqNameString())
-                function.typeReference = newTypeReference
-                ShortenReferencesFacility.getInstance().shorten(newTypeReference)
+                function.typeReference = KtPsiFactory(project).createType(StandardClassIds.Unit.asFqNameString())
+                function.typeReference?.let {
+                    shortenReferences(it)
+                }
             }
         }
     }

@@ -2,7 +2,12 @@
 package com.intellij.json.surroundWith;
 
 import com.intellij.json.JsonBundle;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonElement;
+import com.intellij.json.psi.JsonElementGenerator;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiUtil;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;

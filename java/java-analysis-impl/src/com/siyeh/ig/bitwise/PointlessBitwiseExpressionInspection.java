@@ -20,7 +20,17 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -30,13 +40,25 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.JavaPsiMathUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.psi.JavaTokenType.AND;
+import static com.intellij.psi.JavaTokenType.GTGT;
+import static com.intellij.psi.JavaTokenType.GTGTGT;
+import static com.intellij.psi.JavaTokenType.LTLT;
+import static com.intellij.psi.JavaTokenType.MINUS;
+import static com.intellij.psi.JavaTokenType.OR;
+import static com.intellij.psi.JavaTokenType.TILDE;
+import static com.intellij.psi.JavaTokenType.XOR;
 
 public final class PointlessBitwiseExpressionInspection extends BaseInspection {
 

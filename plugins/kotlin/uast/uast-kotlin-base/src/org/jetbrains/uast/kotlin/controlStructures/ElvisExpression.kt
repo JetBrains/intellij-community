@@ -9,9 +9,28 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.UastSpecialExpressionKind
+import org.jetbrains.uast.convertOpt
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.kinds.KotlinSpecialExpressionKinds
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
+import org.jetbrains.uast.withMargin
 
 private fun createVariableReferenceExpression(variable: UVariable, containingElement: UElement?) =
     object : USimpleNameReferenceExpression {

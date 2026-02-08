@@ -12,7 +12,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
 import java.util.List;
 import java.util.Objects;
 

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.resolve.BindingContext
 
+@K1Deprecation
 class SuperTypesSubstitutor(private val superTypes: Map<ClassifierDescriptor, Map<TypeParameterDescriptor, KtTypeElement>>) {
     operator fun get(klass: ClassDescriptor, typeParameter: TypeParameterDescriptor): KtTypeElement? =
         superTypes[klass]?.get(typeParameter)

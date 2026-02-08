@@ -21,6 +21,11 @@ Snapshots for other products may require update, please run 'All Packaging Tests
 When the patches is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration is up to date.
 """
 
+internal fun buildUnifiedDiffText(fileName: String, originalLines: List<String>, revisedLines: List<String>): String {
+  val patch = DiffUtils.diff(originalLines, revisedLines)
+  return DiffUtils.generateUnifiedDiff(fileName, fileName, originalLines, patch, 3).joinToString(separator = "\n")
+}
+
 private fun buildDistributionChangedMessage(
   fileName: String,
   expectedLines: List<String>,
@@ -28,8 +33,7 @@ private fun buildDistributionChangedMessage(
   suggestedReviewer: String?,
   requiresApproval: Boolean,
 ): String {
-  val patch = DiffUtils.diff(expectedLines, actualLines)
-  val patchText = DiffUtils.generateUnifiedDiff(fileName, fileName, expectedLines, patch, 3).joinToString(separator = "\n")
+  val patchText = buildUnifiedDiffText(fileName, expectedLines, actualLines)
 
   return if (requiresApproval && suggestedReviewer != null) {
     """Distribution content has changed.

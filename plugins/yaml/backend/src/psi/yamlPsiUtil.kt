@@ -11,7 +11,11 @@ import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.headTailOrNull
 import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.yaml.meta.model.*
+import org.jetbrains.yaml.meta.model.YamlAnything
+import org.jetbrains.yaml.meta.model.YamlBooleanType
+import org.jetbrains.yaml.meta.model.YamlMetaType
+import org.jetbrains.yaml.meta.model.YamlNumberType
+import org.jetbrains.yaml.meta.model.YamlStringType
 
 fun getKeysInBetween(value: YAMLValue, topSeq: YAMLSequence): List<String> =
   value.parents(false).takeWhile { it !== topSeq }.filterIsInstance<YAMLKeyValue>().map { it.keyText }.toList().reversed()

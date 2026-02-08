@@ -11,14 +11,18 @@ import com.intellij.testFramework.NeedsIndex;
 import com.intellij.ui.JBColor;
 import org.intellij.lang.annotations.Language;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*;
+import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2;
+import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3;
+import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4;
+import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M5;
+import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN;
 
 public class ImportModuleCompletionTest extends LightJava9ModulesCodeInsightFixtureTestCase {
   @NeedsIndex.Full

@@ -6,9 +6,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.shortenReference
+import org.jetbrains.uast.getQualifiedParentOrThis
+import org.jetbrains.uast.toUElementOfType
 
 /**
  * A call chains that can be used for a replacement by [replaceWithCallChain]

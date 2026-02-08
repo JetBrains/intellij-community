@@ -19,9 +19,13 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.SettingsSnapshot
+import com.intellij.settingsSync.core.SettingsSyncLocalSettings
+import com.intellij.settingsSync.core.SettingsSyncSettings
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.core.getLocalApplicationInfo
+import com.intellij.settingsSync.core.isSettingsSyncEnabledInSettings
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane

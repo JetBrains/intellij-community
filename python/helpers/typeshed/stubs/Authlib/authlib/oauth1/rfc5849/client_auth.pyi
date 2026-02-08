@@ -1,12 +1,14 @@
 from _typeshed import Incomplete
+from collections.abc import Callable
+from typing import Final
 
-CONTENT_TYPE_FORM_URLENCODED: str
-CONTENT_TYPE_MULTI_PART: str
+CONTENT_TYPE_FORM_URLENCODED: Final = "application/x-www-form-urlencoded"
+CONTENT_TYPE_MULTI_PART: Final = "multipart/form-data"
 
 class ClientAuth:
-    SIGNATURE_METHODS: Incomplete
+    SIGNATURE_METHODS: dict[str, Callable[..., str]]
     @classmethod
-    def register_signature_method(cls, name, sign) -> None: ...
+    def register_signature_method(cls, name: str, sign: Callable[..., str]) -> None: ...
     client_id: Incomplete
     client_secret: Incomplete
     token: Incomplete
@@ -33,7 +35,7 @@ class ClientAuth:
         force_include_body: bool = False,
     ) -> None: ...
     def get_oauth_signature(self, method, uri, headers, body) -> str: ...
-    def get_oauth_params(self, nonce, timestamp) -> list[Incomplete]: ...
+    def get_oauth_params(self, nonce, timestamp) -> list[tuple[str, Incomplete]]: ...
     def sign(self, method, uri, headers, body) -> tuple[Incomplete, Incomplete, Incomplete]: ...
     def prepare(self, method, uri, headers, body) -> tuple[Incomplete, ...]: ...
 

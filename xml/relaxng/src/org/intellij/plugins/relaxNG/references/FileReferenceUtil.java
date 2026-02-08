@@ -29,7 +29,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.patterns.XmlPatterns.*;
+import static com.intellij.patterns.XmlPatterns.string;
+import static com.intellij.patterns.XmlPatterns.xmlFile;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 public final class FileReferenceUtil {
 

@@ -11,7 +11,9 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
 

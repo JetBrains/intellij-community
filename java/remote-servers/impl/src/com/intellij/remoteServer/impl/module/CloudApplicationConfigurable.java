@@ -18,7 +18,7 @@ package com.intellij.remoteServer.impl.module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.remoteServer.configuration.RemoteServer;
 
-import java.awt.*;
+import java.awt.Component;
 
 
 public abstract class CloudApplicationConfigurable {

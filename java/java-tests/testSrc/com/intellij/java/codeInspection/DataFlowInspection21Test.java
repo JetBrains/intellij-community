@@ -254,4 +254,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+  
+  public void testOptionalInference() {
+    doTestWith((dfi, cvi) -> dfi.SUGGEST_NULLABLE_ANNOTATIONS = false);
+  }
 }

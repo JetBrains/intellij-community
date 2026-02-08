@@ -1,5 +1,6 @@
 package com.intellij.grazie.text
 
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.utils.Text.looksLikeCode
 import com.intellij.openapi.util.TextRange
 
@@ -19,6 +20,12 @@ open class CodeProblemFilter : ProblemFilter() {
     return problem.shouldSuppressInCodeLikeFragments() &&
            shouldSuppressInText(problem.text) &&
            problem.highlightRanges.any { textAround(problem.text, it).looksLikeCode() }
+  }
+
+  override fun shouldIgnoreTypo(problem: TextProblem): Boolean {
+    return GrazieSpellCheckingInspection.hasSameNamedReferenceInFile(
+      problem.highlightRanges.first().subSequence(problem.text).toString(), problem.text.commonParent
+    )
   }
 
   protected open fun shouldSuppressInText(text: TextContent): Boolean =

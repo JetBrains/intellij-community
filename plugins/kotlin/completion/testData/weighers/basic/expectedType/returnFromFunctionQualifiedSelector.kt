@@ -15,4 +15,4 @@ fun test(): Int {
     return x.<caret>
 }
 
-//ORDER: d, foo, f
+//ORDER: d, foo

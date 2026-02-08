@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.ui.components.breadcrumbs.StickyLineInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -27,13 +26,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.ui.components.breadcrumbs.StickyLineInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.PriorityQueue;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx.findProvider;

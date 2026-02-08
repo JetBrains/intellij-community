@@ -28,7 +28,9 @@ import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Calendar;

@@ -11,7 +11,11 @@ import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 

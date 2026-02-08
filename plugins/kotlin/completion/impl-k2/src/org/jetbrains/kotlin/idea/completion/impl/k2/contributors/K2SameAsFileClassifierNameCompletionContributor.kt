@@ -16,14 +16,15 @@ internal class K2SameAsFileClassifierNameCompletionContributor : K2SimpleComplet
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinClassifierNamePositionContext>)
     override fun complete() {
-        (context.positionContext.classLikeDeclaration as? KtClassOrObject)?.let { context.completeTopLevelClassName(it) }
+        (context.positionContext.classLikeDeclaration as? KtClassOrObject)?.let { completeTopLevelClassName(it) }
     }
 
-    private fun K2CompletionSectionContext<KotlinClassifierNamePositionContext>.completeTopLevelClassName(classOrObject: KtClassOrObject) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinClassifierNamePositionContext>)
+    private fun completeTopLevelClassName(classOrObject: KtClassOrObject) {
         if (!classOrObject.isTopLevel()) return
-        val name = completionContext.originalFile.virtualFile.nameWithoutExtension
+        val name = context.completionContext.originalFile.virtualFile.nameWithoutExtension
         if (!isValidUpperCapitalizedClassName(name)) return
-        if (completionContext.originalFile.declarations.any { it is KtClassOrObject && it.name == name }) return
+        if (context.completionContext.originalFile.declarations.any { it is KtClassOrObject && it.name == name }) return
         addElement(LookupElementBuilder.create(name))
     }
 

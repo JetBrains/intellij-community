@@ -15,7 +15,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import com.jetbrains.python.ast.*
+import com.jetbrains.python.ast.PyAstAnnotation
+import com.jetbrains.python.ast.PyAstFile
+import com.jetbrains.python.ast.PyAstFromImportStatement
+import com.jetbrains.python.ast.PyAstImportStatementBase
+import com.jetbrains.python.ast.PyAstStatementList
+import com.jetbrains.python.ast.PyAstStringLiteralExpression
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil
 import kotlin.math.max
 

@@ -3,7 +3,11 @@ package git4idea.cherrypick
 
 import com.intellij.openapi.progress.coroutineToIndicator
 import git4idea.cherrypick.GitCherryPickContinueProcess.isEmptyCommit
-import git4idea.commands.*
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitCommandResult
+import git4idea.commands.GitLineHandler
+import git4idea.commands.GitSimpleEventDetector
 import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.repo.GitRepository
 

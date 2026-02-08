@@ -7,8 +7,8 @@ import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.util.system.OS
 import java.net.InetAddress
-import java.net.ServerSocket
 import java.net.InetSocketAddress
+import java.net.ServerSocket
 
 object PortUtil {
 

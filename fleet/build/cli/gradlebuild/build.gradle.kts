@@ -11,7 +11,6 @@ plugins {
   id("fleet.toolchain-conventions")
   alias(libs.plugins.dokka)
   id("fleet.module-publishing-conventions")
-  id("fleet.sdk-repositories-publishing-conventions")
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   // GRADLE_PLUGINS__MARKER_END

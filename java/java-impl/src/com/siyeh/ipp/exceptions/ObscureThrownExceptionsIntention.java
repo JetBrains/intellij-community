@@ -2,7 +2,14 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;

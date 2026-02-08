@@ -5,8 +5,17 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
-import java.util.*
-import kotlin.math.*
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
+import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.log10
+import kotlin.math.pow
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
+import kotlin.math.sign
+import kotlin.math.truncate
 
 object StatisticsUtil {
   private const val kilo = 1000

@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+End of files
+Compiling files:
+  java/membersChange/addConstructorParameter/a/Base.java
+End of files
+Cleaning output files:
+  Client.class
+  Derived.class
+End of files
+Compiling files:
+  java/membersChange/addConstructorParameter/a/Client.java
+  java/membersChange/addConstructorParameter/a/Derived.java
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -1,7 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project

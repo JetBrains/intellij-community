@@ -10,7 +10,7 @@ import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.Companion.default
 import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.util.*
+import java.util.Objects
 
 @Experimental
 /**
@@ -248,16 +248,6 @@ class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
     var elementStyleOverrides: ElementStyleOverrides? = null
 
     fun build(): JBHtmlPaneStyleConfiguration = JBHtmlPaneStyleConfiguration(this)
-
-    /**
-     * Provide an editor color scheme to be used to determine colors of the elements
-     * and syntax highlighting.
-     */
-    @ApiStatus.ScheduledForRemoval
-    @ApiStatus.Internal
-    @Deprecated("Use colorSchemeProvider instead to properly react for global scheme changes", ReplaceWith("colorSchemeProvider { colorScheme }"))
-    fun colorScheme(colorScheme: EditorColorsScheme): Builder =
-      apply { this.colorSchemeProvider = { colorScheme } }
 
     /**
      * Provide an editor color scheme to be used to determine colors of the elements

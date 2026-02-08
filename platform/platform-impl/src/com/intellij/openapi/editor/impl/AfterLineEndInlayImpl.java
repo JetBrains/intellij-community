@@ -2,12 +2,16 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.InlayProperties;
+import com.intellij.openapi.editor.VisualPosition;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.List;
 
 /**

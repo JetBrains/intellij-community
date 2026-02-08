@@ -27,7 +27,7 @@ interface EditorColorSchemesSorter {
 
 @Internal
 class Groups<T>(val infos: List<GroupInfo<T>>) {
-  class GroupInfo<A>(val items: List<A>, @Nls val title: String? = null)
+  class GroupInfo<A>(val items: List<A>, val title: @Nls String? = null)
 
   companion object {
     fun <T>create(items: List<List<T>>): Groups<T> = Groups(items.map { GroupInfo(it) })

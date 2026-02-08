@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion.weighers
+package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
@@ -41,6 +41,9 @@ internal object ExpectedTypeWeigher {
     context(_: KaSession)
     fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol?) {
         val expectedType = context.expectedType
+
+        // The expected type was already set elsewhere, we prefer these results
+        if (lookupElement.matchesExpectedType != null) return
 
         lookupElement.matchesExpectedType = when {
             symbol != null -> if (expectedType != null) {

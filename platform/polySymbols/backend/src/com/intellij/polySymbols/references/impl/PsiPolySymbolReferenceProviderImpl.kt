@@ -12,19 +12,23 @@ import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.getMessage
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.polySymbols.PolySymbolNameSegment
+import com.intellij.polySymbols.PolySymbolProperty
+import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.polySymbols.inspections.PolySymbolProblemQuickFixProvider
 import com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.references.PsiPolySymbolReferenceProviderListener
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceCacheInfoProvider
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
+import com.intellij.polySymbols.references.PsiPolySymbolReferenceProviderListener
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.polySymbols.utils.nameSegments
@@ -36,7 +40,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.application
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
 
 internal val IJ_IGNORE_REFS: PolySymbolProperty<Boolean> = PolySymbolProperty["ij-no-psi-refs"]

@@ -5,14 +5,21 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.RemoteValueHintId
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.platform.debugger.impl.rpc.RemoteValueHintId
-import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Point
 
 internal class RemoteValueHint(

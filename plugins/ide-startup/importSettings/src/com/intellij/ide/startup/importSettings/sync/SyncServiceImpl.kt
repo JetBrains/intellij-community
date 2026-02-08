@@ -2,7 +2,12 @@
 package com.intellij.ide.startup.importSettings.sync
 
 import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.BaseSetting
+import com.intellij.ide.startup.importSettings.data.DataToApply
+import com.intellij.ide.startup.importSettings.data.DialogImportData
+import com.intellij.ide.startup.importSettings.data.IconProductSize
+import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.data.SyncService
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger

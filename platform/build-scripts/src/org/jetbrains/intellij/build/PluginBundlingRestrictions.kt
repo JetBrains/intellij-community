@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.intellij.build.PluginBundlingRestrictions.Companion.NONE
 import java.util.Objects
 
 /**

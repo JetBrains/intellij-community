@@ -5,7 +5,13 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.name
-import com.intellij.collaboration.ui.util.popup.*
+import com.intellij.collaboration.ui.util.popup.CollaborationToolsPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
+import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer
+import com.intellij.collaboration.ui.util.popup.showAndAwaitSubmission
+import com.intellij.collaboration.ui.util.popup.showAndAwaitSubmissions
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
@@ -18,9 +24,12 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.fold
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
@@ -34,6 +43,15 @@ import javax.swing.ListSelectionModel
 
 object ChooserPopupUtil {
 
+  /**
+   * Shows a chooser popup with preloaded items.
+   *
+   * @param point the point at which to show the popup
+   * @param items the complete list of items to display
+   * @param presenter a function that creates a [PopupItemPresentation] for each item
+   * @param popupConfig configuration options for the popup appearance and behavior
+   * @return the selected item, or `null` if the popup was cancelled
+   */
   @JvmOverloads
   suspend fun <T> showChooserPopup(
     point: RelativePoint,
@@ -49,6 +67,16 @@ object ChooserPopupUtil {
       popupConfig = popupConfig,
     )
 
+  /**
+   * Shows a chooser popup with preloaded items.
+   *
+   * @param point the point at which to show the popup
+   * @param items the complete list of items to display
+   * @param filteringMapper a function that extracts a filterable string from each item
+   * @param renderer the cell renderer for displaying items in the list
+   * @param popupConfig configuration options for the popup appearance and behavior
+   * @return the selected item, or `null` if the popup was cancelled
+   */
   @JvmOverloads
   suspend fun <T> showChooserPopup(
     point: RelativePoint,
@@ -76,6 +104,25 @@ object ChooserPopupUtil {
 
   // Async choosers:
 
+  /**
+   * Shows a chooser popup that loads items progressively.
+   *
+   * The [itemsLoader] flow must emit **accumulated lists** on each emission.
+   * Each emission should contain all items loaded so far, not just the new items.
+   *
+   * Example of correct usage:
+   * ```
+   * // Emission 1: [A, B, C]
+   * // Emission 2: [A, B, C, D, E, F]  // includes previous items
+   * // Emission 3: [A, B, C, D, E, F, G, H, I]  // includes all items
+   * ```
+   *
+   * @param point the point at which to show the popup
+   * @param itemsLoader a flow that emits accumulated lists of items wrapped in [Result]
+   * @param presenter a function that creates a [PopupItemPresentation] for each item
+   * @param popupConfig configuration options for the popup appearance and behavior
+   * @return the selected item, or `null` if the popup was cancelled
+   */
   @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(
     point: RelativePoint,
@@ -91,6 +138,26 @@ object ChooserPopupUtil {
       popupConfig = popupConfig,
     )
 
+  /**
+   * Shows a chooser popup that loads items progressively.
+   *
+   * The [itemsLoader] flow must emit **accumulated lists** on each emission.
+   * Each emission should contain all items loaded so far, not just the new items.
+   *
+   * Example of correct usage:
+   * ```
+   * // Emission 1: [A, B, C]
+   * // Emission 2: [A, B, C, D, E, F]  // includes previous items
+   * // Emission 3: [A, B, C, D, E, F, G, H, I]  // includes all items
+   * ```
+   *
+   * @param point the point at which to show the popup
+   * @param itemsLoader a flow that emits accumulated lists of items wrapped in [Result]
+   * @param filteringMapper a function that extracts a filterable string from each item
+   * @param renderer the cell renderer for displaying items in the list
+   * @param popupConfig configuration options for the popup appearance and behavior
+   * @return the selected item, or `null` if the popup was cancelled
+   */
   @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(
     point: RelativePoint,
@@ -103,21 +170,23 @@ object ChooserPopupUtil {
     val list = createList(listModel, renderer)
     val loadingListener = ListLoadingListener(itemsLoader, list, listModel, popupConfig.errorPresenter)
 
-    @Suppress("UNCHECKED_CAST")
-    val popup = PopupChooserBuilder(list)
-      .setFilteringEnabled { filteringMapper(it as T) }
-      .addListener(loadingListener)
-      .configure(popupConfig)
-      .createPopup()
-
-    CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
-    PopupUtil.setPopupToggleComponent(popup, point.component)
-
-    popup.showAndAwaitSubmission(list, point, popupConfig.showDirection) {
-      loadingListener.afterShow(popup)
-    }
+    showChooserPopupWithListener(point, filteringMapper, popupConfig, list, loadingListener)
   }
 
+  /**
+   * Shows a chooser popup with custom configuration.
+   *
+   * This overload provides direct access to the popup components for custom loading logic.
+   * The caller is responsible for populating the [CollectionListModel] via the [configure] callback.
+   *
+   * @param point the point at which to show the popup
+   * @param presenter a function that creates a [PopupItemPresentation] for each item
+   * @param popupConfig configuration options for the popup appearance and behavior
+   * @param renderer the cell renderer for displaying items in the list
+   * @param configure a callback that receives the popup components for custom configuration
+   * @return the selected item, or `null` if the popup was cancelled
+   */
+  @ApiStatus.Internal
   @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(
     point: RelativePoint,
@@ -146,6 +215,93 @@ object ChooserPopupUtil {
 
     PopupUtil.setPopupToggleComponent(popup, point.component)
     popup.showAndAwaitSubmission(list, point, popupConfig.showDirection)
+  }
+
+  /**
+   * Shows a chooser popup that displays items from a [ComputedResult] state flow.
+   *
+   * The [itemsState] flow emits [ComputedResult] values representing the current loading state:
+   * - [ComputedResult.loading]: Shows a loading indicator
+   * - [ComputedResult.success]: Replaces the entire list with the new items
+   * - [ComputedResult.failure]: Shows an error message
+   *
+   * Unlike [showAsyncChooserPopup], this method **replaces** the entire
+   * list model on each successful emission rather than appending items.
+   *
+   * @param point the point at which to show the popup
+   * @param itemsState a state flow that emits [ComputedResult] with the complete list of items
+   * @param presenter a function that creates a [PopupItemPresentation] for each item
+   * @param popupConfig configuration options for the popup appearance and behavior
+   * @return the selected item, or `null` if the popup was cancelled
+   */
+  @JvmOverloads
+  suspend fun <T : Any> showComputedResultChooserPopup(
+    point: RelativePoint,
+    itemsState: StateFlow<ComputedResult<List<T>>>,
+    presenter: (T) -> PopupItemPresentation,
+    popupConfig: PopupConfig = PopupConfig.DEFAULT,
+  ): T? =
+    showComputedResultChooserPopup(
+      point = point,
+      itemsState = itemsState,
+      filteringMapper = { presenter(it).shortText },
+      renderer = SimplePopupItemRenderer.create(presenter),
+      popupConfig = popupConfig,
+    )
+
+  /**
+   * Shows a chooser popup that displays items from a [ComputedResult] state flow.
+   *
+   * The [itemsState] flow emits [ComputedResult] values representing the current loading state:
+   * - [ComputedResult.loading]: Shows a loading indicator
+   * - [ComputedResult.success]: Replaces the entire list with the new items
+   * - [ComputedResult.failure]: Shows an error message
+   *
+   * Unlike [showAsyncChooserPopup], this method **replaces** the entire
+   * list model on each successful emission rather than appending items.
+   *
+   * @param point the point at which to show the popup
+   * @param itemsState a state flow that emits [ComputedResult] with the complete list of items
+   * @param filteringMapper a function that extracts a filterable string from each item
+   * @param renderer the cell renderer for displaying items in the list
+   * @param popupConfig configuration options for the popup appearance and behavior
+   * @return the selected item, or `null` if the popup was cancelled
+   */
+  @JvmOverloads
+  suspend fun <T : Any> showComputedResultChooserPopup(
+    point: RelativePoint,
+    itemsState: StateFlow<ComputedResult<List<T>>>,
+    filteringMapper: (T) -> String,
+    renderer: ListCellRenderer<T>,
+    popupConfig: PopupConfig = PopupConfig.DEFAULT,
+  ): T? = coroutineScope {
+    val listModel = CollectionListModel<T>()
+    val list = createList(listModel, renderer)
+    val loadingListener = ComputedResultListLoadingListener(itemsState, list, listModel, popupConfig.errorPresenter)
+
+    showChooserPopupWithListener(point, filteringMapper, popupConfig, list, loadingListener)
+  }
+
+  private suspend fun <T : Any> showChooserPopupWithListener(
+    point: RelativePoint,
+    filteringMapper: (T) -> String,
+    popupConfig: PopupConfig,
+    list: JBList<T>,
+    loadingListener: AsyncListLoadingListener
+  ): T? = coroutineScope {
+    @Suppress("UNCHECKED_CAST")
+    val popup = PopupChooserBuilder(list)
+      .setFilteringEnabled { filteringMapper(it as T) }
+      .addListener(loadingListener)
+      .configure(popupConfig)
+      .createPopup()
+
+    CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
+    PopupUtil.setPopupToggleComponent(popup, point.component)
+
+    popup.showAndAwaitSubmission(list, point, popupConfig.showDirection) {
+      loadingListener.afterShow(popup)
+    }
   }
 
   // Multiple options:
@@ -272,13 +428,17 @@ enum class ShowDirection {
   BELOW
 }
 
-private class ListLoadingListener<T>(
+private interface AsyncListLoadingListener : JBPopupListener {
+  fun afterShow(popup: JBPopup)
+}
+
+private abstract class AbstractListLoadingListener<T>(
   private val itemsFlow: Flow<Result<List<T>>>,
   private val list: JBList<T>,
-  private val listModel: CollectionListModel<T>,
+  protected val listModel: CollectionListModel<T>,
   private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?,
-) : JBPopupListener {
-  fun afterShow(popup: JBPopup) {
+) : AsyncListLoadingListener {
+  override fun afterShow(popup: JBPopup) {
     popup.content.launchOnShow(javaClass.name) {
       list.setPaintBusy(true)
       list.emptyText.clear()
@@ -298,7 +458,17 @@ private class ListLoadingListener<T>(
     }
   }
 
-  private fun onSuccess(items: List<T>) {
+  protected abstract fun onSuccess(items: List<T>)
+}
+
+private class ListLoadingListener<T>(
+  itemsFlow: Flow<Result<List<T>>>,
+  private val list: JBList<T>,
+  listModel: CollectionListModel<T>,
+  errorPresenter: ErrorStatusPresenter.Text<Throwable>?,
+) : AbstractListLoadingListener<T>(itemsFlow, list, listModel, errorPresenter) {
+
+  override fun onSuccess(items: List<T>) {
     val selected = list.selectedIndex
     if (items.size > listModel.size) {
       val newList = items.subList(listModel.size, items.size)
@@ -306,6 +476,37 @@ private class ListLoadingListener<T>(
     }
     if (selected != -1) {
       list.selectedIndex = selected
+    }
+  }
+}
+
+private class ComputedResultListLoadingListener<T>(
+  private val itemsState: StateFlow<ComputedResult<List<T>>>,
+  private val list: JBList<T>,
+  private val listModel: CollectionListModel<T>,
+  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?,
+) : AsyncListLoadingListener {
+  override fun afterShow(popup: JBPopup) {
+    popup.content.launchOnShow(javaClass.name) {
+      itemsState.collect { computedResult ->
+        computedResult.fold(
+          onInProgress = {
+            list.setPaintBusy(true)
+            list.emptyText.clear()
+          },
+          onSuccess = { items ->
+            val selected = list.selectedIndex
+            listModel.replaceAll(items)
+            if (selected != -1 && selected < listModel.size) {
+              list.selectedIndex = selected
+            }
+          },
+          onFailure = { exception ->
+            list.setPaintBusy(false)
+            showErrorOnPopupFailure(exception, errorPresenter, list)
+          }
+        )
+      }
     }
   }
 }

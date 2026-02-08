@@ -16,7 +16,11 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Scanner;
 
 public final class MavenServerUtil {
   private static final Properties mySystemPropertiesCache;

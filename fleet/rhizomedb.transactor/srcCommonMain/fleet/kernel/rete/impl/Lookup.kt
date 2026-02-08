@@ -1,11 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete.impl
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.EAV
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.IndexQuery
+import com.jetbrains.rhizomedb.eav
+import com.jetbrains.rhizomedb.queryIndex
 import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import fleet.fastutil.ints.getOrPut
 import fleet.fastutil.ints.removeIf
-import fleet.kernel.rete.*
+import fleet.kernel.rete.Broadcaster
+import fleet.kernel.rete.Match
+import fleet.kernel.rete.Producer
+import fleet.kernel.rete.Subscription
+import fleet.kernel.rete.SubscriptionScope
+import fleet.kernel.rete.Token
+import fleet.kernel.rete.ValidationResultEnum
+import fleet.kernel.rete.asValidationResult
 
 internal fun <T : Any> SubscriptionScope.getAttribute(query: Producer<EID>, attribute: Attribute<T>): Producer<T> = run {
   // eid -> #{input-matches}

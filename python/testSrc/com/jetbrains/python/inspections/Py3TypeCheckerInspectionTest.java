@@ -3139,6 +3139,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-76922
+  public void testIntersectionImplicitProtocolMatching() {
+    doTest();
+  }
+
   // PY-76822
   public void testProtocolWithAssignedPropertyInMethod() {
     doTestByText("""
@@ -4172,6 +4177,40 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    async_for(async_iter())
                    async_for(<warning descr="Type 'list[int]' doesn't have expected attribute '__aiter__'">[1, 2, 3]</warning>)
+                   """);
+  }
+
+  // PY-76922
+  public void testIntersectionType() {
+    doTestByText("""
+                   int_and_str: int & str
+                   str_and_int: int & str
+                   int_or_str: int | str
+                   
+                   n: int = int_and_str
+                   s: str = int_and_str
+                   
+                   int_and_str = <warning descr="Expected type 'int & str', got 'int' instead">n</warning>
+                   int_and_str = <warning descr="Expected type 'int & str', got 'str' instead">s</warning>
+                   
+                   int_or_str = int_and_str
+                   int_and_str = <warning descr="Expected type 'int & str', got 'int | str' instead">int_or_str</warning>
+                   
+                   str_and_int = int_and_str
+                   int_and_str = str_and_int
+                   
+                   class A: pass
+                   class B: pass
+                   class C(A, B): pass
+                   
+                   a_and_b: A & B
+                   a_and_b = <warning descr="Expected type 'A & B', got 'A' instead">A()</warning>
+                   a_and_b = <warning descr="Expected type 'A & B', got 'B' instead">B()</warning>
+                   a_and_b = C()
+                   
+                   a: A = a_and_b
+                   b: B = a_and_b
+                   c: C = <warning descr="Expected type 'C', got 'A & B' instead">a_and_b</warning>
                    """);
   }
 }

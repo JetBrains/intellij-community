@@ -11,7 +11,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Arrays;
 
 /**

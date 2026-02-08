@@ -9,7 +9,8 @@ import org.HdrHistogram.SingleWriterRecorder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.EventQueue;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 

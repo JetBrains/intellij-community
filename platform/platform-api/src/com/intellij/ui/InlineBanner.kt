@@ -22,7 +22,11 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Graphics
+import java.awt.LayoutManager2
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.Icon

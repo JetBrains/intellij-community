@@ -2,7 +2,7 @@
 package com.intellij.openapi.command.impl.cmd
 
 import com.intellij.openapi.project.Project
-import java.util.*
+import java.util.Collections
 
 
 interface CmdMeta {

@@ -10,7 +10,8 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.Toolkit;
 import java.awt.event.WindowEvent;
 
 final class FrameStateManagerAppListener implements ApplicationActivationListener {

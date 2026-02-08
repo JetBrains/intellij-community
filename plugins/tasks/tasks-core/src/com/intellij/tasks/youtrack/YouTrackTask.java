@@ -4,7 +4,13 @@ package com.intellij.tasks.youtrack;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.CustomTaskProperty;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskState;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.youtrack.model.YouTrackIssue;
 import com.intellij.util.containers.ContainerUtil;
@@ -12,8 +18,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class YouTrackTask extends Task {
   private final YouTrackRepository myRepository;

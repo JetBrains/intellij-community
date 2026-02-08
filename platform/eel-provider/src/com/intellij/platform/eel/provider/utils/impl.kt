@@ -2,7 +2,14 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.diagnostic.Logger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.cancellation.CancellationException
 

@@ -23,6 +23,7 @@ public final class KotlinBaseResourcesIcons {
   /** 16x16 */ public static final @NotNull Icon AnnotationKotlin = load("org/jetbrains/kotlin/idea/icons/expui/annotationKotlin.svg", "org/jetbrains/kotlin/idea/icons/annotationKotlin.svg", -1575121663, 0);
   /** 16x16 */ public static final @NotNull Icon ClassInitializerKotlin = load("org/jetbrains/kotlin/idea/icons/expui/classInitializerKotlin.svg", "org/jetbrains/kotlin/idea/icons/classInitializerKotlin.svg", -456547642, 0);
   /** 16x16 */ public static final @NotNull Icon ClassKotlin = load("org/jetbrains/kotlin/idea/icons/expui/classKotlin.svg", "org/jetbrains/kotlin/idea/icons/classKotlin.svg", 690890608, 0);
+  /** 16x16 */ public static final @NotNull Icon ConvertJavaToKotlin = load("org/jetbrains/kotlin/idea/icons/expui/convertJavaToKotlin.svg", -1127139003, 2);
   /** 12x12 */ public static final @NotNull Icon DslMarkerAnnotation = load("org/jetbrains/kotlin/idea/icons/dslMarkerAnnotation.svg", -2069578249, 2);
   /** 16x16 */ public static final @NotNull Icon EnumKotlin = load("org/jetbrains/kotlin/idea/icons/expui/enumKotlin.svg", "org/jetbrains/kotlin/idea/icons/enumKotlin.svg", 1217910627, 0);
   /** 16x16 */ public static final @NotNull Icon Expect = load("org/jetbrains/kotlin/idea/icons/expui/expect.svg", "org/jetbrains/kotlin/idea/icons/expect.svg", 1795044928, 1);

@@ -47,7 +47,6 @@ jvm_library(
     "//java/openapi:java",
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//android/streaming",
   ],
   runtime_deps = [":parcelize"]
 )

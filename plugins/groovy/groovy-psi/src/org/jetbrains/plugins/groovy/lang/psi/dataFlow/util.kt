@@ -10,7 +10,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
@@ -20,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstructi
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement
 import org.jetbrains.plugins.groovy.util.findNodesOutsideCycles
 import org.jetbrains.plugins.groovy.util.mapGraph
-import java.util.*
+import java.util.BitSet
 
 internal fun getSimpleInstructions(flow: Array<Instruction>): BitSet =
   findNodesOutsideCycles(mapGraph(flow.associateWith { it.allSuccessors().toList() })).fold(BitSet()) { bitSet, instr ->

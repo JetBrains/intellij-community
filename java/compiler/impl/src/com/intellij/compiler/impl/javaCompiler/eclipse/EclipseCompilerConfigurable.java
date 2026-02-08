@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class EclipseCompilerConfigurable implements Configurable {
   private final Project myProject;

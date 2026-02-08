@@ -5,13 +5,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.shared.PythonInfoWithUiComparator
 import com.intellij.python.community.services.shared.PythonWithUi
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
 import com.intellij.python.community.services.systemPython.impl.asSysPythonRegisterError
 import com.intellij.python.community.services.systemPython.impl.ensureSystemPython
+import com.intellij.python.venv.createVenv
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -154,5 +154,5 @@ suspend fun createVenvFromSystemPython(
   python: SystemPython,
   venvDir: Directory,
   inheritSitePackages: Boolean = false,
-  envReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  envReader: VirtualEnvReader = VirtualEnvReader(),
 ): PyResult<PythonBinary> = createVenv(python.pythonBinary, venvDir, inheritSitePackages, envReader)

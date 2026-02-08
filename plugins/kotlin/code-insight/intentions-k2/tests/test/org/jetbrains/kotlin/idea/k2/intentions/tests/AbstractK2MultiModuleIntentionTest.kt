@@ -15,7 +15,12 @@ import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.allKotlinFiles
+import org.jetbrains.kotlin.idea.test.findFileWithCaret
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert

@@ -36,7 +36,8 @@ import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.function.BiPredicate
 import java.util.function.Function
 import java.util.function.Supplier

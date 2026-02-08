@@ -1,6 +1,11 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -21,10 +26,16 @@ import com.intellij.terminal.frontend.view.completion.TerminalLookupPrefixUpdate
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
@@ -35,11 +46,13 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.junit.Assume
 import java.awt.event.KeyEvent
@@ -295,6 +308,43 @@ internal class TerminalCompletionFixture(
 
     return result == true
   }
+
+  /**
+   * Awaits for command text state of the active block to match the [expectedCommandPattern].
+   * Pattern should include `<cursor>` marker to indicate the expected cursor position.
+   */
+  suspend fun assertCommandTextState(expectedCommandPattern: String) {
+    val cursorMarker = "<cursor>"
+    val expectedText = expectedCommandPattern.replace(cursorMarker, "")
+    val expectedCursorOffset = expectedCommandPattern.indexOf(cursorMarker).toLong()
+
+    val blockModel = view.shellIntegrationDeferred.getNow()!!.blocksModel
+    val activeBlock = blockModel.activeBlock as TerminalCommandBlock
+    val conditionMet = awaitOutputModelState(3.seconds) { outputModel ->
+      val commandStartOffset = activeBlock.commandStartOffset ?: return@awaitOutputModelState false
+      val textBeforeCursor = outputModel.getText(commandStartOffset, outputModel.cursorOffset).toString()
+      val textAfterCursor = outputModel.getText(outputModel.cursorOffset, outputModel.endOffset).toString()
+      val commandText = textBeforeCursor + textAfterCursor.trimEnd()
+
+      commandText == expectedText && outputModel.cursorOffset == commandStartOffset + expectedCursorOffset
+    }
+
+    val model = outputModel
+    assertThat(conditionMet)
+      .overridingErrorMessage {
+        val modelText = buildString {
+          append(model.text)
+          insert(model.cursorOffset.toAbsolute().toInt(), cursorMarker)
+        }
+        """
+          Command text doesn't match the expected pattern: '$expectedCommandPattern'
+          Current output model text:
+          
+        """.trimIndent() + modelText
+      }
+      .isTrue
+  }
+
 
   fun mockTestShellCommand(testCommandSpec: ShellCommandSpec) {
     val specsProvider: ShellCommandSpecsProvider = TestCommandSpecsProvider(

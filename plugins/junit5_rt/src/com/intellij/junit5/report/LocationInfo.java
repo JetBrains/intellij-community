@@ -3,7 +3,11 @@ package com.intellij.junit5.report;
 
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestSource;
-import org.junit.platform.engine.support.descriptor.*;
+import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.CompositeTestSource;
+import org.junit.platform.engine.support.descriptor.FilePosition;
+import org.junit.platform.engine.support.descriptor.FileSource;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestIdentifier;
 
 import java.io.File;

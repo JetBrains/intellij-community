@@ -57,9 +57,10 @@ public final class RuntimeModuleId {
   }
 
   /**
-   * Creates ID of a runtime module corresponding to the module-level library {@code libraryName} from module {@code moduleName} in intellij 
-   * project configuration.
+   * @deprecated module-level libraries are now merged with corresponding modules at runtime, it doesn't make sense to have separate IDs for
+   * them.
    */
+  @Deprecated(forRemoval = true)
   public static @NotNull RuntimeModuleId moduleLibrary(@NotNull String moduleName, @NotNull String libraryName) {
     return new RuntimeModuleId(LIB_NAME_PREFIX + moduleName + "." + libraryName);
   }

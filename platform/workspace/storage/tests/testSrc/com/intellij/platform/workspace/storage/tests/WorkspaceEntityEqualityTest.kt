@@ -11,7 +11,11 @@ import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class WorkspaceEntityEqualityTest {
 

@@ -4,7 +4,13 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LanguageInspectionSuppressors
+import com.intellij.codeInspection.LocalInspectionEP
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.RedundantSuppressInspection
+import com.intellij.codeInspection.RedundantSuppressionDetector
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.ide.highlighter.JavaFileType

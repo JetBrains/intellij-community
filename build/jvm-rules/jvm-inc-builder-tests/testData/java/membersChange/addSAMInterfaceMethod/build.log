@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Service.class
+End of files
+Compiling files:
+  java/membersChange/addSAMInterfaceMethod/a/Service.java
+End of files
+Cleaning output files:
+  DerivedService.class
+End of files
+Compiling files:
+  java/membersChange/addSAMInterfaceMethod/a/DerivedService.java
+End of files
+------------------------------------------
+Exit code: OK

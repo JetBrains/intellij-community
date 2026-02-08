@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.memberInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 fun PsiNamedElement.getClassDescriptorIfAny(resolutionFacade: ResolutionFacade? = null): ClassDescriptor? {
     return when (this) {
         is KtClassOrObject -> resolutionFacade?.resolveToDescriptor(this) ?: resolveToDescriptorIfAny(BodyResolveMode.FULL)
@@ -25,6 +27,7 @@ fun PsiNamedElement.getClassDescriptorIfAny(resolutionFacade: ResolutionFacade? 
 }
 
 // Applies to JetClassOrObject and PsiClass
+@K1Deprecation
 @JvmName("qualifiedClassNameForRendering") // to preserve binary compatibility with external usages
 @Deprecated(
     "Use 'qualifiedClassNameForRendering' instead",

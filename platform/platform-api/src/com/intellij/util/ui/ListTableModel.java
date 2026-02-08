@@ -4,9 +4,14 @@ package com.intellij.util.ui;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.event.TableModelEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class ListTableModel<Item> extends TableViewModel<Item> implements EditableModel {
   private ColumnInfo[] myColumnInfos;

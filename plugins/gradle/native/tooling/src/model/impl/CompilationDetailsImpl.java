@@ -10,7 +10,11 @@ import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.MacroDirective;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka

@@ -8,7 +8,11 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Point
+import java.awt.Toolkit
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent

@@ -3,7 +3,7 @@ Run Java
 Connected to the target VM
 coroutineStepping.kt:18
 coroutineStepping.kt:19
-Packets sent: 35, methods called: 4
+Packets sent: 36, methods called: 4
 coroutineStepping.kt:20
 Packets sent: 27, methods called: 4
 coroutineStepping.kt:19

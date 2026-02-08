@@ -1,17 +1,31 @@
 package com.jetbrains.python.psi.impl.stubs
 
-import com.google.common.collect.*
+import com.google.common.collect.BoundType
+import com.google.common.collect.ImmutableRangeSet
+import com.google.common.collect.Range
+import com.google.common.collect.RangeSet
+import com.google.common.collect.TreeRangeSet
 import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
-import com.intellij.psi.stubs.*
-import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.stubs.StubBase
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
+import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.stubs.StubInputStream
+import com.intellij.psi.stubs.StubOutputStream
+import com.intellij.psi.util.CachedValueProvider
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyElsePart
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyIfPart
+import com.jetbrains.python.psi.PyIfStatement
+import com.jetbrains.python.psi.PyStatementPart
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.stubs.PyVersionSpecificStub
-import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
 
 internal abstract class PyVersionSpecificStubBase<T : PsiElement>(
   parent: StubElement<*>?,

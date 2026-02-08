@@ -9,11 +9,19 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.target.*
+import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironment.TargetPath
 import com.intellij.execution.target.TargetEnvironment.UploadRoot
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetPtyOptions
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.TargetValue
+import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.getRelativeTargetPath
+import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,6 +38,7 @@ import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.target.PathMapping
 import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
+import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -39,9 +48,9 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAd
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.pathString
+import kotlin.text.Charsets.UTF_8
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
-
 
 @JvmOverloads
 @ApiStatus.Internal
@@ -158,12 +167,18 @@ private fun resolveUploadPath(localPath: String, uploads: List<PathMapping>): Ta
   return upload.targetPathFun.getRelativeTargetPath(localRelativePath)
 }
 
+private fun PythonExecution.setHelpersCharset() {
+  charset = UTF_8
+  addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, UTF_8.name())
+}
+
 @ApiStatus.Internal
 fun prepareHelperScriptExecution(helperPackage: HelperPackage,
                                  helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): PythonScriptExecution =
   PythonScriptExecution().apply {
     val uploads = applyHelperPackageToPythonPath(helperPackage, helpersAwareTargetRequest)
     pythonScriptPath = resolveUploadPath(helperPackage.asParamString(), uploads)
+    setHelpersCharset()
   }
 
 @ApiStatus.Internal
@@ -180,8 +195,9 @@ fun prepareHelperScriptViaToolExecution(
     toolParams,
     resolveUploadPath(helperPackage.asParamString(), uploads).andThen { Path.of(it) }
   )
-  execution.envs += envs;
-  return execution;
+  execution.envs += envs
+  execution.setHelpersCharset()
+  return execution
 }
 
 private const val PYTHONPATH_ENV = "PYTHONPATH"

@@ -3,8 +3,16 @@ package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.EID
-import fleet.kernel.rete.*
 import fleet.fastutil.longs.LongSet
+import fleet.kernel.rete.Cardinality
+import fleet.kernel.rete.Collector
+import fleet.kernel.rete.DatomPort
+import fleet.kernel.rete.Producer
+import fleet.kernel.rete.Query
+import fleet.kernel.rete.QueryScope
+import fleet.kernel.rete.RevalidationPort
+import fleet.kernel.rete.Subscription
+import fleet.kernel.rete.SubscriptionScope
 
 internal object DummyQueryScope : QueryScope {
   override fun <C : Cardinality, T> Query<C, T>.producer(): Producer<T> = producerImpl()

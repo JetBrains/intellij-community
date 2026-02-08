@@ -34,19 +34,40 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.conda.CondaPackage
-import com.jetbrains.python.packaging.management.*
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.findPackageSpecification
+import com.jetbrains.python.packaging.management.packagesByRepository
+import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
 import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.repository.*
+import com.jetbrains.python.packaging.repository.PyPIPackageRepository
+import com.jetbrains.python.packaging.repository.PyPackageRepositories
+import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.repository.PyRepositoriesList
+import com.jetbrains.python.packaging.repository.checkValid
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
-import com.jetbrains.python.packaging.toolwindow.model.*
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
+import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.PackageQuickFix
+import com.jetbrains.python.packaging.toolwindow.model.PyInvalidRepositoryViewData
+import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
+import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_DELETED
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_INSTALLED
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -339,7 +360,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
             val sdk = readAction {
               val module = ModuleUtilCore.findModuleForFile(newFile, project)
               PythonSdkUtil.findPythonSdk(module)
-            } ?: return@launch
+            }
             initForSdk(sdk)
           }
         }
@@ -350,7 +371,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun refreshInstalledPackages() {
     val context = sdkContext ?: return
 
-    val declaredPackages = context.manager.extractDependencies()?.getOr {
+    val declaredPackages = context.manager.extractDependenciesCached()?.getOr {
       withContext(Dispatchers.EDT) {
         val errorMessage = context.manager.syncErrorMessage() ?: return@withContext
         showErrorNode(errorMessage.descriptionMessage, errorMessage.fixCommandMessage) {
@@ -360,8 +381,10 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       return
     } ?: emptyList()
 
+    val declaredPackageNames = declaredPackages.map { it.name }.toSet()
+
     withContext(Dispatchers.Default) {
-      val installedDeclaredPackages = findInstalledDeclaredPackages(context, declaredPackages)
+      val installedDeclaredPackages = findInstalledDeclaredPackages(context, declaredPackageNames)
       val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(context.sdk)
 
       val packagesWithDependencies = if (treeExtractor != null) {
@@ -385,9 +408,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private suspend fun findInstalledDeclaredPackages(context: SdkContext, declaredPackages: List<PythonPackage>): List<PythonPackage> =
+  private suspend fun findInstalledDeclaredPackages(context: SdkContext, declaredPackageNames: Set<String>): List<PythonPackage> =
     context.manager.listInstalledPackages().filter {
-      it.name in declaredPackages.map { pkg -> pkg.name }
+      it.name in declaredPackageNames
     }
 
   private suspend fun processPackagesWithRequirementsTree(

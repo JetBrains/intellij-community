@@ -11,12 +11,17 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
 internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
@@ -68,7 +73,6 @@ internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAw
         val virtualFile = newFile.virtualFile
         val originalVirtualFile = originalFile.virtualFile
         if (virtualFile is LightVirtualFile && originalVirtualFile != null) {
-            virtualFile.analysisContextModule = originalFile.getKaModule(originalFile.project, useSiteModule = null)
             virtualFile.originalFile = originalVirtualFile
             virtualFile.fileType = originalVirtualFile.fileType
         }

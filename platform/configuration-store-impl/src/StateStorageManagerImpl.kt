@@ -5,8 +5,17 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.PathMacroSubstitutor
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.StateSplitter
+import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.settings.SettingsController

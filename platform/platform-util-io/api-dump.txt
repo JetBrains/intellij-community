@@ -263,6 +263,7 @@ f:com.intellij.execution.process.LocalPtyOptions
 - f:getInitialRows():I
 - f:getUseCygwinLaunch():Z
 - f:getUseWinConPty():Z
+- f:getWinConPtyInheritCursor():Z
 - f:getWinSuspendedProcessCallback():java.util.function.LongConsumer
 f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:build():com.intellij.execution.process.LocalPtyOptions
@@ -275,6 +276,8 @@ f:com.intellij.execution.process.LocalPtyOptions$Builder
 - f:set(com.intellij.execution.process.LocalPtyOptions):com.intellij.execution.process.LocalPtyOptions$Builder
 - f:useCygwinLaunch():Z
 - f:useCygwinLaunch(Z):com.intellij.execution.process.LocalPtyOptions$Builder
+- f:winConPtyInheritCursor():Z
+- f:winConPtyInheritCursor(Z):com.intellij.execution.process.LocalPtyOptions$Builder
 - f:winSuspendedProcessCallback():java.util.function.LongConsumer
 - f:winSuspendedProcessCallback(java.util.function.LongConsumer):com.intellij.execution.process.LocalPtyOptions$Builder
 f:com.intellij.execution.process.LocalPtyOptions$Companion

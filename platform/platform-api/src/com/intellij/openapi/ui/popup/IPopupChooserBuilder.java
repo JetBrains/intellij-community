@@ -9,15 +9,29 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.util.Set;
 
-import static javax.swing.ListSelectionModel.*;
-import static javax.swing.SwingConstants.*;
+import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
+import static javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION;
+import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEADING;
+import static javax.swing.SwingConstants.LEFT;
+import static javax.swing.SwingConstants.RIGHT;
+import static javax.swing.SwingConstants.TRAILING;
 
 public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setRenderer(ListCellRenderer<? super T> renderer);

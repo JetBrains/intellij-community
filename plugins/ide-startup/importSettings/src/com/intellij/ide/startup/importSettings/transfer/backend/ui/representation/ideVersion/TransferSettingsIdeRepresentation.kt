@@ -6,10 +6,12 @@ import com.intellij.ide.startup.importSettings.ui.representation.TransferSetting
 import com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sections.TransferSettingsSection
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
-import java.util.*
+import java.util.EventListener
 import javax.swing.JComponent
 import javax.swing.JLabel
 

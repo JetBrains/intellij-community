@@ -8,7 +8,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.psi.impl.source.JavaFileElementType;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -22,7 +27,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.platform.syntax.lexer.TokenListUtil.*;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.backWhile;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.backWithBraceMatching;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.forwardWhile;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.hasType;
 
 public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");

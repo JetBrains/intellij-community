@@ -4,7 +4,13 @@ package com.intellij.java.ml.local
 import com.intellij.ml.local.models.frequency.methods.MethodsFrequencyModelFactory
 import com.intellij.ml.local.models.frequency.methods.MethodsUsagesTracker
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiImportStatement
+import com.intellij.psi.PsiImportStaticStatement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethodCallExpression
 
 class JavaMethodsFrequencyModelFactory : MethodsFrequencyModelFactory() {
   override fun fileVisitor(usagesTracker: MethodsUsagesTracker): PsiElementVisitor = object : JavaRecursiveElementWalkingVisitor() {

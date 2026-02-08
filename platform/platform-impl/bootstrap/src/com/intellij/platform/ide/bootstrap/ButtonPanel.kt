@@ -18,7 +18,12 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JPanel
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 internal class ButtonPanel(@JvmField val button: JButton) : JPanel(BorderLayout(0, 0)) {
   init {

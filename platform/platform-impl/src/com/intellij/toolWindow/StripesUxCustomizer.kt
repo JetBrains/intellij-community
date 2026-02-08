@@ -2,7 +2,6 @@
 package com.intellij.toolWindow
 
 import com.intellij.ide.ui.NotRoamableUiSettings
-import javax.swing.JComponent
 
 internal open class StripesUxCustomizer {
   init {

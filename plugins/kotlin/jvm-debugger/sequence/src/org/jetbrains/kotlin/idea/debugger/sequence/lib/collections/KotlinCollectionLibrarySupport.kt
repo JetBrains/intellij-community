@@ -13,11 +13,13 @@ import com.intellij.debugger.streams.core.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.core.trace.dsl.Dsl
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections.BothSemanticHandlerWrapper
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections.BothSemanticsHandler
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections.FilterCallHandler
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.interpret.FilterTraceInterpreter
 
+@K1Deprecation
 class KotlinCollectionLibrarySupport : LibrarySupportBase() {
     init {
         addOperation(FilterOperation("filter", FilterCallHandler(), true))

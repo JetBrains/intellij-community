@@ -4,7 +4,12 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.properties.PropertiesImplUtil
 import com.intellij.lang.properties.psi.impl.PropertyImpl
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
@@ -19,7 +24,7 @@ import com.intellij.util.PsiNavigateUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
-import java.util.*
+import java.util.Locale
 
 internal const val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
 internal const val DESCRIPTION_SUFFIX = ".description"

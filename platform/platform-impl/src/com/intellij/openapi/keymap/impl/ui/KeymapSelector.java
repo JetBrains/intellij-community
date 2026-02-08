@@ -20,7 +20,9 @@ import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import java.util.function.Consumer;
 
 final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {

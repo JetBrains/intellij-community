@@ -3,7 +3,12 @@ package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlMarkupDecl;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

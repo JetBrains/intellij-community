@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.util.io.delete
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Obsolete
 @ApiStatus.Internal

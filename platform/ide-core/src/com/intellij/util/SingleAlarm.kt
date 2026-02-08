@@ -6,7 +6,10 @@ package com.intellij.util
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.CoroutineSupport
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
@@ -16,11 +19,23 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.ui.EDT
 import com.intellij.util.ui.RawSwingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
@@ -28,7 +43,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.time.Duration
 
 private val LOG: Logger = logger<SingleAlarm>()
 

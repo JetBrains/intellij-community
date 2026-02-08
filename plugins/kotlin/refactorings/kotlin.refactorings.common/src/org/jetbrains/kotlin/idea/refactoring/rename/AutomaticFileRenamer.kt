@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.NlsContexts.Button
+import com.intellij.openapi.util.NlsContexts.ColumnName
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory

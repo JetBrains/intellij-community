@@ -84,11 +84,12 @@ internal class Http2ConnectionProvider(
   private suspend fun openChannel(): ConnectionState {
     Span.current().addEvent("open TCP connection", Attributes.of(AttributeKey.stringKey("host"), server.hostString, AttributeKey.longKey("port"), server.port.toLong()))
 
-    val channel = bootstrapTemplate
-      .clone()
-      .remoteAddress(server)
-      .handler(channelInitializer)
-      .connectAsync()
+    val channel = connect(
+      bootstrapTemplate
+        .clone()
+        .remoteAddress(server)
+        .handler(channelInitializer)
+    )
 
     val connection = ConnectionState(
       bootstrap = Http2StreamChannelBootstrap(channel),

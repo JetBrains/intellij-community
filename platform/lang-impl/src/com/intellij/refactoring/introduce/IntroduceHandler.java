@@ -25,7 +25,12 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Base class for Introduce variable/field/etc refactorings. It provides skeleton for choosing the target and consequent invoking of the

@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.core.script.k1.configuration.loader
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 open class FileContentsDependentConfigurationLoader(project: Project) : DefaultScriptConfigurationLoader(project) {
     override fun getInputsStamp(virtualFile: VirtualFile, file: KtFile): CachedConfigurationInputs {
         return CachedConfigurationInputs.SourceContentsStamp.get(virtualFile)

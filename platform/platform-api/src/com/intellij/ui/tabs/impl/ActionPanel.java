@@ -3,7 +3,11 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -13,8 +17,13 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;

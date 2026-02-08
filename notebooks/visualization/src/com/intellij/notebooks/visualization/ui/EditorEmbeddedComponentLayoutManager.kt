@@ -5,7 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.components.JBScrollPane
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager2
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 import kotlin.math.min

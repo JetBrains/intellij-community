@@ -26,7 +26,7 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.DocumentImpl
 import junit.framework.TestCase
-import java.util.*
+import java.util.BitSet
 
 class UnifiedFragmentBuilderTest : DiffTestCase() {
   fun testSimple() {

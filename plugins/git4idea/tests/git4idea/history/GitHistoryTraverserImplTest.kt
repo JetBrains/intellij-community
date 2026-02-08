@@ -16,7 +16,11 @@ import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.makeCommit
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.random.nextInt

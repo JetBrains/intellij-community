@@ -1,9 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.indexes;
 
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.ChangeTrackingValueContainer;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.indexing.impl.MapIndexStorageCache;
+import com.intellij.util.indexing.impl.MapIndexStorageCacheProvider;
+import com.intellij.util.indexing.impl.SlruIndexStorageCacheProvider;
+import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;

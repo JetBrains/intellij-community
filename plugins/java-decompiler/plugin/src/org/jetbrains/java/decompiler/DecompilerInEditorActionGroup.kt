@@ -2,7 +2,12 @@
 package org.jetbrains.java.decompiler
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
 

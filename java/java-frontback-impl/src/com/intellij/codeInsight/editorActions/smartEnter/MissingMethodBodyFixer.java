@@ -4,14 +4,29 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.intellij.psi.PsiModifier.*;
+import static com.intellij.psi.PsiModifier.ABSTRACT;
+import static com.intellij.psi.PsiModifier.DEFAULT;
+import static com.intellij.psi.PsiModifier.NATIVE;
+import static com.intellij.psi.PsiModifier.PRIVATE;
+import static com.intellij.psi.PsiModifier.STATIC;
+import static com.intellij.psi.PsiModifier.TRANSIENT;
+import static com.intellij.psi.PsiModifier.VOLATILE;
 
 public class MissingMethodBodyFixer implements Fixer {
   @Override

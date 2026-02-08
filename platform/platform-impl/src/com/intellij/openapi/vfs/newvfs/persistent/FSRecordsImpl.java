@@ -5,13 +5,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.ContentTooBigException;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileTooBigException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordReader;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordUpdater;
@@ -20,18 +28,36 @@ import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.*;
+import com.intellij.util.BitUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
@@ -91,13 +117,6 @@ public final class FSRecordsImpl implements Closeable {
   private static final boolean USE_FILE_NAME_CACHE = !"none".equals(NAME_CACHE_IMPL);
   private static final boolean USE_MRU_FILE_NAME_CACHE = "mru".equals(NAME_CACHE_IMPL);
 
-
-  private static final String CONTENT_STORAGE_IMPL = System.getProperty("vfs.content-storage.impl", "over-mmapped-file");
-  public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(CONTENT_STORAGE_IMPL);
-  public static final boolean USE_CONTENT_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_STORAGE_IMPL);
-
-  private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-mmapped-file");
-  public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_HASH_IMPL);
 
   /**
    * Cutoff for VFSContentStorage: file content larger than this threshold store with compression.
@@ -163,22 +182,14 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   public static int currentImplementationVersion() {
-    //bumped main version (63 -> 64) because AppendOnlyLog ids assignment algo changed
-    int mainVFSFormatVersion = 64;
+    //bumped main version (64 -> 65) because 'names.dat.mmap' -> 'names.dat' renaming
+    int mainVFSFormatVersion = 65;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
-           nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation
-           nextMask(IOUtil.useNativeByteOrderForByteBuffers(), // TODO RC: memory-mapped storages ignore that property
-           nextMask(false, // former USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE, free to re-use
-           nextMask(true,  // former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
-           nextMask(true,  // former USE_ATTRIBUTES_OVER_MMAPPED_FILE, free to re-use
-           nextMask(true,  // former USE_SMALL_ATTR_TABLE, feel free to re-use
-           nextMask(true,  // former PersistentHashMapValueStorage.COMPRESSION_ENABLED, feel free to re-use
-           nextMask(false, // former FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS, feel free to re-use
-           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-           nextMask(true,  // former USE_FAST_NAMES_IMPLEMENTATION, free to reuse
-           nextMask(true   /* former USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, free to reuse */, 0)))))))))))));
+           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(), 0
+           //22 bits are free to use for any configurable VFS property of which VFS binary format/file layout depends
+           )));
     //@formatter:on
   }
 

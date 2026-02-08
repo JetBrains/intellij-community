@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ui.UIUtil;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -83,7 +82,7 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       assertEquals(WINDOWS_1251, virtualFile.getCharset());
       assertEquals(WINDOWS_1251, virtualFile2.getCharset());
       EncodingProjectManager.getInstance(myProject).setEncoding(virtualFile, StandardCharsets.UTF_8);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
       assertEquals(WINDOWS_1251, virtualFile2.getCharset());
       Editor editor = getEditor(virtualFile);
@@ -93,11 +92,11 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       typeInText(editor2, string);
       WriteCommandAction.runWriteCommandAction(getProject(), () -> editor.getDocument().deleteString(0, editor.getDocument().getTextLength()));
       undo(editor);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertEquals(utf8character, (int)editor.getDocument().getText().charAt(0));
       WriteCommandAction.runWriteCommandAction(getProject(), () -> editor2.getDocument().deleteString(0, editor2.getDocument().getTextLength()));
       undo(editor2);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertEquals(utf8character, (int)editor2.getDocument().getText().charAt(0));
     }));
   }

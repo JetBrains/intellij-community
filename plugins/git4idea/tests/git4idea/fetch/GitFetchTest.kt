@@ -5,7 +5,12 @@ import com.intellij.openapi.vcs.Executor.cd
 import git4idea.fetch.GitFetchSupport.fetchSupport
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.cd
+import git4idea.test.createRepository
+import git4idea.test.git
+import git4idea.test.log
+import git4idea.test.tac
 import java.nio.file.Path
 
 class GitFetchTest : GitPlatformTest() {

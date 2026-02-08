@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
 import com.intellij.testFramework.DumbModeTestUtils
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinKaModulesAfterModificationsConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
     override val pluginMode: KotlinPluginMode

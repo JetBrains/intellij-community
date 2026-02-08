@@ -2,8 +2,11 @@
 
 package org.jetbrains.kotlin.idea.jvm.k1.quickfix
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
-import org.jetbrains.kotlin.diagnostics.Errors.*
+import org.jetbrains.kotlin.diagnostics.Errors.MISSING_SCRIPT_STANDARD_TEMPLATE
+import org.jetbrains.kotlin.diagnostics.Errors.UNRESOLVED_REFERENCE
+import org.jetbrains.kotlin.diagnostics.Errors.UNSUPPORTED_FEATURE
 import org.jetbrains.kotlin.idea.jvm.k1.inspections.AddReflectionQuickFix
 import org.jetbrains.kotlin.idea.jvm.k1.inspections.AddScriptRuntimeQuickFix
 import org.jetbrains.kotlin.idea.jvm.k1.inspections.AddTestLibQuickFix
@@ -12,6 +15,7 @@ import org.jetbrains.kotlin.idea.quickfix.QuickFixContributor
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.NO_REFLECTION_IN_CLASS_PATH
 
+@K1Deprecation
 class JvmQuickFixRegistrar : QuickFixContributor {
     override fun registerQuickFixes(quickFixes: QuickFixes) {
         fun DiagnosticFactory<*>.registerFactory(vararg factory: KotlinIntentionActionsFactory) {

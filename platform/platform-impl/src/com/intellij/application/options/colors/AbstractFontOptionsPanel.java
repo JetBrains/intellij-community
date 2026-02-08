@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -24,9 +24,20 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -470,8 +481,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myDispatcher.getMulticaster().fontChanged();
   }
 
-  public void fireSchemeChanged() {
-    myDispatcher.getMulticaster().schemeChanged(this);
+  public void fireSchemeReset(FontPreferences fontPreferences) {
+    myDispatcher.getMulticaster().schemeReset(fontPreferences);
   }
 
   @Override

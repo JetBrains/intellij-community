@@ -1,7 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.core.wrapper;
 
-import com.intellij.debugger.streams.core.trace.*;
+import com.intellij.debugger.streams.core.trace.BooleanValue;
+import com.intellij.debugger.streams.core.trace.ByteValue;
+import com.intellij.debugger.streams.core.trace.CharValue;
+import com.intellij.debugger.streams.core.trace.DoubleValue;
+import com.intellij.debugger.streams.core.trace.FloatValue;
+import com.intellij.debugger.streams.core.trace.IntegerValue;
+import com.intellij.debugger.streams.core.trace.LongValue;
+import com.intellij.debugger.streams.core.trace.PrimitiveValue;
+import com.intellij.debugger.streams.core.trace.ShortValue;
+import com.intellij.debugger.streams.core.trace.TraceElement;
+import com.intellij.debugger.streams.core.trace.Value;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import one.util.streamex.StreamEx;

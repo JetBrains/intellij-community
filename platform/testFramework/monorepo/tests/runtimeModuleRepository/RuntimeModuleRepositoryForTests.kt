@@ -3,6 +3,7 @@ package com.intellij.platform.testFramework.monorepo.runtimeModuleRepository
 
 import com.intellij.devkit.runtimeModuleRepository.generator.ResourcePathsSchema
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
+import com.intellij.devkit.runtimeModuleRepository.generator.isProjectLevel
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
@@ -31,11 +32,11 @@ fun generateRuntimeModuleRepositoryForTests(monorepoProject: JpsProject): Runtim
     }
   }
 
-  val allLibraries = JpsJavaExtensionService.dependencies(monorepoProject).productionOnly().runtimeOnly().libraries
+  val allProjectLibraries = JpsJavaExtensionService.dependencies(monorepoProject).productionOnly().runtimeOnly().libraries.filter { it.isProjectLevel }
   val moduleDescriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(
     includedProduction = monorepoProject.modules,
     includedTests = emptyList(),
-    includedLibraries = allLibraries,
+    includedProjectLibraries = allProjectLibraries,
     resourcePathsSchema = ResourcePathsSchemaForTests,
   )
   

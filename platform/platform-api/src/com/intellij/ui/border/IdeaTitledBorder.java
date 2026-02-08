@@ -8,9 +8,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JSeparator;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 /**
  * @author evgeny zakrevsky

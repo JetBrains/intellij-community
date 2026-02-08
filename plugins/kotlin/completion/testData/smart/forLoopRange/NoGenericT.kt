@@ -7,3 +7,5 @@ fun foo() {
 
 // ABSENT: xxx1
 // EXIST: xxx2
+
+// IGNORE_K2

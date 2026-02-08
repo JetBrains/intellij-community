@@ -14,7 +14,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.HelperPackage;
-import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonExecution;
+import com.jetbrains.python.run.PythonProcessRunner;
+import com.jetbrains.python.run.PythonScriptExecution;
+import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder;
+import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +93,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
   @Override
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
     final Runnable afterTask = getAfterTask();
-    ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine, false);
+    ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine);
     if (afterTask != null) {
       processHandler.addProcessListener(new ProcessListener() {
         @Override

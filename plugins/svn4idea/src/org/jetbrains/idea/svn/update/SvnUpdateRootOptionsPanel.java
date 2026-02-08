@@ -7,7 +7,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.FilePathUtil;
+import org.jetbrains.idea.svn.NestedCopyType;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
@@ -18,8 +23,10 @@ import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Font;
 import java.util.Collection;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;

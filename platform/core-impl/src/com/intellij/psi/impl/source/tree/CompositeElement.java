@@ -4,7 +4,12 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;

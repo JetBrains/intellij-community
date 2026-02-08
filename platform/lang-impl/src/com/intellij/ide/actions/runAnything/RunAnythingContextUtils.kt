@@ -3,7 +3,10 @@
 
 package com.intellij.ide.actions.runAnything
 
-import com.intellij.ide.actions.runAnything.RunAnythingContext.*
+import com.intellij.ide.actions.runAnything.RunAnythingContext.BrowseRecentDirectoryContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.ModuleContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.ProjectContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.RecentDirectoryContext
 import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.project.guessProjectDir
 import org.jetbrains.annotations.NonNls

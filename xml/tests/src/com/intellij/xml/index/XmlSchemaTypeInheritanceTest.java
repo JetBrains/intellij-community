@@ -19,11 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.MultiMap;
-import java.util.HashSet;
 import org.junit.Assert;
 
 import java.io.FileInputStream;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.core.script.v1
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key

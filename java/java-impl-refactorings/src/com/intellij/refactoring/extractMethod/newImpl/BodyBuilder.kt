@@ -2,7 +2,21 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix
-import com.intellij.psi.*
+import com.intellij.psi.PsiBlockStatement
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiParserFacade
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -10,9 +24,14 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.createDeclaration
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ArtificialBooleanOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.EmptyOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.VariableOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.ConditionalFlow
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.EmptyFlow
+import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.UnconditionalFlow
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.util.CommonJavaRefactoringUtil
 

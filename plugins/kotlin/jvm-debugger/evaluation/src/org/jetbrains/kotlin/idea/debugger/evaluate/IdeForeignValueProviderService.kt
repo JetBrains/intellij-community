@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinForeignValueProviderService
 import org.jetbrains.kotlin.psi.KtCodeFragment
 
+@OptIn(KaPlatformInterface::class)
 internal class IdeForeignValueProviderService : KotlinForeignValueProviderService {
     override fun getForeignValues(codeFragment: KtCodeFragment): Map<String, String> {
         val project = codeFragment.project

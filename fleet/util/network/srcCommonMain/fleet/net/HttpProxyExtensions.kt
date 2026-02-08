@@ -2,7 +2,12 @@ package fleet.net
 
 import fleet.util.Base64WithOptionalPadding
 import fleet.util.logging.logger
-import io.ktor.client.engine.*
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.HttpClientEngineCapability
+import io.ktor.client.engine.HttpClientEngineConfig
+import io.ktor.client.engine.HttpClientEngineFactory
+import io.ktor.client.engine.ProxyBuilder
+import io.ktor.client.engine.http
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData

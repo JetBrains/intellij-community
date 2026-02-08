@@ -1,8 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
-import com.intellij.ide.plugins.*
-import com.intellij.platform.plugins.parser.impl.*
+import com.intellij.ide.plugins.DataLoader
+import com.intellij.ide.plugins.PathResolver
+import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.createXIncludeLoader
+import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
@@ -66,10 +74,24 @@ internal class ModuleBasedPluginXmlPathResolver(
     dataLoader: DataLoader,
     path: String,
   ): LoadedXIncludeReference? {
-    return fallbackResolver.loadXIncludeReference(
+    val reference = fallbackResolver.loadXIncludeReference(
       dataLoader = dataLoader,
       path = path,
     )
+    if (reference != null) {
+      return reference
+    }
+
+    /* If the IDE is running in 'dev build' mode from sources without using Bazel build, the modules aren't packed to JARs, so the included
+       file may be located in a different directory. We need to search for it in all plugin's modules. */
+    for (module in includedModules) {
+      val inputStream = module.moduleDescriptor.readFile(path)
+      if (inputStream != null) {
+        val bytes = inputStream.use { it.readBytes() }
+        return LoadedXIncludeReference(bytes, module.moduleDescriptor.moduleId.stringId)
+      }
+    }
+    return null
   }
 
   override fun resolvePath(

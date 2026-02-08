@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentation
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Set;
 
 public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {

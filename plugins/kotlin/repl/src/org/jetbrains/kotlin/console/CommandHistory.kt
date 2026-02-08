@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.console
 
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class CommandHistory {
     class Entry(
         val entryText: String,
@@ -36,6 +38,7 @@ class CommandHistory {
     val size: Int get() = entries.size
 }
 
+@K1Deprecation
 interface HistoryUpdateListener {
     fun onNewEntry(entry: CommandHistory.Entry)
 }

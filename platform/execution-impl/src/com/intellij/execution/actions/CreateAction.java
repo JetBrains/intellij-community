@@ -14,7 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class CreateAction extends BaseRunConfigurationAction {
   public CreateAction() {

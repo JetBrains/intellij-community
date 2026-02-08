@@ -1,23 +1,30 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.google.common.collect.ImmutableSortedMap;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.BinaryFileStubBuilder;
+import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.psi.stubs.LanguageStubDescriptor;
+import com.intellij.psi.stubs.StubElementRegistryService;
+import com.intellij.psi.stubs.StubIndexExtension;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.SortedMap;
 import java.util.stream.Collectors;
 
 public class IndexInfrastructureVersionBase {
@@ -158,22 +165,6 @@ public class IndexInfrastructureVersionBase {
     return builder;
   }
 
-  /**
-   * @deprecated use {@link #getAllLanguageStubDescriptors} intead
-   * @return
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<IFileElementType> getAllStubFileElementTypes() {
-    return Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
-      .filter(type -> type instanceof LanguageFileType)
-      .map(type -> ((LanguageFileType)type).getLanguage())
-      .map(LanguageParserDefinitions.INSTANCE::forLanguage)
-      .filter(Objects::nonNull)
-      .map(ParserDefinition::getFileNodeType)
-      .collect(Collectors.toList());
-  }
-
-  @ApiStatus.Experimental
   public static @NotNull List<LanguageStubDescriptor> getAllLanguageStubDescriptors() {
     StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
     return Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
@@ -192,7 +183,6 @@ public class IndexInfrastructureVersionBase {
     return fileNodeType.getExternalId() + ":" + fileNodeType.getLanguage().getID();
   }
 
-  @ApiStatus.Experimental
   public static @NotNull String getStubFileElementTypeKey(@NotNull LanguageStubDescriptor descriptor) {
     return descriptor.getFileElementSerializer().getExternalId() + ":" + descriptor.getLanguage().getID();
   }
@@ -208,10 +198,9 @@ public class IndexInfrastructureVersionBase {
            : stubVersion;
   }
 
-  @ApiStatus.Experimental
   public static int getStubFileElementBaseVersion(@NotNull LanguageStubDescriptor descriptor) {
     int stubVersion = descriptor.getStubDefinition().getStubVersion();
-    return descriptor.getLanguage() instanceof TemplateLanguage // todo IJPL-562 get rid of template here???
+    return descriptor.getLanguage() instanceof TemplateLanguage
            ? stubVersion - TemplateLanguageStubBaseVersion.getVersion()
            : stubVersion;
   }

@@ -10,7 +10,8 @@ import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
 import com.intellij.util.diff.UniqueLCS
 import junit.framework.TestCase
-import java.util.*
+import java.util.Collections
+import java.util.Random
 
 @PerformanceUnitTest
 class DiffPerformanceTest : TestCase() {

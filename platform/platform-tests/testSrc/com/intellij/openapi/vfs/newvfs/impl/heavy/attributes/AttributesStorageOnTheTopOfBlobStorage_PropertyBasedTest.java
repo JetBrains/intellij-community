@@ -34,7 +34,9 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
 import static org.jetbrains.jetCheck.Generator.constant;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {

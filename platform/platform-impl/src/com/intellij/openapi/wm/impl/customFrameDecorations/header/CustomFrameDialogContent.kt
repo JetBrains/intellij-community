@@ -4,7 +4,11 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Window
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JFrame
+import javax.swing.JPanel
+import javax.swing.JWindow
 
 internal class CustomFrameDialogContent private constructor(private val window: Window,
                                                             private val header: CustomHeader, content: Container) : JPanel() {

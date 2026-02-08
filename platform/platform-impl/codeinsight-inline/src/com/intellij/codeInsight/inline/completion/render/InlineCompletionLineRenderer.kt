@@ -14,7 +14,11 @@ import com.intellij.ui.paint.EffectPainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.font.TextLayout
 
 /**

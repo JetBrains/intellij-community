@@ -9,7 +9,6 @@ import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote.allAvailableLocally
 import com.intellij.grazie.remote.GrazieRemote.getLanguagesBasedOnUserAgreement
-import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -27,7 +26,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
-import java.nio.file.Path
 import kotlin.io.path.copyTo
 
 @Suppress("DialogTitleCapitalization")
@@ -35,10 +33,10 @@ internal object LanguageDownloader {
 
   @Deprecated("Use downloadAsync(Collection<Lang>, Project) instead", replaceWith = ReplaceWith("downloadAsync(listOf(lang), project)"))
   @ApiStatus.ScheduledForRemoval
-  internal fun download(lang: Lang): Boolean {
-    if (isAvailableLocally(lang)) return true
-    val path = runDownload(lang) ?: return false
-    performGrazieUpdate(LanguageBundles(lang to path))
+  internal fun download(languages: Collection<Lang>): Boolean {
+    if (allAvailableLocally(languages)) return true
+    runDownload(languages)
+    performGrazieUpdate(languages)
     return true
   }
 
@@ -56,47 +54,61 @@ internal object LanguageDownloader {
   }
 
   suspend fun startDownloading(languages: Collection<Lang>) {
-    val bundles = withContext(Dispatchers.IO) {
-      performDownload(languages)
+    withContext(Dispatchers.IO) {
+      try {
+        performDownload(languages)
+      }
+      catch (exception: Throwable) {
+        val installedSuccessfully = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          promptToSelectLanguageBundleManually(languages)
+        }
+        thisLogger().warn(exception)
+        if (!installedSuccessfully) throw exception
+      }
     }
-    performGrazieUpdate(bundles)
+    performGrazieUpdate(languages)
   }
 
-  private fun runDownload(language: Lang): Path? {
+  private fun runDownload(languages: Collection<Lang>) {
     try {
-      return runWithModalProgressBlocking(
+      runWithModalProgressBlocking(
         ModalTaskOwner.guess(),
         msg("grazie.settings.proofreading.languages.download")
       ) {
-        performDownload(listOf(language))
-      }.languages.entries.single().value
+        performDownload(languages)
+      }
     }
     catch (exception: Throwable) {
       thisLogger().warn(exception)
-      return promptToSelectLanguageBundleManually(language)
+      if (!promptToSelectLanguageBundleManually(languages)) throw exception
     }
   }
 
-  private fun performGrazieUpdate(bundles: LanguageBundles) {
-    if (bundles.languages.isNotEmpty()) {
-      bundles.languages.forEach { (lang, path) ->
-        // Each language has its own LT jar file, at least for now
-        val jarPath = path.resolve(lang.ltRemote!!.storageName)
-        check(GrazieRemote.isValidBundleForLanguage(lang, jarPath)) { "Language bundle checksum became invalid right before loading it: $lang" }
+  private fun performGrazieUpdate(languages: Collection<Lang>) {
+    languages.forEach {
+      val jarPath = GrazieDynamic.dynamicFolder.resolve(it.ltRemote!!.storageName)
+      check(GrazieRemote.isValidBundleForLanguage(it.ltRemote, jarPath)) {
+        "Language bundle checksum became invalid right before loading it: $it"
       }
-      val classLoader = UrlClassLoader.build()
-        .parent(GraziePlugin.classLoader)
-        .files(bundles.languages.map { it.value.resolve(it.key.ltRemote!!.storageName) })
-        .get()
-      GrazieDynamic.addDynClassLoader(classLoader)
     }
-    bundles.hunspellLangs.forEach { (lang, path) ->
-      val zip = path.resolve(lang.hunspellRemote!!.storageDescriptor)
-      val outputDir = path.resolve(lang.hunspellRemote!!.storageName)
-      Files.createDirectories(outputDir)
-      ZipUtil.extract(zip, outputDir, HunspellDescriptor.filenameFilter())
-      NioFiles.deleteRecursively(zip)
-    }
+    val classLoader = UrlClassLoader.build()
+      .parent(GraziePlugin.classLoader)
+      .files(languages.map { GrazieDynamic.dynamicFolder.resolve(it.ltRemote!!.storageName) })
+      .get()
+    GrazieDynamic.addDynClassLoader(classLoader)
+    languages
+      .filter { it.hunspellRemote != null }
+      .forEach {
+        val descriptor = it.hunspellRemote!!
+        val jarPath = GrazieDynamic.dynamicFolder.resolve(descriptor.storageDescriptor)
+        check(GrazieRemote.isValidBundleForLanguage(it.hunspellRemote, jarPath)) {
+          "Language bundle checksum became invalid right before loading it: $it"
+        }
+        val outputDir = GrazieDynamic.dynamicFolder.resolve(descriptor.storageName)
+        Files.createDirectories(outputDir)
+        ZipUtil.extract(jarPath, outputDir, HunspellDescriptor.filenameFilter())
+        NioFiles.deleteRecursively(jarPath)
+      }
     reloadGrazie()
   }
 
@@ -108,57 +120,55 @@ internal object LanguageDownloader {
   }
 
   @Throws(IllegalStateException::class)
-  private fun performDownload(languages: Collection<Lang>): LanguageBundles {
+  private fun performDownload(languages: Collection<Lang>) {
     val bundles = downloadLanguages(languages)
-    val invalidBundles = bundles.jLangs
-      .map { (lang, path) -> lang to path.resolve(lang.ltRemote!!.storageName) }
-      .filter { !GrazieRemote.isValidBundleForLanguage(it.first, it.second) }
+    val invalidBundles = languages
+      .flatMap { it.remoteDescriptors }
+      .map { it to GrazieDynamic.dynamicFolder.resolve(it.storageDescriptor) }
+      .filterNot { GrazieRemote.isValidBundleForLanguage(it.first, it.second) }
       .map { it.second }
     if (invalidBundles.isNotEmpty()) {
-      bundles.languages.forEach { NioFiles.deleteRecursively(it.value) }
+      deleteLanguages()
       throw IllegalStateException("Failed to verify integrity of downloaded language bundle for languages ${invalidBundles}.")
     }
     return bundles
   }
 
-  private fun promptToSelectLanguageBundleManually(language: Lang): Path? {
-    language.ltRemote ?: return null
-    val selectedFile = OfflineLanguageBundleSelectionDialog.show(null, language) ?: return null
-    val targetPath = GrazieDynamic.dynamicFolder.resolve(language.ltRemote!!.storageName)
-    selectedFile.copyTo(targetPath, overwrite = true)
-    return targetPath
-  }
-
-  private fun downloadLanguages(languages: Collection<Lang>): LanguageBundles {
-    val downloaderService = DownloadableFileService.getInstance()
-    val paths = mutableMapOf<Lang, Path>()
-    try {
-      languages.forEach { lang ->
-        val descriptors = lang.remoteDescriptors
-          .map { it.url to it.storageDescriptor }
-          .map { downloaderService.createFileDescription(it.first, it.second) }
-        downloaderService
-          .createDownloader(descriptors, msg("grazie.settings.proofreading.languages.download"))
-          .download(GrazieDynamic.dynamicFolder.toFile())
-        paths[lang] = GrazieDynamic.dynamicFolder
-      }
-    }
-    catch (e: Exception) {
-      paths.forEach { NioFiles.deleteRecursively(it.value) }
-      throw e
-    }
-    return LanguageBundles(paths)
-  }
 
   /**
-   * [Path] in this map corresponds to the absolute path of [RemoteLangDescriptor.storageDescriptor]
+   * @return true if manual installation was successful, false otherwise
    */
-  private data class LanguageBundles(val languages: Map<Lang, Path>) {
-    val hunspellLangs: Map<Lang, Path>
-      get() = languages.filterKeys { it.hunspellRemote != null }
-    val jLangs: Map<Lang, Path>
-      get() = languages.filterKeys { it.ltRemote != null }
+  private fun promptToSelectLanguageBundleManually(languages: Collection<Lang>): Boolean {
+    val urls = languages.flatMap { it.remoteDescriptors }.joinToString("\n") { it.url }
+    thisLogger().info(
+      "Please download the following JARs and select them in the 'Choose Languages' Bundles' dialog for manual offline installation.\n$urls"
+    )
+    val selectedFiles = OfflineLanguageBundleSelectionDialog.show(languages)
+    selectedFiles.forEach { file ->
+      file.copyTo(GrazieDynamic.dynamicFolder.resolve(file.fileName), overwrite = true)
+    }
+    return selectedFiles.isNotEmpty()
+  }
 
-    constructor(lang: Pair<Lang, Path>) : this(mapOf(lang))
+  private fun downloadLanguages(languages: Collection<Lang>) {
+    val downloaderService = DownloadableFileService.getInstance()
+    try {
+      val descriptors = languages.flatMap { it.remoteDescriptors }
+        .map { it.url to it.storageDescriptor }
+        .map { downloaderService.createFileDescription(it.first, it.second) }
+      downloaderService
+        .createDownloader(descriptors, msg("grazie.settings.proofreading.languages.download"))
+        .download(GrazieDynamic.dynamicFolder.toFile())
+    }
+    catch (e: Exception) {
+      deleteLanguages()
+      throw e
+    }
+  }
+
+  private fun deleteLanguages() {
+    Files.list(GrazieDynamic.dynamicFolder).forEach {
+      NioFiles.deleteRecursively(it)
+    }
   }
 }

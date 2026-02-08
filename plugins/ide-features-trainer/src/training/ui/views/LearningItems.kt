@@ -3,6 +3,7 @@ package training.ui.views
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
@@ -19,11 +20,24 @@ import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
 import training.ui.UISettings
-import training.util.*
-import java.awt.*
+import training.util.createBalloon
+import training.util.enableLessonsAndPromoters
+import training.util.iftPluginIsUsing
+import training.util.learningProgressString
+import training.util.rigid
+import training.util.scaledRigid
+import java.awt.Color
+import java.awt.Cursor
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
 private val HOVER_COLOR: Color get() = JBColor.namedColor("Plugins.hoverBackground", JBColor(0xEDF6FE, 0x464A4D))
@@ -184,7 +198,9 @@ private class LearningItemPanel(clickAction: () -> Unit) : JPanel() {
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
         if (!visibleRect.contains(e.point)) return
-        clickAction()
+        WriteIntentReadAction.run {
+          clickAction()
+        }
       }
 
       override fun mouseEntered(e: MouseEvent) {

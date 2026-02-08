@@ -91,12 +91,13 @@ class SpanExtractionFromUnitPerfTest {
     val reportFile = Files.createTempFile("temp", ".json")
 
     val metricsDto = PerformanceMetricsDto.create(
-      mainMetricName,
-      "",
-      "",
-      testInfo.displayName,
-      BuildNumber.fromString("233.SNAPSHOT")!!,
-      extractedMetrics
+      projectName = mainMetricName,
+      projectURL = "",
+      projectDescription = "",
+      methodName = testInfo.displayName,
+      buildNumber = BuildNumber.fromString("233.SNAPSHOT")!!,
+      metrics = extractedMetrics,
+      owner = ""
     )
 
     // just invoke serialization to validate that it completes without exceptions
@@ -132,12 +133,13 @@ class SpanExtractionFromUnitPerfTest {
     val reportFile = Files.createTempFile("temp", ".json")
 
     val metricsDto = PerformanceMetricsDto.create(
-      mainMetricName,
-      "",
-      "",
-      testInfo.displayName,
-      BuildNumber.fromString("233.SNAPSHOT")!!,
-      extractedMetrics
+      projectName = mainMetricName,
+      projectURL = "",
+      projectDescription = "",
+      methodName = testInfo.displayName,
+      buildNumber = BuildNumber.fromString("233.SNAPSHOT")!!,
+      metrics = extractedMetrics,
+      owner = ""
     )
 
     // just invoke serialization to validate that it completes without exceptions

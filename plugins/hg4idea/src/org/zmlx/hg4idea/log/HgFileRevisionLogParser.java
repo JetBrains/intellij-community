@@ -15,7 +15,14 @@ import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
   private static final Logger LOG = Logger.getInstance(HgFileRevisionLogParser.class);

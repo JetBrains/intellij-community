@@ -6,7 +6,13 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.execution.SyncBundle
-import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.model.MavenArchetype
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenArtifactInfo
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenModel
+import org.jetbrains.idea.maven.model.MavenRemoteRepository
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File

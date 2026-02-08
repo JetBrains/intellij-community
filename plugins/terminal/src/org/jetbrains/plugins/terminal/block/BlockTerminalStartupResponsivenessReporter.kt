@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.terminal.TerminalStartupMoment
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
-import org.jetbrains.plugins.terminal.fus.TimeSpanType
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
+import org.jetbrains.plugins.terminal.fus.TimeSpanType
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.time.Duration
 import kotlin.time.toKotlinDuration

@@ -17,9 +17,9 @@
 package com.intellij.stats.completion.logger
 
 import com.intellij.openapi.Disposable
-import com.intellij.stats.completion.tracker.CompletionEventLogger
 import com.intellij.stats.completion.LogEventSerializer
 import com.intellij.stats.completion.events.LogEvent
+import com.intellij.stats.completion.tracker.CompletionEventLogger
 import com.intellij.util.concurrency.SequentialTaskExecutor
 
 /**

@@ -59,3 +59,5 @@ class C {
 // ABSENT: X5
 // EXIST: Y1
 // ABSENT: Y2
+
+// IGNORE_K2

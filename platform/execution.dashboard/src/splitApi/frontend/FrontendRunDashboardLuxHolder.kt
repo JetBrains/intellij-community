@@ -2,6 +2,7 @@
 package com.intellij.platform.execution.dashboard.splitApi.frontend
 
 import com.intellij.execution.dashboard.RunDashboardServiceId
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
@@ -10,6 +11,8 @@ import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
@@ -29,11 +32,13 @@ internal class FrontendRunDashboardLuxHolder(val project: Project, val coroutine
 
   internal suspend fun subscribeToRunToolwindowUpdates() {
     RunDashboardServiceRpc.getInstance().getLuxedContentEvents(project.projectId()).collect { luxedContent ->
-      if (luxedContent.isAdded) {
-        registerLuxContent(luxedContent)
-      }
-      else {
-        unregisterLuxContent(luxedContent)
+      withContext(Dispatchers.EDT) {
+        if (luxedContent.isAdded) {
+          registerLuxContent(luxedContent)
+        }
+        else {
+          unregisterLuxContent(luxedContent)
+        }
       }
     }
   }

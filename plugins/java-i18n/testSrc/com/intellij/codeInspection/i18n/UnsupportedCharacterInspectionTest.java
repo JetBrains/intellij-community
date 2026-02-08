@@ -9,8 +9,8 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 
 import java.io.IOException;
@@ -80,7 +80,7 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
 
     PsiFile props = addFile("test.properties", "key1=Java + ☕");
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(props.getVirtualFile(), true);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     fileEncoding(props, StandardCharsets.UTF_8);
     propertiesEncoding(props, null);

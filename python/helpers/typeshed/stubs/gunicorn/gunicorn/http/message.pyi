@@ -1,5 +1,7 @@
 import io
 import re
+from enum import IntEnum
+from typing import Final
 
 from gunicorn.config import Config
 from gunicorn.http.body import Body
@@ -7,14 +9,31 @@ from gunicorn.http.unreader import Unreader
 
 from .._types import _AddressType
 
-MAX_REQUEST_LINE: int
-MAX_HEADERS: int
-DEFAULT_MAX_HEADERFIELD_SIZE: int
-RFC9110_5_6_2_TOKEN_SPECIALS: str
-TOKEN_RE: re.Pattern[str]
-METHOD_BADCHAR_RE: re.Pattern[str]
-VERSION_RE: re.Pattern[str]
-RFC9110_5_5_INVALID_AND_DANGEROUS: re.Pattern[str]
+PP_V2_SIGNATURE: Final = b"\x0d\x0a\x0d\x0a\x00\x0d\x0a\x51\x55\x49\x54\x0a"
+
+class PPCommand(IntEnum):
+    LOCAL = 0x0
+    PROXY = 0x1
+
+class PPFamily(IntEnum):
+    UNSPEC = 0x0
+    INET = 0x1
+    INET6 = 0x2
+    UNIX = 0x3
+
+class PPProtocol(IntEnum):
+    UNSPEC = 0x0
+    STREAM = 0x1
+    DGRAM = 0x2
+
+MAX_REQUEST_LINE: Final = 8190
+MAX_HEADERS: Final = 32768
+DEFAULT_MAX_HEADERFIELD_SIZE: Final = 8190
+RFC9110_5_6_2_TOKEN_SPECIALS: Final = r"!#$%&'*+-.^_`|~"
+TOKEN_RE: Final[re.Pattern[str]]
+METHOD_BADCHAR_RE: Final[re.Pattern[str]]
+VERSION_RE: Final[re.Pattern[str]]
+RFC9110_5_5_INVALID_AND_DANGEROUS: Final[re.Pattern[str]]
 
 class Message:
     cfg: Config
@@ -46,14 +65,14 @@ class Request(Message):
     fragment: str | None
     limit_request_line: int
     req_number: int
-    proxy_protocol_info: dict[str, str | int] | None
+    proxy_protocol_info: dict[str, str | int | None] | None  # TODO: Use TypedDict
 
     def __init__(self, cfg: Config, unreader: Unreader, peer_addr: _AddressType, req_number: int = 1) -> None: ...
     def get_data(self, unreader: Unreader, buf: io.BytesIO, stop: bool = False) -> None: ...
     def parse(self, unreader: Unreader) -> bytes: ...
-    def read_line(self, unreader: Unreader, buf: io.BytesIO, limit: int = 0) -> tuple[bytes, bytes]: ...
-    def proxy_protocol(self, line: str) -> bool: ...
+    def read_into(self, unreader: Unreader, buf: bytearray, stop: bool | None = False) -> None: ...
+    def read_line(self, unreader: Unreader, buf: bytearray, limit: int = 0) -> tuple[bytes, bytearray]: ...
+    def read_bytes(self, unreader: Unreader, buf: bytearray, count: int) -> tuple[bytes, bytearray]: ...
     def proxy_protocol_access_check(self) -> None: ...
-    def parse_proxy_protocol(self, line: str) -> None: ...
     def parse_request_line(self, line_bytes: bytes) -> None: ...
     def set_body_reader(self) -> None: ...

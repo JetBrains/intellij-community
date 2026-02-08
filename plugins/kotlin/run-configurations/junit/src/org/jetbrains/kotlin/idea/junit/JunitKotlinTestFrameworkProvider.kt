@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.junit
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.junit.JUnitConfigurationProducer
-import com.intellij.execution.junit.JUnitUtil.*
+import com.intellij.execution.junit.JUnitUtil.CUSTOM_TESTABLE_ANNOTATION
+import com.intellij.execution.junit.JUnitUtil.TEST_ANNOTATION
+import com.intellij.execution.junit.JUnitUtil.TEST_CASE_CLASS
+import com.intellij.execution.junit.JUnitUtil.isTestClass
+import com.intellij.execution.junit.JUnitUtil.isTestMethod
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass

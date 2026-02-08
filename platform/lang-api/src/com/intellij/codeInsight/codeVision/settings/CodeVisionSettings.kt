@@ -3,9 +3,13 @@ package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
-import java.util.*
+import java.util.TreeSet
 
 @State(name = "CodeVisionSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
 class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {

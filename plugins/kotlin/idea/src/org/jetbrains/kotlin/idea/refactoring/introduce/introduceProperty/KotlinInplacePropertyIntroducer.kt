@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.refactoring.introduce.TYPE_REFERENCE_VARIABLE_NAME
@@ -32,6 +33,7 @@ import javax.swing.JComboBox
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@K1Deprecation
 class KotlinInplacePropertyIntroducer(
     property: KtProperty,
     editor: Editor,

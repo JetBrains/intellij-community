@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
@@ -23,8 +23,8 @@ import kotlin.io.path.walk
 
 class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() {
     @Test
-    fun testK1PluginIsUsed() {
-        Assertions.assertTrue(System.getProperty("idea.kotlin.plugin.use.k1").toBoolean())
+    fun testK2PluginIsUsed() {
+        Assertions.assertFalse(System.getProperty("idea.kotlin.plugin.use.k1").toBoolean())
     }
 
     @ParameterizedTest

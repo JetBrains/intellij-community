@@ -3,7 +3,11 @@
 
 package org.jetbrains.sqlite
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
@@ -11,7 +15,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.*
+import java.util.Random
 import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
 import kotlin.time.Duration.Companion.milliseconds

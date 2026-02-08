@@ -5,7 +5,12 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.MnemonicHelper.DISABLE_MNEMONIC_PROCESSING
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.StringUtilRt
@@ -24,12 +29,21 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.Image
+import java.awt.KeyEventDispatcher
+import java.awt.KeyboardFocusManager
+import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JLayeredPane
+import javax.swing.SwingUtilities
 
 /**
  * @author Eugene Belyaev

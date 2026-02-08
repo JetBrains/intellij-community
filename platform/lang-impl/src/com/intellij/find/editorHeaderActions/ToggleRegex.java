@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class ToggleRegex extends EditorHeaderToggleAction implements Embeddable, TooltipLinkProvider, TooltipDescriptionProvider {
   public ToggleRegex() {

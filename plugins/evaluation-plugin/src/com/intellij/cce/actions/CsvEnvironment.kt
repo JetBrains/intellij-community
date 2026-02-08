@@ -3,7 +3,7 @@ package com.intellij.cce.actions
 import com.intellij.cce.evaluable.ChunkHelper
 import com.intellij.cce.evaluation.EvaluationChunk
 import com.intellij.cce.evaluation.SimpleFileEnvironment
-import com.intellij.cce.interpreter.*
+import com.intellij.cce.interpreter.AsyncFeatureInvoker
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines

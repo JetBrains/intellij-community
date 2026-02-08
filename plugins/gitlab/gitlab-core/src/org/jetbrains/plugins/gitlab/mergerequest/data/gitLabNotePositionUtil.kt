@@ -2,11 +2,62 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiffLineRange
 import com.intellij.diff.util.Side
 import git4idea.changes.GitTextFilePatchWithHistory
 
 object GitLabNotePositionUtil {
-  fun getLocation(lineIndexLeft: Int?, lineIndexRight: Int?, contextSide: Side = Side.LEFT): DiffLineLocation? = when {
+  fun getLocation(position: GitLabNotePosition.WithLine, contextSide: Side = Side.LEFT): DiffLineRange? {
+    val forceRightSide = (position.lineIndexLeft == null && position.lineIndexRight != null) ||
+                         (position.startLineIndexLeft == null && position.startLineIndexRight != null)
+
+    return when {
+      forceRightSide -> getRightSideLocation(position)
+      position.lineIndexLeft != null && position.lineIndexRight != null -> when (contextSide) {
+        Side.LEFT -> getLeftSideLocation(position)
+
+        Side.RIGHT -> getRightSideLocation(position)
+      }
+      position.lineIndexLeft != null -> getLeftSideLocation(position)
+      position.lineIndexRight != null -> getRightSideLocation(position)
+      else -> null
+    }
+  }
+  private fun getLeftSideLocation(position: GitLabNotePosition.WithLine): DiffLineRange? {
+    val (startSide, startLine) = position.startLineIndexLeft?.let { Side.LEFT to it } ?: (Side.RIGHT to position.startLineIndexRight)
+    val (endSide, endLine) = position.endLineIndexLeft?.let { Side.LEFT to it } ?: (Side.RIGHT to position.endLineIndexRight)
+
+    return if (startLine == null || endLine == null || // fallback to a single line
+               (endSide == Side.RIGHT && endLine != position.lineIndexRight) ||
+               (endSide == Side.LEFT && endLine != position.lineIndexLeft)) {
+      getSingleLineLocation(position.lineIndexLeft, position.lineIndexRight, Side.LEFT)
+        ?.let { single -> DiffLineRange(single, single) }
+    }
+    else {
+        val startLoc = DiffLineLocation(startSide, startLine)
+        val endLoc = DiffLineLocation(endSide, endLine)
+      DiffLineRange(startLoc, endLoc)
+    }
+  }
+
+  private fun getRightSideLocation(position: GitLabNotePosition.WithLine): DiffLineRange? {
+    val (startSide, startLine) = position.startLineIndexRight?.let { Side.RIGHT to it } ?: (Side.LEFT to position.startLineIndexLeft)
+    val (endSide, endLine) = position.endLineIndexRight?.let { Side.RIGHT to it } ?: (Side.LEFT to position.endLineIndexLeft)
+
+    return if (startLine == null || endLine == null || // fallback to a single line
+               (endSide == Side.RIGHT && endLine != position.lineIndexRight) ||
+               (endSide == Side.LEFT && endLine != position.lineIndexLeft)) {
+      getSingleLineLocation(position.lineIndexLeft, position.lineIndexRight, Side.RIGHT)
+        ?.let { single -> DiffLineRange(single, single) }
+    }
+    else {
+      val startLoc = DiffLineLocation(startSide, startLine)
+      val endLoc = DiffLineLocation(endSide, endLine)
+      DiffLineRange(startLoc, endLoc)
+    }
+  }
+
+  private fun getSingleLineLocation(lineIndexLeft: Int?, lineIndexRight: Int?, contextSide: Side = Side.LEFT): DiffLineLocation? = when {
     lineIndexLeft != null && lineIndexRight != null -> when (contextSide) {
       Side.LEFT -> DiffLineLocation(Side.LEFT, lineIndexLeft)
       Side.RIGHT -> DiffLineLocation(Side.RIGHT, lineIndexRight)
@@ -24,28 +75,36 @@ fun GitLabNotePosition.mapToRightSideLine(diffData: GitTextFilePatchWithHistory)
   mapToSidedLine(diffData, Side.RIGHT)
 
 private fun GitLabNotePosition.mapToSidedLine(diffData: GitTextFilePatchWithHistory, side: Side): Int? {
-  val (currentSide, lineIndex) = getLocation(side) ?: getLocation(side.other()) ?: return null
-
+  val (_, endLineLocation) = getLocation(side) ?: getLocation(side.other()) ?: return null
   if (!diffData.contains(parentSha, filePathBefore, sha, filePathAfter)) return null
-  val revision = currentSide.select(parentSha, sha)
-
-  return diffData.forcefullyMapLine(revision, lineIndex, side)
+  val revision = endLineLocation.first.select(parentSha, sha)
+  return diffData.forcefullyMapLine(revision, endLineLocation.second, side)
 }
 
 fun GitLabNotePosition.mapToLocation(diffData: GitTextFilePatchWithHistory, contextSide: Side = Side.LEFT)
-  : DiffLineLocation? {
-  val (side, lineIndex) = getLocation(contextSide) ?: return null
+  : GitLabNoteLocation? {
+  val unmappedLocation = getLocation(contextSide) ?: return null
   if (!diffData.contains(parentSha, filePathBefore, sha, filePathAfter)) return null
-  val revision = side.select(parentSha, sha)
-  return diffData.mapLine(revision, lineIndex, side)
+  return unmappedLocation.toMapped(diffData, parentSha, sha)
 }
 
 fun GitLabMergeRequestNewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory, contextSide: Side = Side.LEFT)
-  : DiffLineLocation? {
-  val (side, lineIndex) = GitLabNotePositionUtil.getLocation(oldLineIndex, newLineIndex, contextSide) ?: return null
+  : GitLabNoteLocation? {
+  val unmappedLocation = getLocation(contextSide) ?: return null
   if (!diffData.contains(baseSha, paths.oldPath, headSha, paths.newPath)) return null
-  val revision = contextSide.select(baseSha, headSha)
-  return diffData.mapLine(revision, lineIndex, side)
+  return unmappedLocation.toMapped(diffData, baseSha, sha)
+}
+
+private fun DiffLineRange.toMapped(diffData: GitTextFilePatchWithHistory, parentSha: String, sha: String): GitLabNoteLocation? {
+  val (startLineLocation, endLineLocation) = this
+  val startRevision = startLineLocation.first.select(parentSha, sha)
+  val endRevision = endLineLocation.first.select(parentSha, sha)
+  val mappedStartLine = diffData.mapLine(startRevision, startLineLocation.second, startLineLocation.first)
+  val mappedEndLine = diffData.mapLine(endRevision, endLineLocation.second, endLineLocation.first)
+  return if (mappedStartLine != null && mappedEndLine != null)
+    GitLabNoteLocation(mappedStartLine.first, mappedStartLine.second, mappedEndLine.first, mappedEndLine.second)
+  else
+    mappedEndLine?.let { GitLabNoteLocation(it.first, it.second, it.first, it.second) }
 }
 
 private fun GitTextFilePatchWithHistory.contains(parentSha: String, pathAtParent: String?,

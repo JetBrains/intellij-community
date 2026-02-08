@@ -21,3 +21,5 @@ fun foo(p1: Char) {
 // EXIST: expr4
 // EXIST: s
 // EXIST: i
+
+// IGNORE_K2

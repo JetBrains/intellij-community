@@ -85,6 +85,7 @@ jvm_library(
     "//platform/vcs-impl/shared:shared_test_lib",
     "@lib//:jetbrains-annotations",
     "//platform/projectModel-impl",
+    "//platform/lang-core",
   ]
 )
 ### auto-generated section `build intellij.platform.lvcs.impl` end

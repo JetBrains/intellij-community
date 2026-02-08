@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.util.application
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -32,13 +32,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class UseInlineDebuggerAction : ToggleAction(), DumbAware, SplitDebuggerAction {
   override fun isSelected(e: AnActionEvent): Boolean {
-    return XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowValuesInline
+    return XDebuggerSettingsManager.getInstance().dataViewSettings.isShowValuesInline
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowValuesInline = state
+    XDebuggerSettingsManager.getInstance().dataViewSettings.isShowValuesInline = state
     saveSettingsForRemoteDevelopment(e.coroutineScope, application)
-    XDebuggerUtilImpl.rebuildAllSessionsViews(e.project)
+    DebuggerUIUtil.rebuildAllSessionsViews(e.project)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

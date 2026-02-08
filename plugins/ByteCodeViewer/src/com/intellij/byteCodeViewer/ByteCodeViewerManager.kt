@@ -20,7 +20,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentsOfType
 import java.nio.file.Path
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Queue
 
 public object ByteCodeViewerManager {
   private val CLASS_SEARCHER_EP = ExtensionPointName<ClassSearcher>("ByteCodeViewer.classSearcher")

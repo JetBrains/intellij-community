@@ -3,7 +3,14 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
-import com.intellij.codeInsight.multiverse.*
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager
+import com.intellij.codeInsight.multiverse.EditorContextManager
+import com.intellij.codeInsight.multiverse.ModuleContext
+import com.intellij.codeInsight.multiverse.SingleEditorContext
+import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder

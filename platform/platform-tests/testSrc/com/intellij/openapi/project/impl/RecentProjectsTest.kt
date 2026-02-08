@@ -3,14 +3,24 @@
 
 package com.intellij.openapi.project.impl
 
-import com.intellij.ide.*
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.ProjectGroup
+import com.intellij.ide.ProjectGroupActionGroup
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.ui.DeferredIconImpl
 import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil

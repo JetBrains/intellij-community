@@ -7,10 +7,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 

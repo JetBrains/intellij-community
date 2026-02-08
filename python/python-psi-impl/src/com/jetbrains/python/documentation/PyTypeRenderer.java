@@ -19,7 +19,28 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterListType;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyConcatenateType;
+import com.jetbrains.python.psi.types.PyIntersectionType;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyParamSpecType;
+import com.jetbrains.python.psi.types.PySelfType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParameterType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyTypeVarType;
+import com.jetbrains.python.psi.types.PyTypeVisitorExt;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnsafeUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -195,6 +216,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     @Override
     public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
       // There is no way to represent weak unions through type hints
+      return visitUnknownType();
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPyIntersectionType(com.jetbrains.python.psi.types.@NotNull PyIntersectionType intersectionType) {
+      // There is no way to represent intersections through the standard type hints at the moment
       return visitUnknownType();
     }
 
@@ -394,6 +421,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     return result.toFragment();
   }
 
+  @Override
+  public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+    return renderList(ContainerUtil.map(intersectionType.getMembers(), this::render), " & ");
+  }
+
   private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
     final Collection<PyType> members = type.getMembers();
 
@@ -502,6 +534,9 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
         yield styled(separator, PyHighlighter.PY_COMMA);
       }
       case " | " -> {
+        yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
+      }
+      case " & " -> {
         yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
       }
       default -> {

@@ -4,7 +4,11 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.ScrollingModel
 import com.intellij.openapi.editor.SelectionModel
-import com.intellij.openapi.editor.ex.*
+import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.EditorModel
+import com.intellij.openapi.editor.ex.InlayModelEx
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.SoftWrapModelEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import org.jetbrains.annotations.ApiStatus
 

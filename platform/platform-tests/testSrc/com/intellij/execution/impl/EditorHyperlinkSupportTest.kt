@@ -7,7 +7,12 @@ import com.intellij.execution.filters.Filter.ResultItem
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.process.ConsoleHighlighter
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -388,6 +393,57 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
       hyperlinkSupport.highlightHyperlinksLater(filter, document.lineCount - 2, document.lineCount - 1, eternal())
     }
     assertHyperlinks(barLinkText, 50)
+  }
+
+  @Test
+  fun `test overlapping hyperlinks`() {
+    setRegistryPropertyForTest("execution.filters.with.hyperlinks.allow.overlapping", "true")
+
+    val linkText = "foo bar baz"
+    document.setText(linkText)
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyHyperlinkFilter("foo bar baz"))
+      it.addFilter(MyHyperlinkFilter("bar"))
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 0, eternal())
+
+    val hyperlinks = collectAllHyperlinks()
+    assertEquals(2, hyperlinks.size)
+
+    val infoAtFoo = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("foo"))
+    assertEquals("foo bar baz", (infoAtFoo as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+
+    val infoAtBar = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("bar"))
+    assertEquals("bar", (infoAtBar as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+  }
+
+  @Test
+  fun `test overlapping hyperlinks partial overlap`() {
+    setRegistryPropertyForTest("execution.filters.with.hyperlinks.allow.overlapping", "true")
+
+    val linkText = "foo bar baz"
+    document.setText(linkText)
+    // Partially overlapping hyperlinks: "foo bar" and "bar baz"
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyHyperlinkFilter("bar baz"))
+      it.addFilter(MyHyperlinkFilter("foo bar"))
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 0, eternal())
+
+    val hyperlinks = collectAllHyperlinks()
+    assertEquals(2, hyperlinks.size)
+
+    val infoAtFoo = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("foo"))
+    assertEquals("foo bar", (infoAtFoo as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+
+    // prefer left one
+    val infoAtBar = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("bar"))
+    assertEquals("foo bar", (infoAtBar as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+
+    val infoAtBaz = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("baz"))
+    assertEquals("bar baz", (infoAtBaz as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
   }
 
   private fun assertHighlightings(textToHighlight: String, expectedCount: Int): List<RangeHighlighter> {

@@ -2,13 +2,37 @@
 
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiEnumConstantInitializer
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiParameterList
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnonymousClass
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassInitializer
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UDeclarationEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
+import org.jetbrains.uast.toUElementOfType
 
 @ApiStatus.Internal
 abstract class AbstractJavaUClass(

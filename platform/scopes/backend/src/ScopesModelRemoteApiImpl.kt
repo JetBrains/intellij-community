@@ -4,7 +4,16 @@ package com.intellij.platform.scopes.backend
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.ide.rpc.dataContext
 import com.intellij.ide.ui.WindowFocusFrontendService
-import com.intellij.ide.util.scopeChooser.*
+import com.intellij.ide.util.scopeChooser.AbstractScopeModel
+import com.intellij.ide.util.scopeChooser.EditScopesDialog
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.ide.util.scopeChooser.ScopeModelListener
+import com.intellij.ide.util.scopeChooser.ScopeModelService
+import com.intellij.ide.util.scopeChooser.ScopeOption
+import com.intellij.ide.util.scopeChooser.ScopeService
+import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType
+import com.intellij.ide.util.scopeChooser.ScopesSnapshot
+import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -26,7 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {

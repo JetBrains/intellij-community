@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ScrollPaneConstants;
 
 public final class ErrorStripeEditorCustomization extends SimpleEditorCustomization {
 

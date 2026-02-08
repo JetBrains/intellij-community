@@ -3,7 +3,12 @@ package com.intellij.rt.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
-import org.testng.*;
+import org.testng.IClass;
+import org.testng.IInvokedMethod;
+import org.testng.ISuite;
+import org.testng.ITestContext;
+import org.testng.ITestNGMethod;
+import org.testng.ITestResult;
 import org.testng.annotations.Test;
 import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlClass;
@@ -15,7 +20,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IDEATestNGRemoteListener {
 

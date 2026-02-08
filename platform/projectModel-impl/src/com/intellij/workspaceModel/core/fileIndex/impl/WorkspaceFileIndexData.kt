@@ -21,6 +21,7 @@ interface WorkspaceFileIndexData {
                   includeContentNonIndexableSets: Boolean,
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean,
+                  includeExternalNonIndexableSets: Boolean,
                   includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
 
   @RequiresReadLock

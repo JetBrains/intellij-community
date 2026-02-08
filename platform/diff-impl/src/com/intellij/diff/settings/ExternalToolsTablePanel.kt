@@ -2,7 +2,9 @@
 package com.intellij.diff.settings
 
 import com.intellij.diff.tools.external.ExternalDiffSettings
-import com.intellij.diff.tools.external.ExternalDiffSettings.*
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolConfiguration
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.ui.ComboBoxTableRenderer

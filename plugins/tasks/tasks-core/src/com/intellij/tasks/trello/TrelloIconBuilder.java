@@ -6,8 +6,11 @@ import com.intellij.tasks.trello.model.TrelloLabel;
 import com.intellij.util.ui.ImageUtil;
 import icons.TasksCoreIcons;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;

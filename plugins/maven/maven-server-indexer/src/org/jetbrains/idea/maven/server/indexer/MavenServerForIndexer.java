@@ -1,9 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.indexer;
 
-import org.codehaus.plexus.*;
+import org.codehaus.plexus.DefaultContainerConfiguration;
+import org.codehaus.plexus.DefaultPlexusContainer;
+import org.codehaus.plexus.PlexusConstants;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.PlexusContainerException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.MavenEmbedderSettings;
+import org.jetbrains.idea.maven.server.MavenPullDownloadListener;
+import org.jetbrains.idea.maven.server.MavenPullServerLogger;
+import org.jetbrains.idea.maven.server.MavenServer;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerIndexer;
+import org.jetbrains.idea.maven.server.MavenServerStatus;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.MavenWatchdogAware;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.rmi.RemoteException;

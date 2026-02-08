@@ -14,12 +14,12 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApp
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.calculateIndent
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isStartOfLine
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSurroundedByLineBreaksOrBlanks
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.marginPrefix
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.marginPrefix
 
 internal class ConvertTrimMarginToTrimIndentIntention :
     KotlinApplicableModCommandAction<KtCallExpression, Unit>(KtCallExpression::class) {

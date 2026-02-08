@@ -7,7 +7,12 @@ import com.intellij.ui.components.DisclosureButton
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.MacUIUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import javax.swing.border.Border
 import javax.swing.plaf.UIResource
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.traversal
 
+import com.intellij.platform.pluginGraph.ContentModuleName
 import org.jetbrains.intellij.build.productLayout.tooling.ModulePath
 import org.jetbrains.intellij.build.productLayout.tooling.ModulePathsResult
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
@@ -19,7 +20,7 @@ import java.nio.file.Path
  * @return Module paths result with all discovered paths
  */
 internal fun findModulePaths(
-  moduleName: String,
+  moduleName: ContentModuleName,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
   projectRoot: Path
@@ -39,7 +40,7 @@ internal fun findModulePaths(
     if (contentSpec.additionalModules.any { it.name == moduleName }) {
       paths.add(ModulePath(
         type = "direct",
-        path = "$moduleName → ${prod.name}",
+        path = "${moduleName.value} → ${prod.name}",
         files = listOf(
           PathFileReference(
             type = "product",
@@ -57,7 +58,7 @@ internal fun findModulePaths(
       if (productModuleSetNames.contains(moduleSetEntry.moduleSet.name)) {
         paths.add(ModulePath(
           type = "module-set",
-          path = "$moduleName → (module set) ${moduleSetEntry.moduleSet.name} → ${prod.name}",
+          path = "${moduleName.value} → (module set) ${moduleSetEntry.moduleSet.name} → ${prod.name}",
           files = listOf(
             PathFileReference(
               type = "module-set",
@@ -78,7 +79,7 @@ internal fun findModulePaths(
   }
   
   return ModulePathsResult(
-    module = moduleName,
+    module = moduleName.value,
     paths = paths,
     moduleSets = moduleInSets.map { it.moduleSet.name },
     products = paths.map { path ->

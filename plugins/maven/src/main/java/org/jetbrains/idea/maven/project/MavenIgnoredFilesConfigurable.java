@@ -18,7 +18,9 @@ import org.jetbrains.idea.maven.utils.MavenUIUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.Strings;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

@@ -12,7 +12,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Objects;
 
 @HeavyPlatformTestCase.WrapInCommand

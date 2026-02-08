@@ -27,7 +27,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.startOffset
 import com.intellij.psi.util.walkUp
 import com.intellij.util.Query
-import java.util.*
+import java.util.Locale
 
 internal class PolySymbolUsageSearcher : UsageSearcher {
 

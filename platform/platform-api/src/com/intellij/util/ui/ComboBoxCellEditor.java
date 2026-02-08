@@ -3,12 +3,12 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.ComboBox;
 
-import java.awt.Component;
-import java.util.List;
-import java.util.Objects;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
+import java.awt.Component;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class ComboBoxCellEditor extends DefaultCellEditor {
   public ComboBoxCellEditor() {

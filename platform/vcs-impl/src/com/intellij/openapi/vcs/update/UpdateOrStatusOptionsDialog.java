@@ -16,11 +16,19 @@ import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   private final JComponent myMainPanel;

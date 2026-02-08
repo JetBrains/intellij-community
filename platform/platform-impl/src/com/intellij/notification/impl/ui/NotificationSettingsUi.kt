@@ -3,7 +3,10 @@ package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationDisplayType.*
+import com.intellij.notification.NotificationDisplayType.BALLOON
+import com.intellij.notification.NotificationDisplayType.NONE
+import com.intellij.notification.NotificationDisplayType.STICKY_BALLOON
+import com.intellij.notification.NotificationDisplayType.TOOL_WINDOW
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.notification.impl.isNotificationAnnouncerEnabled
 import com.intellij.notification.impl.isSoundEnabled

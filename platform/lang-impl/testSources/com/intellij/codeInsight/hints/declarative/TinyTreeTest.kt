@@ -4,7 +4,12 @@ package com.intellij.codeInsight.hints.declarative
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.DataInput
+import java.io.DataInputStream
+import java.io.DataOutput
+import java.io.DataOutputStream
 import com.intellij.codeInsight.hints.declarative.TinyTreeDebugNode as DebugNode
 
 class TinyTreeTest : UsefulTestCase() {

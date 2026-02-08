@@ -12,8 +12,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.FileBasedIndexInfrastructureExtension.InitializationResult
 import org.junit.Assert
 import java.nio.file.Files
-import java.util.*
-import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.SortedMap
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name

@@ -1,0 +1,22 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+  <id>com.intellij.java</id>
+  <version>253.28294.105-3</version>
+  <idea-version since-build="253.28294" until-build="263.*" />
+  <name>Java</name>
+  <description><![CDATA[FUBAR#3]]></description>
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/JavaPlugin.xml"/>
+
+  <content namespace="jetbrains">
+    <module name="intellij.java.frontback.psi.impl" loading="embedded"/>
+  </content>
+
+  <module value="com.intellij.modules.java" />
+</idea-plugin>

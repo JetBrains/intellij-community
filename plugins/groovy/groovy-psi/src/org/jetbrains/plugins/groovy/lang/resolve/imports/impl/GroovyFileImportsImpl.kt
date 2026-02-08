@@ -7,7 +7,13 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.resolve.imports.*
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyNamedImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.defaultImports
+import org.jetbrains.plugins.groovy.lang.resolve.imports.importKey
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.util.flatten
 

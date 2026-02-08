@@ -6,7 +6,11 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.PyCustomMember
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.resolve.*
+import com.jetbrains.python.psi.resolve.PointInImport
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder
+import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.types.PyModuleMembersProvider
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus

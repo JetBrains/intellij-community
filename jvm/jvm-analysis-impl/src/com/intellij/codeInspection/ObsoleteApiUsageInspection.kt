@@ -4,10 +4,26 @@ package com.intellij.codeInspection
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiReference
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.findSourceAnnotation
+import org.jetbrains.uast.sourcePsiElement
+import org.jetbrains.uast.toUElement
 
 private inline val OBSOLETE_ANNOTATION_NAME get() = ApiStatus.Obsolete::class.java.canonicalName
 

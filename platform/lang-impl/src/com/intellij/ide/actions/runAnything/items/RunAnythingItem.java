@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * {@link RunAnythingItem} represents an item of 'Run Anything' list

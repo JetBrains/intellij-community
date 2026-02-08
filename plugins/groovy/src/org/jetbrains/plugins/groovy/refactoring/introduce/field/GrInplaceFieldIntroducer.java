@@ -3,7 +3,13 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
@@ -22,9 +28,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduce.*;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntroducer;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EnumSet;

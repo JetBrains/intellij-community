@@ -9,7 +9,9 @@ import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.ServerType;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
 import java.util.Objects;
 
 /**

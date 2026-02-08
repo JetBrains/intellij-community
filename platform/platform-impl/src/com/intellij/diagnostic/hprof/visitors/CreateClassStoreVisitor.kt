@@ -19,7 +19,13 @@ import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.classstore.ClassStore
 import com.intellij.diagnostic.hprof.classstore.InstanceField
 import com.intellij.diagnostic.hprof.classstore.StaticField
-import com.intellij.diagnostic.hprof.parser.*
+import com.intellij.diagnostic.hprof.parser.ConstantPoolEntry
+import com.intellij.diagnostic.hprof.parser.HProfVisitor
+import com.intellij.diagnostic.hprof.parser.HeapDumpRecordType
+import com.intellij.diagnostic.hprof.parser.InstanceFieldEntry
+import com.intellij.diagnostic.hprof.parser.RecordType
+import com.intellij.diagnostic.hprof.parser.StaticFieldEntry
+import com.intellij.diagnostic.hprof.parser.Type
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap

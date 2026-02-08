@@ -15,15 +15,13 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
-
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

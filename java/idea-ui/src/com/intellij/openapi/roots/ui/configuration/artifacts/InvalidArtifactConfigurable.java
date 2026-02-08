@@ -7,7 +7,9 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.impl.artifacts.InvalidArtifact;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
   private final @NlsContexts.Label String myErrorMessage;

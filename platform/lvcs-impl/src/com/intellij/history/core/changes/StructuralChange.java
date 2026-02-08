@@ -31,7 +31,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public abstract class StructuralChange extends Change {
   protected final String myPath;
@@ -91,14 +90,6 @@ public abstract class StructuralChange extends Change {
 
   @Override
   public boolean affectsProject(String projectId) {
-    return false;
-  }
-
-  @Override
-  public boolean affectsMatching(@NotNull Pattern pattern) {
-    for (String each : getAffectedPaths()) {
-      if (pattern.matcher(Paths.getNameOf(each)).find()) return true;
-    }
     return false;
   }
 

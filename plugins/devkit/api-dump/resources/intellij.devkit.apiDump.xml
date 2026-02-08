@@ -1,7 +1,7 @@
 <idea-plugin visibility="internal" package="com.intellij.devkit.apiDump">
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 
   <resource-bundle>messages.ApiDumpBundle</resource-bundle>

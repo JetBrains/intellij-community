@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.*
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.PlaceProvider
+import com.intellij.ui.SimpleColoredText
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.tabs.impl.JBTabsImpl

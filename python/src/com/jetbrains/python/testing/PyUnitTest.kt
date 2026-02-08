@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
 /**
@@ -98,4 +99,6 @@ class PyUnitTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFacto
   override fun getId(): String = PyUnitTestFactory.id
 
   override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = true
+
+  override val packageSpec: PackageAvailabilitySpec? = null
 }

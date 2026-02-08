@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplacePutWithAssignment")
 
@@ -8,8 +8,22 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.plugins.parser.impl.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.platform.plugins.parser.impl.XmlReadUtils.getNullifiedContent
-import com.intellij.platform.plugins.parser.impl.elements.*
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement.*
+import com.intellij.platform.plugins.parser.impl.elements.ActionElement.ActionDescriptorAction
+import com.intellij.platform.plugins.parser.impl.elements.ActionElement.ActionElementGroup
+import com.intellij.platform.plugins.parser.impl.elements.ActionElement.ActionElementMisc
+import com.intellij.platform.plugins.parser.impl.elements.ActionElement.ActionElementName
+import com.intellij.platform.plugins.parser.impl.elements.ClientKindValue
+import com.intellij.platform.plugins.parser.impl.elements.ComponentElement
+import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
+import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
+import com.intellij.platform.plugins.parser.impl.elements.DependsElement
+import com.intellij.platform.plugins.parser.impl.elements.ExtensionElement
+import com.intellij.platform.plugins.parser.impl.elements.ExtensionPointElement
+import com.intellij.platform.plugins.parser.impl.elements.ListenerElement
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.plugins.parser.impl.elements.OSValue
+import com.intellij.platform.plugins.parser.impl.elements.PreloadModeValue
+import com.intellij.platform.plugins.parser.impl.elements.ServiceElement
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -20,7 +34,8 @@ import java.io.InputStream
 import java.text.ParseException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Collections
+import java.util.Locale
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
@@ -1029,6 +1044,10 @@ class ContentParseResult(
   @JvmField val xIncludePaths: List<String>,
   /** Module dependencies from <dependencies><module name="..."/> elements */
   @JvmField val moduleDependencies: List<String> = emptyList(),
+  /** Plugin dependencies from <dependencies><plugin id="..."/> elements */
+  @JvmField val pluginDependencies: List<String> = emptyList(),
+  /** Plugin aliases from <module value="..."/> elements at root level */
+  @JvmField val pluginAliases: List<String> = emptyList(),
 )
 
 /**
@@ -1063,6 +1082,8 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
   val xIncludePaths = ArrayList<String>()
   val contentModules = ArrayList<ContentModuleElement>()
   val moduleDependencies = ArrayList<String>()
+  val pluginDependencies = ArrayList<String>()
+  val pluginAliases = ArrayList<String>()
   consumeChildElements(reader) { localName ->
     when (localName) {
       PluginXmlConst.INCLUDE_ELEM if reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI -> {
@@ -1085,16 +1106,31 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
         }
       }
       PluginXmlConst.DEPENDENCIES_ELEM -> {
-        // Parse module dependencies
+        // Parse module and plugin dependencies
         consumeChildElements(reader) { childName ->
-          if (childName == PluginXmlConst.DEPENDENCIES_MODULE_ELEM) {
-            val name = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR)
-            if (name != null) {
-              moduleDependencies.add(name)
+          when (childName) {
+            PluginXmlConst.DEPENDENCIES_MODULE_ELEM -> {
+              val name = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR)
+              if (name != null) {
+                moduleDependencies.add(name)
+              }
+            }
+            PluginXmlConst.DEPENDENCIES_PLUGIN_ELEM -> {
+              val id = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.DEPENDENCIES_PLUGIN_ID_ATTR)
+              if (id != null) {
+                pluginDependencies.add(id)
+              }
             }
           }
           reader.skipElement()
         }
+      }
+      PluginXmlConst.MODULE_ELEM -> {
+        val value = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.MODULE_VALUE_ATTR)
+        if (value != null) {
+          pluginAliases.add(value)
+        }
+        reader.skipElement()
       }
       else -> {
         // Recursively check nested elements for xi:includes (they can appear at root level only,
@@ -1106,7 +1142,7 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
       }
     }
   }
-  return ContentParseResult(contentModules, xIncludePaths, moduleDependencies)
+  return ContentParseResult(contentModules, xIncludePaths, moduleDependencies, pluginDependencies, pluginAliases)
 }
 
 private fun readContentModuleElement(reader: XMLStreamReader2): ContentModuleElement {

@@ -26,7 +26,7 @@ import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import java.nio.charset.Charset
-import java.util.*
+import java.util.TreeMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 

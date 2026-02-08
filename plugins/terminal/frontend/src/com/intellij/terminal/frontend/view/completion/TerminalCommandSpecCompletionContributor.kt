@@ -7,6 +7,7 @@ import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -20,7 +21,7 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
       return null
     }
 
-    val prefix = commandTokens.last()
+    val prefix = TerminalCompletionUtil.getTypedPrefix(commandTokens)
     if (context.isAutoPopup && prefix.startsWith("-") && prefix.length <= 2) {
       // Do not show the completion popup automatically for short options like `-a` or `-h`
       // Most probably, it will cause only distraction.
@@ -87,7 +88,7 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
     val expandedTokens = readAction {
       parameters.shellSupport.getCommandTokens(parameters.project, command.toString())
     }
-    return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
+    return expandedTokens + tokens.last() // add an incomplete token to the end
   }
 
   private suspend fun computeSuggestions(
@@ -149,7 +150,7 @@ internal suspend fun getCommandTokens(context: TerminalCommandCompletionContext)
   val commandText = context.commandText.substring(0, localCursorOffset.toInt()).trimStart()
 
   val tokens = readAction {
-    shellSupport.getCommandTokens(context.project, commandText) ?: emptyList()
+    shellSupport.getCommandTokens(context.project, commandText)
   }
 
   return if (commandText.endsWith(' ') && commandText.isNotBlank()) {

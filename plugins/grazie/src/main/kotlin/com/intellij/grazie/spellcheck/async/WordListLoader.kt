@@ -13,7 +13,11 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = logger<WordListLoader>()

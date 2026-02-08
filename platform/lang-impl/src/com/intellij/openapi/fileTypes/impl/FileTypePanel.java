@@ -6,7 +6,9 @@ import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.components.JBLabel;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 final class FileTypePanel {
   JPanel myWholePanel;

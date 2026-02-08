@@ -4,7 +4,11 @@ package com.intellij.uiDesigner.editor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project

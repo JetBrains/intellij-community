@@ -29,16 +29,20 @@ import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.CardLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public final class RepositoryLibraryPropertiesEditor {
   private static final Logger LOG = Logger.getInstance(RepositoryLibraryPropertiesEditor.class);

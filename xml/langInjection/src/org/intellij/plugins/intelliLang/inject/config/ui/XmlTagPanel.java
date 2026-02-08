@@ -17,10 +17,11 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.Objects;
+import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
+
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
+import java.util.Objects;
 
 public class XmlTagPanel extends AbstractInjectionPanel<XmlTagInjection> {
 

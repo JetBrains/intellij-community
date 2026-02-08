@@ -7,12 +7,14 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
+@K1Deprecation
 class KotlinOverridingMethodsWithGenericsSearcher : QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {
     override fun execute(p: OverridingMethodsSearch.SearchParameters, consumer: Processor<in PsiMethod>): Boolean {
         val method = p.method

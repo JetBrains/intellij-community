@@ -1,7 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api
 
-import org.jetbrains.idea.svn.api.ErrorCategory.*
+import org.jetbrains.idea.svn.api.ErrorCategory.CLIENT
+import org.jetbrains.idea.svn.api.ErrorCategory.ENTRY
+import org.jetbrains.idea.svn.api.ErrorCategory.FS
+import org.jetbrains.idea.svn.api.ErrorCategory.MISC
+import org.jetbrains.idea.svn.api.ErrorCategory.RA
+import org.jetbrains.idea.svn.api.ErrorCategory.RA_DAV
+import org.jetbrains.idea.svn.api.ErrorCategory.WC
 
 private const val ERROR_BASE = 120000
 private const val ERROR_CATEGORY_SIZE = 5000

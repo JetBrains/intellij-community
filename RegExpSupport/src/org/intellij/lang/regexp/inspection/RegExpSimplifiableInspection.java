@@ -19,7 +19,21 @@ import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpCapability;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpCharRange;
+import org.intellij.lang.regexp.psi.RegExpClass;
+import org.intellij.lang.regexp.psi.RegExpClassElement;
+import org.intellij.lang.regexp.psi.RegExpClosure;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpIntersection;
+import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.RegExpPosixBracketExpression;
+import org.intellij.lang.regexp.psi.RegExpProperty;
+import org.intellij.lang.regexp.psi.RegExpQuantifier;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 
 /**

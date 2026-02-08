@@ -14,4 +14,5 @@ data class ComplexPatternOptions(
   val repeats: Boolean = false,
   val unique: Boolean = false,
   val symbolsResolver: PolySymbolPatternSymbolsResolver? = null,
+  val additionalLastSegmentSymbol: PolySymbol? = null
 )

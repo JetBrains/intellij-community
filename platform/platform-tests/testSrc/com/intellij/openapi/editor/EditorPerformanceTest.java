@@ -10,7 +10,8 @@ import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ui.UIUtil;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 @PerformanceUnitTest
 public class EditorPerformanceTest extends AbstractEditorTest {

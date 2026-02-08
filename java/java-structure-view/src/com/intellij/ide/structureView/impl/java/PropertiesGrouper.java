@@ -2,14 +2,22 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import com.intellij.ide.util.treeView.smartTree.Group;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public final class PropertiesGrouper implements Grouper {
   public static final @NonNls String ID = "SHOW_PROPERTIES";

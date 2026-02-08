@@ -6,7 +6,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionListener;
 

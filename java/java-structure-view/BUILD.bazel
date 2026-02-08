@@ -20,6 +20,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//platform/util:util-ui",
     "//java/java-analysis-impl:analysis-impl",
+    "//platform/platform-api:ide",
   ]
 )
 ### auto-generated section `build intellij.java.structureView` end

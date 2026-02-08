@@ -11,7 +11,13 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.CHECKSUM_FAILURE_POLICY;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.CHECKSUM_WARNING_POLICY;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.DEBUG;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.FAIL_AT_END;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.FAIL_FAST;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.FAIL_NEVER;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.QUIET;
 
 public @Nullable class MavenConfig {
   private final Map<String, Option> optionMap;

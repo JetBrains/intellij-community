@@ -13,7 +13,12 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.containers.sequenceOfNotNull
-import com.intellij.util.indexing.testEntities.*
+import com.intellij.util.indexing.testEntities.ChildTestEntity
+import com.intellij.util.indexing.testEntities.ChildTestEntityBuilder
+import com.intellij.util.indexing.testEntities.ParentTestEntity
+import com.intellij.util.indexing.testEntities.ParentTestEntityBuilder
+import com.intellij.util.indexing.testEntities.SiblingEntity
+import com.intellij.util.indexing.testEntities.SiblingEntityBuilder
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking

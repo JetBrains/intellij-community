@@ -59,7 +59,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.junit.Assert
 import java.io.File
-import kotlin.collections.iterator
 
 const val DUMMY_FUN_NAME = "__dummyTestFun__"
 

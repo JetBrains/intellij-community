@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.ZipSource
 import java.nio.file.Path
 
-internal interface SourceBuilder {
+interface SourceBuilder {
   val useCacheAsTargetFile: Boolean
 
   fun updateDigest(digest: HashStream64)
@@ -19,7 +19,7 @@ internal interface SourceBuilder {
   fun consumeInfo(source: Source, size: Int, hash: Long)
 }
 
-internal sealed interface JarCacheManager {
+sealed interface JarCacheManager {
   suspend fun computeIfAbsent(
     sources: Collection<Source>,
     targetFile: Path,

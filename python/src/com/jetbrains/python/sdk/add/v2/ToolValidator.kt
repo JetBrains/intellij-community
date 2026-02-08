@@ -7,7 +7,13 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class ToolValidator<P : PathHolder>(

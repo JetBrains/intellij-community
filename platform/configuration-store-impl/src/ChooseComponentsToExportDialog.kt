@@ -22,7 +22,12 @@ import java.awt.event.ActionEvent
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
 
 private const val DEFAULT_FILE_NAME = "settings.zip"
 private val DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME

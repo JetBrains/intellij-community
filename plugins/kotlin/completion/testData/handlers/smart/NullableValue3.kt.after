@@ -10,3 +10,5 @@ fun foo(){
 
 // ELEMENT_TEXT: "!! K.bar"
 // TAIL_TEXT: "() (<root>)"
+
+// IGNORE_K2

@@ -11,7 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 import java.awt.datatransfer.StringSelection;
 
 public final class DocRenderCopyHandler extends EditorActionHandler {

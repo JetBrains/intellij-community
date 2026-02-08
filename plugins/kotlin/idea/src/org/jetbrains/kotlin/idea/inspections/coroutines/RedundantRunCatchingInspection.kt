@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.coroutines
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
 /**
  * Test - [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.Coroutines.RedundantRunCatching]
  */
+@K1Deprecation
 class RedundantRunCatchingInspection : AbstractCallChainChecker() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =

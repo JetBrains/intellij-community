@@ -13,10 +13,13 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ProjectSettingsService {
+
   public static ProjectSettingsService getInstance(Project project) {
     return project.getService(ProjectSettingsService.class);
   }
@@ -70,11 +73,22 @@ public class ProjectSettingsService {
     return getLibrarySettingsConfigurable(orderEntry) != null;
   }
 
+  @ApiStatus.Experimental
+  public boolean canOpenLibrarySettings(final LibraryEntity library) {
+    return false;
+  }
+
   private static @Nullable Configurable getLibrarySettingsConfigurable(OrderEntry orderEntry) {
     if (!(orderEntry instanceof LibraryOrderEntry libOrderEntry)) return null;
     Library lib = libOrderEntry.getLibrary();
+    if (lib == null) return null;
+    Project project = libOrderEntry.getOwnerModule().getProject();
+    return getLibrarySettingsConfigurable(lib, project);
+  }
+
+  @ApiStatus.Internal
+  protected static @Nullable Configurable getLibrarySettingsConfigurable(@NotNull Library lib, @NotNull Project project) {
     if (lib instanceof LibraryEx) {
-      Project project = libOrderEntry.getOwnerModule().getProject();
       PersistentLibraryKind<?> libKind = ((LibraryEx)lib).getKind();
       if (libKind != null) {
         return LibrarySettingsProvider.getAdditionalSettingsConfigurable(project, libKind);

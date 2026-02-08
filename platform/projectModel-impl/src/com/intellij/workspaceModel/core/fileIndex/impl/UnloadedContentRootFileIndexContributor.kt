@@ -4,7 +4,12 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 
 class UnloadedContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>,
                                                 PlatformInternalWorkspaceFileIndexContributor {

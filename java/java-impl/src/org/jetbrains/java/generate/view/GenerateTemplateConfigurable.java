@@ -28,10 +28,16 @@ import org.jetbrains.java.generate.element.GenerationHelper;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 public class GenerateTemplateConfigurable implements UnnamedConfigurable{
   private final TemplateResource template;

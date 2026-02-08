@@ -36,8 +36,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.nio.file.Path
-import java.util.*
-import kotlin.io.path.*
+import java.util.Collections
+import kotlin.io.path.Path
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
 
 @ApiStatus.Internal
 class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 

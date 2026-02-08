@@ -16,7 +16,11 @@
 package com.intellij.java.psi.impl.smartPointers;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnchor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;

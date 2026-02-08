@@ -1,7 +1,15 @@
 package com.intellij.sh.utils
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.isArm64
+import com.intellij.platform.eel.isFreeBSD
+import com.intellij.platform.eel.isLinux
+import com.intellij.platform.eel.isMac
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.isX86
+import com.intellij.platform.eel.isX86_64
 import com.intellij.sh.ShLanguage
 import java.nio.file.Path
 

@@ -14,7 +14,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

@@ -3,9 +3,13 @@ package com.intellij.platform.lvcs.impl
 
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.history.ActivityPresentationProvider
-import com.intellij.history.core.*
+import com.intellij.history.core.ChangeAndPathProcessor
+import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.PutLabelChange
+import com.intellij.history.core.collectChanges
+import com.intellij.history.core.matches
+import com.intellij.history.core.processContents
 import com.intellij.history.integration.CommonActivity
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl

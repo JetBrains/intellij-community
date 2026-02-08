@@ -1,7 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
@@ -14,7 +22,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.*
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.IMPORT_REFERENCE
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.PACKAGE_REFERENCE
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.REFERENCE
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.impl.explicitTypeArguments

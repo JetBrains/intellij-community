@@ -2,8 +2,12 @@
 package com.intellij.java.navigation;
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
-import com.intellij.ide.actions.searcheverywhere.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.mock.MockProgressIndicator;
@@ -16,8 +20,16 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ObjectUtils;
@@ -29,7 +41,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings("NewClassNamingConvention")
 public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {

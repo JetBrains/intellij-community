@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.append;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.debug;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgUserFilterTest extends HgPlatformTest {

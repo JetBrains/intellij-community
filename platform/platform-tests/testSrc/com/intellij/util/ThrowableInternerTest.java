@@ -4,7 +4,9 @@ package com.intellij.util;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import org.junit.Test;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotSame;
+import static junit.framework.TestCase.assertSame;
 
 public class ThrowableInternerTest {
   @Test

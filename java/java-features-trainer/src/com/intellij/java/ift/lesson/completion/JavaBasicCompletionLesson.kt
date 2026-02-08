@@ -2,10 +2,15 @@
 package com.intellij.java.ift.lesson.completion
 
 import com.intellij.java.ift.JavaLessonsBundle
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.settingsSync;
 
-import com.intellij.application.options.*;
+import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.application.options.codeStyle.CommenterForm;
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
@@ -13,7 +17,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +31,8 @@ import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import java.lang.reflect.Field;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;

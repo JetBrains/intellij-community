@@ -2,15 +2,33 @@
 
 package org.jetbrains.kotlin.j2k.usageProcessing
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiBinaryExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPostfixExpression
+import com.intellij.psi.PsiPrefixExpression
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.AccessorKind
 import org.jetbrains.kotlin.j2k.CodeConverter
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.j2k.ast.Expression
+import org.jetbrains.kotlin.j2k.ast.Identifier
+import org.jetbrains.kotlin.j2k.ast.QualifiedExpression
+import org.jetbrains.kotlin.j2k.ast.ThisExpression
+import org.jetbrains.kotlin.j2k.ast.assignNoPrototype
 import org.jetbrains.kotlin.j2k.dot
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
+@K1Deprecation
 class FieldToPropertyProcessing(
         private val field: PsiField,
         private val propertyName: String,
@@ -70,6 +88,7 @@ class FieldToPropertyProcessing(
     }
 }
 
+@K1Deprecation
 class UseAccessorsJavaCodeProcessor(private val factory: PsiElementFactory, private val propertyName: String) : ExternalCodeProcessor {
     override fun processUsage(reference: PsiReference): Array<PsiReference>? {
         val refExpr = reference.element as? PsiReferenceExpression ?: return null

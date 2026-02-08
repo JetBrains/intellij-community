@@ -3,7 +3,6 @@
 
 package com.intellij.util
 
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -25,23 +24,6 @@ inline fun <T> runIf(condition: Boolean, block: () -> T): T? {
     callsInPlace(block, InvocationKind.AT_MOST_ONCE)
   }
   return if (condition) block() else null
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("""
-  Unfortunately, this function provokes cryptic code, please do not use it.
-  
-  Consider these options instead:
-  * val result = my().chain() ?: return null
-  * val result = my().chain() ?: run { log.warn("null result!"); return null }
-  * val result = my().chain(); if (result == null) { log.warn("null result!") } else { useNotNull(result) }  
-  * if (my().chain() == null) { log.warn("null result!") }
-""", level = DeprecationLevel.ERROR)
-inline fun <T : Any> T?.alsoIfNull(block: () -> Unit): T? {
-  if (this == null) {
-    block()
-  }
-  return this
 }
 
 @OptIn(ExperimentalContracts::class)

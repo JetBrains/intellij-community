@@ -2,7 +2,7 @@
 package com.intellij.collaboration.auth.services
 
 import com.intellij.util.io.DigestUtil
-import java.util.*
+import java.util.Base64
 
 object PkceUtils {
   fun generateCodeVerifier(): String = DigestUtil.randomToken()

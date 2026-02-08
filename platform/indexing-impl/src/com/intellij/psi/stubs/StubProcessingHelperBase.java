@@ -17,7 +17,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.ActualContextFileInfo;
+import com.intellij.psi.search.CodeInsightContextAwareSearchScopes;
+import com.intellij.psi.search.CodeInsightContextFileInfo;
+import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.NoContextFileInfo;
 import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +37,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.*;
+import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.StubPsiCheck;
+import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.WrongPsiFileClassInNonPsiStub;
+import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.ZeroStubIdList;
 
 /**
  * Author: dmitrylomov

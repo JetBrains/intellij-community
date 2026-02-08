@@ -16,7 +16,7 @@ import com.intellij.util.indexing.IndexingBundle
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Collections
 import kotlin.concurrent.Volatile
 
 @Suppress("EqualsOrHashCode")

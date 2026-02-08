@@ -12,7 +12,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;

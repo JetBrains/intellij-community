@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.xml
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
@@ -21,9 +21,10 @@ internal class ContentBuilder(@PublishedApi internal val sb: StringBuilder, @Pub
   /**
    * Appends a <module> element.
    */
-  fun module(name: String, loading: ModuleLoadingRuleValue? = null) {
+  fun module(name: String, loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL) {
     sb.append("$indent<module name=\"$name\"")
-    if (loading != null) {
+    // Only output loading attribute for non-default values (OPTIONAL is default, omit it)
+    if (loading != ModuleLoadingRuleValue.OPTIONAL) {
       sb.append(" loading=\"${loading.xmlValue}\"")
     }
     sb.append("/>\n")
@@ -48,7 +49,7 @@ internal class ContentBuilder(@PublishedApi internal val sb: StringBuilder, @Pub
  * Extension function to append module with ContentModule data class.
  */
 internal fun ContentBuilder.module(contentModule: ContentModule) {
-  module(contentModule.name, contentModule.loading)
+  module(contentModule.name.value, contentModule.loading)
 }
 
 /**

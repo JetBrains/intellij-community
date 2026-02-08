@@ -17,7 +17,7 @@
 package com.intellij.completion.ml.personalization
 
 import com.intellij.completion.ml.personalization.impl.DayImpl
-import java.util.*
+import java.util.Date
 
 /**
  * @author Vitaliy.Bibaev

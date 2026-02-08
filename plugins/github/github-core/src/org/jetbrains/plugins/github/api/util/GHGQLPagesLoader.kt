@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
-import java.util.*
+import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class GHGQLPagesLoader<T, R>(private val executor: GithubApiRequestExecutor,

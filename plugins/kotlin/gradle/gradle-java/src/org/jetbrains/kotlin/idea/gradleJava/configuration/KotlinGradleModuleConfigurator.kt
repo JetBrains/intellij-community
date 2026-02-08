@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.projectStructure.allModules
@@ -42,10 +41,6 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !module.isAndroidModule()
     }
-
-    override fun canRunAutoConfig(): Boolean = isAutoConfigurationEnabled()
-
-    override fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", true)
 
     override fun configureModule(
         module: Module,

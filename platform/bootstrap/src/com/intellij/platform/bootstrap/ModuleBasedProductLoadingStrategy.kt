@@ -1,7 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ClassPathXmlPathResolver
+import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.ImmutableZipFileDataLoader
+import com.intellij.ide.plugins.LocalFsDataLoader
+import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.PluginDescriptorLoadingContext
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.ProductLoadingStrategy
+import com.intellij.ide.plugins.deprecatedLoadCorePluginForModuleBasedLoader
+import com.intellij.ide.plugins.loadDescriptorFromDir
+import com.intellij.ide.plugins.loadDescriptorFromFileOrDir
+import com.intellij.ide.plugins.loadDescriptorFromJar
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -23,7 +39,12 @@ import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepos
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -136,6 +157,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val serviceModuleMappingDeferred = scope.async { 
       ServiceModuleMapping.buildMapping(productModules)
     }
+
+    productModules.notLoadedBundledPluginModules.forEach { (notLoadedId, failedDependencyPath) ->
+      // todo: convert this to an error after fixing the problem with intellij.performanceTesting.async plugin: IJPL-186414
+      logger<ModuleBasedProductLoadingStrategy>().warn("""
+        |Bundled plugin module '${notLoadedId.stringId}' couldn't be loaded because of missing dependency:
+        |${failedDependencyPath.joinToString(" -> ") { it.stringId }}
+        |""".trimMargin())
+    }
+
     val bundled = productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
         if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet } || isPluginWithUseIdeaClassLoader(moduleGroup, context, zipFilePool)) {
@@ -304,11 +334,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     isBundled: Boolean,
     pluginDir: Path?,
   ): PluginMainDescriptor? {
-    val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull()
-    if (mainResourceRoot == null) {
+    val resourceRoots = pluginModuleGroup.mainModule.resourceRootPaths
+    if (resourceRoots.isEmpty()) {
       thisLogger().warn(
-        "Main plugin module must have single resource root, so '${pluginModuleGroup.mainModule.moduleId.stringId}'" +
-        " with roots ${pluginModuleGroup.mainModule.resourceRootPaths} won't be loaded"
+        "Main plugin module must have at least one resource root, so '${pluginModuleGroup.mainModule.moduleId.stringId}' won't be loaded"
       )
       return null
     }
@@ -325,16 +354,37 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     val allResourceRootsList = allResourceRoots.toList()
 
-    val descriptor = if (Files.isDirectory(mainResourceRoot)) {
+    val descriptor = resourceRoots.firstNotNullOfOrNull { resourceRoot ->
+      tryLoadingPluginDescriptorFromJarOrDirectory(resourceRoot, allResourceRootsList, zipFilePool,
+                                                   pluginModuleGroup, context, isBundled, pluginDir)
+    }
+    val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
+      val jarFiles = moduleItem.jarFiles
+      if (moduleItem.moduleLoadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
+    }
+    descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
+    return descriptor
+  }
+
+  private fun tryLoadingPluginDescriptorFromJarOrDirectory(
+    resourceRoot: Path,
+    allResourceRootsList: List<Path>,
+    zipFilePool: ZipEntryResolverPool,
+    pluginModuleGroup: PluginModuleGroup,
+    context: PluginDescriptorLoadingContext,
+    isBundled: Boolean,
+    pluginDir: Path?,
+  ): PluginMainDescriptor? {
+    return if (Files.isDirectory(resourceRoot)) {
       val fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool)
       val resolver = ModuleBasedPluginXmlPathResolver(
-        includedModules = includedModules,
+        includedModules = pluginModuleGroup.includedModules,
         optionalModuleIds = pluginModuleGroup.optionalModuleIds,
         notLoadedModuleIds = pluginModuleGroup.notLoadedModuleIds,
         fallbackResolver = fallbackResolver,
       )
       loadDescriptorFromDir(
-        dir = mainResourceRoot,
+        dir = resourceRoot,
         loadingContext = context,
         pool = zipFilePool,
         pathResolver = resolver,
@@ -349,23 +399,23 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
             }
           }
         }
-    }
-    else {
+      }
+      else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
       val pathResolver = if (allResourceRootsList.size == 1 && pluginModuleGroup.notLoadedModuleIds.isEmpty()) {
         defaultResolver
       }
       else {
         ModuleBasedPluginXmlPathResolver(
-          includedModules = includedModules,
+          includedModules = pluginModuleGroup.includedModules,
           optionalModuleIds = pluginModuleGroup.optionalModuleIds,
           notLoadedModuleIds = pluginModuleGroup.notLoadedModuleIds,
           fallbackResolver = defaultResolver,
         )
       }
-      val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
+      val pluginDir = pluginDir ?: resourceRoot.parent.parent
       loadDescriptorFromJar(
-        file = mainResourceRoot,
+        file = resourceRoot,
         loadingContext = context,
         pool = zipFilePool,
         pathResolver = pathResolver,
@@ -373,12 +423,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pluginDir = pluginDir,
       )
     }
-    val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
-      val jarFiles = moduleItem.jarFiles
-      if (moduleItem.moduleLoadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
-    }
-    descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
-    return descriptor
   }
 
   /* TODO: reuse ServiceModuleMapping instead */
@@ -410,8 +454,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
 
     val paths = resolvedModule.resourceRootPaths
-    return paths.singleOrNull() 
-           ?: error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
+    val singlePath = paths.singleOrNull()
+    /* when running from sources without dev build, resources of a content module may include the module output directory and paths to its
+       module-level libraries, so this function may return null so resolveModuleFile and resolveCustomModuleClassesRoots from
+       ModuleBasedPluginXmlPathResolver will be used to load the module */
+    if (singlePath == null && !(PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild())) {
+      error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
+    }
+
+    return singlePath
   }
 }
 

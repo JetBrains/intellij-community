@@ -2,8 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
 import org.jetbrains.annotations.NonNls

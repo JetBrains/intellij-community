@@ -3,7 +3,13 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;

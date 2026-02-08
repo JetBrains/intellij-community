@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Bas Leijdekkers

@@ -6,9 +6,9 @@ import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.LookupFilter
-import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.cce.workspace.filter.NamedFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
+import com.intellij.cce.workspace.filter.SpanFilter
 import java.nio.file.Paths
 
 

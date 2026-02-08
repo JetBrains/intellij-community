@@ -1,9 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorClientUtils;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,8 +49,11 @@ final class CanISilentlyChange {
 
     UndoManager undoManager = UndoManager.getInstance(project);
     for (FileEditor editor : editors) {
-      if (undoManager.isUndoAvailable(editor)) {
-        return true;
+      ClientId clientId = FileEditorClientUtils.getClientId(editor);
+      try (AccessToken ignored = ClientId.withExplicitClientId(clientId)) {
+        if (undoManager.isUndoAvailable(editor)) {
+          return true;
+        }
       }
     }
     return false;

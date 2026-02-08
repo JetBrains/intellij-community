@@ -3,7 +3,9 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asBase
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySymbolicIdEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

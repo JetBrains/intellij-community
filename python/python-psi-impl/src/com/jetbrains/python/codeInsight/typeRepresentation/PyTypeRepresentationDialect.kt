@@ -25,3 +25,5 @@ import com.jetbrains.python.PythonLanguage
  * This is used to serialize types, and for type engine communication
  */
 object PyTypeRepresentationDialect : Language(PythonLanguage.getInstance(), "PyTypeRepresentation"), DependentLanguage
+
+const val PyModuleTypeName: String = "Module"

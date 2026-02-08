@@ -1,11 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.core
 
-import com.intellij.editorconfig.common.syntax.psi.*
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigConcatenatedPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigEnumerationPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.util.Key
-import com.intellij.psi.util.*
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import dk.brics.automaton.Automaton
 import dk.brics.automaton.BasicOperations
 import dk.brics.automaton.RegExp

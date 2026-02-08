@@ -51,6 +51,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalPopupAdStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
@@ -66,6 +67,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupAdStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -195,6 +197,9 @@ public val JewelTheme.Companion.speedSearchStyle: SpeedSearchStyle
 
 public val JewelTheme.Companion.searchMatchStyle: SearchMatchStyle
     @Composable @ReadOnlyComposable get() = LocalSearchMatchStyle.current
+
+public val JewelTheme.Companion.popupAdStyle: PopupAdStyle
+    @Composable @ReadOnlyComposable get() = LocalPopupAdStyle.current
 
 @Composable
 public fun BaseJewelTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {

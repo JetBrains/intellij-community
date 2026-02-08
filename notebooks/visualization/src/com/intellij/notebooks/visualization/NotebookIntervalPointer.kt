@@ -9,7 +9,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
-import java.util.*
+import java.util.EventListener
 
 /**
  * Pointer becomes invalid when code cell is removed.

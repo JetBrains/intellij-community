@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.resolve.calls.tasks.createSynthesizedInvokes
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 class ExtensionFunctionTypeValueCompletion(
     private val receiverTypes: Collection<ReceiverType>,
     private val callType: CallType<*>,

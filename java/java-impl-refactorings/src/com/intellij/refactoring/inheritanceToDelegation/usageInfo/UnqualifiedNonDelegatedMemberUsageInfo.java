@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.inheritanceToDelegation.usageInfo;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 
 public class UnqualifiedNonDelegatedMemberUsageInfo extends NonDelegatedMemberUsageInfo{
 

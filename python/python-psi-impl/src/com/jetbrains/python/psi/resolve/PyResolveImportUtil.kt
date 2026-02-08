@@ -36,7 +36,7 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.SortedMap
 
 /**
  * Python resolve utilities for qualified names.
@@ -491,3 +491,5 @@ private enum class Priority {
   NAMESPACE_PACKAGE, // namespace package but may contain several entries in resolve result
   SKELETON // generated skeletons have lowest priority but are always included in the resolve result as a fallback
 }
+
+

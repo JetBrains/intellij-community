@@ -3,7 +3,12 @@ package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
-import com.intellij.ide.gdpr.ui.consents.*;
+import com.intellij.ide.gdpr.ui.consents.AiDataCollectionConsentUi;
+import com.intellij.ide.gdpr.ui.consents.ConsentUi;
+import com.intellij.ide.gdpr.ui.consents.DefaultConsentUi;
+import com.intellij.ide.gdpr.ui.consents.TraceDataCollectionConsentUI;
+import com.intellij.ide.gdpr.ui.consents.UsageStatisticsConsentUi;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,11 +24,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JPanel;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
-import java.awt.*;
+import java.awt.GridLayout;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,7 +47,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   private final boolean myIsJetBrainsVendor;
 
   public ConsentSettingsUi(boolean preferencesMode) {
-    this(preferencesMode, false);
+    this(preferencesMode, ApplicationInfoImpl.getShadowInstance().isVendorJetBrains());
   }
 
   @ApiStatus.Internal

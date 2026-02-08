@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingChildrenBuilder.toProblemNodes
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -13,8 +14,9 @@ import com.intellij.ui.tree.LeafState
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.TreePath
 
-abstract class Root(val panel: ProblemsViewPanel)
-  : Node(panel.project), ProblemsCollector, Disposable {
+abstract class Root(
+  val panel: ProblemsViewPanel,
+) : Node(panel.project), ProblemsCollector, Disposable {
 
   private val nodes = mutableMapOf<VirtualFile, FileNode>()
 
@@ -42,9 +44,12 @@ abstract class Root(val panel: ProblemsViewPanel)
     return getChildren(node)
   }
 
-  open fun getChildren(node: FileNode): Collection<Node> = getNodesForProblems(node, getFileProblems(node.file))
+  open fun getChildren(node: FileNode): Collection<Node> =
+    getFileProblems(node.file).toProblemNodes(node, node.file)
 
-  protected fun getNodesForProblems(node:FileNode, fileProblems: Collection<Problem>): List<Node> = fileProblems.map { p -> ProblemNode(node, node.file, p) }
+  @Deprecated("Use toProblemNodes instead", replaceWith = ReplaceWith("fileProblems.toProblemNodes(node, node.file)"))
+  protected fun getNodesForProblems(node: FileNode, fileProblems: Collection<Problem>): List<Node> =
+    fileProblems.toProblemNodes(node, node.file)
 
   override fun problemAppeared(problem: Problem) {
     when (problem) {
@@ -108,3 +113,4 @@ abstract class Root(val panel: ProblemsViewPanel)
     }
   }
 }
+

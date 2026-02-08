@@ -6,7 +6,11 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Methods (including constructors) annotated with {@code @RequiresReadLockAbsence} must be called without a read lock <i>nor</i>

@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  Super.class
+End of files
+Compiling files:
+  java/generics/changeExtends1/a/Super.java
+End of files
+Cleaning output files:
+  Client.class
+  Client2.class
+  Client3.class
+End of files
+Compiling files:
+  java/generics/changeExtends1/a/Client.java
+  java/generics/changeExtends1/a/Client2.java
+  java/generics/changeExtends1/a/Client3.java
+End of files
+------------------------------------------
+Exit code: OK

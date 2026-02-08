@@ -1,7 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginInstallOperation
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginManagementPolicy
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId

@@ -2,8 +2,8 @@
 package com.intellij.platform.syntax.psi
 
 import com.intellij.platform.syntax.Logger
-import com.intellij.openapi.diagnostic.Logger as IJLogger
 import com.intellij.platform.syntax.util.log.LogProvider
+import com.intellij.openapi.diagnostic.Logger as IJLogger
 
 internal class IntelliJLogProvider : LogProvider {
   override fun getLogger(name: String): Logger =

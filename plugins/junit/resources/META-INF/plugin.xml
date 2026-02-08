@@ -157,6 +157,9 @@
     <registryKey key="junit4.accept.inner.classes"
                  defaultValue="true"
                  description="If false, inner classes won't be included in search for tests in package"/>
+    <registryKey key="idea.test.graceful.shutdown.timeout.seconds"
+                 defaultValue="600"
+                 description="Timeout in seconds for the test runner to terminate gracefully after receiving a shutdown signal. A negative value disables the timeout, allowing unlimited wait."/>
   </extensions>
 
   <extensionPoints>

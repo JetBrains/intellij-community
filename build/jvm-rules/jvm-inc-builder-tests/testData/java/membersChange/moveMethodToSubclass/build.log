@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+  Impl.class
+End of files
+Compiling files:
+  java/membersChange/moveMethodToSubclass/a/Base.java
+  java/membersChange/moveMethodToSubclass/a/Impl.java
+End of files
+Cleaning output files:
+  Main.class
+End of files
+Compiling files:
+  java/membersChange/moveMethodToSubclass/a/Main.java
+End of files
+------------------------------------------
+Exit code: OK

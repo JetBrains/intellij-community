@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.vfilefinder
 
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.DataIndexer
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor

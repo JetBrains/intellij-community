@@ -1,6 +1,10 @@
 package com.intellij.settingsSync.core
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.settingsSync.core.SettingsSyncSettings.Companion.COMPONENT_NAME
 import com.intellij.settingsSync.core.SettingsSyncSettings.Companion.FILE_SPEC
 import com.intellij.util.xmlb.annotations.Property

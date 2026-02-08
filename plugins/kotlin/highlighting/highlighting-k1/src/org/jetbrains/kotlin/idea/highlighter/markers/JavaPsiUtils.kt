@@ -8,6 +8,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.toFakeLightClass
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 
+@K1Deprecation
 fun collectContainingClasses(methods: Collection<PsiMethod>): Set<PsiClass> {
     val classes = HashSet<PsiClass>()
     for (method in methods) {
@@ -30,6 +32,7 @@ fun collectContainingClasses(methods: Collection<PsiMethod>): Set<PsiClass> {
     return classes
 }
 
+@K1Deprecation
 @ApiStatus.Internal
 tailrec fun getPsiClass(element: PsiElement?): PsiClass? {
     return when {
@@ -41,6 +44,7 @@ tailrec fun getPsiClass(element: PsiElement?): PsiClass? {
     }
 }
 
+@K1Deprecation
 @ApiStatus.Internal
 fun getPsiMethod(element: PsiElement?): PsiMethod? {
     val parent = element?.parent

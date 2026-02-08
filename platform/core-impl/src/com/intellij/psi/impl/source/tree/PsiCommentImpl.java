@@ -2,7 +2,11 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.psi.*;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.CommentLiteralEscaper;
 import com.intellij.psi.tree.IElementType;

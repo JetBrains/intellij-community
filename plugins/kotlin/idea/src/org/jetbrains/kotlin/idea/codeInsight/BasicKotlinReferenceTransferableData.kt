@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import java.awt.datatransfer.DataFlavor
 import java.io.Serializable
 
+@K1Deprecation
 class BasicKotlinReferenceTransferableData(
     val sourceFileUrl: String,
     val packageName: String,

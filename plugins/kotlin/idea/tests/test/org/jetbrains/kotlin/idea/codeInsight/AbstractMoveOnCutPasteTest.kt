@@ -9,10 +9,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsEditorCookie
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsProcessor
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile

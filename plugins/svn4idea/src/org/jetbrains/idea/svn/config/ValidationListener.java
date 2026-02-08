@@ -4,7 +4,7 @@ package org.jetbrains.idea.svn.config;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface ValidationListener {
   void onError(@DialogMessage @NotNull String text, @NotNull JComponent component, boolean forbidSave);

@@ -4,8 +4,8 @@ package org.jetbrains.yaml.refactoring.inlineExpandConversion
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -24,7 +24,11 @@ import kotlinx.coroutines.launch
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.YAMLElementGenerator
 import org.jetbrains.yaml.YAMLTokenTypes
-import org.jetbrains.yaml.psi.*
+import org.jetbrains.yaml.psi.YAMLKeyValue
+import org.jetbrains.yaml.psi.YAMLMapping
+import org.jetbrains.yaml.psi.YAMLQuotedText
+import org.jetbrains.yaml.psi.YAMLScalar
+import org.jetbrains.yaml.psi.YAMLSequence
 import org.jetbrains.yaml.psi.impl.YAMLArrayImpl
 import org.jetbrains.yaml.psi.impl.YAMLHashImpl
 import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl

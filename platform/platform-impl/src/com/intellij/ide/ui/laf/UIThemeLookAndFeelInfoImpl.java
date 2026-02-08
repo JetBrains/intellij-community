@@ -15,9 +15,14 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.SVGLoader;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;

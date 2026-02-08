@@ -4,7 +4,7 @@ package com.intellij.testFramework.common
 import com.intellij.openapi.diagnostic.logger
 import java.lang.reflect.InaccessibleObjectException
 import java.nio.file.spi.FileSystemProvider
-import java.util.*
+import java.util.ServiceLoader
 
 private object FileSystemProviderInjector
 

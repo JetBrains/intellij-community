@@ -22,7 +22,13 @@ import java.awt.Cursor
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.KeyStroke
+import javax.swing.ListCellRenderer
+import javax.swing.ListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 

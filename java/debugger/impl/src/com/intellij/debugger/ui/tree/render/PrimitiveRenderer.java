@@ -10,7 +10,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.PrimitiveType;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
+import com.sun.jdi.VoidType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 

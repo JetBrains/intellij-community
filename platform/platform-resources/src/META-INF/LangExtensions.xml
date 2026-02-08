@@ -94,19 +94,12 @@
     <registryKey defaultValue="true" description="Use EEL for file watching." key="use.eel.file.watcher" restartRequired="true"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
-    <registryKey defaultValue="false" key="use.workspace.model.for.calculation.library.scope"
+    <registryKey defaultValue="true" key="use.workspace.model.for.calculation.library.scope"
                  description="Calculation of LibraryScopeCache using WorkspaceModel entities"/>
-    <registryKey defaultValue="false" key="search.in.non.indexable" restartRequired="false"
-                 description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
     <registryKey defaultValue="true" key="se.enable.non.indexable.files.contributor" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFilesSEContributor"/>
-    <registryKey defaultValue="false" key="se.enable.non.indexable.files.use.bfs" restartRequired="false"
-                 description="NonIndexableFilesSEContributor iterates files using BFS instead of DFS"/>"/>
-    <registryKey defaultValue="false" key="se.enable.non.indexable.files.use.bfs.blocking.read.actions" restartRequired="false"
-                 description="NonIndexableFilesSEContributor iterates files using BFS with multiple blocking read actions instead of one big cancellable RA"/>"/>
-    <registryKey defaultValue="false" key="intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions"
-                 restartRequired="false"
-                 description="Use cancellable read actions for NonIndexableFilesSEContributor and NonIndexableFilesDequeImpl"/>" />
+    <registryKey defaultValue="true" key="rename.files.in.dumb.mode.enable" restartRequired="false"
+                 description="Allow renaming files in dumb mode"/>
     <registryKey defaultValue="false"
                  description="Enable reformat action execution on frontend in remote development"
                  key="reformat.action.execute.on.frontend"
@@ -705,7 +698,6 @@
 
     <searchEverywhereClassifier implementation="com.intellij.ide.actions.DefaultSearchEverywhereClassifier"/>
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
-    <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.NonIndexableFileNavigationContributor"/>
     <gotoRelatedProvider implementation="com.intellij.ide.actions.RelatedItemLineMarkerGotoAdapter"/>
 
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInGroupTarget"/>
@@ -784,6 +776,8 @@
                            dynamic="true"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"
                            id="editor.preferences.appearance"/>
+    <editorAppearanceInlineDocHandler instance="com.intellij.application.options.editor.EditorAppearanceConfigurable$DefaultInlineDocAdditionalConfigurable"
+                                      id="default"/>
 
     <editorOptionsProvider instance="com.intellij.application.options.editor.GutterIconsConfigurable" id="editor.preferences.gutterIcons"/>
     <search.optionContributor implementation="com.intellij.application.options.editor.GutterIconsSearchableOptionContributor"/>
@@ -1106,6 +1100,7 @@
     <renamerFactory implementation="com.intellij.refactoring.rename.RenameHandlerRenamerFactory"/>
     <renamerFactory implementation="com.intellij.refactoring.rename.impl.SymbolRenameTargetRenamerFactory"/>
     <renameHandler implementation="com.intellij.refactoring.rename.PlainDirectoryRenameHandler"/>
+    <renameHandler implementation="com.intellij.refactoring.rename.FileDumbRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler"/>
     <completion.contributor language="any" id="InplaceRename"
@@ -1211,7 +1206,10 @@
       implementationClass="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationFeatureUsagesUtil"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.hints.declarative.impl.InlayActionHandlerUsagesCollector"/>
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.AttachDirectoryUsagesCollector"/>
+
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileDumbProcessor"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbarCollector" />

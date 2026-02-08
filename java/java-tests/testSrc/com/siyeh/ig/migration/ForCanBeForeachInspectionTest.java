@@ -3,8 +3,8 @@ package com.siyeh.ig.migration;
 
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -19,7 +19,11 @@ import java.nio.file.Path;
 
 import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaCodeInsightFixture;
 import static com.intellij.testFramework.JavaCodeInsightFixtureKt.setUpJdk;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.*;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.disposableFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
 
 @TestApplication
 @RunInEdt(allMethods = false)

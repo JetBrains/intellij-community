@@ -12,14 +12,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.FileColorManager;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Font;
 
 /**
  * @author zajac

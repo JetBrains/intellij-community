@@ -7,7 +7,8 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.util
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 
 val LOG: Logger = Logger.getInstance(CodeStyle::class.java)
 internal class RBGraph {

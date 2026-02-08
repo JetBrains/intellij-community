@@ -3,11 +3,12 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 
 private fun KtStringTemplateExpression.singleExpressionOrNull() = children.singleOrNull()?.children?.firstOrNull() as? KtExpression
 
+@K1Deprecation
 class RemoveSingleExpressionStringTemplateInspection : IntentionBasedInspection<KtStringTemplateExpression>(
     RemoveSingleExpressionStringTemplateIntention::class,
     additionalChecker = { templateExpression ->
@@ -27,6 +29,7 @@ class RemoveSingleExpressionStringTemplateInspection : IntentionBasedInspection<
     override val problemText: String = KotlinBundle.message("redundant.string.template")
 }
 
+@K1Deprecation
 class RemoveSingleExpressionStringTemplateIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
     KotlinBundle.messagePointer("remove.single.expression.string.template")

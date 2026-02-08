@@ -15,7 +15,13 @@
  */
 package com.intellij.refactoring.util.classMembers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.classMembers.AbstractMemberInfoStorage;
 

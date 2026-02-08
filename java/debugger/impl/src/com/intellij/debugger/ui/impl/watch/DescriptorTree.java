@@ -6,7 +6,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.iterateBackward;
 

@@ -14,8 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridLayout;
 import java.util.Arrays;
 
 public class TableAndTextCsvFormatPreview implements CsvFormatPreview, Disposable {

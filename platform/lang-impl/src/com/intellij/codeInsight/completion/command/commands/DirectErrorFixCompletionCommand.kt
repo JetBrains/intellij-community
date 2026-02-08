@@ -38,7 +38,8 @@ internal class DirectErrorFixCompletionCommand(
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
-    val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
+    val project = psiFile.project
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
     val topLevelPsiFile = injectedLanguageManager.getTopLevelFile(psiFile)
     var topLevelOffset = offset
@@ -49,7 +50,7 @@ internal class DirectErrorFixCompletionCommand(
     myOffset?.let {
       topLevelEditor.caretModel.moveToOffset(myOffset)
     }
-    val action: IntentionAction? = runWithModalProgressBlocking(topLevelPsiFile.project, message("scanning.scope.progress.title")) {
+    val action: IntentionAction? = runWithModalProgressBlocking(project, message("scanning.scope.progress.title")) {
       val indicator = DaemonProgressIndicator()
       readAction {
         jobToIndicator(currentThreadContext().job, indicator) {
@@ -65,11 +66,11 @@ internal class DirectErrorFixCompletionCommand(
                                                                  endOffset,
                                                                  ProperTextRange(startOffset, endOffset),
                                                                  true, true, true)
-          val lazyQuickFixUpdater = LazyQuickFixUpdater.getInstance(psiFile.project)
+          val lazyQuickFixUpdater = LazyQuickFixUpdater.getInstance(project)
           for (info in highlightings) {
             if (info.hasLazyQuickFixes()) {
-              info.updateLazyFixesPsiTimeStamp(PsiModificationTracker.getInstance(psiFile.project).modificationCount);
-              lazyQuickFixUpdater.waitQuickFixesSynchronously(psiFile, editor, info)
+              info.updateLazyFixesPsiTimeStamp(PsiModificationTracker.getInstance(project).modificationCount);
+              lazyQuickFixUpdater.waitQuickFixesSynchronously(info, project, editor.getDocument())
             }
             if (!(info.startOffset == highlightInfo.range.startOffset && info.endOffset == highlightInfo.range.endOffset)) {
               continue

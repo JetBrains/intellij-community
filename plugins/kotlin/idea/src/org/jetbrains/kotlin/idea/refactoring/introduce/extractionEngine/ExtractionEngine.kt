@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 abstract class ExtractionEngineHelper(@NlsContexts.DialogTitle operationName: String)
     : IExtractionEngineHelper<KotlinType, ExtractionData, ExtractionGeneratorConfiguration, ExtractionResult, ExtractableCodeDescriptor, ExtractableCodeDescriptorWithConflicts>(operationName) {
 
@@ -15,6 +17,7 @@ abstract class ExtractionEngineHelper(@NlsContexts.DialogTitle operationName: St
     override fun validate(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptorWithConflicts = descriptor.validate()
 }
 
+@K1Deprecation
 class ExtractionEngine(
     helper: ExtractionEngineHelper
 ): IExtractionEngine<KotlinType, ExtractionData, ExtractionGeneratorConfiguration, ExtractionResult, ExtractableCodeDescriptor, ExtractableCodeDescriptorWithConflicts>(helper) {

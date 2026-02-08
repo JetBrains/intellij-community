@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -76,22 +76,26 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
             buildList {
                 for ((name, indexedTypes) in namedArgumentInfos) {
                     with(KotlinFirLookupElementFactory) {
-                        add(createNamedArgumentLookupElement(name, indexedTypes.map { it.value }))
+                        add(createNamedArgumentLookupElement(name, indexedTypes))
 
                         // suggest default values only for types from parameters with matching positions to not clutter completion
-                        val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }.map { it.value }
-                        if (typesAtCurrentPosition.any { it.isBooleanType }) {
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value))
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value))
+                        val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }
+
+                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.value.isBooleanType }
+                        if (booleanPosition != null) {
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value, booleanPosition.index))
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value, booleanPosition.index))
                         }
-                        if (typesAtCurrentPosition.any { it.isMarkedNullable }) {
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value))
+
+                        val nullablePosition = typesAtCurrentPosition.firstOrNull { it.value.isMarkedNullable }
+                        if (nullablePosition != null) {
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value, nullablePosition.index))
                         }
                     }
                 }
             }
         }.map { it.applyWeighs() }
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     /**

@@ -14,7 +14,8 @@ internal class ShellCompletionSuggestionImpl(
   override val priority: Int,
   override val icon: Icon?,
   override val prefixReplacementIndex: Int,
-  override val isHidden: Boolean
+  override val isHidden: Boolean,
+  override val shouldEscape: Boolean
 ) : ShellCompletionSuggestion {
   init {
     if (priority !in 0..100) {

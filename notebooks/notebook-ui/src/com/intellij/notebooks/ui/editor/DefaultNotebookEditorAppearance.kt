@@ -9,7 +9,9 @@ import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.*
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -23,7 +25,6 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.ui.JBColor
 import java.awt.Color
-import kotlin.sequences.generateSequence
 
 open class DefaultNotebookEditorAppearance(
   private val editor: Editor

@@ -17,7 +17,15 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsMetrics
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.ModuleTypeId
+import com.intellij.platform.workspace.jps.entities.groupPath
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleGroupPathEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectModel.ProjectModelBundle

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.patterns.PlatformPatterns
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.psi.KtFile
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
  * Performs completion in package directive. Should suggest only packages and avoid showing fake package produced by
  * DUMMY_IDENTIFIER.
  */
+@K1Deprecation
 object PackageDirectiveCompletion {
     val DUMMY_IDENTIFIER = "___package___"
     val ACTIVATION_PATTERN = PlatformPatterns.psiElement().inside(KtPackageDirective::class.java)

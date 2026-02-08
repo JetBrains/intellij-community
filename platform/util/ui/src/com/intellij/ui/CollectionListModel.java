@@ -2,10 +2,19 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.EditableModel;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.AbstractListModel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class CollectionListModel<T> extends AbstractListModel<T> implements EditableModel {
   private final List<T> myItems;

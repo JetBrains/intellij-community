@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -134,7 +135,12 @@ internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
   private fun doTest(mode: TerminalCommandCompletionShowingMode, block: suspend (TerminalCompletionFixture) -> Unit) =
     timeoutRunBlocking(context = Dispatchers.EDT) {
       val fixtureScope = childScope("TerminalCompletionFixture")
-      val session = EchoingTerminalSession(fixtureScope.childScope("EchoingTerminalSession"))
+      val startupOptions = TerminalStartupOptionsImpl(
+        shellCommand = listOf("/bin/zsh", "--login", "-i"),
+        workingDirectory = "fakeDir",
+        envVariables = emptyMap()
+      )
+      val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
       doWithCompletionFixture(project, session, fixtureScope) { fixture ->
         fixture.mockTestShellCommand(testCommandSpec)
         fixture.setCompletionOptions(

@@ -8,7 +8,9 @@ import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.options.OptDropdown
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptPane.dropdown
+import com.intellij.codeInspection.options.OptPane.option
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil
@@ -20,14 +22,33 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.uast.UastVisitorAdapter
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jdom.Element
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getUastParentOfType
+import org.jetbrains.uast.textRange
 
 private const val EFFECTIVE_LL = "effectiveLL"
 

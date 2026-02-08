@@ -35,6 +35,9 @@ jvm_library(
     "//platform/execution",
     "//platform/refactoring",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
   ],
   exports = ["//platform/platform-api:ide"]
 )

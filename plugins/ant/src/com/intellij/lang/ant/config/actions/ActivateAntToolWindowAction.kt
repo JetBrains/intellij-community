@@ -5,7 +5,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.lang.ant.config.impl.AntToolWindowFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.RegisterToolWindowTask
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import java.util.function.Supplier
 
 internal class ActivateAntToolWindowAction : ActivateToolWindowAction(ToolWindowId.ANT_BUILD) {

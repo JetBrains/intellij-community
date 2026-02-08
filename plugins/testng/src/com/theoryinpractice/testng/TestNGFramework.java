@@ -9,7 +9,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
@@ -23,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Arrays;
 import java.util.List;
 

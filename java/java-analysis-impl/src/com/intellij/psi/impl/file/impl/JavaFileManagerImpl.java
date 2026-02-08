@@ -16,7 +16,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -30,7 +34,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 

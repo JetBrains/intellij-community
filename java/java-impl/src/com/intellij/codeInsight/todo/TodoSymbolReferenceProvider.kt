@@ -2,7 +2,12 @@
 package com.intellij.codeInsight.todo
 
 import com.intellij.codeInsight.highlighting.PsiHighlightedReference
-import com.intellij.find.usages.api.*
+import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.find.usages.api.UsageSearchParameters
+import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.ide.todo.TodoView
 import com.intellij.java.JavaBundle

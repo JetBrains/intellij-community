@@ -1,15 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.session
 
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.DescriptionComputer
+import com.intellij.platform.ml.MLApiPlatform
 import com.intellij.platform.ml.MLApiPlatform.Companion.getDescriptorsOfTiers
+import com.intellij.platform.ml.MLTask
+import com.intellij.platform.ml.ObsoleteTierDescriptor
+import com.intellij.platform.ml.PerTier
 import com.intellij.platform.ml.ScopeEnvironment.Companion.restrictedBy
+import com.intellij.platform.ml.Tier
+import com.intellij.platform.ml.TierDescriptor
 import com.intellij.platform.ml.TierRequester.Companion.fulfilledBy
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.environment.ExtendedEnvironment
-import com.intellij.platform.ml.feature.*
+import com.intellij.platform.ml.feature.Feature
 import com.intellij.platform.ml.feature.Feature.Companion.toCompactString
+import com.intellij.platform.ml.feature.FeatureDeclaration
+import com.intellij.platform.ml.feature.FeatureFilter
+import com.intellij.platform.ml.feature.FeatureSelector
 import com.intellij.platform.ml.feature.FeatureSelector.Companion.or
+import com.intellij.platform.ml.feature.FeatureValueType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

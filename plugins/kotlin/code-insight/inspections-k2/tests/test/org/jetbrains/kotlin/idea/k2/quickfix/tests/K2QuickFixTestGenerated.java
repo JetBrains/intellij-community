@@ -1803,6 +1803,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/classUseOptIn.kt");
         }
 
+        @TestMetadata("destructuringDeclarationOnFunction.kt")
+        public void testDestructuringDeclarationOnFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/destructuringDeclarationOnFunction.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationOnStatement.kt")
+        public void testDestructuringDeclarationOnStatement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/destructuringDeclarationOnStatement.kt");
+        }
+
         @TestMetadata("existingFileAnnotationWithPackage.kt")
         public void testExistingFileAnnotationWithPackage() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/existingFileAnnotationWithPackage.kt");

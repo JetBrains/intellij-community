@@ -11,8 +11,11 @@ import com.intellij.util.ArrayUtilRt;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import java.awt.BorderLayout;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;

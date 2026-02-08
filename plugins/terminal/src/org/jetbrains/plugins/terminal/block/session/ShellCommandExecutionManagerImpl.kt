@@ -25,7 +25,8 @@ import org.jetbrains.plugins.terminal.fus.TimeSpanType
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.TimeMark

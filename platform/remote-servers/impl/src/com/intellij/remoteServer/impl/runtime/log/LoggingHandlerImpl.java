@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHandler {
   private final ConsoleView myConsole;

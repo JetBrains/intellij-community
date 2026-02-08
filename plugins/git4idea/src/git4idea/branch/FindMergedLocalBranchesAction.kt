@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import kotlin.coroutines.cancellation.CancellationException

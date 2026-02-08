@@ -4,7 +4,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 @ApiStatus.Internal
 public class CustomizedBreakpointPresentation {

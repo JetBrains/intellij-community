@@ -5,7 +5,11 @@ import com.intellij.database.extractors.NumberDisplayType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 

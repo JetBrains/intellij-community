@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.function.Function
 
 open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :

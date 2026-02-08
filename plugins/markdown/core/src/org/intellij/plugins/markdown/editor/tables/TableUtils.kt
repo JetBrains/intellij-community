@@ -6,7 +6,11 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.*
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parents
+import com.intellij.psi.util.siblings
+import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable

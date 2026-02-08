@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
 import com.intellij.debugger.engine.DebuggerUtils
-import com.sun.jdi.*
+import com.sun.jdi.ClassType
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.PrimitiveValue
+import com.sun.jdi.StringReference
+import com.sun.jdi.Value
+import com.sun.jdi.VoidValue
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.findMethod

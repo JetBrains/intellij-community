@@ -10,8 +10,8 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 public final class XDebuggerUIConstants {
   public static final Icon ERROR_MESSAGE_ICON = AllIcons.General.Error;

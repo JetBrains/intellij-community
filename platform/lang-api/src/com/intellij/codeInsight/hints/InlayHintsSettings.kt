@@ -5,10 +5,14 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
 import org.jdom.Element
-import java.util.*
+import java.util.TreeSet
 
 @State(name = "InlayHintsSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
 class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {

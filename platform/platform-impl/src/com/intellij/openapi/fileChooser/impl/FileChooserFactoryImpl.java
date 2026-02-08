@@ -4,14 +4,21 @@ package com.intellij.openapi.fileChooser.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.fileChooser.ClientFileChooserFactory;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileChooser.FileTextField;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTextField;
+import java.awt.Component;
 import java.util.HashMap;
 import java.util.Map;
 

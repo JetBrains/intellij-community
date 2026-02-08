@@ -13,7 +13,9 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JList;
 
 /**
  * @author Konstantin Bulenkov

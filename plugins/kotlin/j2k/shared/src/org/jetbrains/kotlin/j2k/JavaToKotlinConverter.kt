@@ -2,21 +2,19 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 
 abstract class JavaToKotlinConverter {
     protected abstract fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor): Result
 
-    abstract fun filesToKotlin(
+    abstract suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progressIndicator: ProgressIndicator = EmptyProgressIndicator(),
+        bodyFilter: ((PsiElement) -> Boolean)? = null,
         preprocessorExtensions: List<J2kPreprocessorExtension> = emptyList(),
         postprocessorExtensions: List<J2kPostprocessorExtension> = emptyList()
-    ): FilesResult
+    ): ConvertionResult
 
     abstract fun elementsToKotlin(inputElements: List<PsiElement>): Result
 }

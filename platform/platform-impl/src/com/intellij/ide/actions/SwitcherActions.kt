@@ -14,7 +14,12 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.util.BitUtil.isSet
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.InputEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.util.function.Consumer
 import javax.swing.AbstractAction
 import javax.swing.JList

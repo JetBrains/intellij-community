@@ -7,7 +7,11 @@ import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.EEL_DESCRIPTOR_KEY
+import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
+import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 
 @ApiStatus.Internal

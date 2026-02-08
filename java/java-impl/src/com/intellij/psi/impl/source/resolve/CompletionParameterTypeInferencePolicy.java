@@ -4,7 +4,13 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.ConstraintType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 
 
 public final class CompletionParameterTypeInferencePolicy extends ProcessCandidateParameterTypeInferencePolicy {

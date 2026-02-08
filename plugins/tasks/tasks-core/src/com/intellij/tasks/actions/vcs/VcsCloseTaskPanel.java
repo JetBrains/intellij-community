@@ -13,7 +13,9 @@ import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.ArrayList;
 
 /**

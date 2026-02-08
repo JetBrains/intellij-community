@@ -3,7 +3,11 @@ package com.intellij.ide.starter.ide.installer
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.isScramblingEnabled
 import com.intellij.ide.starter.config.useDockerContainer
-import com.intellij.ide.starter.ide.*
+import com.intellij.ide.starter.ide.IDEStartConfig
+import com.intellij.ide.starter.ide.IdeInstaller
+import com.intellij.ide.starter.ide.InstalledIde
+import com.intellij.ide.starter.ide.JBRResolver
+import com.intellij.ide.starter.ide.LinuxIdeDistribution
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.VMOptionsDiff

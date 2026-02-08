@@ -43,6 +43,11 @@
             internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <action id="KotlinCriDiagnostics"
+            class="org.jetbrains.kotlin.idea.search.refIndex.CriDiagnosticAction"
+            internal="true">
+      <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
+    </action>
   </actions>
 
   <resource-bundle>messages.KotlinReferenceIndexBundle</resource-bundle>

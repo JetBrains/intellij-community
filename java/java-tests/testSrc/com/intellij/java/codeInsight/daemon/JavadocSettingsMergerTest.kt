@@ -10,7 +10,9 @@ import com.intellij.codeInspection.javaDoc.MissingJavadocInspection
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
 import org.jdom.Element
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class JavadocSettingsMergerTest: LightJavaCodeInsightFixtureTestCase5() {

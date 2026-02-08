@@ -2,19 +2,35 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.AssignToVariableResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ChainedCallGenerator
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.MatchingState
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatch
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.VariableInitialization
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.findVariableInitializationBeforeLoop
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.generateLambda
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isVariableReference
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isZeroConstant
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.MapTransformation
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 abstract class SumTransformationBase(
     loop: KtForExpression,
     initialization: VariableInitialization
@@ -143,6 +159,7 @@ abstract class SumTransformationBase(
     }
 }
 
+@K1Deprecation
 class SumTransformation(loop: KtForExpression, initialization: VariableInitialization) : SumTransformationBase(loop, initialization) {
     override val presentation: String
         get() = "sum()"
@@ -152,6 +169,7 @@ class SumTransformation(loop: KtForExpression, initialization: VariableInitializ
     }
 }
 
+@K1Deprecation
 class SumByTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization,

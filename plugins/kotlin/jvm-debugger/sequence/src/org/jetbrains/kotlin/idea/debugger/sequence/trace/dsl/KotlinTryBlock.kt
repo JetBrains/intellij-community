@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.core.trace.dsl.impl.common.TryBlockBase
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinTryBlock(private val block: CodeBlock, statementFactory: StatementFactory) : TryBlockBase(statementFactory) {
     override fun toCode(indent: Int): String {
         val descriptor = myCatchDescriptor ?: error("catch block must be specified")

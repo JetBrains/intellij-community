@@ -2,12 +2,15 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenModel
+import org.jetbrains.idea.maven.model.MavenProfile
+import org.jetbrains.idea.maven.model.MavenResource
 import org.junit.Assume
 import org.junit.Test
 import java.nio.charset.StandardCharsets

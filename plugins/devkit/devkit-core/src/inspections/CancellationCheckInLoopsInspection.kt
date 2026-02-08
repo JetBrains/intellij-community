@@ -3,7 +3,11 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.CommonClassNames.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_ITERABLE
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_CONSUMER
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_ITERATOR
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_STREAM
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -12,7 +16,20 @@ import com.intellij.util.containers.ContainerUtil
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.CancellationCheckInLoopsFixProviders
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UDoWhileExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UForEachExpression
+import org.jetbrains.uast.UForExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULoopExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.UWhileExpression
+import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 private val javaLoopMethods: CallMatcher = CallMatcher.anyOf(

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -27,11 +28,24 @@ import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.DefinitelyNotNullType
+import org.jetbrains.kotlin.types.FlexibleType
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.kotlin.types.TypeProjectionImpl
+import org.jetbrains.kotlin.types.TypeSubstitution
+import org.jetbrains.kotlin.types.TypeSubstitutor
+import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.toDefaultAttributes
 import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 
+@K1Deprecation
 fun PsiElement.isCaller(allUsages: Array<out UsageInfo>): Boolean {
     val primaryConstructor = (this as? KtClass)?.primaryConstructor
     val elementsToSearch = if (primaryConstructor != null) listOf(primaryConstructor, this) else listOf(this)
@@ -43,6 +57,7 @@ fun PsiElement.isCaller(allUsages: Array<out UsageInfo>): Boolean {
         .any { it.element in elementsToSearch }
 }
 
+@K1Deprecation
 fun getCallableSubstitutor(
     baseFunction: KotlinCallableDefinitionUsage<*>,
     derivedCallable: KotlinCallableDefinitionUsage<*>
@@ -65,6 +80,7 @@ private fun getCallableSubstitution(baseCallable: CallableDescriptor, derivedCal
     return substitution
 }
 
+@K1Deprecation
 fun KotlinType.renderTypeWithSubstitution(substitutor: TypeSubstitutor?, defaultText: String, inArgumentPosition: Boolean): String {
     val newType = substitutor?.substitute(this, Variance.INVARIANT) ?: return defaultText
     val renderer = if (inArgumentPosition)
@@ -78,6 +94,7 @@ fun KotlinType.renderTypeWithSubstitution(substitutor: TypeSubstitutor?, default
 // This method is used to create full copies of functions (including copies of all types)
 // It's needed to prevent accesses to PSI (e.g. using LazyJavaClassifierType properties) when Change signature invalidates it
 // See KotlinChangeSignatureTest.testSAMChangeMethodReturnType
+@K1Deprecation
 fun DeclarationDescriptor.createDeepCopy(): DeclarationDescriptor =
     (this as? JavaMethodDescriptor)?.substitute(TypeSubstitutor.create(ForceTypeCopySubstitution)) ?: this
 
@@ -103,6 +120,7 @@ private fun KotlinType.copyAsSimpleType(): SimpleType = KotlinTypeFactory.simple
     memberScope,
 )
 
+@K1Deprecation
 fun suggestReceiverNames(project: Project, descriptor: CallableDescriptor): List<String> {
     val callable = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor) as? KtCallableDeclaration ?: return emptyList()
     val bodyScope = (callable as? KtFunction)?.bodyExpression?.let { it.getResolutionScope(it.analyze(), it.getResolutionFacade()) }
@@ -116,6 +134,7 @@ fun suggestReceiverNames(project: Project, descriptor: CallableDescriptor): List
     return Fe10KotlinNameSuggester.suggestNamesByType(receiverType, validator, "receiver")
 }
 
+@K1Deprecation
 fun KotlinTypeInfo.getReceiverTypeText(): String {
     val text = render()
     return when {

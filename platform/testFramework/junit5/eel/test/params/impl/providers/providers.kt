@@ -3,7 +3,7 @@ package com.intellij.platform.testFramework.junit5.eel.params.impl.providers
 
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.ServiceLoader
 
 @TestOnly
 internal fun getIjentTestProviders(): List<EelIjentTestProvider<*>> =

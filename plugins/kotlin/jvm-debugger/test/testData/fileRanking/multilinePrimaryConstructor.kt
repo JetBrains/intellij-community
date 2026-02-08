@@ -1,3 +1,5 @@
+// IGNORE_K2
+// IGNORE_K2_K1
 //FILE: a/a.kt
 class A(
     val firstName: String,

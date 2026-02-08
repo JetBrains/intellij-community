@@ -4,7 +4,15 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.Project

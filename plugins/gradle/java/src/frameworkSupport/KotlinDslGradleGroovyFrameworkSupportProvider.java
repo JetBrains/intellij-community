@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class KotlinDslGradleGroovyFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
 

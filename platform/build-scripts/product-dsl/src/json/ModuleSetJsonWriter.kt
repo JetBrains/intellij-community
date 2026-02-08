@@ -1,16 +1,45 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.json
 
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.platform.pluginGraph.PluginGraph
 import kotlinx.serialization.Serializable
+import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
-import org.jetbrains.intellij.build.productLayout.tooling.detectDuplicates
-import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
-import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.isRegularFile
+import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetModuleNames
+
+@Serializable
+internal data class ModuleSetEntry(
+  val name: String,
+  val location: String,
+  val sourceFile: String,
+  val directModules: List<ContentModule>,
+  val directNestedSets: List<String>,
+  val alias: String? = null,
+  val selfContained: Boolean = false,
+  val allModulesFlattened: List<String>
+)
+
+private fun buildModuleSetEntry(
+  moduleSet: ModuleSet,
+  location: String,
+  sourceFilePath: String,
+  pluginGraph: PluginGraph
+): ModuleSetEntry {
+  return ModuleSetEntry(
+    name = moduleSet.name,
+    location = location,
+    sourceFile = sourceFilePath,
+    directModules = moduleSet.modules,
+    directNestedSets = moduleSet.nestedSets.map { it.name },
+    alias = moduleSet.alias?.value,
+    selfContained = moduleSet.selfContained,
+    allModulesFlattened = collectModuleSetModuleNames(pluginGraph, moduleSet.name)
+      .map { it.value }
+      .sorted()
+  )
+}
 
 /**
  * Writes a single module set to JSON using kotlinx.serialization.
@@ -20,25 +49,25 @@ internal fun writeModuleSet(
   moduleSet: ModuleSet,
   location: String,
   sourceFilePath: String,
-  cache: ModuleSetTraversalCache
+  pluginGraph: PluginGraph
 ) {
-  @Serializable
-  data class ModuleSetEntry(
-    val name: String,
-    val location: String,
-    val sourceFile: String,
-    val moduleSet: ModuleSet,
-    val allModulesFlattened: List<String>
-  )
-
-  val entry = ModuleSetEntry(
-    name = moduleSet.name,
-    location = location,
-    sourceFile = sourceFilePath,
-    moduleSet = moduleSet,
-    allModulesFlattened = cache.getModuleNames(moduleSet.name).sorted()
-  )
+  val entry = buildModuleSetEntry(moduleSet, location, sourceFilePath, pluginGraph)
   gen.writeRawValue(kotlinxJson.encodeToString(entry))
+}
+
+/**
+ * Writes a name-indexed map of module sets for O(1) lookup on the client side.
+ */
+internal fun writeModuleSetIndex(
+  gen: JsonGenerator,
+  allModuleSets: List<ModuleSetMetadata>,
+  pluginGraph: PluginGraph
+) {
+  val entries = LinkedHashMap<String, ModuleSetEntry>()
+  for ((moduleSet, location, sourceFilePath) in allModuleSets.sortedBy { it.moduleSet.name }) {
+    entries[moduleSet.name] = buildModuleSetEntry(moduleSet, location.name, sourceFilePath, pluginGraph)
+  }
+  gen.writeRawValue(kotlinxJson.encodeToString(entries))
 }
 
 /**
@@ -47,9 +76,7 @@ internal fun writeModuleSet(
 internal fun writeDuplicateAnalysis(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
-  products: List<ProductSpec>,
-  projectRoot: Path,
-  cache: ModuleSetTraversalCache
+  pluginGraph: PluginGraph
 ) {
   @Serializable
   data class ModuleDuplicate(val moduleName: String, val appearsInSets: List<String>)
@@ -67,11 +94,11 @@ internal fun writeDuplicateAnalysis(
   )
 
   // Find modules that appear in multiple module sets (using cache for O(1) lookups)
-  val moduleToSets = mutableMapOf<String, MutableList<String>>()
-  for ((moduleSet, _, _) in allModuleSets) {
-    val allModules = cache.getModuleNames(moduleSet)
+  val moduleToSets = LinkedHashMap<String, MutableList<String>>()
+  for (entry in allModuleSets) {
+    val allModules = collectModuleSetModuleNames(pluginGraph, entry.moduleSet.name)
     for (moduleName in allModules) {
-      moduleToSets.computeIfAbsent(moduleName) { mutableListOf() }.add(moduleSet.name)
+      moduleToSets.computeIfAbsent(moduleName.value) { ArrayList() }.add(entry.moduleSet.name)
     }
   }
 
@@ -91,13 +118,13 @@ internal fun writeDuplicateAnalysis(
       val (set1, _, _) = allModuleSets[i]
       val (set2, _, _) = allModuleSets[j]
 
-      val modules1 = cache.getModuleNames(set1)
-      val modules2 = cache.getModuleNames(set2)
+      val modules1 = collectModuleSetModuleNames(pluginGraph, set1.name)
+      val modules2 = collectModuleSetModuleNames(pluginGraph, set2.name)
 
       val overlap = modules1.intersect(modules2)
       if (overlap.size > 5) { // Only report significant overlaps
-        val uniqueToSet1 = (modules1 - modules2).sorted().take(10).ifEmpty { null }
-        val uniqueToSet2 = (modules2 - modules1).sorted().take(10).ifEmpty { null }
+      val uniqueToSet1 = (modules1 - modules2).map { it.value }.sorted().take(10).ifEmpty { null }
+      val uniqueToSet2 = (modules2 - modules1).map { it.value }.sorted().take(10).ifEmpty { null }
         val overlapPercentage = (overlap.size.toDouble() / minOf(modules1.size, modules2.size)) * 100
 
         setOverlapAnalysis.add(SetOverlap(
@@ -116,14 +143,4 @@ internal fun writeDuplicateAnalysis(
 
   gen.writeFieldName("setOverlapAnalysis")
   gen.writeRawValue(kotlinxJson.encodeToString(setOverlapAnalysis))
-
-  // xi:include duplicate detection
-  val productFiles = products
-    .mapNotNull { it.pluginXmlPath }
-    .map { projectRoot.resolve(it) }
-    .filter { it.exists() && it.isRegularFile() }
-
-  val report = detectDuplicates(productFiles, projectRoot)
-  gen.writeFieldName("xiIncludeDuplicates")
-  gen.writeRawValue(kotlinxJson.encodeToString(report))
 }

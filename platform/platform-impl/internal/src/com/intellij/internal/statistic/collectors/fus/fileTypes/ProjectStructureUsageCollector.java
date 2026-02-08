@@ -29,7 +29,11 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author gregsh

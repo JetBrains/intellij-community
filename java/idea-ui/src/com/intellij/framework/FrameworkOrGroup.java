@@ -18,7 +18,7 @@ package com.intellij.framework;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Represents a single node (framework or group) in the frameworks tree ("Additional Libraries and Frameworks"

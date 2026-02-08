@@ -19,7 +19,9 @@ import org.jetbrains.uast.UResolvable
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Arrays
+import java.util.TreeSet
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference

@@ -3,10 +3,10 @@ package com.intellij.platform.vcs.impl.frontend.changes.tree
 
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeManager
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
 import com.intellij.platform.vcs.impl.shared.rhizome.ModuleNodeEntity
+import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 

@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.EncapsulatableClassMember;
+import com.intellij.codeInsight.generation.GenerateAccessorProviderRegistrar;
+import com.intellij.codeInsight.generation.GenerateGetterHandler;
+import com.intellij.codeInsight.generation.GenerateSetterHandler;
+import com.intellij.codeInsight.generation.GetterSetterGenerationOptions;
+import com.intellij.codeInsight.generation.PsiFieldMember;
+import com.intellij.codeInsight.generation.SetterTemplatesManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;

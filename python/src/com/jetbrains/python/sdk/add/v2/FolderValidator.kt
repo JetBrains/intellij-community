@@ -11,7 +11,13 @@ import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FolderValidator<P : PathHolder>(
   val fileSystem: FileSystem<P>,

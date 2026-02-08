@@ -3,8 +3,13 @@ package com.intellij.projectView
 
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.ProjectViewSettings
-import com.intellij.ide.projectView.impl.*
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane
+import com.intellij.ide.projectView.impl.PackageViewPane
+import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule
+import com.intellij.ide.projectView.impl.ProjectViewImpl
+import com.intellij.ide.projectView.impl.ProjectViewPane
+import com.intellij.ide.projectView.impl.isSelectInProjectViewServiceBusy
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.VirtualFile

@@ -31,16 +31,16 @@ kotlin {
         compilations.all {
             compilerOptions.options.apply {
                 freeCompilerArgs.add("-opt-in=CompilationOptInAnnotation")
-                languageVersion.set(KotlinVersion.KOTLIN_1_9)
-                apiVersion.set(KotlinVersion.KOTLIN_1_9)
+                languageVersion.set({{minimalSupportedKotlinVersion}})
+                apiVersion.set({{minimalSupportedKotlinVersion}})
             }
         }
     }
 
     sourceSets.all {
         languageSettings {
-            languageVersion = "2.0"
-            apiVersion = "2.0"
+            languageVersion = "{{nextMinimalSupportedKotlinLanguageVersion}}"
+            apiVersion = "{{nextMinimalSupportedKotlinLanguageVersion}}"
             progressiveMode = true
             optIn("LangSettingsOptInAnnotation")
         }

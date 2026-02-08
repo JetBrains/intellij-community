@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
   public static final SPIFileType INSTANCE = new SPIFileType();

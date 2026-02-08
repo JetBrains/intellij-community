@@ -6,7 +6,11 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLocalInspectionTool {

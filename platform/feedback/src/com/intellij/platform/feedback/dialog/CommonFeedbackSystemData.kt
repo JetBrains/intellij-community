@@ -26,7 +26,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.Nls
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 /** This number should be increased when [CommonFeedbackSystemData] fields changing */
 const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION: Int = 3

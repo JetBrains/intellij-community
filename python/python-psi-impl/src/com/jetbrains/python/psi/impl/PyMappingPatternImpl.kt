@@ -3,24 +3,45 @@ package com.jetbrains.python.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiListLikeElement
 import com.intellij.psi.util.findParentInFile
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.ast.findChildrenByClass
+import com.jetbrains.python.psi.PyDoubleStarPattern
+import com.jetbrains.python.psi.PyElementVisitor
+import com.jetbrains.python.psi.PyKeyValuePattern
+import com.jetbrains.python.psi.PyMappingPattern
+import com.jetbrains.python.psi.PyPattern
+import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
+import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypedDictType
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappingPattern, PyCaptureContext, PsiListLikeElement {
+  private val elements: List<PyPattern>
+    get() = findChildrenByClass(PyPattern::class.java).asList()
+
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyMappingPattern(this)
   }
 
-  override fun getComponents(): List<PyKeyValuePattern> = findChildrenByClass(PyKeyValuePattern::class.java).toList()
+  override fun getComponents(): List<PyPattern> = elements
 
-  override fun canExcludePatternType(context: TypeEvalContext): Boolean = false
+  override fun canExcludePatternType(context: TypeEvalContext): Boolean {
+    return elements.size == 1 && elements[0] is PyDoubleStarPattern
+  }
 
   override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
     val keyTypes = mutableListOf<PyType?>()
     val valueTypes = mutableListOf<PyType?>()
-    for (it in components) {
+    for (it in elements.filterIsInstance<PyKeyValuePattern>()) {
       keyTypes.add(context.getType(it.keyPattern))
       if (it.valuePattern != null) {
         valueTypes.add(context.getType(it.valuePattern!!))
@@ -66,7 +87,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 private fun PyType?.getValueType(sequenceMember: PyKeyValuePattern, context: TypeEvalContext): PyType? {
   if (this is PyTypedDictType) {
     val key = sequenceMember.getKeyString(context)
-    if (key != null) return this.getElementType(key)
+    if (key != null) return getElementType(key)
   }
   val mappingType = PyTypeUtil.convertToType(this, "typing.Mapping", sequenceMember, context)
                     ?: return PyNeverType.NEVER

@@ -4,9 +4,13 @@ package org.jetbrains.yaml.schema
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.jetbrains.jsonSchema.impl.*
+import com.jetbrains.jsonSchema.impl.JsonBySchemaCompletionBaseTest
+import com.jetbrains.jsonSchema.impl.JsonSchemaSetup
 import com.jetbrains.jsonSchema.impl.TestSchemas.open1ThenOpen2Then3Schema
+import com.jetbrains.jsonSchema.impl.assertThatSchema
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
+import com.jetbrains.jsonSchema.impl.testNestedCompletionsWithPredefinedCompletionsRoot
+import com.jetbrains.jsonSchema.impl.withConfiguration
 import org.intellij.lang.annotations.Language
 
 class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {

@@ -7,13 +7,18 @@ import com.intellij.openapi.vcs.Executor.cd
 import git4idea.commands.GitCommandResult
 import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.cd
+import git4idea.test.git
+import git4idea.test.last
+import git4idea.test.makeCommit
+import git4idea.test.makePushSpec
+import git4idea.test.tac
 import git4idea.update.GitUpdateResult
 import org.junit.After
 import org.junit.Before
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 
 class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 

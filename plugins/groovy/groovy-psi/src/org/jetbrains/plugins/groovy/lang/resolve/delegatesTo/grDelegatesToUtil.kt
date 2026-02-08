@@ -2,7 +2,18 @@
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiClassObjectAccessExpression
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil

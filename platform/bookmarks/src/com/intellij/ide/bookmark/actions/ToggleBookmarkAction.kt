@@ -7,7 +7,11 @@ import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmark.ui.GroupSelectDialog
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo

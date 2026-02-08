@@ -2,7 +2,12 @@
 package org.jetbrains.uast.evaluation
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.values.UDependency
 import org.jetbrains.uast.values.UValue
 

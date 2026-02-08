@@ -2,7 +2,6 @@
   <extensionPoints>
     <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider"
                     dynamic="true"/>
-    <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="workspaceModel.moduleExtensionBridgeFactory"
                     interface="com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory"
                     dynamic="true"/>

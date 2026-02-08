@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.CharArrayUtil
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 

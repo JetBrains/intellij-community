@@ -13,7 +13,11 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 import java.util.ArrayList;
 import java.util.List;

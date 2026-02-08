@@ -3,11 +3,13 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hints.InlayInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@K1Deprecation
 fun provideSuspendingCallHint(callExpression: KtCallExpression): InlayInfo? {
     val resolvedCall = callExpression.resolveToCall() ?: return null
     if (resolvedCall.candidateDescriptor.isSuspend) {

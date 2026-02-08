@@ -1,0 +1,15 @@
+// WITH_STDLIB
+// AFTER-WARNING: Enum argument can be null in Java, but exhaustive when contains no null branch
+fun test(outer: Outer) {
+    when (outer.inner.type) {
+        Outer.Inner.Type.A -> {
+            println("A")
+        }
+        Outer.Inner.Type.B -> {
+            println("B")
+        }
+        Outer.Inner.Type.C -> {
+            println("C")
+        }
+    }
+}

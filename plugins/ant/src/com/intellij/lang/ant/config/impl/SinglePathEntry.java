@@ -12,7 +12,7 @@ import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.util.List;
 

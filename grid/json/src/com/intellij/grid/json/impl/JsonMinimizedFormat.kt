@@ -7,7 +7,11 @@ import com.intellij.json.JsonElementTypes
 import com.intellij.json.JsonLanguage
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 import com.intellij.util.containers.TreeTraversal

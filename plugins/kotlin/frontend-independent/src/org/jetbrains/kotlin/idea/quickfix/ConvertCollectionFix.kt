@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
@@ -27,7 +27,9 @@ class ConvertCollectionFix(
         List("toList()", FqName("kotlin.collections.List"), "listOf", "emptyList"),
         Collection("toList()", FqName("kotlin.collections.Collection"), "listOf", "emptyList"),
         Iterable("toList()", FqName("kotlin.collections.Iterable"), "listOf", "emptyList"),
-        MutableList("toMutableList()", FqName("kotlin.collections.MutableList")),
+        MutableList("toMutableList()", FqName("kotlin.collections.MutableList"), "mutableListOf", "emptyList"),
+        MutableMap("toMutableMap()", FqName("kotlin.collections.MutableMap"), "mutableMapOf", "emptyMap"),
+        MutableSet("toMutableSet()", FqName("kotlin.collections.MutableSet"), "mutableSetOf", "emptySet"),
         Array("toTypedArray()", FqName("kotlin.Array"), "arrayOf", "emptyArray"),
         Sequence("asSequence()", FqName("kotlin.sequences.Sequence"), "sequenceOf", "emptySequence"),
         Set("toSet()", FqName("kotlin.collections.Set"), "setOf", "emptySet"),

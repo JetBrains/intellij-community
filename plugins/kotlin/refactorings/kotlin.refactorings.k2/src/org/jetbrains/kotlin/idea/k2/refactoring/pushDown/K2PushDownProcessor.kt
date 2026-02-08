@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteA
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.applyMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.clearMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.markElements
-import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessor
 import org.jetbrains.kotlin.name.FqName
@@ -66,10 +65,6 @@ internal class K2PushDownProcessor(
 ) : KotlinPushDownProcessor(project) {
     override val context: K2PushDownContext = K2PushDownContext(sourceClass, membersToMove)
 
-    override fun renderSourceClassForConflicts(): String = analyze(context.sourceClass) {
-        context.sourceClass.symbol.renderForConflicts(analysisSession = this)
-    }
-
     override fun analyzePushDownConflicts(
         usages: Array<out UsageInfo>,
     ): MultiMap<PsiElement, String> = analyze(context.sourceClass) {
@@ -102,12 +97,22 @@ internal class K2PushDownProcessor(
     ) {
         val sourceClass = context.sourceClass
         allowAnalysisFromWriteActionInEdt(sourceClass) {
-            targetClasses.forEach { targetClass ->
-                val substitutor = createInheritanceTypeSubstitutor(
-                    subClass = targetClass.symbol as KaClassSymbol,
-                    superClass = sourceClass.symbol as KaClassSymbol,
-                ) ?: Empty(token)
-                processTargetClass(targetClass, substitutor, actionsContext)
+            if (targetClasses.isEmpty()) {
+                // No inheritors exist, but we still register removal actions to delete members
+                // from the source class. This ensures the refactoring behaves as indicated in
+                // the user-facing warning dialog.
+                // See: K2PushDownTestGenerated.K2K.testNoInheritors
+                context.membersToMove.forEach { memberInfo ->
+                    registerRemovalAction(memberInfo, Empty(token), actionsContext)
+                }
+            } else {
+                targetClasses.forEach { targetClass ->
+                    val substitutor = createInheritanceTypeSubstitutor(
+                        subClass = targetClass.symbol as KaClassSymbol,
+                        superClass = sourceClass.symbol as KaClassSymbol,
+                    ) ?: Empty(token)
+                    processTargetClass(targetClass, substitutor, actionsContext)
+                }
             }
         }
     }

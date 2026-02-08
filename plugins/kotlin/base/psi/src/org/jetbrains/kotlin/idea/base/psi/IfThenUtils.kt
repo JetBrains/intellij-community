@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.base.psi
 
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
 
 /**
  * If [this] is [KtBlockExpression], returns, after deparenthesizing, a single block statement or `null` if multiple statements are present.

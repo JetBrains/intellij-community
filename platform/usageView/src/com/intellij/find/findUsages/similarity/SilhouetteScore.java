@@ -7,7 +7,8 @@ import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.intellij.usages.similarity.clustering.Distance.jaccardDistanceExact;

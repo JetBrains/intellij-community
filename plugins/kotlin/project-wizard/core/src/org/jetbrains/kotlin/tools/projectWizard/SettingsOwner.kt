@@ -2,7 +2,16 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import org.jetbrains.kotlin.tools.projectWizard.core.Parser
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.BooleanSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.DropDownSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ListSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PathSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.Setting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingBuilder
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.StringSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ValueSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.VersionSettingType
 import org.jetbrains.kotlin.tools.projectWizard.core.enumParser
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem

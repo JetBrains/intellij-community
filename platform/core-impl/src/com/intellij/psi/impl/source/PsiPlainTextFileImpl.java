@@ -5,7 +5,13 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.HintedReferenceHost;
+import com.intellij.psi.PlainTextTokenTypes;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,7 +1,13 @@
 package com.intellij.evaluationPlugin.languages.kotlin.callGraphs
 
 import com.intellij.cce.core.Language
-import com.intellij.evaluationPlugin.languages.callGraphs.*
+import com.intellij.evaluationPlugin.languages.callGraphs.CallGraph
+import com.intellij.evaluationPlugin.languages.callGraphs.CallGraphBuilder
+import com.intellij.evaluationPlugin.languages.callGraphs.CallGraphEdge
+import com.intellij.evaluationPlugin.languages.callGraphs.CallGraphNode
+import com.intellij.evaluationPlugin.languages.callGraphs.collectPsiFiles
+import com.intellij.evaluationPlugin.languages.callGraphs.forEachIndexedWithProgress
+import com.intellij.evaluationPlugin.languages.callGraphs.getNodeLocation
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile

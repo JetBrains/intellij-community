@@ -379,7 +379,7 @@ public final class JDOMUtil {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
+  private static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
     FileUtilRt.createParentDirs(file);
 
     try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {

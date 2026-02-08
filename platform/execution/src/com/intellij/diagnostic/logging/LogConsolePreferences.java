@@ -19,7 +19,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 @Service(Service.Level.PROJECT)
 @State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))

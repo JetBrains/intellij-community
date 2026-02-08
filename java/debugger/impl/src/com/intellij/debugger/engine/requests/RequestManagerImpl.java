@@ -3,12 +3,20 @@ package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessAdapterImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.InstrumentationBreakpointState;
+import com.intellij.debugger.engine.JVMName;
+import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.LightOrRealThreadInfo;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.JvmtiError;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
@@ -21,16 +29,37 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.Location;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.event.EventSet;
-import com.sun.jdi.request.*;
+import com.sun.jdi.request.AccessWatchpointRequest;
+import com.sun.jdi.request.BreakpointRequest;
+import com.sun.jdi.request.ClassPrepareRequest;
+import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.EventRequestManager;
+import com.sun.jdi.request.ExceptionRequest;
+import com.sun.jdi.request.InvalidRequestStateException;
+import com.sun.jdi.request.MethodEntryRequest;
+import com.sun.jdi.request.MethodExitRequest;
+import com.sun.jdi.request.ModificationWatchpointRequest;
+import com.sun.jdi.request.WatchpointRequest;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -45,6 +74,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<>();
   private EventRequestManager myEventRequestManager;
+
+  private final Map<Requestor, InstrumentationBreakpointState> myInstrumentationInfo = new HashMap<>();
 
   /**
    * It specifies the thread performing suspend-all stepping.
@@ -69,16 +100,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return myFilterThread != null ? myFilterThread.getRealThread() : null;
   }
 
-  /** @deprecated Use setThreadFilter instead */
-  @Deprecated(forRemoval = true)
-  public void setFilterThread(final @Nullable ThreadReference filterThread) {
-    if (filterThread != null) {
-      setThreadFilter(new RealThreadInfo(filterThread));
-    }
-    else {
-      setThreadFilter(null);
-    }
-  }
   public void setThreadFilter(final @Nullable LightOrRealThreadInfo filter) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Thread filter is set to " + filter);
@@ -268,6 +289,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   public void deleteRequest(Requestor requestor) {
+    InstrumentationBreakpointState instrumentationInfo = getInstrumentationInfo(requestor);
+    if (instrumentationInfo != null) {
+      instrumentationInfo.updateInstrumentationModeEnabled(this, false);
+    }
+
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRequestWarnings.remove(requestor);
     if (!myDebugProcess.isAttached()) {
@@ -439,8 +465,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   @Override
   public void processAttached(DebugProcessImpl process) {
-    if (myDebugProcess.getVirtualMachineProxy().canBeModified()) {
-      myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
+    VirtualMachineProxyImpl vmProxy = VirtualMachineProxyImpl.getCurrent();
+    if (vmProxy.canBeModified()) {
+      myEventRequestManager = vmProxy.eventRequestManager();
     }
   }
 
@@ -477,7 +504,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   public boolean checkReadOnly(Requestor requestor) {
-    if (!myDebugProcess.getVirtualMachineProxy().canBeModified()) {
+    if (!VirtualMachineProxyImpl.getCurrent().canBeModified()) {
       setInvalid(requestor, "Not available in read only mode");
       return true;
     }
@@ -492,5 +519,16 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     for (Requestor request : stepRequestors) {
       deleteRequest(request);
     }
+  }
+
+
+  @ApiStatus.Internal
+  public void addInstrumentationInfo(@NotNull Requestor requestor, @NotNull InstrumentationBreakpointState info) {
+    myInstrumentationInfo.put(requestor, info);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable InstrumentationBreakpointState getInstrumentationInfo(@NotNull Requestor requestor) {
+    return myInstrumentationInfo.get(requestor);
   }
 }

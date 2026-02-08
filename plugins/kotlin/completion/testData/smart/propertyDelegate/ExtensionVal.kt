@@ -44,3 +44,5 @@ val C.property by <caret>
 // EXIST: Y1
 // ABSENT: Y2
 // EXIST: Y3
+
+// IGNORE_K2

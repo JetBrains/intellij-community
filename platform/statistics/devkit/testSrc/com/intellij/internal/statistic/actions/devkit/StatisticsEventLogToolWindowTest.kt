@@ -6,7 +6,10 @@ import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogMessa
 import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogToolWindow
 import com.intellij.internal.statistic.devkit.toolwindow.StatisticsLogFilterModel
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.INCORRECT_RULE
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.THIRD_PARTY
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.UNDEFINED_RULE
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent

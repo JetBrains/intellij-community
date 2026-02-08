@@ -9,7 +9,10 @@ import fleet.tracing.runtime.CompletableSpan
 import fleet.tracing.runtime.Span
 import fleet.tracing.runtime.SpanInfo
 import fleet.tracing.runtime.SpanStatus
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 

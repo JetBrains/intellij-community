@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.PsiDocumentManagerEx
 
 internal class CommittedDocumentsConstraint(

@@ -8,9 +8,11 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.vcs.git.actions.GitSingleRefActions
 import fleet.util.safeAs
 import git4idea.GitBranch
+import git4idea.GitReference
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider
 import javax.swing.Icon
@@ -26,10 +28,16 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
+    val explicitRefFromCtx = e.getData(GitSingleRefActions.SELECTED_REF_DATA_KEY)
+    if (explicitRefFromCtx != null && explicitRefFromCtx !is GitBranch) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
 
     e.presentation.isEnabledAndVisible = true
+    GitWorkingTreesNewBadgeUtil.addLabelNewIfNeeded(e.presentation)
     e.presentation.icon = computeIcon(e)
-    val localBranchFromContext = getBranchFromContext(e, singleRepository)
+    val localBranchFromContext = getBranchFromContext(e, singleRepository, explicitRefFromCtx)
     if (localBranchFromContext == null) {
       e.presentation.text = GitBundle.message("action.Git.CreateNewWorkingTree.text")
       e.presentation.description = GitBundle.message("action.Git.CreateNewWorkingTree.description")
@@ -51,14 +59,18 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     val repository = GitWorkingTreesService.getRepoForWorkingTreesSupport(project) ?: return
     val branchFromContext = getBranchFromContext(e, repository)
     GitCreateWorkingTreeService.getInstance().collectDataAndCreateWorkingTree(repository, branchFromContext, e.place)
   }
 
-  private fun getBranchFromContext(e: AnActionEvent, repository: GitRepository?): GitBranch? {
-    val explicitRefFromCtx = e.getData(GitSingleRefActions.SELECTED_REF_DATA_KEY)
+  private fun getBranchFromContext(
+    e: AnActionEvent,
+    repository: GitRepository?,
+    explicitRefFromCtx: GitReference? = e.getData(GitSingleRefActions.SELECTED_REF_DATA_KEY),
+  ): GitBranch? {
     val ref = when {
       explicitRefFromCtx != null -> explicitRefFromCtx
       e.getData(GitBranchActionsDataKeys.USE_CURRENT_BRANCH) == true -> repository?.currentBranch

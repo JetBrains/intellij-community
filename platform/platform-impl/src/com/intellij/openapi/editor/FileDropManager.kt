@@ -6,7 +6,8 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -31,7 +32,7 @@ fun containsFileDropTargets(transferFlavors: Array<DataFlavor>): Boolean {
   return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors)
 }
 
-private val LOG = Logger.getInstance(FileDropManager::class.java)
+private val LOG = logger<FileDropManager>()
 
 private val EP_NAME: ExtensionPointName<FileDropHandler> = ExtensionPointName("com.intellij.fileDropHandler")
 
@@ -41,7 +42,9 @@ class FileDropManager(
   private val coroutineScope: CoroutineScope,
 ) {
   fun scheduleDrop(transferable: Transferable, editor: Editor?, editorWindowCandidate: EditorWindow?) {
-    val fileList = FileCopyPasteUtil.getFileList(transferable) ?: return
+    val fileList = FileCopyPasteUtil.getFileList(transferable)
+    LOG.debug { "FileDropManager.scheduleDrop: extracted ${fileList?.size ?: 0} files from transferable: ${fileList?.map { it.name }}" }
+    if (fileList == null) return
     coroutineScope.launch {
       handleDrop(transferable, editor, editorWindowCandidate, fileList)
     }

@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

@@ -18,7 +18,13 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Nullable

@@ -7,15 +7,9 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.sdk.PyDetectedSdk;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +19,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.intellij.openapi.util.text.HtmlChunk.raw;
-import static com.intellij.openapi.util.text.HtmlChunk.text;
 
 @ApiStatus.Internal
 
@@ -71,10 +62,6 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empt
     }
   }
 
-  public static @NotNull GeneralCommandLine getXCodeSelectInstallCommand() {
-    return new GeneralCommandLine("xcode-select", "--install");
-  }
-
   private static @NotNull GeneralCommandLine getXCodeSelectPathCommand() {
     return new GeneralCommandLine("xcode-select", "-p");
   }
@@ -101,32 +88,5 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empt
       LOGGER.warn("Exception during '" + commandLine.getCommandLineString() + "'", e);
       return true;
     }
-  }
-
-  public static @Nullable ValidationInfo checkDetectedPython(@NotNull PyDetectedSdk sdk) {
-    if (!"/usr/bin/python3".equals(sdk.getHomePath())) return null;
-
-    //noinspection DialogTitleCapitalization
-    final String progressTitle = PyBundle.message("python.cldt.checking");
-
-    if (ProgressManager
-      .getInstance()
-      .runProcessWithProgressSynchronously(
-        MacPythonSdkFlavor::areCommandLineDeveloperToolsAvailable,
-        progressTitle,
-        true,
-        null
-      )
-    ) {
-      return null;
-    }
-
-    final HtmlChunk commandChunk = text(getXCodeSelectInstallCommand().getCommandLineString());
-
-    final String message = new HtmlBuilder().append(
-      raw(PyBundle.message("python.cldt.required", commandChunk.code()))
-    ).toString();
-
-    return new ValidationInfo(message).asWarning().withOKEnabled();
   }
 }

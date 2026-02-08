@@ -11,7 +11,11 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
@@ -25,7 +29,12 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord.newAttributeRecord;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.NON_EXISTENT_ATTRIBUTE_RECORD_ID;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 

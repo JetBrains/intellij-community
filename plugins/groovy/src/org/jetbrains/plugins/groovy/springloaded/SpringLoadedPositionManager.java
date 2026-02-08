@@ -5,6 +5,7 @@ import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ReadAction;
@@ -57,7 +58,7 @@ public class SpringLoadedPositionManager implements PositionManager {
 
     int line = ReadAction.compute(() -> classPosition.getLine());
 
-    List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
+    List<ReferenceType> referenceTypes = VirtualMachineProxy.getCurrent().classesByName(className);
     if (referenceTypes.isEmpty()) throw NoDataException.INSTANCE;
 
     Set<ReferenceType> res = new HashSet<>();

@@ -5,12 +5,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MISC_PROJECT_WITH_WELCOME_NAME
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.miscProjectDefaultPath
 import com.jetbrains.python.projectCreation.createVenvAndSdk
+import com.jetbrains.python.sdk.ModuleOrProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -33,6 +35,10 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
 
   override fun doGetCreateNewFileProjectPrefix(): String = "awesomeProject"
 
+  override fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
+    return Registry.`is`("welcome.screen.open.files", false) && filePath.endsWith(".ipynb")
+  }
+
   override suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project {
     val project = super.doCreateOrOpenWelcomeScreenProject(path)
     // The name might be a MiscProject, since we are reusing that project.
@@ -43,7 +49,7 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
     }
 
     if (PlatformProjectOpenProcessor.isNewProject(project)) {
-      createVenvAndSdk(project, confirmInstallation = {
+      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation = {
         withContext(Dispatchers.EDT) {
           MessageDialogBuilder.yesNo(
             PyCharmCommunityCustomizationBundle.message("misc.no.python.found"),

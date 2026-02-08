@@ -5,3 +5,5 @@ fun bar() {
 }
 
 // ELEMENT: "{ word, number -> ... }"
+
+// IGNORE_K2

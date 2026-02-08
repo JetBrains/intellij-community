@@ -22,7 +22,12 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
 import org.w3c.dom.Node;
 
 import javax.xml.transform.TransformerException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
 
 class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debugger.StyleFrame {
   private final boolean myWithSourceFrame;

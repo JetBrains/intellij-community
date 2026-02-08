@@ -4,7 +4,13 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.diagnostic.Checks.fail
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffEditorViewer
-import com.intellij.diff.tools.combined.*
+import com.intellij.diff.tools.combined.COMBINED_DIFF_SCROLL_TO_BLOCK
+import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
+import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+import com.intellij.diff.tools.combined.CombinedDiffManager
+import com.intellij.diff.tools.combined.CombinedDiffRegistry
+import com.intellij.diff.tools.combined.CombinedDiffViewer
+import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager

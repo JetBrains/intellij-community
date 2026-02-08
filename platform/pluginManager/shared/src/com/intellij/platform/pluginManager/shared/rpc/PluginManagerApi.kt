@@ -2,7 +2,13 @@
 package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.marketplace.*
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi

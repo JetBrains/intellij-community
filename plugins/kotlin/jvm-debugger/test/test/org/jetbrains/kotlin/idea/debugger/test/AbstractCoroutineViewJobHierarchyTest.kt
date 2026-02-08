@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.test
 
-import com.intellij.debugger.engine.executeOnDMT
-import com.intellij.debugger.impl.PrioritizedTask
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
@@ -62,8 +59,3 @@ abstract class AbstractCoroutineViewJobHierarchyTest : KotlinDescriptorTestCaseW
 }
 
 
-abstract class AbstractK1IdeK2CoroutineViewTest : AbstractCoroutineViewJobHierarchyTest() {
-    override val compileWithK2 = true
-
-    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-}

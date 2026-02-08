@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
-import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
+import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.COERCE_ROOT_SOURCE_SETS_TO_COMMON
+import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.IMPORT_ORPHAN_SOURCE_SETS
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
@@ -71,7 +72,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
             val coroutinesState = getCoroutinesState(project)
             val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: NO_KOTLIN_NATIVE_HOME
-
+            val swiftExportModel = buildSwiftExportModel(kotlinExtensionReflection)
 
             val model = KotlinMPPGradleModelImpl(
                 sourceSetsByName = filterOrphanSourceSets(importingContext),
@@ -83,7 +84,8 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
                 dependencies = dependenciesContainer,
-                kotlinGradlePluginVersion = importingContext.kotlinGradlePluginVersion
+                kotlinGradlePluginVersion = importingContext.kotlinGradlePluginVersion,
+                swiftExport = swiftExportModel
             ).apply {
                 kotlinImportingDiagnostics += collectDiagnostics(importingContext)
             }
@@ -210,6 +212,26 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     private fun shouldBuild(extension: KotlinExtensionReflection): Boolean {
         return extension.kotlinExtension.javaClass.getMethodOrNull("getTargets") != null && extension.targets.isNotEmpty()
+    }
+
+    /**
+     * Builds the [KotlinSwiftExportModelImpl] from the Swift Export DSL configuration.
+     *
+     * ## KGP Reference
+     * `org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension`
+     *
+     * The extension is registered via `addExtension("swiftExport", ...)` in `SetupSwiftExportDSL.kt`,
+     * so it's accessed via [KotlinExtensionReflection.swiftExport] which uses `getExtensions().findByName()`.
+     *
+     * @return The Swift Export model if the extension is configured, null otherwise
+     * @see org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSwiftExportReflection
+     */
+    private fun buildSwiftExportModel(extension: KotlinExtensionReflection): KotlinSwiftExportModelImpl? {
+        val swiftExportReflection = extension.swiftExport ?: return null
+        return KotlinSwiftExportModelImpl(
+            moduleName = swiftExportReflection.moduleName,
+            flattenPackage = swiftExportReflection.flattenPackage
+        )
     }
 
     companion object {

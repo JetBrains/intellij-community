@@ -20,13 +20,22 @@ import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.hyperlinks.Gen1TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.output.highlighting.CompositeTerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
-import org.jetbrains.plugins.terminal.block.session.*
-import org.jetbrains.plugins.terminal.block.ui.*
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
+import org.jetbrains.plugins.terminal.block.session.TerminalModel
+import org.jetbrains.plugins.terminal.block.ui.doWithScrollingAware
+import org.jetbrains.plugins.terminal.block.ui.executeInBulk
+import org.jetbrains.plugins.terminal.block.ui.getDisposed
+import org.jetbrains.plugins.terminal.block.ui.invokeLater
+import org.jetbrains.plugins.terminal.block.ui.scrollToBottom
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 import kotlin.math.max
 
 /**

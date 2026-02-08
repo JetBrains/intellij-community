@@ -47,7 +47,10 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.idea.svn.api.Revision.WORKING;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 public class SvnRollbackTest extends SvnTestCase {
   private Disposable testRootDisposable = null;

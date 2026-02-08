@@ -6,7 +6,9 @@ package org.jetbrains.uast.test.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertTrue
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
@@ -21,7 +23,7 @@ import org.jetbrains.uast.test.common.kotlin.checkDescriptorsLeak
 import org.jetbrains.uast.visitor.UastVisitor
 import org.junit.Assert
 import java.io.File
-import java.util.*
+import java.util.Stack
 
 interface AbstractKotlinRenderLogTest : RenderLogTestBase {
     override fun getTestFile(testName: String, ext: String) =

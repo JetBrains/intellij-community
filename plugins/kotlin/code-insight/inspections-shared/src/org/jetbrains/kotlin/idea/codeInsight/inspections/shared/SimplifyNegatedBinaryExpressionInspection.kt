@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemHighlightType.*
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
@@ -15,7 +16,11 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimpli
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.simplify
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtOperationExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.prefixExpressionVisitor
 
 
 internal class SimplifyNegatedBinaryExpressionInspection :

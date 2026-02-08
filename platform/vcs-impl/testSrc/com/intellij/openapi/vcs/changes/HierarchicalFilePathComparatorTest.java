@@ -11,7 +11,12 @@ import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
+import java.util.TreeSet;
 
 public class HierarchicalFilePathComparatorTest extends TestCase {
   public void testInOneDirectory() {

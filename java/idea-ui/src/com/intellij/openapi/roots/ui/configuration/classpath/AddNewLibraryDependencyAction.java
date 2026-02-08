@@ -12,7 +12,8 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 
 class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
   private final StructureConfigurableContext myContext;

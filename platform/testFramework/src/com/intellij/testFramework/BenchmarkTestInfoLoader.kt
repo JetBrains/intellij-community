@@ -2,7 +2,8 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.diagnostic.logger
-import java.util.*
+import java.util.ServiceConfigurationError
+import java.util.ServiceLoader
 
 class BenchmarkTestInfoLoader {
   companion object {

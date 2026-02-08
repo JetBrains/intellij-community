@@ -5,27 +5,48 @@
 package org.jetbrains.kotlin.idea.caches.resolve.util
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ParameterDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
-import org.jetbrains.kotlin.load.java.structure.*
-import org.jetbrains.kotlin.load.java.structure.impl.*
+import org.jetbrains.kotlin.load.java.structure.JavaConstructor
+import org.jetbrains.kotlin.load.java.structure.JavaElement
+import org.jetbrains.kotlin.load.java.structure.JavaField
+import org.jetbrains.kotlin.load.java.structure.JavaMember
+import org.jetbrains.kotlin.load.java.structure.JavaMethod
+import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
+import org.jetbrains.kotlin.load.java.structure.impl.JavaConstructorImpl
+import org.jetbrains.kotlin.load.java.structure.impl.JavaElementImpl
+import org.jetbrains.kotlin.load.java.structure.impl.JavaFieldImpl
+import org.jetbrains.kotlin.load.java.structure.impl.JavaMethodImpl
 import org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.jvm.JavaDescriptorResolver
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
+@K1Deprecation
 fun PsiMethod.getJavaMethodDescriptor(): FunctionDescriptor? = javaResolutionFacade()?.let { getJavaMethodDescriptor(it) }
 
 private fun PsiMethod.getJavaMethodDescriptor(resolutionFacade: ResolutionFacade): FunctionDescriptor? {
@@ -56,8 +77,10 @@ private fun PsiMethod.getJavaPropertyDescriptorForAnnotationMethod(resolutionFac
     return method.getJavaDescriptorResolver(resolutionFacade)?.resolveKotlinPropertyForJavaMethod(JavaMethodImpl(psiJavaSource))
 }
 
+@K1Deprecation
 fun PsiClass.getJavaClassDescriptor() = javaResolutionFacade()?.let { getJavaClassDescriptor(it) }
 
+@K1Deprecation
 fun PsiClass.getJavaClassDescriptor(resolutionFacade: ResolutionFacade): ClassDescriptor? {
     val psiClass = originalElement as? PsiClass ?: return null
     val sourceFactory = JavaElementSourceFactory.getInstance(resolutionFacade.project)
@@ -73,6 +96,7 @@ private fun PsiField.getJavaFieldDescriptor(resolutionFacade: ResolutionFacade):
     return field.getJavaDescriptorResolver(resolutionFacade)?.resolveField(JavaFieldImpl(psiJavaSource))
 }
 
+@K1Deprecation
 fun PsiMember.getJavaMemberDescriptor(resolutionFacade: ResolutionFacade): DeclarationDescriptor? {
     return when (this) {
         is PsiClass -> getJavaClassDescriptor(resolutionFacade)
@@ -82,11 +106,14 @@ fun PsiMember.getJavaMemberDescriptor(resolutionFacade: ResolutionFacade): Decla
     }
 }
 
+@K1Deprecation
 fun PsiMember.getJavaMemberDescriptor(): DeclarationDescriptor? = javaResolutionFacade()?.let { getJavaMemberDescriptor(it) }
 
+@K1Deprecation
 fun PsiMember.getJavaOrKotlinMemberDescriptor(): DeclarationDescriptor? =
     javaResolutionFacade()?.let { getJavaOrKotlinMemberDescriptor(it) }
 
+@K1Deprecation
 fun PsiMember.getJavaOrKotlinMemberDescriptor(resolutionFacade: ResolutionFacade): DeclarationDescriptor? {
     return when (val callable = unwrapped) {
         is PsiMember -> getJavaMemberDescriptor(resolutionFacade)
@@ -98,10 +125,12 @@ fun PsiMember.getJavaOrKotlinMemberDescriptor(resolutionFacade: ResolutionFacade
     }
 }
 
+@K1Deprecation
 fun PsiParameter.getParameterDescriptor(): ParameterDescriptor? = javaResolutionFacade()?.let {
     getParameterDescriptor(it)
 }
 
+@K1Deprecation
 fun PsiParameter.getParameterDescriptor(resolutionFacade: ResolutionFacade): ParameterDescriptor? {
     val method = declarationScope as? PsiMethod ?: return null
     val methodDescriptor = method.getJavaMethodDescriptor(resolutionFacade) ?: return null
@@ -123,6 +152,7 @@ fun PsiParameter.getParameterDescriptor(resolutionFacade: ResolutionFacade): Par
     throw AssertionError("Can't get parameter descriptor with index = $parameterIndex")
 }
 
+@K1Deprecation
 fun PsiClass.resolveToDescriptor(
     resolutionFacade: ResolutionFacade,
     declarationTranslator: (KtClassOrObject) -> KtClassOrObject? = { it }
@@ -179,8 +209,10 @@ private fun <T : DeclarationDescriptorWithSource> Collection<T>.findByJavaElemen
     }
 }
 
+@K1Deprecation
 fun PsiElement.hasJavaResolutionFacade(): Boolean = this.originalElement.containingFile != null
 
+@K1Deprecation
 fun PsiElement.javaResolutionFacade() =
     KotlinCacheService.getInstance(project).getResolutionFacadeByFile(
         this.originalElement.containingFile ?: reportCouldNotCreateJavaFacade(),

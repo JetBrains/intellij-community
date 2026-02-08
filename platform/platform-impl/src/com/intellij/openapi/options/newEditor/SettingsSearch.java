@@ -10,7 +10,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SearchTextField;
 
-import javax.swing.*;
+import javax.swing.InputMap;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;

@@ -23,21 +23,29 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 import org.jspecify.annotations.NonNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.enumeration;
+import static java.util.Collections.unmodifiableList;
 import static org.jetbrains.concurrency.Promises.createError;
 
 public class StructureTreeModel<Structure extends AbstractTreeStructure>

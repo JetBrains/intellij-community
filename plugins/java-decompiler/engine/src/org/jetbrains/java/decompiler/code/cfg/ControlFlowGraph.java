@@ -1,7 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.code.cfg;
 
-import org.jetbrains.java.decompiler.code.*;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.ExceptionHandler;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.code.JumpInstruction;
+import org.jetbrains.java.decompiler.code.SwitchInstruction;
 import org.jetbrains.java.decompiler.code.interpreter.InstructionImpact;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
@@ -13,8 +18,16 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class ControlFlowGraph {
   public int last_id = 0;

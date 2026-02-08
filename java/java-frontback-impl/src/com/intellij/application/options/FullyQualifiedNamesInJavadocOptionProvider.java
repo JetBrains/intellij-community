@@ -9,10 +9,15 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
-import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.*;
+import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
+import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
+import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT;
 
 public class FullyQualifiedNamesInJavadocOptionProvider {
 

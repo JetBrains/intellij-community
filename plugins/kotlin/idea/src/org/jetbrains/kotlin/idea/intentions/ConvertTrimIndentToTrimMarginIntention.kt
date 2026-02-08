@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Holder.calculateIndent
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class ConvertTrimIndentToTrimMarginIntention : SelfTargetingIntention<KtCallExpression>(
     KtCallExpression::class.java, KotlinBundle.messagePointer("convert.to.trim.margin")
 ) {

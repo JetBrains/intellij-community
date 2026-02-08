@@ -4,8 +4,13 @@ package com.intellij.codeInsight
 import com.intellij.model.Symbol
 import com.intellij.model.psi.ImplicitReferenceProvider
 import com.intellij.model.psi.PsiSymbolService
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
 import com.intellij.psi.LambdaUtil.resolveFunctionalInterfaceClass
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFunctionalExpression
+import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiTypeElement
 import com.intellij.psi.util.PsiUtil.isJavaToken
 import com.intellij.psi.util.PsiUtil.resolveClassInType
 

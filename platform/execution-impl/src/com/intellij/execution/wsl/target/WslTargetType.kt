@@ -1,7 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.BrowsableTargetEnvironmentType
+import com.intellij.execution.target.CustomToolLanguageRuntimeType
+import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.TargetBrowserHints
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.wsl.target.wizard.WslTargetCustomToolStep
 import com.intellij.execution.wsl.target.wizard.WslTargetIntrospectionStep
 import com.intellij.execution.wsl.target.wizard.WslTargetLanguageStep

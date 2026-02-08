@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 /**
@@ -36,14 +36,6 @@ public interface UsageContextPanel extends Disposable {
    */
   @Deprecated
   void updateLayout(@Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
-
-  /**
-   * @deprecated Use {@link #updateLayout(Project, List, UsageView)}
-   */
-  @Deprecated(forRemoval = true)
-  default void updateLayout(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    updateLayout(infos);
-  }
 
   @NotNull
   JComponent createComponent();

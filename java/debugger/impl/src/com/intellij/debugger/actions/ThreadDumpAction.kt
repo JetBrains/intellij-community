@@ -8,7 +8,11 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.suspendAllAndEvaluate
-import com.intellij.debugger.impl.*
+import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.ThreadDumpItemsProvider
+import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.debugger.statistics.ThreadDumpStatus
@@ -31,7 +35,25 @@ import com.intellij.unscramble.toDumpItems
 import com.intellij.util.lang.JavaVersion
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.jetbrains.jdi.ThreadReferenceImpl
-import com.sun.jdi.*
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.BooleanType
+import com.sun.jdi.BooleanValue
+import com.sun.jdi.ClassType
+import com.sun.jdi.Field
+import com.sun.jdi.IncompatibleThreadStateException
+import com.sun.jdi.IntegerType
+import com.sun.jdi.IntegerValue
+import com.sun.jdi.InvalidStackFrameException
+import com.sun.jdi.Location
+import com.sun.jdi.LongType
+import com.sun.jdi.LongValue
+import com.sun.jdi.MonitorInfo
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.StringReference
+import com.sun.jdi.ThreadReference
+import com.sun.jdi.Type
+import com.sun.jdi.Value
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
@@ -105,7 +127,7 @@ class ThreadDumpAction {
 
         if (providers.any { it.requiresEvaluation }) {
 
-          val vm = context.debugProcess!!.virtualMachineProxy
+          val vm = VirtualMachineProxyImpl.getCurrent()
           // If the previous dump is still being evaluated, only show the Java platform thread dump and do not start a new evaluation.
           if (vm.getUserData(EVALUATION_IN_PROGRESS) == true) {
             sendJavaPlatformThreads()
@@ -138,7 +160,7 @@ class ThreadDumpAction {
           }
         }
         else {
-          val vm = context.debugProcess!!.virtualMachineProxy
+          val vm = VirtualMachineProxyImpl.getCurrent()
           vm.suspend()
           try {
             sendAllItems(null)
@@ -164,7 +186,7 @@ class ThreadDumpAction {
     }
 
     fun buildJavaPlatformThreadDump(context: DebuggerContextImpl): List<ThreadState> {
-      val vm = context.debugProcess!!.virtualMachineProxy
+      val vm = VirtualMachineProxyImpl.getCurrent()
       vm.suspend()
       try {
         return buildThreadStates(vm)
@@ -541,7 +563,7 @@ private fun splitFirstTwoAndRemainingLines(text: String): Triple<String, String,
 
 internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
   override fun getProvider(context: DebuggerContextImpl) = object : ThreadDumpItemsProvider {
-    val vm = context.debugProcess!!.virtualMachineProxy
+    val vm = VirtualMachineProxyImpl.getCurrent()
 
     private val enabled =
       Registry.`is`("debugger.thread.dump.include.virtual.threads") &&

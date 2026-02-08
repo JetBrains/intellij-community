@@ -10,9 +10,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.AFTER_SOFT_WRAP;
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED;

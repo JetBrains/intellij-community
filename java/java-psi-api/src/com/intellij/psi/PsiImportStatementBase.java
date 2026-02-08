@@ -5,7 +5,7 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java {@code import} or {@code import static} statement.
+ * Represents a Java {@code import}, {@code import static} or {@code import module} statement.
  */
 public interface PsiImportStatementBase extends PsiElement {
   /**

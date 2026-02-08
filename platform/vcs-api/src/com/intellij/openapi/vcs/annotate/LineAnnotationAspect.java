@@ -8,7 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Represents one part of a line annotation which is shown in the editor when the "Annotate"

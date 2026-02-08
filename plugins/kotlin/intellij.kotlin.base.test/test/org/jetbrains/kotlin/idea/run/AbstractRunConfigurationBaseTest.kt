@@ -21,8 +21,12 @@ import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.KotlinCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import java.io.File
 

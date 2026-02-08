@@ -17,7 +17,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
+import javax.swing.JButton;
 import java.util.Collection;
 
 

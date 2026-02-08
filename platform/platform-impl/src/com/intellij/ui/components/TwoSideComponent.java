@@ -6,8 +6,12 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 /**
  * This component wraps 'left' and 'right' components (for example two toolbars in wide header):<ul>

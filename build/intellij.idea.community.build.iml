@@ -17,6 +17,7 @@
       <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-jvm-rules" />
       <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-out" />
       <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-testlogs" />
+      <excludeFolder url="file://$MODULE_DIR$/mcp-servers/ij-proxy/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

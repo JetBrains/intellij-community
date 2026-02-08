@@ -11,15 +11,22 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
-import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.*
+import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.MATCH
+import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.NO_MATCH
+import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.UNSURE
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -66,6 +73,7 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
 
             val cachedValue = CachedValuesManager.getManager(target.project).createCachedValue(
                 {
+                    @OptIn(KaPlatformInterface::class)
                     CachedValueProvider.Result(
                         PsiBasedClassResolver(target),
                         KotlinModificationTrackerFactory.getInstance(target.project).createProjectWideSourceModificationTracker(),

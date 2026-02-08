@@ -6,8 +6,18 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtWhenEntry
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.USwitchClauseExpressionWithBody
+import org.jetbrains.uast.UYieldExpression
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.kinds.KotlinSpecialExpressionKinds
+import org.jetbrains.uast.withMargin
 
 @ApiStatus.Internal
 class KotlinUSwitchEntry(

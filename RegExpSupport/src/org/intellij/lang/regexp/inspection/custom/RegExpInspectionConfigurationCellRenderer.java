@@ -7,7 +7,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 

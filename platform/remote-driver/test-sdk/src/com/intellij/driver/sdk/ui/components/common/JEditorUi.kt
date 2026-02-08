@@ -5,9 +5,20 @@ import com.intellij.driver.client.impl.DriverCallException
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RemoteMouseButton
-import com.intellij.driver.sdk.*
+import com.intellij.driver.sdk.DeclarativeInlayRenderer
+import com.intellij.driver.sdk.Document
+import com.intellij.driver.sdk.Editor
+import com.intellij.driver.sdk.HighlightInfo
+import com.intellij.driver.sdk.HintRenderer
+import com.intellij.driver.sdk.Inlay
+import com.intellij.driver.sdk.InlineCompletionLineRenderer
+import com.intellij.driver.sdk.ScrollType
+import com.intellij.driver.sdk.getHighlights
+import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.logicalPosition
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
@@ -22,12 +33,15 @@ import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.rdTarget
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
+import com.intellij.driver.sdk.wait
+import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitNotNull
+import com.intellij.openapi.editor.markup.EffectType
 import org.intellij.lang.annotations.Language
 import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration
-import com.intellij.openapi.editor.markup.EffectType
 import kotlin.time.Duration.Companion.milliseconds
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {

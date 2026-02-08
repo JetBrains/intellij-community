@@ -8,11 +8,19 @@ import com.intellij.util.ui.JLabelUtil;
 import com.intellij.util.ui.SwingTextTrimmer;
 import sun.swing.SwingUtilities2;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.basic.BasicLabelUI;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 public class DarculaLabelUI extends BasicLabelUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})

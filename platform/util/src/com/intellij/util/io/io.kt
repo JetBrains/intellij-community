@@ -12,7 +12,7 @@ import java.io.OutputStream
 import java.io.Reader
 import java.net.SocketTimeoutException
 import java.nio.ByteBuffer
-import java.util.*
+import java.util.Base64
 import kotlin.math.min
 
 fun Reader.readCharSequence(length: Int): CharSequence {

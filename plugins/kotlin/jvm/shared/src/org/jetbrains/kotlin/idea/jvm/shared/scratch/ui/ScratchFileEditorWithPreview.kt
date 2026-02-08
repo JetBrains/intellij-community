@@ -23,7 +23,15 @@ import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.*
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ExplainInfo
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.InlayScratchOutputHandler
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.PreviewEditorScratchOutputHandler
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.PreviewOutputBlocksManager
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandler
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandlerAdapter
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.releaseToolWindowHandler
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.requestToolWindowHandler
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 abstract class ScratchFileEditorWithPreview(

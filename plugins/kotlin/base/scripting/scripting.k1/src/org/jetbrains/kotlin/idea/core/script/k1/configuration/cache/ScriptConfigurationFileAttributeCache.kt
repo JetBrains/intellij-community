@@ -22,7 +22,11 @@ import java.io.DataOutput
 import java.io.Serializable
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.withDefaultsFrom
 import kotlin.script.experimental.jvm.util.toClassPathOrEmpty
 

@@ -16,7 +16,11 @@ import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.Invoker
 import com.intellij.util.concurrency.InvokerSupplier
 import com.intellij.util.ui.tree.TreeUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.concurrency.AsyncPromise

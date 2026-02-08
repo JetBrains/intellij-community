@@ -14,7 +14,11 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics
 import java.awt.event.MouseEvent
 
 /**

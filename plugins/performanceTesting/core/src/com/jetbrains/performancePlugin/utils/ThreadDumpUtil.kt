@@ -6,7 +6,13 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime

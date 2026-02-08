@@ -5,11 +5,22 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
+import org.jetbrains.kotlin.idea.gradleTooling.compilationFullName
+import org.jetbrains.kotlin.idea.gradleTooling.get
+import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
+import org.jetbrains.kotlin.idea.gradleTooling.getTargets
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
-import org.jetbrains.plugins.gradle.model.*
+import org.jetbrains.plugins.gradle.model.AbstractExternalDependency
+import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
+import org.jetbrains.plugins.gradle.model.DefaultExternalProjectDependency
+import org.jetbrains.plugins.gradle.model.ExternalDependency
+import org.jetbrains.plugins.gradle.model.ExternalLibraryDependency
+import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
+import org.jetbrains.plugins.gradle.model.FileCollectionDependency
 import java.io.File
 import java.lang.reflect.Method
 

@@ -22,7 +22,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Map;

@@ -11,6 +11,7 @@ import ai.grazie.rules.settings.Setting
 import ai.grazie.rules.toolkit.LanguageToolkit
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.LangDetector
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.mlec.LanguageHolder
@@ -19,8 +20,11 @@ import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.Companion.runWithSentenceBatcher
 import com.intellij.grazie.rule.SentenceTokenizer.tokenize
+import com.intellij.grazie.spellcheck.SpellingTextChecker
+import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
 import java.util.concurrent.ConcurrentHashMap
@@ -72,16 +76,29 @@ fun GrazieTextRange.Companion.coveringIde(ranges: Array<GrazieTextRange>): TextR
   return TextRange(ranges.minOf { it.start }, ranges.maxOf { it.endExclusive })
 }
 
-fun TextContent.toProofreadingContext(): ProofreadingContext {
+fun TextContent.toProofreadingContext(languageDetectionRequired: Boolean = true): ProofreadingContext {
   val content = this
   val stripPrefixLength = HighlightingUtil.stripPrefix(content)
-  val language = LangDetector.getLanguage(content.toString().substring(stripPrefixLength)) ?: UNKNOWN
+  val language = if (languageDetectionRequired) {
+    LangDetector.getLanguage(content.toString().substring(stripPrefixLength)) ?: UNKNOWN
+  } else {
+    UNKNOWN
+  }
   return object : ProofreadingContext {
     override fun getText(): TextContent = content
     override fun getLanguage(): Language = language
     override fun getStripPrefix(): String = content.toString().substring(0, stripPrefixLength)
   }
 }
+
+fun ProofreadingContext.shouldCheckGrammarStyle(): Boolean =
+  this.text.domain in GrazieInspection.checkedDomains()
+  && seemsNatural(this.text)
+  && this.language != UNKNOWN
+  && HighlightingUtil.findInstalledLang(this.language) != null
+
+internal fun TextChecker.isSpelling(): Boolean = this is SpellingTextChecker
+internal fun TextChecker.isGrammar(): Boolean = this !is SpellingTextChecker
 
 suspend fun <T : LanguageHolder<SentenceBatcher<SentenceWithProblems>>> getProblems(context: ProofreadingContext, parserClass: Class<T>): List<Problem>? {
   val stripPrefixLength = context.stripPrefix.length

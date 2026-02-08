@@ -19,8 +19,12 @@ import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.NonNls
-import java.io.*
-import java.util.*
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.Objects
 
 class GitIndexVirtualFile(
   private val project: Project,

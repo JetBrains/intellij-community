@@ -5,13 +5,21 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.*;
+import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.applicableByKind;
+import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.applicableByName;
+import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.inapplicable;
+import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.unknown;
 
 public class ReferenceListWeigher extends ProximityWeigher {
   public static final ReferenceListWeigher INSTANCE = new ReferenceListWeigher();

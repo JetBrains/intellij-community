@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.ThreadingAssertions.assertEventDispatchThread
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.permissions.KaAnalysisPermissionRegistry
 
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAnalysisPermissionRegistr
  * All resolve should be banned from the UI thread. This method is needed for the transition period to document
  * places that are not fixed yet.
  */
+@K1Deprecation
 fun <T> allowResolveInDispatchThread(runnable: () -> T): T {
     return ResolveInDispatchThreadManager.runWithResolveAllowedInDispatchThread(runnable)
 }
@@ -29,6 +31,7 @@ fun <T> allowResolveInDispatchThread(runnable: () -> T): T {
  *
  * (A better check is needed instead that would assert no resolve result are obtained outside of caches.)
  */
+@K1Deprecation
 fun <T> allowCachedResolveInDispatchThread(runnable: () -> T): T {
     return ResolveInDispatchThreadManager.runWithResolveAllowedInDispatchThread(runnable)
 }
@@ -36,6 +39,7 @@ fun <T> allowCachedResolveInDispatchThread(runnable: () -> T): T {
 /**
  * Force resolve check in tests as it disabled by default.
  */
+@K1Deprecation
 @TestOnly
 fun <T> forceCheckForResolveInDispatchThreadInTests(errorHandler: (() -> Unit)? = null, runnable: () -> T): T {
     return ResolveInDispatchThreadManager.runWithForceCheckForResolveInDispatchThreadInTests(errorHandler, runnable)
@@ -43,9 +47,11 @@ fun <T> forceCheckForResolveInDispatchThreadInTests(errorHandler: (() -> Unit)? 
 
 private const val RESOLVE_IN_DISPATCH_THREAD_ERROR_MESSAGE = "Resolve is not allowed in dispatch thread!"
 
+@K1Deprecation
 class ResolveInDispatchThreadException(message: String? = null) :
     IllegalThreadStateException(message ?: RESOLVE_IN_DISPATCH_THREAD_ERROR_MESSAGE)
 
+@K1Deprecation
 @ApiStatus.Internal
 object ResolveInDispatchThreadManager {
     private val LOG = Logger.getInstance(ResolveInDispatchThreadManager::class.java)

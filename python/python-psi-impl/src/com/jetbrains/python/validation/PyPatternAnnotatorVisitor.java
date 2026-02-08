@@ -10,10 +10,34 @@ import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.PyRemoveElementFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAsPattern;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCaseClause;
+import com.jetbrains.python.psi.PyDoubleStarPattern;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyGroupPattern;
+import com.jetbrains.python.psi.PyKeyValuePattern;
+import com.jetbrains.python.psi.PyKeywordPattern;
+import com.jetbrains.python.psi.PyLiteralPattern;
+import com.jetbrains.python.psi.PyMappingPattern;
+import com.jetbrains.python.psi.PyMatchStatement;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PyOrPattern;
+import com.jetbrains.python.psi.PyPattern;
+import com.jetbrains.python.psi.PyPatternArgumentList;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PySequencePattern;
+import com.jetbrains.python.psi.PySingleStarPattern;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyValuePattern;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 

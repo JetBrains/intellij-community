@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  pkg/A.class
+End of files
+Cleaning output files:
+  pkg/Client.class
+End of files
+Compiling files:
+  java/common/moveClassToAnotherRoot/a/pkg/Client.java
+  java/common/moveClassToAnotherRoot/b/pkg/A.java
+End of files
+------------------------------------------
+Exit code: OK

@@ -15,7 +15,11 @@
  */
 package git4idea.push
 
-import git4idea.push.GitPushNativeResult.Type.*
+import git4idea.push.GitPushNativeResult.Type.FORCED_UPDATE
+import git4idea.push.GitPushNativeResult.Type.NEW_REF
+import git4idea.push.GitPushNativeResult.Type.REJECTED
+import git4idea.push.GitPushNativeResult.Type.SUCCESS
+import git4idea.push.GitPushNativeResult.Type.UP_TO_DATE
 import git4idea.push.GitPushNativeResultParser.parse
 import org.junit.Assert.assertEquals
 import org.junit.Test

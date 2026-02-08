@@ -85,10 +85,10 @@ class AndroidInstaller : IdeInstaller {
     val downloadUrl = createDownloadableUrl(buildNumber, OS.CURRENT)
     val asFileName = downloadUrl.split("/").last()
     val globalPaths by di.instance<GlobalPaths>()
-    val zipFile = globalPaths.getCacheDirectoryFor("android-studio").resolve(asFileName)
+    val zipFile = globalPaths.getLocalCacheDirectoryFor("android-studio").resolve(asFileName)
     HttpClient.downloadIfMissing(downloadUrl, zipFile)
 
-    val installDir = globalPaths.getCacheDirectoryFor("builds") / "AI-$buildNumber"
+    val installDir = globalPaths.getLocalCacheDirectoryFor("builds") / "AI-$buildNumber"
 
     installDir.deleteRecursivelyQuietly()
 

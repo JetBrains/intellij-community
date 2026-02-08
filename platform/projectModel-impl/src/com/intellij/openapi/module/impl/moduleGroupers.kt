@@ -1,7 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
-import com.intellij.openapi.module.*
+import com.intellij.openapi.module.LoadedModuleDescription
+import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleDescription
+import com.intellij.openapi.module.ModuleGrouper
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.UnloadedModuleDescription
+import com.intellij.openapi.module.isQualifiedModuleNamesEnabled
 import com.intellij.openapi.project.Project
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus

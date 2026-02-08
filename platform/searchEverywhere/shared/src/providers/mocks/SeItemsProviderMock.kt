@@ -8,7 +8,9 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
-import com.intellij.platform.searchEverywhere.providers.SeLog.*
+import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.SeLog.LIFE_CYCLE
+import com.intellij.platform.searchEverywhere.providers.SeLog.USER_ACTION
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay

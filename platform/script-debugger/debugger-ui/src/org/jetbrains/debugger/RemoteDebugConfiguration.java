@@ -27,7 +27,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 

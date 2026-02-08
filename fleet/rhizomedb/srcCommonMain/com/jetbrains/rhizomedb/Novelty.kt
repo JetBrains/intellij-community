@@ -2,8 +2,12 @@
 package com.jetbrains.rhizomedb
 
 import com.jetbrains.rhizomedb.impl.Editor
-import kotlinx.collections.immutable.*
 import fleet.util.removeShim
+import kotlinx.collections.immutable.ImmutableCollection
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentHashSetOf
 
 internal data class EAT(val e: EID, val a: Attribute<*>, val t: TX)
 

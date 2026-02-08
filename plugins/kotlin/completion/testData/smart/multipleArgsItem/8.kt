@@ -7,3 +7,5 @@ fun bar() {
 }
 
 // EXIST: "a, b"
+
+// IGNORE_K2

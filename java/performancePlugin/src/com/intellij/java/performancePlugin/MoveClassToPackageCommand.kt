@@ -5,7 +5,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -37,8 +39,10 @@ class MoveClassToPackageCommand(text: String, line: Int) : PlaybackCommandCorout
     val project = context.project
     val targetPackageName: String = extractCommandArgument(PREFIX)
 
-    val editor = readAction { FileEditorManager.getInstance(context.project).selectedTextEditor }
-                 ?: throw IllegalArgumentException("There is no selected editor")
+    val editor = readAction {
+      val fileEditorManager = FileEditorManager.getInstance(context.project)
+      fileEditorManager.selectedTextEditor ?: fileEditorManager.getAllEditors().firstNotNullOfOrNull { it as TextEditor }?.editor
+    } ?: throw IllegalArgumentException("Couldn't get text editor")
 
     val elementUnderCaret = readAction {
       PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.findElementAt(editor.caretModel.offset)

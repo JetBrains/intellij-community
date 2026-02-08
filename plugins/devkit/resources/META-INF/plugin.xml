@@ -23,7 +23,7 @@
   ]]></description>
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 
   <content namespace="jetbrains">

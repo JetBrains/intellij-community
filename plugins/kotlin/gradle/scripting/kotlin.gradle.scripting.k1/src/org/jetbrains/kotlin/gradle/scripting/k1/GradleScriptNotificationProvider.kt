@@ -18,7 +18,14 @@ import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptAction
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.*
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.dontCare
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.legacy
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.legacyOutside
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.notEvaluatedInLastImport
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.outsideAnything
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.standalone
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.standaloneLegacy
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.wasNotImportedAfterCreation
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.ScriptUnderRoot
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport

@@ -5,10 +5,10 @@ import com.intellij.designer.inspection.AbstractQuickFixManager;
 import com.intellij.designer.model.ErrorInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JViewport;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.List;
 

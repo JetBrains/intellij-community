@@ -4,7 +4,15 @@ package com.intellij.platform.pasta.common
 import andel.editor.RangeMarkerId
 import andel.editor.substring
 import andel.text.TextRange
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.Indexing
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.RetractableEntity
+import com.jetbrains.rhizomedb.entity
+import com.jetbrains.rhizomedb.exists
 import fleet.util.UID
 
 

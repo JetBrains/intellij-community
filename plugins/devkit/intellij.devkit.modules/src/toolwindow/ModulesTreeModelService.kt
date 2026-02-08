@@ -2,8 +2,6 @@
 package com.intellij.devkit.modules.toolwindow
 
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
 import javax.swing.tree.DefaultTreeModel
 
 /**

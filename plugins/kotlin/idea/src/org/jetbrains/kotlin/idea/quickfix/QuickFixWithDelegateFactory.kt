@@ -11,7 +11,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 open class QuickFixWithDelegateFactory(
     delegateFactory: () -> IntentionAction?
 ) : IntentionAction, ReportingClassSubstitutor {
@@ -51,18 +53,22 @@ open class QuickFixWithDelegateFactory(
     }
 }
 
+@K1Deprecation
 class LowPriorityQuickFixWithDelegateFactory(
     delegateFactory: () -> IntentionAction?
 ) : QuickFixWithDelegateFactory(delegateFactory), LowPriorityAction
 
+@K1Deprecation
 class HighPriorityQuickFixWithDelegateFactory(
     delegateFactory: () -> IntentionAction?
 ) : QuickFixWithDelegateFactory(delegateFactory), HighPriorityAction
 
+@K1Deprecation
 enum class IntentionActionPriority {
     LOW, NORMAL, HIGH
 }
 
+@K1Deprecation
 fun IntentionAction.detectPriority(): IntentionActionPriority {
     return when (this) {
         is LowPriorityAction -> IntentionActionPriority.LOW
@@ -71,6 +77,7 @@ fun IntentionAction.detectPriority(): IntentionActionPriority {
     }
 }
 
+@K1Deprecation
 fun QuickFixWithDelegateFactory(priority: IntentionActionPriority, createAction: () -> IntentionAction?): QuickFixWithDelegateFactory {
     return when (priority) {
         IntentionActionPriority.NORMAL -> QuickFixWithDelegateFactory(createAction)

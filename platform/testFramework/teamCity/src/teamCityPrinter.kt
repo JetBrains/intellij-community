@@ -2,7 +2,7 @@
 package com.intellij.platform.testFramework.teamCity
 
 import java.io.PrintStream
-import java.util.*
+import java.util.UUID
 
 // Functions in this file only handle TeamCity message formatting.
 

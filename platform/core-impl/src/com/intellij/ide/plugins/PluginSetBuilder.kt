@@ -11,7 +11,7 @@ import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Arrays
 import java.util.function.Supplier
 
 @ApiStatus.Internal
@@ -416,7 +416,8 @@ private val pluginModuleVisibilityCheck by lazy {
   when (System.getProperty("intellij.platform.plugin.modules.check.visibility")) {
     "warning" -> PluginModuleVisibilityCheckOption.REPORT_WARNING
     "error" -> PluginModuleVisibilityCheckOption.REPORT_ERROR
-    else -> PluginModuleVisibilityCheckOption.DISABLED
+    "disabled" -> PluginModuleVisibilityCheckOption.DISABLED
+    else -> PluginModuleVisibilityCheckOption.REPORT_WARNING
   }
 }
 

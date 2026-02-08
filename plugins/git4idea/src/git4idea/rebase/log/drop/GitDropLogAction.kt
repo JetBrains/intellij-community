@@ -17,7 +17,11 @@ import com.intellij.vcs.log.ui.table.size
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
-import git4idea.rebase.log.*
+import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.rebase.log.GitMultipleCommitEditingAction
+import git4idea.rebase.log.executeInMemoryWithFallback
+import git4idea.rebase.log.getOrLoadDetails
+import git4idea.rebase.log.notifySuccess
 import git4idea.ui.branch.GitBranchPopupActions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

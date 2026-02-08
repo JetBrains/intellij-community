@@ -3,7 +3,11 @@ package com.intellij.tasks.fogbugz;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositoryType;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NotNullFunction;
@@ -18,7 +22,7 @@ import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.Date;

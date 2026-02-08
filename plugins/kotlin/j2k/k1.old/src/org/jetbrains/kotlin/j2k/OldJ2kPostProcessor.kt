@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
@@ -12,6 +16,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -24,6 +29,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
+@K1Deprecation
 class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcessor {
     override val phasesCount: Int = 1
 

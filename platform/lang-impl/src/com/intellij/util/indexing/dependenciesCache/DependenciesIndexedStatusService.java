@@ -14,9 +14,18 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import kotlin.Pair;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 

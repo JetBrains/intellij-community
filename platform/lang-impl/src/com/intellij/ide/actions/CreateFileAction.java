@@ -28,7 +28,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTextField;
 import java.io.File;
 import java.util.List;
 import java.util.function.Consumer;

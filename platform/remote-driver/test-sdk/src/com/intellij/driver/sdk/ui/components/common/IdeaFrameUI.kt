@@ -81,6 +81,12 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     }
   }
 
+  fun saveAll() {
+    step(name = "Save All files") {
+      driver.invokeAction("SaveAll")
+    }
+  }
+
   fun maximize() = driver.withContext(OnDispatcher.EDT) {
     ideaFrameComponent.setExtendedState(ideaFrameComponent.getExtendedState().or(JFrame.MAXIMIZED_BOTH))
   }

@@ -24,10 +24,19 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBInsets;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.Box;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected final PsiMethod myMethod;

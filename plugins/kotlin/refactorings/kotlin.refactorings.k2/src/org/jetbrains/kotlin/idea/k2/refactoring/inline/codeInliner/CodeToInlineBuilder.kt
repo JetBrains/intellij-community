@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeToIn
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ResolvedImportPath
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.ImportPath
 
 open class CodeToInlineBuilder(

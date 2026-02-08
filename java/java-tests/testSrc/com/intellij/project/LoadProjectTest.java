@@ -20,7 +20,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.serviceContainer.ComponentManagerImpl;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 import java.nio.file.Path;

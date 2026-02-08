@@ -3,12 +3,10 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UsageSearchContext
@@ -64,9 +62,6 @@ class HeavyPlatformUtilitiesTest {
 
   @Test
   fun `PsiSearchHelper#processElementsWithWord can be canceled on project scope`() = `PsiSearchHelperImpl cancellation test`(GlobalSearchScope.projectScope(project.get()))
-
-  @Test
-  fun `PsiSearchHelper#processElementsWithWord can be canceled on file scope`() = `PsiSearchHelperImpl cancellation test`(runReadAction { LocalSearchScope(file.get()) })
 
   fun `PsiSearchHelperImpl cancellation test`(scope: SearchScope): Unit = timeoutRunBlocking {
     val prj = project.get()

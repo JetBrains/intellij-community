@@ -20,7 +20,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;

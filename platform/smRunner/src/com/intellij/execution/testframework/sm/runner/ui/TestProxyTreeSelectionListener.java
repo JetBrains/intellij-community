@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

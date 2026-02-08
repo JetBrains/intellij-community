@@ -10,7 +10,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import java.util.*
+import java.util.LinkedList
 import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.SwingUtilities

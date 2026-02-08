@@ -3,7 +3,11 @@ package com.intellij.platform.navbar.frontend.actions
 
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
 
 internal class NavBarContextMenuActionGroup : ActionGroup() {
 

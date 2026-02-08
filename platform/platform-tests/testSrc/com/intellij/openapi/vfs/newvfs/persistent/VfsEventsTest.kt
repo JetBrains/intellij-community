@@ -4,7 +4,13 @@ package com.intellij.openapi.vfs.newvfs.persistent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -25,7 +31,7 @@ import org.junit.runners.model.Statement
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.moveTo
 import kotlin.io.path.writeText

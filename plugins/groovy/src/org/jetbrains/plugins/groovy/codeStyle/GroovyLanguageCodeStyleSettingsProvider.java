@@ -11,7 +11,14 @@ import com.intellij.application.options.codeStyle.properties.IntegerAccessor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaPackageEntryTableAccessor;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
@@ -21,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -32,7 +40,11 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
-import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINES_SETTINGS;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.COMMENTER_SETTINGS;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**

@@ -30,8 +30,7 @@ kotlin {
 
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
+                implementation(kotlin("test"))
             }
         }
 
@@ -60,9 +59,6 @@ kotlin {
 
         jvm().compilations["test"].defaultSourceSet {
             dependsOn(jvmAndJsTest)
-            dependencies {
-                implementation(kotlin("test-junit"))
-            }
         }
 
         js().compilations["main"].defaultSourceSet {
@@ -76,9 +72,6 @@ kotlin {
         js().compilations["test"].defaultSourceSet {
             dependsOn(jvmAndJsTest)
             dependsOn(linuxAndJsTest)
-            dependencies {
-                implementation(kotlin("test-js"))
-            }
         }
 
         linuxX64().compilations["main"].defaultSourceSet {

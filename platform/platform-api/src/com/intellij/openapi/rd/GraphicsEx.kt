@@ -3,7 +3,11 @@ package com.intellij.openapi.rd
 
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.RenderingHints
 
 fun Graphics2D.fill2DRect(rect: Rectangle, color: Color) {
     this.color = color

@@ -588,7 +588,6 @@ f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - s:showXBreakpointEditorBalloon(com.intellij.openapi.project.Project,java.awt.Point,javax.swing.JComponent,Z,Z,com.intellij.xdebugger.breakpoints.XBreakpoint):V
 c:com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 - sf:EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY:com.intellij.openapi.util.Key
-- <init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.messages.MessageBusConnection):V
 - getCurrentFile():com.intellij.openapi.vfs.VirtualFile
@@ -1053,7 +1052,6 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - getChildren():java.util.List
 - getLoadedChildren():java.util.List
 - getWatchChildren():java.util.List
-- getWatchExpressions():java.util.List
 - getWatches():java.util.List
 - headerNodesCount():I
 - moveDown(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode):V

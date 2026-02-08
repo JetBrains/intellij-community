@@ -10,10 +10,10 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.ui.ScrollingUtil
+import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.block.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.block.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
-import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
 
 internal class CommandSearchAction : TerminalPromotedEditorAction(Handler()), ActionRemoteBehaviorSpecification.Disabled {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

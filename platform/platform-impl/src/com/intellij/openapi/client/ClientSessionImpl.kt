@@ -15,6 +15,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -28,7 +29,12 @@ import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.SystemProperties
 import com.intellij.util.messages.MessageBus
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.plus
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -94,7 +100,7 @@ abstract class ClientSessionImpl(
   final override fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    listenerCallbacks: MutableList<in Runnable>?
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>?
   ) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)

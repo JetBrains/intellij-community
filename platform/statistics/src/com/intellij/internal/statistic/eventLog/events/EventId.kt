@@ -6,10 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
-import com.intellij.internal.statistic.eventLog.events.scheme.FUS_DESCRIPTION_REGISTRATION_ENABLED
-import com.intellij.internal.statistic.eventLog.events.scheme.RegisteredLogDescriptionsProcessor
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 
 /**
@@ -18,24 +15,10 @@ import java.util.function.Consumer
  * @constructor Initializes the BaseEventId instance with the provided group ID, event ID, recorder, and optional description.
  * Throws an [IllegalArgumentException] if the provided description is an empty string.
  *
- * @param groupId The ID of the event group to which this event belongs.
  * @param eventId The unique identifier for the event.
  * @param recorder The identifier for the recorder used to log the event.
- * @param description The unique identifier for the event.
- * The description is not an empty string.
- * The description is not null for new events.
- * The description is registered at event initialization using the [RegisteredLogDescriptionsProcessor].
- * There is no description in the memory if the environment variable [FUS_DESCRIPTION_REGISTRATION_ENABLED] is false.
- * Descriptions are stored in memory just for [com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter] and unit tests.
  */
-abstract class BaseEventId(groupId: String, val eventId: String, val recorder: String, description: String?) {
-  init {
-    if (description != null && description.isEmpty()) {
-      throw IllegalArgumentException("Recorder $recorder, event ID $eventId: the event description can't be empty string.")
-    }
-    RegisteredLogDescriptionsProcessor.registerEventDescription(groupId, eventId, description)
-  }
-
+abstract class BaseEventId(val eventId: String, val recorder: String) {
   internal fun processLoggers(log: (StatisticsEventLogger) -> Unit) {
     val errors = mutableListOf<Throwable>()
     for (p in StatisticsEventLogProviderUtil.getEventLogProvidersExt(recorder)) {
@@ -70,10 +53,8 @@ abstract class BaseEventId(groupId: String, val eventId: String, val recorder: S
 
 class EventId(
   private val group: EventLogGroup,
-  @NonNls @EventIdName eventId: String,
-  @NonNls description: String?
-) : BaseEventId(group.id, eventId, group.recorder, description) {
-
+  @EventIdName eventId: String
+) : BaseEventId(eventId, group.recorder) {
   fun log() {
     if (group.groupData.isEmpty()) {
       processLoggers { it.logAsync(group, eventId, false) }
@@ -102,18 +83,14 @@ class EventId(
 
   override fun getFields(): List<EventField<*>> = group.extendEventFields(emptyList())
 
-  override fun toString(): String {
-    return "EventId(eventId='$eventId')"
-  }
+  override fun toString(): String = "EventId(eventId='$eventId')"
 }
 
 class EventId1<in T>(
   private val group: EventLogGroup,
-  @NonNls @EventIdName eventId: String,
-  @NonNls description: String?,
+  @EventIdName eventId: String,
   private val field1: EventField<T>,
-) : BaseEventId(group.id, eventId, group.recorder, description) {
-
+) : BaseEventId(eventId, group.recorder) {
   fun log(value1: T) {
     processLoggers { it.logAsync(group, eventId, buildUsageData(value1).build(), false) }
   }
@@ -135,19 +112,15 @@ class EventId1<in T>(
 
   override fun getFields(): List<EventField<*>> = group.extendEventFields(listOf(field1))
 
-  override fun toString(): String {
-    return "EventId1(eventId='$eventId')"
-  }
+  override fun toString(): String = "EventId1(eventId='$eventId')"
 }
 
 class EventId2<in T1, in T2>(
   private val group: EventLogGroup,
-  @NonNls @EventIdName eventId: String,
-  @NonNls description: String?,
+  @EventIdName eventId: String,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
-) : BaseEventId(group.id, eventId, group.recorder, description) {
-
+) : BaseEventId(eventId, group.recorder) {
   fun log(value1: T1, value2: T2) {
     processLoggers { it.logAsync(group, eventId, buildUsageData(value1, value2).build(), false) }
   }
@@ -170,20 +143,16 @@ class EventId2<in T1, in T2>(
 
   override fun getFields(): List<EventField<*>> = group.extendEventFields(listOf(field1, field2))
 
-  override fun toString(): String {
-    return "EventId2(eventId='$eventId')"
-  }
+  override fun toString(): String = "EventId2(eventId='$eventId')"
 }
 
 class EventId3<in T1, in T2, in T3>(
   private val group: EventLogGroup,
-  @NonNls @EventIdName eventId: String,
-  @NonNls description: String?,
+  @EventIdName eventId: String,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
   private val field3: EventField<T3>,
-) : BaseEventId(group.id, eventId, group.recorder, description) {
-
+) : BaseEventId(eventId, group.recorder) {
   fun log(value1: T1, value2: T2, value3: T3) {
     processLoggers { it.logAsync(group, eventId, buildUsageData(value1, value2, value3).build(), false) }
   }
@@ -207,9 +176,7 @@ class EventId3<in T1, in T2, in T3>(
 
   override fun getFields(): List<EventField<*>> = group.extendEventFields(listOf(field1, field2, field3))
 
-  override fun toString(): String {
-    return "EventId3(eventId='$eventId')"
-  }
+  override fun toString(): String = "EventId3(eventId='$eventId')"
 }
 
 class EventDataCollector : ArrayList<EventPair<*>>() {
@@ -222,11 +189,9 @@ class EventDataCollector : ArrayList<EventPair<*>>() {
 
 class VarargEventId internal constructor(
   private val group: EventLogGroup,
-  @NonNls @EventIdName eventId: String,
-  @NonNls description: String?,
+  @EventIdName eventId: String,
   vararg fields: EventField<*>,
-) : BaseEventId(group.id, eventId, group.recorder, description) {
-
+) : BaseEventId(eventId, group.recorder) {
   private val fields = fields.toMutableList()
 
   fun log(vararg pairs: EventPair<*>) {
@@ -292,7 +257,5 @@ class VarargEventId internal constructor(
 
   override fun getFields(): List<EventField<*>> = group.extendEventFields(fields)
 
-  override fun toString(): String {
-    return "VarargEventId(eventId='$eventId')"
-  }
+  override fun toString(): String = "VarargEventId(eventId='$eventId')"
 }

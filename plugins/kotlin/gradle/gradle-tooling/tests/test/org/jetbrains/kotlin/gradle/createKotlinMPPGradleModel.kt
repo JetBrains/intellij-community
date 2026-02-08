@@ -1,9 +1,31 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
-import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.ExtraFeaturesImpl
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinDependenciesContainer
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
-import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationOutputImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradlePluginVersion
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinLanguageSettingsImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinSourceSetImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinTargetImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinTaskPropertiesImpl
+import org.jetbrains.kotlin.idea.projectModel.ExtraFeatures
+import org.jetbrains.kotlin.idea.projectModel.KotlinAndroidSourceSetInfo
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationCoordinates
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
+import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
+import org.jetbrains.kotlin.idea.projectModel.KotlinNativeCompilationExtensions
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
+import org.jetbrains.kotlin.idea.projectModel.KotlinWasmCompilationExtensions
 import org.jetbrains.kotlin.tooling.core.MutableExtras
 import org.jetbrains.kotlin.tooling.core.mutableExtrasOf
 

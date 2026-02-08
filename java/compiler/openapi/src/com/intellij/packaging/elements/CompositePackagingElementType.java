@@ -4,7 +4,11 @@ package com.intellij.packaging.elements;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Supplier;

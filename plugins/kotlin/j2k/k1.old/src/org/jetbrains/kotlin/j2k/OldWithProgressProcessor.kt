@@ -8,7 +8,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class OldWithProgressProcessor(private val progress: ProgressIndicator?, private val files: List<PsiJavaFile>?) : WithProgressProcessor {
     companion object {
         val DEFAULT = OldWithProgressProcessor(null, null)

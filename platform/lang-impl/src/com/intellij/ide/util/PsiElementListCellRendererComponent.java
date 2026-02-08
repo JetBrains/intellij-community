@@ -5,8 +5,9 @@ import com.intellij.ui.popup.list.SelectablePanel;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import java.awt.Component;
 
 final class PsiElementListCellRendererComponent extends SelectablePanel {
 

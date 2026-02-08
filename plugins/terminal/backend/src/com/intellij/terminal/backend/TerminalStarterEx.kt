@@ -8,7 +8,11 @@ import com.jediterm.terminal.TerminalExecutorServiceManager
 import com.jediterm.terminal.TerminalStarter
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.model.JediTerminal
-import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.fus.BatchLatencyReporter
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.percentile
+import org.jetbrains.plugins.terminal.fus.secondLargest
+import org.jetbrains.plugins.terminal.fus.totalDuration
 import java.io.IOException
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.time.TimeMark

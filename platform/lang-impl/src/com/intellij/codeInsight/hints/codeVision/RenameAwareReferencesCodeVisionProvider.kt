@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.codeVision.CodeVisionState
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils

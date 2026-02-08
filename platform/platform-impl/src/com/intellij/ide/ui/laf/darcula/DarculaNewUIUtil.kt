@@ -1,11 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil.drawRoundedComponentRectangle
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil.paintComponentBorder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.MacUIUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
 import kotlin.math.max

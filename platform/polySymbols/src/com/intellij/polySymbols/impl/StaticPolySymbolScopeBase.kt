@@ -10,7 +10,13 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.patterns.PolySymbolPattern
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap

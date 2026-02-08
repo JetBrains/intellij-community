@@ -4,8 +4,6 @@ package com.intellij.application.options.editor
 import com.intellij.codeInsight.folding.CodeFoldingSettings
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.options.BeanConfigurable
-import com.intellij.openapi.options.ConfigurableBuilderHelper
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import org.jetbrains.annotations.ApiStatus
 

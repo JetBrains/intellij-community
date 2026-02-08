@@ -12,7 +12,7 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitVcs
-import java.util.*
+import java.util.UUID
 
 internal class ShowGitLogCommandAction : DumbAwareAction() {
 

@@ -22,7 +22,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2SequenceType;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFilterExpression;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.lang.xpath.psi.XPathPredicate;
+import org.intellij.lang.xpath.psi.XPathStep;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -11,10 +11,19 @@ import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollingModel
 import com.intellij.openapi.editor.SelectionModel
-import com.intellij.openapi.editor.ex.*
+import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.EditorModel
+import com.intellij.openapi.editor.ex.InlayModelEx
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.SoftWrapModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
-import com.intellij.openapi.editor.impl.*
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.EditorFilteringMarkupModelEx
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.FocusModeModel
+import com.intellij.openapi.editor.impl.FoldingModelInternal
+import com.intellij.openapi.editor.impl.KERNEL_EDITOR_ID_KEY
 import com.intellij.openapi.editor.impl.ad.document.AdDocument
 import com.intellij.openapi.editor.impl.ad.document.AdDocumentManager
 import com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManager
@@ -25,7 +34,12 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import fleet.kernel.transactor
 import fleet.util.UID
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @Service(Level.APP)

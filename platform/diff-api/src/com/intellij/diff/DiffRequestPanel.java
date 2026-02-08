@@ -22,7 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface DiffRequestPanel extends Disposable {
   void setRequest(@Nullable DiffRequest request);

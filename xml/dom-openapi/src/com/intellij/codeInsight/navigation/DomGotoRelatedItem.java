@@ -20,7 +20,7 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.util.NlsContexts.Separator;
 import com.intellij.util.xml.DomElement;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Dmitry Avdeev

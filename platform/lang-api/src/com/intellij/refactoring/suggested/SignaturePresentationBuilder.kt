@@ -3,7 +3,9 @@ package com.intellij.refactoring.suggested
 
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effect
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
-import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.*
+import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.Group
+import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.Leaf
+import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.LineBreak
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 

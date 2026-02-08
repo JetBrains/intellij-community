@@ -27,9 +27,15 @@ import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.util.VcsLogUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
 private val LOG: Logger = logger<IdeVcsProjectLog>()

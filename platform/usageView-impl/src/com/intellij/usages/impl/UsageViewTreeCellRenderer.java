@@ -21,9 +21,11 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final Logger LOG = Logger.getInstance(UsageViewTreeCellRenderer.class);

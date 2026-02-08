@@ -2,7 +2,12 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.util.IncorrectOperationException;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;

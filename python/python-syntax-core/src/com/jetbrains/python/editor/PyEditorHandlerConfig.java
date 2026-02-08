@@ -2,7 +2,29 @@
 package com.jetbrains.python.editor;
 
 import com.intellij.psi.PsiComment;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstArgumentList;
+import com.jetbrains.python.ast.PyAstBinaryExpression;
+import com.jetbrains.python.ast.PyAstCallExpression;
+import com.jetbrains.python.ast.PyAstDecoratorList;
+import com.jetbrains.python.ast.PyAstDictCompExpression;
+import com.jetbrains.python.ast.PyAstDictLiteralExpression;
+import com.jetbrains.python.ast.PyAstFromImportStatement;
+import com.jetbrains.python.ast.PyAstGeneratorExpression;
+import com.jetbrains.python.ast.PyAstGroupPattern;
+import com.jetbrains.python.ast.PyAstListCompExpression;
+import com.jetbrains.python.ast.PyAstListLiteralExpression;
+import com.jetbrains.python.ast.PyAstMappingPattern;
+import com.jetbrains.python.ast.PyAstParameterList;
+import com.jetbrains.python.ast.PyAstParenthesizedExpression;
+import com.jetbrains.python.ast.PyAstPatternArgumentList;
+import com.jetbrains.python.ast.PyAstReferenceExpression;
+import com.jetbrains.python.ast.PyAstSequencePattern;
+import com.jetbrains.python.ast.PyAstSetCompExpression;
+import com.jetbrains.python.ast.PyAstSetLiteralExpression;
+import com.jetbrains.python.ast.PyAstSubscriptionExpression;
+import com.jetbrains.python.ast.PyAstTupleExpression;
+import com.jetbrains.python.ast.PyAstTypeParameterList;
+import com.jetbrains.python.ast.PyAstWithStatement;
 import org.jetbrains.annotations.ApiStatus;
 
 public final class PyEditorHandlerConfig {

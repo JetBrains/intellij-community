@@ -10,6 +10,7 @@ fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? {
   return getJsConfigProperty(window, name.removePrefix("fleet."))?.toString() ?: when (name) {
     "fleet.ai.service.configuration.url" -> url("aiconfig")
     "fleet.ai.service.url" -> url("ai")
+    "fleet.jba.url" -> url("jba")
     else -> defaultValue
   }
 }

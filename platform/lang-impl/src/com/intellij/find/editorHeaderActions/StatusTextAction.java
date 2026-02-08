@@ -14,8 +14,10 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.Dimension;
 
 public class StatusTextAction extends DumbAwareAction implements CustomComponentAction, LightEditCompatible {
   @Override

@@ -3,10 +3,11 @@ package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Insets;
 
 /**
  * @author Konstantin Bulenkov

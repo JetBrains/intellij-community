@@ -6,7 +6,14 @@ import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.tools.ide.util.common.logOutput
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.copyTo
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.fileSize
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime

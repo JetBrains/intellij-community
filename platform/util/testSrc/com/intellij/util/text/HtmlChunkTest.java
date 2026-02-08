@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.HtmlChunk;
 import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 import java.util.stream.Stream;
 

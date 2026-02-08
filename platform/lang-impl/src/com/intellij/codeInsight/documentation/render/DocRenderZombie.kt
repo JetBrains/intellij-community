@@ -4,11 +4,11 @@ package com.intellij.codeInsight.documentation.render
 import com.intellij.codeInsight.documentation.render.DocRenderZombie.Limb
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import com.intellij.openapi.editor.impl.zombie.LimbedZombie
-import java.io.DataInput
-import java.io.DataOutput
 
 
-internal class DocRenderZombie(limbs: List<Limb>) : LimbedZombie<Limb>(limbs) {
+internal class DocRenderZombie private constructor(
+  limbs: List<Limb>,
+) : LimbedZombie<Limb>(limbs) {
 
   data class Limb(
     val startOffset: Int,
@@ -17,21 +17,22 @@ internal class DocRenderZombie(limbs: List<Limb>) : LimbedZombie<Limb>(limbs) {
   )
 
   object Necromancy : LimbedNecromancy<DocRenderZombie, Limb>(spellLevel=0) {
-    override fun buryLimb(grave: DataOutput, limb: Limb) {
-      writeInt(grave, limb.startOffset)
-      writeInt(grave, limb.endOffset)
-      writeString(grave, limb.text)
-    }
-
-    override fun exhumeLimb(grave: DataInput): Limb {
-      val startOffset: Int = readInt(grave)
-      val endOffset:   Int = readInt(grave)
-      val text:     String = readString(grave)
-      return Limb(startOffset, endOffset, text)
-    }
 
     override fun formZombie(limbs: List<Limb>): DocRenderZombie {
       return DocRenderZombie(limbs)
+    }
+
+    override fun Out.writeLimb(limb: Limb) {
+      writeInt(limb.startOffset)
+      writeInt(limb.endOffset)
+      writeString(limb.text)
+    }
+
+    override fun In.readLimb(): Limb {
+      val startOffset: Int = readInt()
+      val endOffset:   Int = readInt()
+      val text:     String = readString()
+      return Limb(startOffset, endOffset, text)
     }
   }
 }

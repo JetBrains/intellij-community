@@ -3,8 +3,11 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -19,7 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.List;
 
 public final class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {

@@ -4,7 +4,11 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -19,7 +23,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 

@@ -6,7 +6,11 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JList

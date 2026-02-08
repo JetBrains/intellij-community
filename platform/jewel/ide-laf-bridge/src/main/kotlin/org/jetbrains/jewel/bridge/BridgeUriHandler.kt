@@ -3,6 +3,7 @@ package org.jetbrains.jewel.bridge
 
 import androidx.compose.ui.platform.UriHandler
 import com.intellij.ide.BrowserUtil
+import org.jetbrains.jewel.bridge.BridgeUriHandler.openUri
 
 /**
  * A custom implementation of [UriHandler] that delegates the handling to IntelliJ's BrowserUtil class.

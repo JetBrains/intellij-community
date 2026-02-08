@@ -35,7 +35,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;

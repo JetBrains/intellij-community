@@ -8,7 +8,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttlistDecl;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

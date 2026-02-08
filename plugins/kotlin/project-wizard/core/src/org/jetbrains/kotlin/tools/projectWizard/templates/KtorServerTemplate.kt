@@ -13,7 +13,13 @@ import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.TemplateSetting
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ArtifactBasedLibraryDependencyIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyType
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.RepositoryIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.runTaskIrs
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind

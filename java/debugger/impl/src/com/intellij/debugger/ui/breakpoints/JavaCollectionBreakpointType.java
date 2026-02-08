@@ -10,7 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -25,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaCollectionBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 @ApiStatus.Experimental
 public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<JavaCollectionBreakpointProperties> {
@@ -34,9 +40,14 @@ public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBa
     super("java-collection", JavaDebuggerBundle.message("collection.watchpoints.tab.title"));
   }
 
+  @ApiStatus.Internal
+  public static boolean isEnabled() {
+    return Registry.is("debugger.collection.watchpoints.enabled");
+  }
+
   @Override
   public boolean isAddBreakpointButtonVisible() {
-    return Registry.is("debugger.collection.watchpoints.enabled");
+    return isEnabled();
   }
 
   @Override
@@ -122,7 +133,7 @@ public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBa
 
   @Override
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
-    if (!Registry.is("debugger.collection.watchpoints.enabled")) {
+    if (!isEnabled()) {
       return false;
     }
     return canPutAtElement(file, line, project, (element, document) -> {

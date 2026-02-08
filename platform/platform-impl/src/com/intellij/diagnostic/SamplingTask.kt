@@ -3,7 +3,13 @@ package com.intellij.diagnostic
 
 import com.intellij.util.containers.UList
 import com.sun.management.OperatingSystemMXBean
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
 import java.util.concurrent.TimeUnit

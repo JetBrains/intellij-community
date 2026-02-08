@@ -6,11 +6,24 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.util.*
-import java.util.*
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parents
+import com.intellij.psi.util.parentsOfType
+import java.util.LinkedList
 
 internal fun PsiExpression.isInStaticContext(): Boolean {
   return isWithinStaticMember() || isWithinConstructorCall()

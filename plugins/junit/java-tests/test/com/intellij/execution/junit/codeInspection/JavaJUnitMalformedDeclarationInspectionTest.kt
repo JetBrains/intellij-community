@@ -894,6 +894,18 @@ class JavaJUnitMalformedDeclarationInspectionTest {
          void simpleList(int x, int y) { System.out.println(x + ", " + y); }
 
          public static final java.util.List<Object> list = null;
+         
+         @org.junit.jupiter.params.ParameterizedTest
+         @org.junit.jupiter.params.provider.FieldSource
+         void stream(String str) { System.out.println(str); }
+
+         public static final java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> stream = null;
+         
+         @org.junit.jupiter.params.ParameterizedTest
+         @org.junit.jupiter.params.provider.FieldSource
+         void supplier(String str) { System.out.println(str); }
+
+         public static final java.util.function.Supplier<java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>> supplier = null;
       }
       """.trimIndent())
     }

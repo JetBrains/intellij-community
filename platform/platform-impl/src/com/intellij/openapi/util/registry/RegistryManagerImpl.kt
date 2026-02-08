@@ -16,7 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.MissingResourceException
 
 @State(
   name = "Registry",

@@ -4,7 +4,15 @@ package com.intellij.ide.plugins.newui
 import com.intellij.diagnostic.LoadingState
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
-import com.intellij.ide.plugins.marketplace.*
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.UUID
 import javax.swing.JComponent
 
 /*

@@ -15,8 +15,9 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
 import java.util.ArrayList;
 
 @ApiStatus.Internal

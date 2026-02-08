@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

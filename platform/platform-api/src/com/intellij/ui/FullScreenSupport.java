@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Window;
 import java.util.function.Function;
 
 /**

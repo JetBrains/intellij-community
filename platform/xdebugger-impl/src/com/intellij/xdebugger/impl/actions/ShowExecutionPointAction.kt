@@ -3,14 +3,14 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
-import kotlinx.coroutines.future.await
-import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.application.EDT
-import kotlinx.coroutines.withContext
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
+import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ShowExecutionPointAction : XDebuggerActionBase(), SplitDebuggerAction {

@@ -11,7 +11,11 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.ThreeState
 import com.intellij.vcs.git.branch.GitInOutCountersInProject
 import com.intellij.vcs.git.ui.getText
-import git4idea.*
+import git4idea.GitBranch
+import git4idea.GitLocalBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitTag
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitRefType
 import git4idea.i18n.GitBundle.message
@@ -22,7 +26,8 @@ import git4idea.ui.branch.GitBranchManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.EventListener
+import java.util.Objects
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.tree.DefaultMutableTreeNode
 

@@ -2,7 +2,14 @@
 package org.jetbrains.kotlin.tools.composeProjectWizard
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.starters.local.*
+import com.intellij.ide.starters.local.GeneratorAsset
+import com.intellij.ide.starters.local.GeneratorEmptyDirectory
+import com.intellij.ide.starters.local.GeneratorTemplateFile
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.starters.local.Starter
+import com.intellij.ide.starters.local.StarterContextProvider
+import com.intellij.ide.starters.local.StarterModuleBuilder
+import com.intellij.ide.starters.local.StarterPack
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.KOTLIN_STARTER_LANGUAGE
 import com.intellij.ide.starters.shared.StarterLanguage

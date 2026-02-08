@@ -11,7 +11,11 @@ import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.util.io.DisabledOutputStream
-import org.jetbrains.settingsRepository.git.*
+import org.jetbrains.settingsRepository.git.GitRepositoryClientImpl
+import org.jetbrains.settingsRepository.git.Pull
+import org.jetbrains.settingsRepository.git.buildBareRepository
+import org.jetbrains.settingsRepository.git.upstream
+import org.jetbrains.settingsRepository.git.use
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.exists

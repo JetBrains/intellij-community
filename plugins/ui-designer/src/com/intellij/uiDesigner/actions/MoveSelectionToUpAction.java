@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
-import java.awt.*;
+import java.awt.Point;
 
 public final class MoveSelectionToUpAction extends AbstractMoveSelectionAction{
   public MoveSelectionToUpAction(final GuiEditor editor, boolean extend, final boolean moveToLast) {

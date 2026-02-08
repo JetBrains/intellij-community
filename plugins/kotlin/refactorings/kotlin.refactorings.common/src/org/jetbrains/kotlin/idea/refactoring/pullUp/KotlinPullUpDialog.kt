@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
@@ -16,9 +17,19 @@ import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.*
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorage
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionTable
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinOrJavaClassCellRenderer
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinUsesAndInterfacesDependencyMemberInfoModel
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.toJavaMemberInfo
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
 
@@ -67,18 +78,20 @@ class KotlinPullUpDialog(
             if (superClass is PsiClass) return false
             if (superClass !is KtClass) return false
 
-            val member = memberInfo.member
-            if (member.hasModifier(KtTokens.INLINE_KEYWORD) ||
-                member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
-                member.hasModifier(KtTokens.LATEINIT_KEYWORD)
-            ) return false
-            if (member.isAbstractInInterface(sourceClass)) return false
-            if (member.isConstructorParameterWithInterfaceTarget(superClass)) return false
-            if (member.isCompanionMemberOf(sourceClass)) return false
+            return runReadAction {
+                val member = memberInfo.member
+                if (member.hasModifier(KtTokens.INLINE_KEYWORD) ||
+                    member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
+                    member.hasModifier(KtTokens.LATEINIT_KEYWORD)
+                ) return@runReadAction false
+                if (member.isAbstractInInterface(sourceClass)) return@runReadAction false
+                if (member.isConstructorParameterWithInterfaceTarget(superClass)) return@runReadAction false
+                if (member.isCompanionMemberOf(sourceClass)) return@runReadAction false
 
-            if (!superClass.isInterface()) return true
+                if (!superClass.isInterface()) return@runReadAction true
 
-            return member is KtNamedFunction || (member is KtProperty && !member.mustBeAbstractInInterface()) || member is KtParameter
+                member is KtNamedFunction || (member is KtProperty && !member.mustBeAbstractInInterface()) || member is KtParameter
+            }
         }
 
         override fun isAbstractWhenDisabled(memberInfo: KotlinMemberInfo): Boolean {

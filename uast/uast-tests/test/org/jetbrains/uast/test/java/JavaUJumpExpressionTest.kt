@@ -5,7 +5,19 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.asSafely
 import junit.framework.TestCase
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UContinueExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UForExpression
+import org.jetbrains.uast.UJumpExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UWhileExpression
+import org.jetbrains.uast.UYieldExpression
+import org.jetbrains.uast.toUElementOfType
 
 abstract class JavaUJumpExpressionBase : AbstractJavaUastLightTest() {
   protected inline fun <reified TElement : UElement, reified TJumpFromElement> doTest(fileSource: String) {

@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.java.guiForms.compiler` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java-guiForms-compiler_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "java-guiForms-compiler",
   module_name = "intellij.java.guiForms.compiler",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-guiForms-compiler_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util/jdom",

@@ -18,7 +18,11 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.kodein.di.direct
 import org.kodein.di.instance
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.doReturn
+import org.mockito.Mockito.doThrow
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.mockito.junit.jupiter.MockitoExtension
 
 @ExtendWith(MockitoExtension::class)

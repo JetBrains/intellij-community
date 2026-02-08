@@ -1,8 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.ide.util.projectWizard.*
-import com.intellij.openapi.actionSystem.*
+import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
+import com.intellij.ide.util.projectWizard.EmptyWebProjectTemplate
+import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
+import com.intellij.ide.util.projectWizard.WebProjectTemplate
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.DirectoryProjectGenerator
 

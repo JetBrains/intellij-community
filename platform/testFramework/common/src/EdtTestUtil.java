@@ -14,7 +14,7 @@ import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.lang.reflect.InvocationTargetException;
 
 import static com.intellij.openapi.application.impl.AppImplKt.rethrowCheckedExceptions;

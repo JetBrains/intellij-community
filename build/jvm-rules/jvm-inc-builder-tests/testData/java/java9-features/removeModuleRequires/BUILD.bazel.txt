@@ -1,0 +1,18 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+    name = "a",
+    srcs = glob(["a/**/*.java"], allow_empty = True),
+)
+
+jvm_library(
+    name = "b",
+    srcs = glob(["b/**/*.java"], allow_empty = True),
+    deps = [":a"],
+)
+
+jvm_library(
+    name = "c",
+    srcs = glob(["c/**/*.java"], allow_empty = True),
+    deps = [":b"],
+)

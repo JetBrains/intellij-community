@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 
+@K1Deprecation
 class ArgumentList(
   val expressions: List<Expression>,
   val lPar: LPar,

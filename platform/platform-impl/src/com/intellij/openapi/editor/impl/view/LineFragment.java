@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl.view;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.util.function.Consumer;
 
 /**
@@ -35,12 +35,13 @@ public interface LineFragment {
   // returns array of two elements 
   // - first one is visual column, 
   // - second one is 1 if target location is closer to larger columns and 0 otherwise
-  int[] xToVisualColumn(float startX, float x);
+  int @NotNull [] xToVisualColumn(float startX, float x);
 
   // offsets are visual
   float offsetToX(float startX, int startOffset, int offset);
 
   // offsets are visual
+  @NotNull
   Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset);
 
   // offsets are logical

@@ -15,9 +15,19 @@ import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.artifacts.*;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorManifestFileProvider;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorSettings;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactModel;
+import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
@@ -31,7 +41,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class ArtifactsTestCase extends JavaProjectTestCase {
   protected boolean mySetupModule;

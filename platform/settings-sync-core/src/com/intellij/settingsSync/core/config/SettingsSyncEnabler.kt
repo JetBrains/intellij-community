@@ -3,10 +3,15 @@ package com.intellij.settingsSync.core.config
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.SettingsSyncBridge
+import com.intellij.settingsSync.core.SettingsSyncBundle
+import com.intellij.settingsSync.core.SettingsSyncMain
+import com.intellij.settingsSync.core.SettingsSyncState
+import com.intellij.settingsSync.core.SyncSettingsEvent
+import com.intellij.settingsSync.core.UpdateResult
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.util.EventDispatcher
-import java.util.*
+import java.util.EventListener
 
 class SettingsSyncEnabler {
   companion object {

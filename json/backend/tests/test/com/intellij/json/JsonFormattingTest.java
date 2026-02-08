@@ -40,6 +40,12 @@ public class JsonFormattingTest extends JsonTestCase {
     doTest();
   }
 
+  public void testWrappingWhenLineIsTooLong() {
+    getCodeStyleSettings().setRightMargin(JsonLanguage.INSTANCE, 20);
+    getCodeStyleSettings().getCommonSettings(JsonLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    doTest();
+  }
+
   // WEB-13587
   public void testAlignPropertiesOnColon() {
     checkPropertyAlignment(PropertyAlignment.ALIGN_ON_COLON);

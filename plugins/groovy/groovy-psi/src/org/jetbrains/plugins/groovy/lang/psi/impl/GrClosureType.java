@@ -3,7 +3,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;

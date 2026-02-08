@@ -5,7 +5,9 @@ package git4idea.test
 
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -18,6 +20,7 @@ import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.test.VcsPlatformTestContext
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
@@ -35,7 +38,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.collections.contains
 
 const val USER_NAME = "John Doe"
 const val USER_EMAIL = "John.Doe@example.com"
@@ -126,6 +128,12 @@ private fun disableGitGc(project: Project) {
 fun createRepository(project: Project, root: String) = createRepository(project, Paths.get(root), true)
 
 internal fun createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
+  initRepo(project, root, makeInitialCommit)
+  LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
+  return registerRepo(project, root)
+}
+
+internal fun VcsPlatformTestContext.createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
   initRepo(project, root, makeInitialCommit)
   LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
   return registerRepo(project, root)

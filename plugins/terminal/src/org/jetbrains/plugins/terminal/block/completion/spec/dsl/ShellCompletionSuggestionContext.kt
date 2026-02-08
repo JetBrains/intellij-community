@@ -41,4 +41,12 @@ sealed interface ShellCompletionSuggestionContext : ShellSuggestionContext {
    * Both options are acceptable, but only one of them should be shown in the completion popup.
    */
   fun hidden()
+
+  /**
+   * By default, the name or [insertValue] is automatically escaped according to the shell syntax
+   * (e.g., handling whitespaces or special characters) before being inserted.
+   *
+   * Marks this suggestion to insert the name or [insertValue] exactly as provided.
+   */
+  fun noEscaping()
 }

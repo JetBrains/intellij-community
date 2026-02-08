@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Key;
@@ -144,6 +144,8 @@ public abstract class ActionPlaces {
   public static final String WELCOME_SCREEN = "WelcomeScreen";
   public static final String WELCOME_SCREEN_QUICK_PANEL = "WelcomeScreen.QuickPanel";
 
+  public static final String CHANGES_TREE_POPUP = "ChangesTreePopup";
+
   public static final String CHANGES_VIEW_TOOLBAR = "ChangesViewToolbar";
   public static final String CHANGES_VIEW_POPUP = "ChangesViewPopup";
 
@@ -266,7 +268,7 @@ public abstract class ActionPlaces {
     FILEVIEW_POPUP, CHECKOUT_POPUP, LVCS_DIRECTORY_HISTORY_POPUP, GUI_DESIGNER_EDITOR_POPUP, GUI_DESIGNER_COMPONENT_TREE_POPUP,
     GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, TOOLWINDOW_POPUP, WELCOME_SCREEN,
     ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ACTION_PLACE_QUICK_LIST_POPUP_ACTION, REFACTORING_QUICKLIST,
-    CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
+    CHANGES_VIEW_POPUP, CHANGES_TREE_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP,
     EDITOR_ANNOTATIONS_AREA_POPUP, EDITOR_NOTIFICATION_POPUP,

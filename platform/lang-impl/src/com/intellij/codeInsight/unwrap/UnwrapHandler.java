@@ -31,7 +31,7 @@ import com.intellij.util.containers.NotNullList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ListSelectionModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;

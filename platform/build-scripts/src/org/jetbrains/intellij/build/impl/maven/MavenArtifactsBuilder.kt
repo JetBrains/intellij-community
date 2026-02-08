@@ -6,8 +6,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.apache.maven.model.Dependency
 import org.apache.maven.model.Developer
 import org.apache.maven.model.Exclusion
@@ -25,6 +24,7 @@ import org.jetbrains.intellij.build.impl.createModuleSourcesNamesFilter
 import org.jetbrains.intellij.build.impl.getLibraryFilename
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.isCommunityModule
+import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -525,9 +525,8 @@ private suspend fun layoutMavenArtifacts(
   outputDir: Path,
   context: BuildContext,
 ): Map<MavenArtifactData, List<Path>> {
-  return coroutineScope {
-    modulesToPublish.entries.map { (artifactData, modules) ->
-      async(CoroutineName("layout maven artifact ${artifactData.coordinates}")) {
+  return modulesToPublish.entries.mapConcurrent { (artifactData, modules) ->
+    withContext(CoroutineName("layout maven artifact ${artifactData.coordinates}")) {
         val artifacts = mutableListOf<Path>()
         val modulesWithSources = modules.filter {
           it.getSourceRoots(JavaSourceRootType.SOURCE).any() || it.getSourceRoots(JavaResourceRootType.RESOURCE).any()
@@ -596,8 +595,7 @@ private suspend fun layoutMavenArtifacts(
         }
         artifactData to artifacts
       }
-    }.associate { it.await() }
-  }
+  }.associate { it }
 }
 
 @ApiStatus.Internal

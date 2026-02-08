@@ -10,7 +10,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,12 +32,28 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLAnchor;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLPsiElement;
+import org.jetbrains.yaml.psi.YAMLQuotedText;
+import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.YAMLSequence;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.psi.YamlPsiUtilKt;
 import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import org.jetbrains.yaml.psi.impl.YAMLHashImpl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
@@ -167,7 +187,32 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       object = otherObject;
     }
     if (object == null) return Collections.emptySet();
-    return new YamlObjectAdapter(object).getPropertyList().stream().map(p -> p.getName()).collect(Collectors.toSet());
+
+    int mappingIndent = indentOf(object);
+    int caretIndent = indentOf(computedPosition);
+
+    // Find the first property to determine the "baseline" indent for properties in this mapping
+    List<YAMLKeyValue> keyValues = object.getKeyValues().stream().toList();
+    if (!keyValues.isEmpty()) {
+      int firstPropIndent = indentOf(keyValues.getFirst());
+      if (caretIndent > firstPropIndent) {
+        // Caret is deeper than existing properties in this mapping -> it's a new nested object
+        return Collections.emptySet();
+      }
+    } else {
+      // Mapping is empty, check against the mapping's own indent
+      // Usually, nested mapping keys are indented relative to the parent key.
+      if (caretIndent > mappingIndent) {
+        // Logically a new level
+        return Collections.emptySet();
+      }
+    }
+
+    // If we are at the same level as the mapping's properties, return the names to prevent duplicates
+    return new YamlObjectAdapter(object).getPropertyList().stream()
+      .map(p -> p.getName())
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
   }
 
   @Override

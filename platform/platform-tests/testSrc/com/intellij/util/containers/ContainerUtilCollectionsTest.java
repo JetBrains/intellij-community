@@ -5,7 +5,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
@@ -18,7 +17,12 @@ import org.junit.rules.TestRule;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -32,7 +36,6 @@ import java.util.stream.IntStream;
  * {@link ConcurrentCollectionFactory}.create*
  * collections for being really weak/soft/concurrent
  */
-@RunFirst
 public class ContainerUtilCollectionsTest extends Assert {
   @Rule
   public TestRule watcher = TestLoggerFactory.createTestWatcher();

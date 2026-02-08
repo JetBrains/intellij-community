@@ -9,7 +9,13 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.frontend.FrontendBreakpointRequestCounter.Companion.REQUEST_IS_NOT_NEEDED
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointCustomPresentationDto
+import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
+import com.intellij.platform.debugger.impl.rpc.XBreakpointDtoState
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId
+import com.intellij.platform.debugger.impl.rpc.toRpc
+import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy

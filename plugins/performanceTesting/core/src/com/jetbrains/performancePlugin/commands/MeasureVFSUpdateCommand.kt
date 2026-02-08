@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.UUID
 import kotlin.io.path.Path
 import kotlin.io.path.div
 

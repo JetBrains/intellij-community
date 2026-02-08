@@ -7,9 +7,15 @@ import com.intellij.lang.LighterASTTokenNode
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.DataIndexer
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.PsiDependentFileContent
 import com.intellij.util.indexing.impl.CollectionDataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
@@ -20,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.stubs.elements.KtTokenSets.INSIDE_DIRECTIVE_EXPRESSIONS
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 
+@K1Deprecation
 class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection<String>>() {
     companion object {
         val NAME: ID<String, Collection<String>> = ID.create(KotlinShortClassNameFileIndex::class.java.simpleName)

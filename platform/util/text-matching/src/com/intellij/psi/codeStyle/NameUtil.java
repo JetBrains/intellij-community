@@ -4,8 +4,8 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.NameUtilCore;
-import com.intellij.util.text.matching.MatchingMode;
 import com.intellij.util.text.matching.KeyboardLayoutConverter;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

@@ -2,6 +2,7 @@
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.NonPersistentStore
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
@@ -20,6 +21,8 @@ class TestComponentManager(
   @JvmField val parentScope: CoroutineScope = GlobalScope,
   additionalContext: CoroutineContext = EmptyCoroutineContext,
 ) : ComponentManagerImpl(parent = null, parentScope = parentScope, additionalContext = additionalContext) {
+  public override var useProxiesForOpenServices: Boolean = false
+
   override val componentStore: IComponentStore
     get() = NonPersistentStore
 
@@ -37,5 +40,9 @@ class TestComponentManager(
 
     val preloadedService = getServiceIfCreated(clazz)
     assert(preloadedService !== null) { "Service was not preloaded: $clazz" }
+  }
+
+  fun registerService(serviceDescriptor: ServiceDescriptor, pluginDescriptor: IdeaPluginDescriptor) {
+    registerServices(listOf(serviceDescriptor), pluginDescriptor)
   }
 }

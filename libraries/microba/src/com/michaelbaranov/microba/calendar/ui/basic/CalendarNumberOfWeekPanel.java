@@ -1,7 +1,14 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;

@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
+@K1Deprecation
 object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val simpleExpression = diagnostic.psiElement as? KtSimpleNameExpression ?: return emptyList()

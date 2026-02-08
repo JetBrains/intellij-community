@@ -3,6 +3,7 @@ package com.intellij.debugger.engine
 
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
@@ -53,7 +54,7 @@ object DebuggerDiagnosticsUtil {
     val invocationWatching = process.myThreadBlockedMonitor.myInvocationWatching
     // Anyway, model problems can be detected only for threads the engine already worked with
     @Suppress("TestOnlyProblems")
-    val allThreads = process.virtualMachineProxy.evenDirtyAllThreads
+    val allThreads = VirtualMachineProxyImpl.getCurrent().evenDirtyAllThreads
 
     val allContexts = suspendManager.eventContextsAsItIs
 
@@ -215,7 +216,7 @@ object DebuggerDiagnosticsUtil {
 
   @JvmStatic
   private fun createThreadsAttachment(process: DebugProcessImpl): Attachment {
-    val virtualMachine = process.virtualMachineProxy
+    val virtualMachine = VirtualMachineProxyImpl.getCurrent()
     val threads = virtualMachine.allThreads().joinToString(separator = "\n") {
       "(${noErr { getThreadState(it) }}) $it, model suspend counter = ${it.wholeSuspendModelNumber}, real suspend counter = ${it.suspendCount}"
     }

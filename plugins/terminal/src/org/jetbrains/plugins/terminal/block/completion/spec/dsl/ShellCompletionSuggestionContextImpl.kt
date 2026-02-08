@@ -15,6 +15,7 @@ internal class ShellCompletionSuggestionContextImpl(
   private var icon: Icon? = null
   private var prefixReplacementIndex: Int = 0
   private var isHidden: Boolean = false
+  private var shouldEscape: Boolean = true
 
   override fun type(type: ShellSuggestionType) {
     this.type = type
@@ -32,6 +33,10 @@ internal class ShellCompletionSuggestionContextImpl(
     isHidden = true
   }
 
+  override fun noEscaping() {
+    shouldEscape = false
+  }
+
   fun build(): ShellCompletionSuggestion {
     return ShellCompletionSuggestionImpl(
       name = name,
@@ -43,6 +48,7 @@ internal class ShellCompletionSuggestionContextImpl(
       icon = icon,
       prefixReplacementIndex = prefixReplacementIndex,
       isHidden = isHidden,
+      shouldEscape = shouldEscape,
     )
   }
 
@@ -58,6 +64,7 @@ internal class ShellCompletionSuggestionContextImpl(
       icon = icon,
       prefixReplacementIndex = prefixReplacementIndex,
       isHidden = isHidden,
+      shouldEscape = shouldEscape,
     )
   }
 }

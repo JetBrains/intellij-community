@@ -11,13 +11,32 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
-import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.*;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.ERROR_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.FAILED_E_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.FAILED_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.IGNORED_E_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.IGNORED_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.NOT_RAN;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.PASSED_E_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.PASSED_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.PASSED_IGNORED;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.PAUSED_E_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.RUNNING_E_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.RUNNING_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.SKIPPED_E_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.SKIPPED_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.TERMINATED_E_ICON;
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.TERMINATED_ICON;
 
 /**
  * @author Roman Chernyatchik

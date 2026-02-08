@@ -19,8 +19,12 @@ import com.intellij.util.LineSeparator
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.nio.file.*
-import java.util.*
+import java.nio.file.DirectoryIteratorException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.Path
+import java.util.Collections
 
 @ApiStatus.Internal
 open class DirectoryBasedStorage(

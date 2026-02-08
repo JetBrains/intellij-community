@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kapt.gradleJava
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import java.io.File
-import java.util.*
+import java.util.Locale
 
 class KaptGradleProjectImportHandler : GradleProjectImportHandler {
     override fun importBySourceSet(facet: KotlinFacet, sourceSetNode: DataNode<GradleSourceSetData>) {

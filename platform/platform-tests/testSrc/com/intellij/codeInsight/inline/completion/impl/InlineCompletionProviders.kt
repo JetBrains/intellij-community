@@ -7,7 +7,12 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionProviderID
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
-import com.intellij.codeInsight.inline.completion.suggestion.*
+import com.intellij.codeInsight.inline.completion.exception.InlineCompletionTestExceptions
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
+import com.intellij.codeInsight.inline.completion.suggestion.invoke
 import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
@@ -103,7 +108,7 @@ internal class ExceptionInlineCompletionProvider : InlineCompletionProvider {
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     return object : InlineCompletionSuggestion {
       override suspend fun getVariants(): List<InlineCompletionVariant> {
-        throw IllegalStateException("expected error")
+        throw InlineCompletionTestExceptions.createExpectedTestException("expected error")
       }
     }
   }
@@ -118,7 +123,7 @@ internal class ExceptionInComputationInlineCompletionProvider : InlineCompletion
     return InlineCompletionSuggestion {
       variant {
         emit(InlineCompletionGrayTextElement("element"))
-        throw IllegalStateException("expected error")
+        throw InlineCompletionTestExceptions.createExpectedTestException("expected error")
       }
     }
   }

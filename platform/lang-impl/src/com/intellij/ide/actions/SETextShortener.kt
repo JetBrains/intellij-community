@@ -38,13 +38,14 @@ object SETextShortener {
       else -> " "
     }
 
+    val dotsShortening = if (separator != ".") "..." else ".."
     val parts = LinkedList(StringUtil.split(text, separator))
     var index: Int
     while (parts.size > 1) {
       index = parts.size / 2 - 1
       parts.removeAt(index)
-      if (getTextWidth(left + StringUtil.join(parts, separator) + "..." + separator) < maxWidth) {
-        parts.add(index, "...")
+      if (getTextWidth(left + StringUtil.join(parts, separator) + dotsShortening + separator) < maxWidth) {
+        parts.add(index, dotsShortening)
         return left + StringUtil.join(parts, separator)
       }
     }

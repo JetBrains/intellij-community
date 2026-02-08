@@ -13,8 +13,13 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.usageView.UsageViewUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

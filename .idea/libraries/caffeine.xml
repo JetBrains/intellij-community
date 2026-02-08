@@ -1,28 +1,28 @@
 <component name="libraryTable">
   <library name="caffeine" type="repository">
-    <properties maven-id="com.github.ben-manes.caffeine:caffeine:3.2.2">
+    <properties maven-id="com.github.ben-manes.caffeine:caffeine:3.2.3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2.jar">
-          <sha256sum>c74a6c72221dfb76eb92f2bb40108ea561a7da2f315dc3b1e64afa8f077f210c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3.jar">
+          <sha256sum>ca70c90a5d1ce1511880ce9c93d4ad22108f61111d3daf91eb52762b571bd179</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar">
           <sha256sum>1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.40.0/error_prone_annotations-2.40.0.jar">
-          <sha256sum>bfa77e49226e9bd2ac7ac1bc4a3c70430078f2e6cd30c8e0615d6c25d8ae818d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0.jar">
+          <sha256sum>48272e75c16e1f7bdc7bd19529ccacd5ee170404701d7f5a23441bb5847957f5</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.40.0/error_prone_annotations-2.40.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.2.3/caffeine-3.2.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.40.0/error_prone_annotations-2.40.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.43.0/error_prone_annotations-2.43.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

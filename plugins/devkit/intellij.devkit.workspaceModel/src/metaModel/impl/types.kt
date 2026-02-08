@@ -3,7 +3,13 @@ package com.intellij.devkit.workspaceModel.metaModel.impl
 
 import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithPsi
 import com.intellij.psi.PsiElement
-import com.intellij.workspaceModel.codegen.deft.meta.*
+import com.intellij.workspaceModel.codegen.deft.meta.Obj
+import com.intellij.workspaceModel.codegen.deft.meta.ObjAnnotation
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.ObjType
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
+import com.intellij.workspaceModel.codegen.deft.meta.TypeParameter
 
 object ObjTypeType : ObjType<ObjType<*>> {
   override val classifier: ObjType<ObjType<*>>

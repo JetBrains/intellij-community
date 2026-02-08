@@ -1,0 +1,4 @@
+package impl;
+class Service{
+  public Service(int a){}
+}

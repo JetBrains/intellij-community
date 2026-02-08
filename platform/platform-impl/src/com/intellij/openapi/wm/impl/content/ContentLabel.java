@@ -22,10 +22,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -220,14 +227,16 @@ public abstract class ContentLabel extends BaseLabel {
     }
 
     if (map.get(false) != null) {
-      int iconWidth = iconsGap;
+      int offset = (myUi.getCurrentLayout() instanceof TabContentLayout tabContentLayout
+                    ? JBUI.scale(tabContentLayout.getTabHOffsetUnscaled())
+                    : 0) + iconsGap;
 
       for (AdditionalIcon icon : map.get(false)) {
-        icon.setX(iconWidth);
-        iconWidth += icon.getIconWidth() + iconsGap;
+        icon.setX(offset);
+        offset += icon.getIconWidth() + iconsGap;
       }
 
-      left = iconWidth;
+      left = offset;
     }
 
     int rightIconWidth = 0;

@@ -17,3 +17,5 @@ fun globalFoo(s: String): Boolean = true
 // ABSENT: ::staticFoo
 // ABSENT: ::extensionFoo
 // EXIST: ::globalFoo
+
+// IGNORE_K2

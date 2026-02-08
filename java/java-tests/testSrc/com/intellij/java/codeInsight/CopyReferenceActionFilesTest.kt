@@ -16,8 +16,8 @@
 package com.intellij.java.codeInsight
 
 import com.intellij.ide.actions.CopyReferenceAction
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile

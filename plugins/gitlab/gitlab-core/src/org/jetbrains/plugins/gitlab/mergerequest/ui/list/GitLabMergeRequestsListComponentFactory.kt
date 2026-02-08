@@ -3,8 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
-import com.intellij.collaboration.ui.codereview.list.*
+import com.intellij.collaboration.ui.codereview.list.NamedCollection
+import com.intellij.collaboration.ui.codereview.list.ReviewListComponentFactory
+import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation
 import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation.CommentsCounter
+import com.intellij.collaboration.ui.codereview.list.TagPresentation
+import com.intellij.collaboration.ui.codereview.list.UserPresentation
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionListModel

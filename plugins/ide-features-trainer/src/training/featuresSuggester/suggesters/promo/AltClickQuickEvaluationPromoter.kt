@@ -24,7 +24,11 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.UiComponentsSearchUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.*
+import com.intellij.ui.GotItComponentBuilder
+import com.intellij.ui.JBColor
+import com.intellij.ui.PopupBorder
+import com.intellij.ui.SimpleColoredText
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
@@ -37,12 +41,28 @@ import com.intellij.util.ui.JBPoint
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import training.featuresSuggester.FeatureSuggesterBundle
-import java.awt.*
-import javax.swing.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JLayeredPane.DEFAULT_LAYER
 import javax.swing.JLayeredPane.PALETTE_LAYER
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 private val altModifier get() = if (SystemInfo.isMac) "⌥" else "Alt"
 

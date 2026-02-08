@@ -16,7 +16,16 @@ import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.jps.util.Ref;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.FieldVisitor;
+import org.jetbrains.org.objectweb.asm.Handle;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.ModuleVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 import org.jetbrains.org.objectweb.asm.util.Textifier;
@@ -24,7 +33,17 @@ import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -406,6 +425,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final String myFileName;
   private final boolean myIsGenerated;
   private final boolean myIsLibraryMode;
+  private boolean myHasImplicitTypes;
   private int myAccess;
   private String myName;
   private String myVersion; // for class contains a class bytecode version, for module contains a module version
@@ -477,6 +497,11 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
   @Override
+  public void setHasImplicitTypes() {
+    myHasImplicitTypes = true;
+  }
+
+  @Override
   public JVMClassNode<? extends JVMClassNode<?, ?>, ? extends Proto.Diff<? extends JVMClassNode<?, ?>>> getResult() {
     JVMFlags flags = new JVMFlags(myAccess);
     if (myLocalClassFlag.get()) {
@@ -494,14 +519,15 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     if (myIsLibraryMode) {
       flags = flags.deriveIsLibrary();
     }
+    if (myHasImplicitTypes) {
+      flags = flags.deriveContainsImplicitTypes();
+    }
 
     if (myIsModule) {
-      if (!myIsLibraryMode) {
-        for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
-          addUsage(usage);
-        }
+      for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
+        addUsage(usage);
       }
-      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myIsLibraryMode? Set.of() : myUsages, myMetadata);
+      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myIsLibraryMode? Iterators.filter(myUsages, u -> u instanceof ModuleUsage) : myUsages, myMetadata);
     }
 
     if (!myIsLibraryMode) {

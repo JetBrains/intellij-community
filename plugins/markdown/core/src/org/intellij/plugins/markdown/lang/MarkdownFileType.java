@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import org.intellij.plugins.markdown.MarkdownIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class MarkdownFileType extends LanguageFileType {
   public static final MarkdownFileType INSTANCE = new MarkdownFileType();

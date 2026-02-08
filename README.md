@@ -20,7 +20,6 @@ This section will guide you through getting the project sources and help avoid c
 
 #### Prerequisites
 - [Git](https://git-scm.com/) installed
-- ~2GB free disk space
 - Install [IntelliJ IDEA 2023.2](https://www.jetbrains.com/idea/download) or higher.
 - For **Windows** set these git config to avoid common issues during cloning:
   ```

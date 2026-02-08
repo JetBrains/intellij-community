@@ -4,7 +4,6 @@ package org.jetbrains.kotlin
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.psi.KtFile
-import kotlin.text.trim
 
 abstract class AbstractK1ImportsTest : AbstractImportsTest() {
     override fun updateScriptDependencies(psiFile: KtFile) {

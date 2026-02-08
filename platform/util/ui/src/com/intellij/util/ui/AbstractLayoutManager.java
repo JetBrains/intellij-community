@@ -2,7 +2,10 @@
 
 package com.intellij.util.ui;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.LayoutManager2;
 
 public abstract class AbstractLayoutManager implements LayoutManager2 {
 

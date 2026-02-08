@@ -17,7 +17,13 @@ import com.intellij.diff.tools.util.BaseSyncScrollable;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Range;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
@@ -44,11 +50,19 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   private static final @NonNls String HELP_ID = "topicId758145";

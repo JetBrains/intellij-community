@@ -33,7 +33,7 @@
         "lowDate": "2023-01-12",
         "highDate": "2025-07-12"
       },
-      "doc": "The <strong><code>dir</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> is an <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute that indicates the directionality of the MathML element."
+      "doc": "The <strong><code>dir</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> is an <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute that indicates the directionality of the MathML element.\n<p>The directionality controls whether math formulas are rendered left-to-right or right-to-left."
     },
     "displaystyle": {
       "url": "$MDN_URL$/web/mathml/reference/global_attributes/displaystyle",
@@ -55,7 +55,7 @@
         "lowDate": "2023-01-12",
         "highDate": "2025-07-12"
       },
-      "doc": "The <strong><code>displaystyle</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> is a boolean setting the <a href=\"$MDN_URL$/Web/CSS/math-style\">math-style</a> of a MathML element."
+      "doc": "The <strong><code>displaystyle</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> is a boolean setting the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-style\">math-style</a> of a MathML element."
     },
     "href": {
       "url": "$MDN_URL$/web/mathml/reference/global_attributes/href",
@@ -89,7 +89,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathbackground</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/background-color\">background-color</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathbackground</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>background-color</code> property value, if set.\n</div>"
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathbackground</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/background-color\">background-color</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathbackground</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>background-color</code> property value, if set.\n</div>"
     },
     "mathcolor": {
       "url": "$MDN_URL$/web/mathml/reference/global_attributes/mathcolor",
@@ -110,7 +110,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathcolor</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/color\">color</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathcolor</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>color</code> property, if set.\n</div>"
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathcolor</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/color\">color</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathcolor</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>color</code> property, if set.\n</div>"
     },
     "mathsize": {
       "url": "$MDN_URL$/web/mathml/reference/global_attributes/mathsize",
@@ -131,7 +131,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathsize</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/font-size\">font-size</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathsize</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>font-size</code> property, if set.\n</div>"
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathsize</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-size\">font-size</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathsize</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>font-size</code> property, if set.\n</div>"
     },
     "scriptlevel": {
       "url": "$MDN_URL$/web/mathml/reference/global_attributes/scriptlevel",
@@ -149,7 +149,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "The <strong><code>scriptlevel</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/math-depth\">math-depth</a> of a MathML element. It allows overriding rules from the <a href=\"$MDN_URL$/Web/CSS/CSS_cascade/Cascade#user-agent_stylesheets\">user agent stylesheet</a> that define automatic calculation of <a href=\"$MDN_URL$/Web/CSS/font-size\">font-size</a> within MathML formulas."
+      "doc": "The <strong><code>scriptlevel</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-depth\">math-depth</a> of a MathML element. It allows overriding rules from the <a href=\"$MDN_URL$/Web/CSS/Guides/Cascade/Introduction#user-agent_stylesheets\">user agent stylesheet</a> that define automatic calculation of <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-size\">font-size</a> within MathML formulas."
     }
   },
   "tags": {
@@ -319,7 +319,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how the enclosed MathML markup should be rendered. It can have one of the following values:\n<ul>\n<li><code>block</code>, which means that this element will be displayed in its own block outside the current span of text and with <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> set to <code>normal</code>.</li>\n<li><code>inline</code>, which means that this element will be displayed inside the current span of text and with <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> set to <code>compact</code>.</li>\n</ul>\n<p>If not present, its default value is <code>inline</code>."
+          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how the enclosed MathML markup should be rendered. It can have one of the following values:\n<ul>\n<li><code>block</code>, which means that this element will be displayed in its own block outside the current span of text and with <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-style\"><code>math-style</code></a> set to <code>normal</code>.</li>\n<li><code>inline</code>, which means that this element will be displayed inside the current span of text and with <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-style\"><code>math-style</code></a> set to <code>compact</code>.</li>\n</ul>\n<p>If not present, its default value is <code>inline</code>."
         }
       }
     },
@@ -466,7 +466,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the thickness of the horizontal fraction line."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the thickness of the horizontal fraction line."
         },
         "numalign": {
           "url": "$MDN_URL$/web/mathml/reference/element/mfrac#numalign",
@@ -504,7 +504,7 @@
         "lowDate": "2023-01-12",
         "highDate": "2025-07-12"
       },
-      "doc": "The <strong><code>&lt;mi&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element indicates that the content should be rendered as an <strong>identifier</strong>, such as a function name, variable or symbolic constant.\n<p>By default <code>&lt;mi&gt;</code> elements that contain multiple characters are a rendered as normal text, while single character characters are rendered as italic: the same formatting behavior as the <a href=\"$MDN_URL$/Web/CSS/text-transform\">CSS <code>text-transform</code></a> property with a value of <code>math-auto</code>.\nThe <code>mathvariant</code> attribute with a value of <code>normal</code> can be used to reset a single character to the normal font.\n<p>In order to use a particular form of a character such as bold/italic, serif, sans-serif, script/calligraphy, monospaced, double-struck, and so on, you should use the appropriate <a href=\"https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols\" class=\"external\" target=\"_blank\">Mathematical Alphanumeric Symbols</a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIn a previous specification (MathML3), the <code>mathvariant</code> attribute was used to define logical classes that could apply the character formatting for mathematical alphanumeric symbols.\nThe associated values are now deprecated, and expected to be removed from browsers in future releases.\n</div>",
+      "doc": "The <strong><code>&lt;mi&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element indicates that the content should be rendered as an <strong>identifier</strong>, such as a function name, variable or symbolic constant.\n<p>By default <code>&lt;mi&gt;</code> elements that contain multiple characters are a rendered as normal text, while single character characters are rendered as italic: the same formatting behavior as the CSS <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/text-transform\"><code>text-transform</code></a> property with a value of <code>math-auto</code>.\nThe <code>mathvariant</code> attribute with a value of <code>normal</code> can be used to reset a single character to the normal font.\n<p>In order to use a particular form of a character such as bold/italic, serif, sans-serif, script/calligraphy, monospaced, double-struck, and so on, you should use the appropriate <a href=\"https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols\" class=\"external\" target=\"_blank\">Mathematical Alphanumeric Symbols</a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIn a previous specification (MathML3), the <code>mathvariant</code> attribute was used to define logical classes that could apply the character formatting for mathematical alphanumeric symbols.\nThe associated values are now deprecated, and expected to be removed from browsers in future releases.\n</div>",
       "details": {
         "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
       },
@@ -570,7 +570,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
         },
         "superscriptshift": {
           "url": "$MDN_URL$/web/mathml/reference/element/mmultiscripts#superscriptshift",
@@ -584,7 +584,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
         }
       }
     },
@@ -697,7 +697,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be drawn bigger when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>normal</code>."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be drawn bigger when <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-style\"><code>math-style</code></a> is set to <code>normal</code>."
         },
         "lspace": {
           "url": "$MDN_URL$/web/mathml/reference/element/mo#lspace",
@@ -719,7 +719,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the amount of space before the operator."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the amount of space before the operator."
         },
         "maxsize": {
           "url": "$MDN_URL$/web/mathml/reference/element/mo#maxsize",
@@ -741,7 +741,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the maximum size of the operator when it is stretchy."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the maximum size of the operator when it is stretchy."
         },
         "minsize": {
           "url": "$MDN_URL$/web/mathml/reference/element/mo#minsize",
@@ -763,7 +763,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum size of the operator when it is stretchy."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum size of the operator when it is stretchy."
         },
         "movablelimits": {
           "url": "$MDN_URL$/web/mathml/reference/element/mo#movablelimits",
@@ -785,7 +785,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether attached under- and overscripts move to sub- and superscript positions when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>compact</code>."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether attached under- and overscripts move to sub- and superscript positions when <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-style\"><code>math-style</code></a> is set to <code>compact</code>."
         },
         "rspace": {
           "url": "$MDN_URL$/web/mathml/reference/element/mo#rspace",
@@ -807,7 +807,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the amount of space after the operator."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the amount of space after the operator."
         },
         "separator": {
           "url": "$MDN_URL$/web/mathml/reference/element/mo#separator",
@@ -953,7 +953,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the <code>&lt;mpadded&gt;</code> element."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the <code>&lt;mpadded&gt;</code> element."
         },
         "height": {
           "url": "$MDN_URL$/web/mathml/reference/element/mpadded#height",
@@ -975,7 +975,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired height (above the baseline) of the <code>&lt;mpadded&gt;</code> element."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired height (above the baseline) of the <code>&lt;mpadded&gt;</code> element."
         },
         "lspace": {
           "url": "$MDN_URL$/web/mathml/reference/element/mpadded#lspace",
@@ -997,7 +997,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the horizontal location of the positioning point of the child content with respect to the positioning point of the <code>&lt;mpadded&gt;</code> element."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the horizontal location of the positioning point of the child content with respect to the positioning point of the <code>&lt;mpadded&gt;</code> element."
         },
         "voffset": {
           "url": "$MDN_URL$/web/mathml/reference/element/mpadded#voffset",
@@ -1019,7 +1019,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the vertical location of the positioning point of the child content with respect to the positioning point of the <code>&lt;mpadded&gt;</code> element."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the vertical location of the positioning point of the child content with respect to the positioning point of the <code>&lt;mpadded&gt;</code> element."
         },
         "width": {
           "url": "$MDN_URL$/web/mathml/reference/element/mpadded#width",
@@ -1041,7 +1041,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired horizontal length of the <code>&lt;mpadded&gt;</code> element."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired horizontal length of the <code>&lt;mpadded&gt;</code> element."
         }
       }
     },
@@ -1215,7 +1215,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the space."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the space."
         },
         "height": {
           "url": "$MDN_URL$/web/mathml/reference/element/mspace#height",
@@ -1237,7 +1237,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired height (above the baseline) of the space."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired height (above the baseline) of the space."
         },
         "width": {
           "url": "$MDN_URL$/web/mathml/reference/element/mspace#width",
@@ -1259,7 +1259,7 @@
             "lowDate": "2023-01-12",
             "highDate": "2025-07-12"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired width of the space."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired width of the space."
         }
       }
     },
@@ -1325,7 +1325,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> instead."
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/background-color\"><code>background-color</code></a> instead."
         },
         "color": {
           "url": "$MDN_URL$/web/mathml/reference/element/mstyle#color",
@@ -1339,7 +1339,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/color\"><code>color</code></a> instead."
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/color\"><code>color</code></a> instead."
         },
         "fontsize": {
           "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontsize",
@@ -1353,7 +1353,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a> instead."
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-size\"><code>font-size</code></a> instead."
         },
         "fontstyle": {
           "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontstyle",
@@ -1367,7 +1367,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/font-style\"><code>font-style</code></a> instead."
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-style\"><code>font-style</code></a> instead."
         },
         "fontweight": {
           "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontweight",
@@ -1381,7 +1381,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/font-weight\"><code>font-weight</code></a> instead."
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-weight\"><code>font-weight</code></a> instead."
         }
       }
     },
@@ -1422,7 +1422,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
         }
       }
     },
@@ -1463,7 +1463,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
         },
         "superscriptshift": {
           "url": "$MDN_URL$/web/mathml/reference/element/msubsup#superscriptshift",
@@ -1477,7 +1477,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
         }
       }
     },
@@ -1518,7 +1518,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
         }
       }
     },
@@ -1593,7 +1593,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "Specifies the space between table columns. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
+          "doc": "Specifies the space between table columns. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "frame": {
           "url": "$MDN_URL$/web/mathml/reference/element/mtable#frame",
@@ -1617,7 +1617,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "Specifies additional space added between the table and frame. The first value specifies the spacing on the right and left; the second value specifies the spacing above and below. Possible values are <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
+          "doc": "Specifies additional space added between the table and frame. The first value specifies the spacing on the right and left; the second value specifies the spacing above and below. Possible values are <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "rowalign": {
           "url": "$MDN_URL$/web/mathml/reference/element/mtable#rowalign",
@@ -1654,7 +1654,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "Specifies the space between table rows. Multiple values separated by space are allowed and apply to the corresponding rows (e.g., <code>rowspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
+          "doc": "Specifies the space between table rows. Multiple values separated by space are allowed and apply to the corresponding rows (e.g., <code>rowspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "width": {
           "url": "$MDN_URL$/web/mathml/reference/element/mtable#width",
@@ -1665,7 +1665,7 @@
           "baseline": {
             "level": "NONE"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the width of the entire table."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the width of the entire table."
         }
       }
     },
@@ -1982,7 +1982,7 @@
         "lowDate": "2023-01-12",
         "highDate": "2025-07-12"
       },
-      "doc": "The <strong><code>&lt;semantics&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element associates annotations with a MathML expression, for example its text source as a <a href=\"https://en.wikipedia.org/wiki/Lightweight_markup_language\" class=\"external\" target=\"_blank\">lightweight markup language</a> or mathematical meaning expressed in a special <a href=\"$MDN_URL$/Glossary/XML\">XML</a> dialect. Typically, its structure is:\n<ul>\n<li>a first child which is a MathML expression to be annotated.</li>\n<li>subsequent <a href=\"$MDN_URL$/Web/MathML/Reference/Element/annotation\" ><code>&lt;annotation&gt;</code></a> or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/annotation-xml\" ><code>&lt;annotation-xml&gt;</code></a> elements, the latter being reserved for XML formats such as <a href=\"https://en.wikipedia.org/wiki/MathML#Content_MathML\" class=\"external\" target=\"_blank\">Content MathML</a> or <a href=\"$MDN_URL$/Glossary/SVG\">SVG</a>.</li>\n</ul>\n<p>By default, only the first child of the <code>&lt;semantics&gt;</code> element is rendered while the others have their <a href=\"$MDN_URL$/Web/CSS/display\">display</a> set to <code>none</code>.\n<div>\n```css\nsemantics > :not(:first-child) {\n  display: none;\n}\n```\n</div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nLegacy MathML specifications allowed renderers to decide the default rendering according to available annotations. The following rules for determining the visible child have been implemented in some browsers. See <a href=\"https://w3c.github.io/mathml/\" class=\"external\" target=\"_blank\">MathML 4</a> for the distinction between Presentation and Content MathML.\n<ul>\n<li>If no other rules apply: By default only the first child is rendered, which is supposed to be Presentation MathML.</li>\n<li>If the first child is a Presentation MathML element other than <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code>, render the first child.</li>\n<li>If no Presentation MathML is found, render the first <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> child element of <code>&lt;semantics&gt;</code> without a <code>src</code> attribute. For <code>&lt;annotation-xml&gt;</code> elements the <code>encoding</code> attribute must be equal to one of following values:\n<ul>\n<li><code>\"application/mathml-presentation+xml\"</code></li>\n<li><code>\"MathML-Presentation\"</code></li>\n<li><code>\"SVG1.1\"</code></li>\n<li><code>\"text/html\"</code></li>\n<li><code>\"image/svg+xml\"</code></li>\n<li><code>\"application/xml\"</code></li>\n</ul>\n</li>\n</ul>\n<p>Note that <code>\"application/mathml+xml\"</code> is <em>not</em> mentioned here as it does not distinguish between Content or Presentation MathML.\n</div>",
+      "doc": "The <strong><code>&lt;semantics&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element associates annotations with a MathML expression, for example its text source as a <a href=\"https://en.wikipedia.org/wiki/Lightweight_markup_language\" class=\"external\" target=\"_blank\">lightweight markup language</a> or mathematical meaning expressed in a special <a href=\"$MDN_URL$/Glossary/XML\">XML</a> dialect. Typically, its structure is:\n<ul>\n<li>a first child which is a MathML expression to be annotated.</li>\n<li>subsequent <a href=\"$MDN_URL$/Web/MathML/Reference/Element/annotation\" ><code>&lt;annotation&gt;</code></a> or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/annotation-xml\" ><code>&lt;annotation-xml&gt;</code></a> elements, the latter being reserved for XML formats such as <a href=\"https://en.wikipedia.org/wiki/MathML#Content_MathML\" class=\"external\" target=\"_blank\">Content MathML</a> or <a href=\"$MDN_URL$/Glossary/SVG\">SVG</a>.</li>\n</ul>\n<p>By default, only the first child of the <code>&lt;semantics&gt;</code> element is rendered while the others have their <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/display\">display</a> set to <code>none</code>.\n<div>\n```css\nsemantics > :not(:first-child) {\n  display: none;\n}\n```\n</div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nLegacy MathML specifications allowed renderers to decide the default rendering according to available annotations. The following rules for determining the visible child have been implemented in some browsers. See <a href=\"https://w3c.github.io/mathml/\" class=\"external\" target=\"_blank\">MathML 4</a> for the distinction between Presentation and Content MathML.\n<ul>\n<li>If no other rules apply: By default only the first child is rendered, which is supposed to be Presentation MathML.</li>\n<li>If the first child is a Presentation MathML element other than <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code>, render the first child.</li>\n<li>If no Presentation MathML is found, render the first <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> child element of <code>&lt;semantics&gt;</code> without a <code>src</code> attribute. For <code>&lt;annotation-xml&gt;</code> elements the <code>encoding</code> attribute must be equal to one of following values:\n<ul>\n<li><code>\"application/mathml-presentation+xml\"</code></li>\n<li><code>\"MathML-Presentation\"</code></li>\n<li><code>\"SVG1.1\"</code></li>\n<li><code>\"text/html\"</code></li>\n<li><code>\"image/svg+xml\"</code></li>\n<li><code>\"application/xml\"</code></li>\n</ul>\n</li>\n</ul>\n<p>Note that <code>\"application/mathml+xml\"</code> is <em>not</em> mentioned here as it does not distinguish between Content or Presentation MathML.\n</div>",
       "details": {
         "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
       }

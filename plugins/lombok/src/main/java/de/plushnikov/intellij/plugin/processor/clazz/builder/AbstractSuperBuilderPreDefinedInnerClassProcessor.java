@@ -11,7 +11,11 @@ import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends AbstractClassProcessor {
 

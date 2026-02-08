@@ -3,7 +3,7 @@ package com.intellij.ui.list;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface ListCellBackgroundSupplier<T> {
   @Nullable

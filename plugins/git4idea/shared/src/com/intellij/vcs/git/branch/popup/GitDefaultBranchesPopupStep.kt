@@ -17,7 +17,11 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.vcs.git.GitDisplayName
 import com.intellij.vcs.git.actions.GitSingleRefActions
-import com.intellij.vcs.git.branch.tree.*
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeModel
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeMultiRepoFilteringModel
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeMultiRepoModel
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeSelectedRepoModel
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeSingleRepoModel
 import com.intellij.vcs.git.ref.GitRefUtil
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import git4idea.GitReference

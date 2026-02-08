@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class RepositoryLibraryPropertiesDialog extends DialogWrapper {
   private final RepositoryLibraryPropertiesEditor propertiesEditor;

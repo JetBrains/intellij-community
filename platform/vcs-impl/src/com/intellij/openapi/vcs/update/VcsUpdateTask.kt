@@ -21,7 +21,15 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.ActionType
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager

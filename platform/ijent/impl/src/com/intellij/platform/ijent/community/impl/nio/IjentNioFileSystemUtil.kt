@@ -8,7 +8,7 @@ import com.intellij.util.IntelliJCoroutinesFacade
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.nio.file.*
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 
 internal fun Path.toEelPath(): EelPath =

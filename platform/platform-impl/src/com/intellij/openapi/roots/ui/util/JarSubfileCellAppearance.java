@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 @ApiStatus.Internal
 public final class JarSubfileCellAppearance extends ValidFileCellAppearance {

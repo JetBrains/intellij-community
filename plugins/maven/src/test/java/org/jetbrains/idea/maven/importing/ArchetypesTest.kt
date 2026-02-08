@@ -4,11 +4,15 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.execution.*
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
+import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.junit.Assert
 import java.lang.Boolean
 import java.nio.file.Files
-import java.util.*
+import java.util.Arrays
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.String

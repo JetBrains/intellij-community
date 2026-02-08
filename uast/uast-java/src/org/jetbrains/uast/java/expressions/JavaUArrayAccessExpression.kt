@@ -18,7 +18,11 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiArrayAccessExpression
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UArrayAccessExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class JavaUArrayAccessExpression(

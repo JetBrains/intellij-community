@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.idea.kdoc;
 
-import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingTest;
 import org.jetbrains.kotlin.idea.highlighter.AbstractK1HighlightingTest;
 import org.jetbrains.kotlin.idea.k1.codeinsight.inspections.KDocUnresolvedReferenceInspection;
 

@@ -2,10 +2,8 @@
 package org.jetbrains.idea.maven.statistics
 
 import com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCollectorEvents
-import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.indices.MavenMultiProjectImportTest
 import org.junit.Test
 
 class MavenLibrariesCollectorsTest : MavenMultiVersionImportingTestCase() {

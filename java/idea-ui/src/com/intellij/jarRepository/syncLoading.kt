@@ -8,7 +8,12 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.registry.Registry
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.concurrency.await
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import java.util.concurrent.TimeUnit

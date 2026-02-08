@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.inheritanceToDelegation.usageInfo;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 
 public class InheritanceToDelegationUsageInfo extends UsageInfo {

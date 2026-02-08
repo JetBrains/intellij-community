@@ -1,10 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.enumerators
 
-import com.intellij.openapi.vfs.newvfs.persistent.*
+import com.intellij.openapi.vfs.newvfs.persistent.AppAgent
+import com.intellij.openapi.vfs.newvfs.persistent.AppController
+import com.intellij.openapi.vfs.newvfs.persistent.InteractionResult
+import com.intellij.openapi.vfs.newvfs.persistent.User
+import com.intellij.openapi.vfs.newvfs.persistent.UserAgent
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.DataEnumeratorEx
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.IOException

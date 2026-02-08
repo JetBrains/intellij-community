@@ -3,7 +3,31 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
-import com.intellij.psi.*
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiForStatement
+import com.intellij.psi.PsiForeachPatternStatement
+import com.intellij.psi.PsiForeachStatement
+import com.intellij.psi.PsiIfStatement
+import com.intellij.psi.PsiInstanceOfExpression
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiPatternVariable
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiResourceVariable
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiSwitchBlock
+import com.intellij.psi.PsiSwitchLabelStatementBase
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
@@ -13,9 +37,15 @@ import com.intellij.util.MathUtil
 import com.siyeh.ig.psiutils.FinalUtils
 import com.siyeh.ig.psiutils.VariableAccessUtils
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKFieldAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtAssignmentStatement
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.MINUSMINUS
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.PLUSPLUS
+import org.jetbrains.kotlin.nj2k.tree.JKParenthesizedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.JKUnaryExpression
+import org.jetbrains.kotlin.nj2k.tree.JKVariable
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal fun getImmutableLocalVariablesInBlock(body: PsiCodeBlock?): Set<PsiVariable>? {

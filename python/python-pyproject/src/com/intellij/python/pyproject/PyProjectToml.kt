@@ -235,10 +235,7 @@ data class PyProjectToml(
      * Attempts to find the `pyproject.toml` file in the provided module.
      * Returns null if not found.
      */
-    suspend fun findFile(module: Module): VirtualFile? =
-      withContext(Dispatchers.IO) {
-        findAmongRoots(module, PY_PROJECT_TOML)
-      }
+    suspend fun findFile(module: Module): VirtualFile? = findAmongRoots(module, PY_PROJECT_TOML)
 
     suspend fun findInRoot(moduleBasePath: Path): Path? = withContext(Dispatchers.IO) {
       moduleBasePath.resolve(PY_PROJECT_TOML).takeIf { it.isRegularFile() }

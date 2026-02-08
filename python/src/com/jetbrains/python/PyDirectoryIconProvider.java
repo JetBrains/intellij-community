@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 
 public final class PyDirectoryIconProvider extends IconProvider {

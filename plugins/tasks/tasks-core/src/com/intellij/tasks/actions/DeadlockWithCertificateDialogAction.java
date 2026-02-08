@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.TaskBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
 import java.net.MalformedURLException;
 import java.net.URL;
 

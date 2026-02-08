@@ -17,7 +17,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
 
 @SuppressWarnings("NonAsciiCharacters")
 public class TextLevelHighlightingTest extends BaseTestCase {

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.ui.components.JBPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class DefaultPostfixTemplateEditor implements PostfixTemplateEditor {
   private final @NotNull PostfixTemplateProvider myTemplateProvider;

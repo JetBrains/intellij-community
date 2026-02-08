@@ -8,7 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
 import java.beans.PropertyChangeListener
-import java.util.*
+import java.util.IdentityHashMap
+import java.util.LinkedList
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.event.ChangeListener

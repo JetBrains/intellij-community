@@ -4,7 +4,7 @@ package com.intellij.platform.execution.serviceView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 interface ServiceViewUi {
   @NotNull JComponent getComponent();

@@ -68,6 +68,9 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//plugins/kotlin/base/kotlin.base.serialization",
+    "//plugins/kotlin/formatter/minimal",
+    "//platform/code-style-api:codeStyle",
+    "//plugins/kotlin/kotlin.searching",
   ]
 )
 ### auto-generated section `build intellij.kotlin.completion.impl` end

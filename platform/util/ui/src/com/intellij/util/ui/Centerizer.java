@@ -5,8 +5,10 @@ import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.Dimension;
 
 public final class Centerizer extends JPanel {
   public enum TYPE {

@@ -1,0 +1,25 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/SomeException.class
+End of files
+Compiling files:
+  java/classProperties/convertToCheckedExceptionMultiModule/a/ppp/SomeException.java
+End of files
+Cleaning output files:
+  ppp/Client.class
+  ppp/Task.class
+End of files
+Compiling files:
+  java/classProperties/convertToCheckedExceptionMultiModule/a/ppp/Client.java
+  java/classProperties/convertToCheckedExceptionMultiModule/a/ppp/Task.java
+End of files
+Cleaning output files:
+  ppp/Client2.class
+  ppp/Task.class
+End of files
+Compiling files:
+  java/classProperties/convertToCheckedExceptionMultiModule/b/ppp/Client2.java
+  java/classProperties/convertToCheckedExceptionMultiModule/b/ppp/Task.java
+End of files
+------------------------------------------
+Exit code: OK

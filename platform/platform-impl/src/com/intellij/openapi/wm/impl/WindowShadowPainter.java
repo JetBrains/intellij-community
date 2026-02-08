@@ -6,15 +6,33 @@ import com.intellij.openapi.ui.impl.ShadowPainter;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.icons.AllIcons.Ide.Shadow.*;
+import static com.intellij.icons.AllIcons.Ide.Shadow.Bottom;
+import static com.intellij.icons.AllIcons.Ide.Shadow.BottomLeft;
+import static com.intellij.icons.AllIcons.Ide.Shadow.BottomRight;
+import static com.intellij.icons.AllIcons.Ide.Shadow.Left;
+import static com.intellij.icons.AllIcons.Ide.Shadow.Right;
+import static com.intellij.icons.AllIcons.Ide.Shadow.Top;
+import static com.intellij.icons.AllIcons.Ide.Shadow.TopLeft;
+import static com.intellij.icons.AllIcons.Ide.Shadow.TopRight;
 
 final class WindowShadowPainter extends AbstractPainter {
   private static final ShadowPainter PAINTER = new ShadowPainter(Top, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft);

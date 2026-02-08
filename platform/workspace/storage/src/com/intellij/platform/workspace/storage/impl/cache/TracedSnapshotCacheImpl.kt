@@ -3,7 +3,16 @@ package com.intellij.platform.workspace.storage.impl.cache
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache.Companion.LOG_QUEUE_MAX_SIZE
-import com.intellij.platform.workspace.storage.impl.query.*
+import com.intellij.platform.workspace.storage.impl.query.Cell
+import com.intellij.platform.workspace.storage.impl.query.CellChain
+import com.intellij.platform.workspace.storage.impl.query.CellId
+import com.intellij.platform.workspace.storage.impl.query.Diff
+import com.intellij.platform.workspace.storage.impl.query.DiffCollectorCell
+import com.intellij.platform.workspace.storage.impl.query.DiffImpl
+import com.intellij.platform.workspace.storage.impl.query.Match
+import com.intellij.platform.workspace.storage.impl.query.MatchList
+import com.intellij.platform.workspace.storage.impl.query.MatchSet
+import com.intellij.platform.workspace.storage.impl.query.QueryId
 import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.CollectionQuery
@@ -12,7 +21,7 @@ import com.intellij.platform.workspace.storage.query.compile
 import com.intellij.platform.workspace.storage.query.trackDiff
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Random
 
 internal data class CellUpdateInfo(
   val chainId: QueryId,

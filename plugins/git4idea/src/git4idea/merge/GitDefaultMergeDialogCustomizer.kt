@@ -32,7 +32,13 @@ import com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitBranch
 import git4idea.GitRevisionNumber
-import git4idea.GitUtil.*
+import git4idea.GitUtil.CHERRY_PICK_HEAD
+import git4idea.GitUtil.HEAD
+import git4idea.GitUtil.MERGE_HEAD
+import git4idea.GitUtil.REBASE_HEAD
+import git4idea.GitUtil.getHead
+import git4idea.GitUtil.getRepositories
+import git4idea.GitUtil.getRepositoriesForFiles
 import git4idea.changes.GitChangeUtils
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitHistoryUtils

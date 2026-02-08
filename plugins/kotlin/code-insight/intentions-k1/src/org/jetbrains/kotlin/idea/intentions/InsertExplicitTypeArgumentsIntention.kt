@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.DEFINITELY_NON_NULLABLE_AS_REIFIED
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.types.DefinitelyNotNullType
 import org.jetbrains.kotlin.types.checker.NewCapturedType
 import org.jetbrains.kotlin.types.error.ErrorUtils
 
+@K1Deprecation
 class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallExpression>(
     KtCallExpression::class.java,
     KotlinBundle.messagePointer("add.explicit.type.arguments")

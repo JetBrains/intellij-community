@@ -17,7 +17,12 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.DOLLAR_SLASHY;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.DOUBLE_QUOTED;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.SINGLE_QUOTED;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.SLASHY;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.TRIPLE_DOUBLE_QUOTED;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.TRIPLE_SINGLE_QUOTED;
 
 public class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
   @Test

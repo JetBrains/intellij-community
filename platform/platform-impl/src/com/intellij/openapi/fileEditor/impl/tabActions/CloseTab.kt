@@ -5,7 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -25,7 +30,11 @@ import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.BitUtil
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.awt.geom.Ellipse2D

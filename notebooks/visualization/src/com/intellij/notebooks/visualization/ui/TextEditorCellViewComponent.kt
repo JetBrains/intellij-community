@@ -101,7 +101,7 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
     this.highlighter = highlighter
   }
 
-  override fun dispose(): Unit = editor.updateManager.update {
+  override fun dispose(): Unit = editor.notebookViewUpdater.update {
     disposeExistingHighlighter()
   }
 

@@ -4,7 +4,15 @@ package com.intellij.codeInsight.hints.declarative.impl.toggle
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
+import com.intellij.codeInsight.hints.declarative.InlayPayload
+import com.intellij.codeInsight.hints.declarative.InlayPosition
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.OwnBypassCollector
+import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Editor

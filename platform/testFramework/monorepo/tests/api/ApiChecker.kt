@@ -4,7 +4,7 @@ package com.intellij.platform.testFramework.monorepo.api
 import com.intellij.tools.apiDump.API
 import com.intellij.tools.apiDump.printFlags
 import com.intellij.tools.apiDump.referencedFqns
-import java.util.*
+import java.util.TreeMap
 
 /**
  * @return map with an FQN as a key, and a member (class, method, field) which exposes the FQN as a value

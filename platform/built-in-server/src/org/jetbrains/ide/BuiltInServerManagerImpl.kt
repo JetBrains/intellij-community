@@ -18,8 +18,13 @@ import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME

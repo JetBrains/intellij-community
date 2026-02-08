@@ -6,7 +6,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,7 +32,9 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.Strings.isEmpty;
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
-import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_COLLECTION;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
 

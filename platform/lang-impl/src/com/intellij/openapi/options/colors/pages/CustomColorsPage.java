@@ -15,7 +15,7 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 
 public final class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySortable {

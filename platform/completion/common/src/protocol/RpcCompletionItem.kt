@@ -12,10 +12,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RpcCompletionItem(
   val lookupString: String,
-  /** null means setOf(lookupString) */
-  val allLookupStrings: Set<String>? = null,
+  val allLookupStrings: Set<String>? = null, // null means setOf(lookupString)
   val presentation: RpcCompletionItemPresentation,
   val id: RpcCompletionItemId,
+  val hasExpensiveRenderer: Boolean = false,
   val insertHandler: RpcInsertHandler = RpcInsertHandler.Backend,
   val requiresCommittedDocuments: Boolean = true,
   val autoCompletionPolicy: AutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT,
@@ -23,6 +23,7 @@ data class RpcCompletionItem(
   val shouldStopLookupInsertion: Boolean = false,
   val isDirectInsertion: Boolean = false,
   val prefixMatcher: RpcPrefixMatcher,
+  val isWorthShowingInAutoPopup: Boolean = false,
 ) {
   override fun toString(): String = buildToString("RpcCompletionItem") {
     field("lookupString", lookupString)
@@ -51,11 +52,13 @@ fun CompletionResult.toRpc(): RpcCompletionItem {
     id = id,
     insertHandler = element.getRpcInsertHandler(),
     requiresCommittedDocuments = element.requiresCommittedDocuments(),
+    hasExpensiveRenderer = element.expensiveRenderer != null,
     autoCompletionPolicy = element.autoCompletionPolicy,
     isCaseSensitive = element.isCaseSensitive,
     shouldStopLookupInsertion = element is LookupElementInsertStopper && element.shouldStopLookupInsertion(),
     isDirectInsertion = element.getUserData(CodeCompletionHandlerBase.DIRECT_INSERTION) != null,
     prefixMatcher = prefixMatcher.toRpc(id),
+    isWorthShowingInAutoPopup = element.isWorthShowingInAutoPopup(),
   )
 }
 

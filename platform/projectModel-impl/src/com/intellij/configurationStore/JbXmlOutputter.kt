@@ -13,12 +13,18 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.Constants
-import org.jdom.*
+import org.jdom.Attribute
+import org.jdom.CDATA
+import org.jdom.Content
+import org.jdom.Element
+import org.jdom.EntityRef
+import org.jdom.Text
+import org.jdom.Verifier
 import org.jdom.output.Format
 import java.io.IOException
 import java.io.StringWriter
 import java.io.Writer
-import java.util.*
+import java.util.Collections
 
 // expandEmptyElements is ignored
 open class JbXmlOutputter @JvmOverloads constructor(

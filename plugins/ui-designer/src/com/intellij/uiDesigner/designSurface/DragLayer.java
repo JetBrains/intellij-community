@@ -3,8 +3,11 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 final class DragLayer extends PassiveDecorationLayer {
   DragLayer(final GuiEditor editor) {

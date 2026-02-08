@@ -3,7 +3,11 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.InitInspectionRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.loadAndUseProjectInLoadComponentStateMode
+import com.intellij.testFramework.statement
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule

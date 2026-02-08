@@ -10,7 +10,8 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 public interface EditorColors {
   ColorKey CARET_ROW_COLOR = ColorKey.createColorKey("CARET_ROW_COLOR");

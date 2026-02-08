@@ -3,7 +3,9 @@ package org.intellij.plugins.markdown.extensions.common.plantuml
 
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.*
+import org.intellij.plugins.markdown.extensions.CodeFenceDownloadLineMarkerProvider
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 
 internal class PlantUMLCodeFenceDownloadLineMarkerProvider : CodeFenceDownloadLineMarkerProvider() {

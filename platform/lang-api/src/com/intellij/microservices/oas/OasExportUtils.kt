@@ -7,8 +7,7 @@ import com.intellij.microservices.endpoints.EndpointsProvider
 import com.intellij.microservices.endpoints.EndpointsUrlTargetProvider
 import com.intellij.microservices.url.UrlPath
 import com.intellij.microservices.url.UrlTargetInfo
-import java.util.*
-import kotlin.collections.iterator
+import java.util.Locale
 
 val EMPTY_OPENAPI_SPECIFICATION: OpenApiSpecification = OpenApiSpecification(emptyList())
 

@@ -5,6 +5,13 @@ com.intellij.codeInsight.controlflow.ControlFlowProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getAdditionalInfo(com.intellij.codeInsight.controlflow.Instruction):java.lang.String
 - a:getControlFlow(com.intellij.psi.PsiElement):com.intellij.codeInsight.controlflow.ControlFlow
+c:com.intellij.extapi.psi.StubBasedPsiElementBase
+- <init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
+- pf:getElementTypeImpl():com.intellij.psi.tree.IElementType
+- f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
+- f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
+- f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
+- f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 com.intellij.lang.DefaultASTFactory
 - a:createComment(com.intellij.psi.tree.IElementType,java.lang.CharSequence):com.intellij.psi.impl.source.tree.LeafElement
 c:com.intellij.lang.impl.PsiBuilderAdapter
@@ -206,6 +213,8 @@ com.intellij.psi.impl.source.HolderFactory
 - a:createHolder(com.intellij.psi.PsiManager,com.intellij.psi.impl.source.tree.TreeElement,com.intellij.psi.PsiElement,com.intellij.util.CharTable):com.intellij.psi.impl.source.DummyHolder
 - a:createHolder(com.intellij.psi.PsiManager,com.intellij.util.CharTable,com.intellij.lang.Language):com.intellij.psi.impl.source.DummyHolder
 - a:createHolder(com.intellij.psi.PsiManager,com.intellij.util.CharTable,Z):com.intellij.psi.impl.source.DummyHolder
+a:com.intellij.psi.impl.source.PsiFileImpl
+- getStubDescriptor():com.intellij.psi.stubs.LanguageStubDescriptor
 com.intellij.psi.impl.source.PsiFileWithStubSupport
 - com.intellij.psi.PsiFile
 - a:getStubTree():com.intellij.psi.stubs.StubTree
@@ -249,6 +258,13 @@ f:com.intellij.psi.stubs.DefaultFileStubSerializer
 - getExternalId():java.lang.String
 - indexStub(com.intellij.psi.stubs.PsiFileStub,com.intellij.psi.stubs.IndexSink):V
 - serialize(com.intellij.psi.stubs.PsiFileStub,com.intellij.psi.stubs.StubOutputStream):V
+c:com.intellij.psi.stubs.PsiFileStubImpl
+- getElementType():com.intellij.psi.tree.IElementType
+- getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+f:com.intellij.psi.stubs.StubElementUtil
+- sf:shouldCreateStubForPsi(com.intellij.psi.stubs.StubElementFactory,com.intellij.psi.PsiElement):Z
+f:com.intellij.psi.stubs.StubTreeBuilder
+- s:getStubbedRootDescriptors(com.intellij.psi.FileViewProvider):java.util.List
 com.intellij.psi.tree.RoleFinder
 - a:findChild(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 com.intellij.psi.util.PsiAwareObject

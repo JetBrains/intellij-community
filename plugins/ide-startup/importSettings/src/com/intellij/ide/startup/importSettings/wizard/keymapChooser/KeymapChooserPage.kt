@@ -16,7 +16,11 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.ButtonGroup
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 internal class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
   private val pages = mutableListOf<KeymapPane>()

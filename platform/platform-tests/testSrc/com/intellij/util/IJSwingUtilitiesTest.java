@@ -18,8 +18,9 @@ package com.intellij.util;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Component;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;

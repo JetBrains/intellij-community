@@ -8,8 +8,9 @@ import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JProgressBar;
+import java.awt.BorderLayout;
 
 @ApiStatus.Internal
 final class BuildProgressStripe extends JBPanel {

@@ -10,7 +10,13 @@ import com.intellij.polySymbols.search.PolySymbolUsageQueries
 import com.intellij.polySymbols.utils.qualifiedName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.rename.api.*
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.PsiModifiableRenameUsage
+import com.intellij.refactoring.rename.api.PsiRenameUsage
+import com.intellij.refactoring.rename.api.RenameUsage
+import com.intellij.refactoring.rename.api.RenameUsageSearchParameters
+import com.intellij.refactoring.rename.api.RenameUsageSearcher
+import com.intellij.refactoring.rename.api.fileRangeUpdater
 import com.intellij.util.Query
 
 internal class PolySymbolRenameUsageSearcher : RenameUsageSearcher {

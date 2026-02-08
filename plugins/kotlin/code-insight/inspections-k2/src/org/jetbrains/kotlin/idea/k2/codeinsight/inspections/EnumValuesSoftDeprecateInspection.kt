@@ -8,7 +8,8 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection.EnumValuesSoftDeprecateInspectionBase
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isOptInAllowed
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
 
 internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspectionBase() {
 
@@ -21,7 +22,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
     }
 
     private class K2ReplaceFix(fixType: ReplaceFixType, enumClassQualifiedName: String) :
-        ReplaceFix(fixType, enumClassQualifiedName) {
+        ReplaceFix(fixType,  "Enum.entries", "$enumClassQualifiedName.entries") {
         override fun shortenReferences(element: KtElement) {
             shortenReferences(element, callableShortenStrategy = { ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED })
         }

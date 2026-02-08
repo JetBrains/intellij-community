@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import java.util.*
+import java.util.Date
 
 data class GHPRMergedEvent(override val actor: GHActor?,
                            override val createdAt: Date,

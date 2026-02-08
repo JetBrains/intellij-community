@@ -3,7 +3,13 @@ package com.intellij.ide.util
 
 import com.intellij.ide.ui.text.paragraph.ListParagraph
 import com.intellij.ide.ui.text.paragraph.TextParagraph
-import com.intellij.ide.ui.text.parts.*
+import com.intellij.ide.ui.text.parts.CodeTextPart
+import com.intellij.ide.ui.text.parts.IconTextPart
+import com.intellij.ide.ui.text.parts.IllustrationTextPart
+import com.intellij.ide.ui.text.parts.LinkTextPart
+import com.intellij.ide.ui.text.parts.RegularTextPart
+import com.intellij.ide.ui.text.parts.ShortcutTextPart
+import com.intellij.ide.ui.text.parts.TextPart
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE

@@ -18,8 +18,9 @@ jvm_library(
     "//plugins/kotlin/maven",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//plugins/maven",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/jps",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.serialization.maven` end

@@ -8,9 +8,14 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.impl.search.AnnotatedElementsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch.Parameters;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -23,7 +28,13 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service(Service.Level.PROJECT)
 public final class InjectionCache {
@@ -66,7 +77,7 @@ public final class InjectionCache {
     for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
       Parameters parameters = new Parameters(annoClasses.get(cursor), usageScope, true,
                                              PsiClass.class, PsiParameter.class, PsiMethod.class, PsiRecordComponent.class);
-      AnnotatedElementsSearch.searchElements(parameters).forEach(element -> {
+      new AnnotatedElementsSearcher().execute(parameters, element -> {
         if (element instanceof PsiParameter psiParameter) {
           final PsiElement scope = psiParameter.getDeclarationScope();
           if (scope instanceof PsiMethod psiMethod) {

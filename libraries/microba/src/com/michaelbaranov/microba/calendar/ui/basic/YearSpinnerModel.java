@@ -1,6 +1,6 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import javax.swing.*;
+import javax.swing.SpinnerNumberModel;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Calendar;

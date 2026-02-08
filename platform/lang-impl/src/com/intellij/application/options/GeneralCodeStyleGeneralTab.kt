@@ -9,7 +9,13 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField
 import com.intellij.ui.components.fields.IntegerField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 
 internal class GeneralCodeStyleGeneralTab(settings: CodeStyleSettings) {

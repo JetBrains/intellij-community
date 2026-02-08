@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.BitSet
 
 /**
  * Tracker state can be updated without taking an Application writeLock.

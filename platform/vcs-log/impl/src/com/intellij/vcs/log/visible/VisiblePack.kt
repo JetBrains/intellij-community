@@ -4,7 +4,11 @@ package com.intellij.vcs.log.visible
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogDataPack
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject

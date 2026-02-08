@@ -4,7 +4,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.AWTEvent;
 import java.awt.event.KeyEvent;
 
 public abstract class StackingPopupDispatcher implements IdePopupEventDispatcher {

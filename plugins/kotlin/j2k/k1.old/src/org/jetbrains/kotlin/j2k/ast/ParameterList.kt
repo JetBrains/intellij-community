@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.j2k.ast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 
+@K1Deprecation
 class ParameterList(
         val parameters: List<Parameter>,
         val lPar: LPar?,
@@ -27,6 +29,7 @@ class ParameterList(
 }
 
 // we use LPar and RPar elements to better handle comments and line breaks around them
+@K1Deprecation
 class LPar private constructor() : Element() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("(")
@@ -37,6 +40,7 @@ class LPar private constructor() : Element() {
     }
 }
 
+@K1Deprecation
 class RPar private constructor() : Element() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(")")

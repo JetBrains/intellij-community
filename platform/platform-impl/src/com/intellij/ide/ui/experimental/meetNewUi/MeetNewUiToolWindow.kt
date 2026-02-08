@@ -4,7 +4,11 @@ package com.intellij.ide.ui.experimental.meetNewUi
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
-import com.intellij.ide.ui.*
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.LafReference
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -20,7 +24,11 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.IconUtil

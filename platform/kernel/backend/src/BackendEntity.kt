@@ -3,7 +3,12 @@ package com.intellij.platform.kernel.backend
 
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.kernel.withKernel
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.entity
+import com.jetbrains.rhizomedb.get
 import fleet.kernel.change
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext

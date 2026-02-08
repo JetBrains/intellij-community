@@ -15,7 +15,11 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactRootElement;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.jar.JarFile;
 
 /**

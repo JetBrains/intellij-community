@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.awt.font.FontRenderContext;
 import java.text.BreakIterator;
 import java.text.CharacterIterator;

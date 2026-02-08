@@ -15,7 +15,7 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

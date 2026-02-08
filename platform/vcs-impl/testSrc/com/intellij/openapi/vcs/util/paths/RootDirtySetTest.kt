@@ -10,7 +10,10 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.IntSet
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 

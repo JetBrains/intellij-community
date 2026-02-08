@@ -1,6 +1,10 @@
 package com.intellij.database.run.ui.treetable
 
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridHelper
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.extractors.toJson
 import com.intellij.database.run.ReservedCellValue
 import com.intellij.database.run.ui.DataAccessType

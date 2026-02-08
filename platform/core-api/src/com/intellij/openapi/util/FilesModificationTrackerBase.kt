@@ -3,7 +3,13 @@ package com.intellij.openapi.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileCopyEvent
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileMoveEvent
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager

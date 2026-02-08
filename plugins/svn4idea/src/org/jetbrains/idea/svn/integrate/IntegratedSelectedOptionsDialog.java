@@ -2,7 +2,14 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -26,7 +33,12 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.info.Info;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;

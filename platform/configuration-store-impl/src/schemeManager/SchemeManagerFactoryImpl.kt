@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
+import com.intellij.configurationStore.LOG
+import com.intellij.configurationStore.SchemeNameToFileName
+import com.intellij.configurationStore.SettingsSavingComponent
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType

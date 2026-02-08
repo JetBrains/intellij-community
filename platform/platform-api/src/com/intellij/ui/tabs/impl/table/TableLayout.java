@@ -16,10 +16,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingConstants;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @deprecated use inheritors of {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout} instead

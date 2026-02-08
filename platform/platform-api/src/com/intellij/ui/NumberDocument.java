@@ -18,7 +18,7 @@ package com.intellij.ui;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
-import java.awt.*;
+import java.awt.Toolkit;
 
 public class NumberDocument extends PlainDocument {
   @Override

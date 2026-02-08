@@ -3,7 +3,11 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.testFramework.plugins.PluginSpec
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt

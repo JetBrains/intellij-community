@@ -7,14 +7,20 @@ import org.gradle.api.Named
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.AndroidAwareGradleModelProvider
+import org.jetbrains.kotlin.idea.gradleTooling.capitalize
+import org.jetbrains.kotlin.idea.gradleTooling.compilations
+import org.jetbrains.kotlin.idea.gradleTooling.getCompileKotlinTaskName
+import org.jetbrains.kotlin.idea.gradleTooling.getTarget
+import org.jetbrains.kotlin.idea.gradleTooling.getTargets
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.Modifier
-import java.util.*
+import java.util.Locale
 
 interface KaptSourceSetModel : Serializable {
     val sourceSetName: String

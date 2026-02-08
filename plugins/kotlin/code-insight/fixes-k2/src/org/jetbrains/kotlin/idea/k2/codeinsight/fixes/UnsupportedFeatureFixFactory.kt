@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.K2EnableUnsupportedFeatureFix
-import java.util.*
+import java.util.EnumMap
 
 object UnsupportedFeatureFixFactory {
     val unsupportedFeature: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.UnsupportedFeature> =

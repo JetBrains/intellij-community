@@ -8,7 +8,7 @@ import com.intellij.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;

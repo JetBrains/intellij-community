@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.slicer
 
 import com.intellij.slicer.SliceUsage
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 object LambdaResultInflowBehaviour : KotlinSliceAnalysisMode.Behaviour {
     override fun processUsages(
         element: KtElement,

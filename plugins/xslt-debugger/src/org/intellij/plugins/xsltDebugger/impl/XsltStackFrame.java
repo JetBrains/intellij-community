@@ -9,7 +9,13 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XNavigatable;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
@@ -19,7 +25,7 @@ import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.net.URI;
 import java.util.List;
 

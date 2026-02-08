@@ -2,7 +2,13 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AggregateResultsInspection;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -22,7 +28,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Test for {@link AggregateResultsInspection} functionality.

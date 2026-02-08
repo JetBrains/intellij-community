@@ -7,7 +7,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListChange
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
+import com.intellij.openapi.vcs.changes.ui.DefaultInclusionModel
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesTreeModel
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.util.containers.ContainerUtil
 
 internal class KotlinConfiguratorChangesBrowser(project: Project, private val changes: List<Change>, private val changeSelector: (Change) -> Unit) :

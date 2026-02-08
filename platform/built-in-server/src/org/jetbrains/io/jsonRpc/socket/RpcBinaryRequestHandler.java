@@ -13,7 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BinaryRequestHandler;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.io.MessageDecoder;
-import org.jetbrains.io.jsonRpc.*;
+import org.jetbrains.io.jsonRpc.Client;
+import org.jetbrains.io.jsonRpc.ClientListener;
+import org.jetbrains.io.jsonRpc.ClientManager;
+import org.jetbrains.io.jsonRpc.ClientManagerKt;
+import org.jetbrains.io.jsonRpc.ExceptionHandler;
+import org.jetbrains.io.jsonRpc.JsonRpcServer;
 
 import java.util.List;
 import java.util.Map;

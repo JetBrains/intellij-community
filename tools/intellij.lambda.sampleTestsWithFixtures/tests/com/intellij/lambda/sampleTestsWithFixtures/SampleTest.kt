@@ -4,7 +4,11 @@ package com.intellij.lambda.sampleTestsWithFixtures
 import com.intellij.lambda.sampleTestsWithFixtures.fixtures.codeInsightFixture
 import com.intellij.lambda.sampleTestsWithFixtures.fixtures.openNewProjectAndEditor
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
-import com.intellij.lambda.testFramework.testApi.editor.*
+import com.intellij.lambda.testFramework.testApi.editor.editorImplOrThrow
+import com.intellij.lambda.testFramework.testApi.editor.moveTo
+import com.intellij.lambda.testFramework.testApi.editor.typeWithLatency
+import com.intellij.lambda.testFramework.testApi.editor.waitContains
+import com.intellij.lambda.testFramework.testApi.editor.waitForExpectedSelectedFile
 import com.intellij.lambda.testFramework.testApi.getProjects
 import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.lambda.testFramework.utils.IdeWithLambda

@@ -28,25 +28,29 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.intellij.python.community.execService.impl.LoggedProcessLine
-import com.intellij.python.processOutput.impl.ui.Icons
 import com.intellij.python.processOutput.impl.OutputFilter
 import com.intellij.python.processOutput.impl.ProcessOutputBundle.message
 import com.intellij.python.processOutput.impl.ProcessOutputController
 import com.intellij.python.processOutput.impl.Tag
 import com.intellij.python.processOutput.impl.formatFull
 import com.intellij.python.processOutput.impl.ui.Colors
+import com.intellij.python.processOutput.impl.ui.Icons
 import com.intellij.python.processOutput.impl.ui.collectReplayAsState
+import com.intellij.python.processOutput.impl.ui.thenIfNotNull
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 
 private object Styling {
     val COPY_SECTION_BUTTON_SPACE_SIZE = 18.dp
+    val LINE_START_PADDING = 8.dp
+    val LINE_HORIZONTAL_ALIGNMENT = 10.dp
+    val LINE_SPACER_HEIGHT = 4.dp
 }
 
 @Composable
@@ -167,19 +171,17 @@ internal fun OutputSection(controller: ProcessOutputController) {
                                 items = lines,
                                 key = { index, _ -> index },
                             ) { index, line ->
-                                val outputColor = when (line.kind) {
-                                    LoggedProcessLine.Kind.OUT -> Color.Unspecified
-                                    LoggedProcessLine.Kind.ERR -> Colors.Output.ErrorText
-                                }
+                                // when the kind of the current line does not match the kind of the
+                                // previous line, it means that the current line is the start of a
+                                // new section
+                                val startOfNewSection =
+                                    lines.getOrNull(index - 1)?.kind != line.kind
 
                                 OutputLine(
                                     displayTags = isDisplayTags,
                                     sectionIndicator =
-                                        if (lines.getOrNull(index - 1)?.kind != line.kind) {
-                                            SectionIndicator(
-                                                line.kind.tag,
-                                                OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
-                                            ) {
+                                        if (startOfNewSection) {
+                                            SectionIndicator(line.kind.tag) {
                                                 controller.copyOutputTagAtIndexToClipboard(
                                                     loggedProcess,
                                                     index,
@@ -189,16 +191,13 @@ internal fun OutputSection(controller: ProcessOutputController) {
                                             null
                                         },
                                     text = line.text,
-                                    textStyle = SpanStyle(
-                                        color = outputColor,
-                                    ),
                                 )
                             }
 
                             exitInfo?.also { exitInfo ->
                                 item(key = "exit") {
                                     OutputLine(
-                                        displayTags = true,
+                                        displayTags = isDisplayTags,
                                         sectionIndicator =
                                             SectionIndicator(
                                                 Tag.EXIT,
@@ -253,22 +252,31 @@ private fun OutputLine(
 
         Row(
             modifier = Modifier.fillMaxWidth()
-                .padding(end = scrollbarContentSafePadding()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(
+                    end = scrollbarContentSafePadding(),
+                    start = Styling.LINE_START_PADDING,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(Styling.LINE_HORIZONTAL_ALIGNMENT),
         ) {
-            DisableSelection {
-                val padding = Tag.maxLength + 3
+            if (displayTags) {
+                DisableSelection {
+                    val padding = Tag.maxLength + 1
 
-                Text(
-                    text =
-                        if (displayTags && sectionIndicator != null) {
-                            "${sectionIndicator.tag}:".padStart(padding, ' ')
-                        } else {
-                            " ".repeat(padding)
-                        },
-                    style = JewelTheme.consoleTextStyle,
-                    fontWeight = FontWeight.Thin,
-                )
+                    Text(
+                        text =
+                            if (sectionIndicator != null) {
+                                "${sectionIndicator.tag}:".padStart(padding, ' ')
+                            } else {
+                                " ".repeat(padding)
+                            },
+                        style = JewelTheme.consoleTextStyle,
+                        fontWeight = FontWeight.Thin,
+                        modifier =
+                            Modifier.thenIfNotNull(sectionIndicator) {
+                                testTag(OutputSectionTestTags.OUTPUT_SECTION_TAG)
+                            },
+                    )
+                }
             }
 
             Text(
@@ -286,7 +294,7 @@ private fun OutputLine(
                 ActionIconButton(
                     modifier = Modifier
                         .size(Styling.COPY_SECTION_BUTTON_SPACE_SIZE)
-                        .testTag(sectionIndicator.testTag),
+                        .testTag(sectionIndicator.copyButtonTestTag),
                     iconKey = Icons.Keys.Copy,
                     tooltipText = message("process.output.output.copySection.tooltip"),
                     onClick = sectionIndicator.onCopy,
@@ -302,7 +310,7 @@ private fun OutputLine(
 
 private data class SectionIndicator(
     val tag: String,
-    val testTag: String,
+    val copyButtonTestTag: String = OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
     val onCopy: () -> Unit,
 )
 
@@ -338,7 +346,7 @@ private fun LazyListScope.infoLineItems(
             else -> 0
         }
     } ?: 0
-    val padding = maxLength + 2
+    val padding = maxLength + 1
 
     infoLines.forEach { infoLine ->
         when (infoLine) {
@@ -375,8 +383,11 @@ private fun LazyListScope.infoLineItemSingle(
 
             Row(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(end = scrollbarContentSafePadding()),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    .padding(
+                        end = scrollbarContentSafePadding(),
+                        start = Styling.LINE_START_PADDING,
+                    ),
+                horizontalArrangement = Arrangement.spacedBy(Styling.LINE_HORIZONTAL_ALIGNMENT),
             ) {
                 Text(
                     text =
@@ -406,7 +417,7 @@ private fun LazyListScope.infoLineItemSingle(
 
 @Composable
 private fun LineSpacer() {
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(Styling.LINE_SPACER_HEIGHT))
 }
 
 private sealed class InfoLine {
@@ -427,6 +438,7 @@ internal object OutputSectionTestTags {
     const val NOT_SELECTED_TEXT = "ProcessOutput.Output.NotSelectedText"
     const val INFO_SECTION = "ProcessOutput.Output.InfoSection"
     const val OUTPUT_SECTION = "ProcessOutput.Output.OutputSection"
+    const val OUTPUT_SECTION_TAG = "ProcessOutput.Output.OutputSection.Tag"
     const val FILTERS_TAGS = "ProcessOutput.Output.FiltersTags"
     const val FILTERS_BUTTON = "ProcessOutput.Output.FiltersButton"
     const val FILTERS_MENU = "ProcessOutput.Output.FiltersMenu"

@@ -15,8 +15,19 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.startOffset
 import com.intellij.util.asSafely
 import com.siyeh.ig.testFrameworks.UAssertHint
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.evaluateString
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getContainingUMethod
+import org.jetbrains.uast.getUCallExpression
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.resolveToUElementOfType
+import org.jetbrains.uast.toUElement
 
 class JvmTestDiffProvider : TestDiffProvider {
   override fun updateExpected(element: PsiElement, actual: String) {

@@ -3,7 +3,6 @@ package com.intellij.lang.html
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.html.embedding.HtmlCustomEmbeddedContentTokenType
-import com.intellij.idea.AppModeAssertions
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.ParserDefinition.SpaceRequirements
@@ -23,6 +22,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.UnsupportedNodeElementTypeException
 import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTokenType
+import com.intellij.util.PlatformUtils
 
 open class HTMLParserDefinition :
   ParserDefinition {
@@ -55,7 +55,7 @@ open class HTMLParserDefinition :
 
       elementType === XmlElementType.HTML_EMBEDDED_CONTENT -> HtmlEmbeddedContentImpl(node)
 
-      AppModeAssertions.isFrontend() -> ASTWrapperPsiElement(node)
+      PlatformUtils.isJetBrainsClient() -> ASTWrapperPsiElement(node)
 
       else -> throw UnsupportedNodeElementTypeException(node)
     }

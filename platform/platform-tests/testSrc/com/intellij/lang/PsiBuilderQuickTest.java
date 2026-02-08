@@ -9,7 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
-import com.intellij.psi.tree.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.ILightLazyParseableElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -25,7 +29,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   private static final IFileElementType ROOT = new IFileElementType("ROOT", Language.ANY);

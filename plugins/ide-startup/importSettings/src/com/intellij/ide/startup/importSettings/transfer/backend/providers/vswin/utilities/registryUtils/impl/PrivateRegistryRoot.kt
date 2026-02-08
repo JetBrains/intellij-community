@@ -5,7 +5,11 @@ import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registr
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.WindowsRegistryException
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl.RegistryRoot
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.sun.jna.platform.win32.*
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.W32Errors
+import com.sun.jna.platform.win32.Win32Exception
+import com.sun.jna.platform.win32.WinNT
+import com.sun.jna.platform.win32.WinReg
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 

@@ -8,7 +8,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocFieldReferenceImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocInlinedTagImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocMethodParameterImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocMethodParamsImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocMethodReferenceImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocParameterReferenceImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocTagImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocTagValueTokenImpl;
 
 public final class GroovyDocPsiCreator {
 

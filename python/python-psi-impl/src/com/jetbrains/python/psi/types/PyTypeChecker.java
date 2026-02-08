@@ -1,7 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -14,7 +18,20 @@ import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -33,11 +50,27 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.jetbrains.python.PyNames.FUNCTION;
-import static com.jetbrains.python.psi.PyUtil.*;
-import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
+import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.getReturnTypeToAnalyzeAsCallType;
+import static com.jetbrains.python.psi.PyUtil.isNewMethod;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getArgumentsMappedToKeywordContainer;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getArgumentsMappedToPositionalContainer;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getMappedKeywordContainer;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getMappedPositionalContainer;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getRegularMappedParameters;
 
 public final class PyTypeChecker {
   private PyTypeChecker() {
@@ -187,6 +220,14 @@ public final class PyTypeChecker {
 
     if (expected instanceof PyUnsafeUnionType weakUnionType) {
       return Optional.of(match(weakUnionType, actual, context));
+    }
+
+    if (actual instanceof PyIntersectionType intersectionType) {
+      return Optional.of(match(expected, intersectionType, context));
+    }
+
+    if (expected instanceof PyIntersectionType intersectionType) {
+      return Optional.of(match(intersectionType, actual, context));
     }
 
     if (expected instanceof PyClassType && actual instanceof PyClassType) {
@@ -521,10 +562,6 @@ public final class PyTypeChecker {
     return ContainerUtil.and(actual.getMembers(), type -> match(expected, type, context).orElse(false));
   }
 
-  private static boolean match(@NotNull PyType expected, @NotNull PyUnsafeUnionType actual, @NotNull MatchContext context) {
-    return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
-  }
-
   private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected,
                                                   @NotNull PyUnionType actual,
                                                   @NotNull MatchContext context) {
@@ -545,6 +582,18 @@ public final class PyTypeChecker {
       return true;
     }
     return ContainerUtil.or(expected.getMembers(), type -> match(type, actual, context).orElse(true));
+  }
+
+  private static boolean match(@NotNull PyType expected, @NotNull PyIntersectionType actual, @NotNull MatchContext context) {
+    return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
+  }
+
+  private static boolean match(@NotNull PyIntersectionType expected, @NotNull PyType actual, @NotNull MatchContext context) {
+    return ContainerUtil.all(expected.getMembers(), type -> match(type, actual, context).orElse(true));
+  }
+
+  private static boolean match(@NotNull PyType expected, @NotNull PyUnsafeUnionType actual, @NotNull MatchContext context) {
+    return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
   }
 
   private static boolean match(@NotNull PyUnsafeUnionType expected, @NotNull PyType actual, @NotNull MatchContext context) {
@@ -1140,6 +1189,9 @@ public final class PyTypeChecker {
     }
     if (type instanceof PyUnsafeUnionType weakUnion) {
       return ContainerUtil.exists(weakUnion.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
+    }
+    if (type instanceof PyIntersectionType intersectionType) {
+      return ContainerUtil.exists(intersectionType.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
     }
     return false;
   }

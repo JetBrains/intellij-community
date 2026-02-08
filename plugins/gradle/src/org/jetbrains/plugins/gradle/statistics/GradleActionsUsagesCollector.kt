@@ -24,11 +24,9 @@ internal object GradleActionsUsagesCollector : CounterUsagesCollector() {
   val PASTE_MAVEN_DEPENDENCY = GROUP.registerEvent("PasteMvnDependency")
   @JvmField
   val SHOW_GRADLE_DAEMONS_ACTION = GROUP.registerEvent("showGradleDaemonsAction")
+
   @JvmField
-  val TOGGLE_PARALLEL_FETCH = GROUP.registerEvent("toggleParallelFetch",
-                                                  EventFields.Boolean("new_value", "newly set value"),
-                                                  "Parallel model fetch flag was switched by a user to the new value. " +
-                                                  "Only fires when the old value differs from the new boolean value")
+  val TOGGLE_PARALLEL_FETCH = GROUP.registerEvent("toggleParallelFetch", EventFields.Boolean("new_value", "newly set value"))
 
   @JvmStatic
   fun trigger(project: Project?, action: EventId) {

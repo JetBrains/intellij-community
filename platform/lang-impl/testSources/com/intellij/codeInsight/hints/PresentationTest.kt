@@ -1,7 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.BiStatePresentation
+import com.intellij.codeInsight.hints.presentation.ChangeOnClickPresentation
+import com.intellij.codeInsight.hints.presentation.ContainerInlayPresentation
+import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.InsetPresentation
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
+import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.codeInsight.hints.presentation.SpacePresentation
+import com.intellij.codeInsight.hints.presentation.StatefulPresentation
+import com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
+import com.intellij.codeInsight.hints.presentation.VerticalListInlayPresentation
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase

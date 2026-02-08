@@ -2,11 +2,21 @@
 package com.intellij.vcs.changes.viewModel
 
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesViewDiffPreviewHandler
+import com.intellij.openapi.vcs.changes.ChangesViewDiffPreviewProcessor
+import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
+import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.all
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnderTag
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.included
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.includedUnderTag
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ui.tree.TreeUtil.*
+import com.intellij.util.ui.tree.TreeUtil.getLastUserObject
+import com.intellij.util.ui.tree.TreeUtil.selectPath
+import com.intellij.util.ui.tree.TreeUtil.selectPaths
+import com.intellij.util.ui.tree.TreeUtil.treePathTraverser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow

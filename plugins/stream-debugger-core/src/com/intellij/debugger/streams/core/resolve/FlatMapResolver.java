@@ -5,7 +5,11 @@ import com.intellij.debugger.streams.core.trace.TraceElement;
 import com.intellij.debugger.streams.core.trace.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vitaliy.Bibaev

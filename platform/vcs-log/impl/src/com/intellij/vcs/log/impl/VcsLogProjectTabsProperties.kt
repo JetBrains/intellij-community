@@ -2,7 +2,11 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.Comparing
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -11,7 +15,7 @@ import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.TreeMap
 
 @Internal
 @State(name = "Vcs.Log.Tabs.Properties", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
@@ -31,6 +35,10 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
     return MyVcsLogUiPropertiesImpl(id)
   }
 
+  fun checkTabHasFilters(id: String): Boolean {
+    return _state.tabStates[id]?.filters?.isNotEmpty() ?: false
+  }
+
   fun addTab(tabId: String, location: VcsLogTabLocation) {
     _state.openTabs[tabId] = location
   }
@@ -45,7 +53,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   }
 
   val tabs: Map<String, VcsLogTabLocation>
-    get() = _state.openTabs
+    get() = _state.openTabs.toMap()
 
   fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
     return getRecentGroup(_state.recentFilters, filterName)
@@ -61,7 +69,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
 
     @get:OptionTag("OPEN_GENERIC_TABS")
     @get:MapAnnotation(sortBeforeSave = false)
-    var openTabs = LinkedHashMap<String, VcsLogTabLocation>()
+    var openTabs: LinkedHashMap<String, VcsLogTabLocation> = LinkedHashMap()
 
     @get:OptionTag("RECENT_FILTERS")
     var recentFilters: MutableMap<String, MutableList<RecentGroup>> = HashMap()

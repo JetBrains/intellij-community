@@ -7,7 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Weak hash set.

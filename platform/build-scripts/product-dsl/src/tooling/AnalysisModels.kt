@@ -18,11 +18,13 @@ internal enum class MergeOperation {
   INLINE;
   
   companion object {
-    fun fromString(value: String): MergeOperation = when (value.lowercase()) {
-      "merge" -> MERGE
-      "move" -> MOVE
-      "inline" -> INLINE
-      else -> error("Unknown merge operation: '$value'. Valid values: merge, move, inline")
+    fun fromString(value: String): MergeOperation {
+      return when (value.lowercase()) {
+        "merge" -> MERGE
+        "move" -> MOVE
+        "inline" -> INLINE
+        else -> error("Unknown merge operation: '$value'. Valid values: merge, move, inline")
+      }
     }
   }
 }
@@ -40,10 +42,12 @@ internal enum class MergeOperation {
   UNKNOWN;
 
   companion object {
-    fun fromPath(path: String): ModuleLocation = when {
-      path.contains("/community/") -> COMMUNITY
-      path.contains("/ultimate/") -> ULTIMATE
-      else -> UNKNOWN
+    fun fromPath(path: String): ModuleLocation {
+      return when {
+        path.contains("/community/") -> COMMUNITY
+        path.contains("/ultimate/") -> ULTIMATE
+        else -> UNKNOWN
+      }
     }
   }
 }
@@ -74,22 +78,26 @@ data class ModuleSetMetadata(
 
 /**
  * JSON filter for selective analysis output.
- * Supports various filter types: products, moduleSets, composition, duplicates, mergeImpact, modulePaths, 
- * moduleDependencies, moduleReachability, dependencyPath, productUsage, or specific items.
+ * Supports various filter types: products, moduleSets, composition, duplicates, mergeImpact, modulePaths,
+ * moduleDependencies, moduleOwners, moduleReachability, dependencyPath, productUsage, or specific items.
  */
 @Serializable
 data class JsonFilter(
-  @JvmField val filter: String,  // "products", "moduleSets", "composition", "duplicates", "mergeImpact", "modulePaths", "product", "moduleSet", "moduleDependencies", "moduleReachability", "dependencyPath", "productUsage"
+  @JvmField val filter: String,  // "products", "moduleSets", "composition", "duplicates", "mergeImpact", "modulePaths", "product", "moduleSet", "moduleDependencies", "moduleOwners", "moduleReachability", "dependencyPath", "productUsage"
   @JvmField val value: String? = null,  // Product/module set name when filter is "product" or "moduleSet"
   @JvmField val module: String? = null,  // Module name for "modulePaths", "moduleDependencies" filters
   @JvmField val moduleSet: String? = null,  // Module set name for "moduleReachability" or "productUsage" filter
   @JvmField val fromModule: String? = null,  // Starting module for "dependencyPath" filter
   @JvmField val toModule: String? = null,  // Target module for "dependencyPath" filter
+  @JvmField val graph: String? = null,  // Graph type for "dependencyPath" filter: "plugin" or "jps"
   @JvmField val source: String? = null,  // Source module set name for "mergeImpact" filter
   @JvmField val target: String? = null,  // Target module set name for "mergeImpact" filter (null for inline operation)
   @JvmField val operation: String? = null,  // Operation type for "mergeImpact": "merge", "move", or "inline" (default: "merge")
   @JvmField val includeDuplicates: Boolean = false,  // Include duplicate xi:include detection in output (for future unification)
-  @JvmField val includeTransitive: Boolean = false  // Include ALL transitive dependencies in moduleDependencies filter (BFS traversal)
+  @JvmField val includeTransitive: Boolean = false,  // Include ALL transitive dependencies in moduleDependencies filter (BFS traversal)
+  @JvmField val includeTestDependencies: Boolean = false,  // Include TEST-scoped target deps in moduleDependencies/dependencyPath
+  @JvmField val includeTestSources: Boolean = false,  // Include test plugin owners in moduleOwners
+  @JvmField val includeScopes: Boolean = false,  // Include dependency scopes in dependencyPath result
 )
 
 /**
@@ -119,9 +127,23 @@ data class ProductSpec(
   @JvmField val contentSpec: ProductModulesContentSpec?,
   @JvmField val buildModules: List<String>,
   @JvmField val category: ProductCategory = ProductCategory.BACKEND,  // Product architecture category
-  @JvmField val totalModuleCount: Int = 0,      // All modules including from module sets (deduplicated)
+  @JvmField val totalModuleCount: Int = 0,      // All modules, including from module sets (deduplicated)
   @JvmField val directModuleCount: Int = 0,     // Just additionalModules count
-  @JvmField val moduleSetCount: Int = 0         // Number of module sets included
+  @JvmField val moduleSetCount: Int = 0,        // Number of module sets included
+  @JvmField val moduleSets: List<String> = emptyList(), // Direct module set names
+  @JvmField val directModules: List<String> = emptyList(), // Direct module names (additionalModules)
+  @JvmField val aliasCount: Int = 0,            // Number of product aliases
+  @JvmField val aliases: List<String> = emptyList(), // Product alias values
+  @JvmField val compositionSummary: CompositionSummary = CompositionSummary()
+)
+
+/**
+ * Summary of product composition operations.
+ */
+@Serializable
+data class CompositionSummary(
+  @JvmField val totalOperations: Int = 0,
+  @JvmField val operationsByType: Map<String, Int> = emptyMap()
 )
 
 /**
@@ -331,4 +353,3 @@ internal data class ProductUsageAnalysis(
   @JvmField val indirectUsage: List<ProductUsageEntry>,  // Products that use it transitively through other sets
   @JvmField val totalProducts: Int
 )
-

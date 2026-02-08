@@ -19,8 +19,9 @@ import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.IconReplacer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Graphics;
 
 public class AlertIcon implements Icon, RetrievableIcon {
 

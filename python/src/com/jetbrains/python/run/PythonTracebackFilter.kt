@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.traceBackParsers.TraceBackParser
 import java.io.File
-import kotlin.io.path.Path
 
 open class PythonTracebackFilter : Filter {
   protected val project: Project

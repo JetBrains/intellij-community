@@ -15,7 +15,17 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.AbstractFontCombo
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.ButtonsGroup
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.actionListener
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
@@ -45,6 +55,13 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
       override fun fontChanged() {
         restoreSelectedVariants()
         updateFontPreferences()
+      }
+
+      override fun schemeReset(fontPreferences: FontPreferences) {
+        recentFeatures[fontPreferences.fontFamily] = fontPreferences.characterVariants
+        if (currentFont == fontPreferences.fontFamily) {
+          currentFeatures.forEach { (string, box) -> box.isSelected = string in fontPreferences.characterVariants }
+        }
       }
     })
 
@@ -268,11 +285,11 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     row {
       val featureCb = checkBox(label)
         .selected(selected)
-        .onChanged { cb ->
+        .actionListener { _, cb ->
           (fontPreferences as ModifiableFontPreferences).apply {
             setCharacterVariant(feature, cb.isSelected)
           }
-          fireSchemeChanged()
+          fireFontChanged()
         }
         .component
 

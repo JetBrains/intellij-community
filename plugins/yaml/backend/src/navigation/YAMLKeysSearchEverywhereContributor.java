@@ -23,7 +23,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 
-import javax.swing.*;
+import javax.swing.ListCellRenderer;
 
 import static org.jetbrains.yaml.navigation.YamlSearchEverywhereResultsCollectorKt.searchForKey;
 

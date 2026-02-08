@@ -4,11 +4,17 @@ package com.intellij.platform.uast.testFramework.common
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.testFramework.assertEqualsToFile
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.asRecursiveLogString
+import org.jetbrains.uast.getContainingUFile
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.UastVisitor
+import org.jetbrains.uast.withContainingElements
 import org.junit.Assert
 import java.io.File
-import java.util.*
+import java.util.Stack
 
 interface RenderLogTestBase {
   fun getTestDataPath(): String

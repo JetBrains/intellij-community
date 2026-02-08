@@ -12,9 +12,9 @@ import com.intellij.xdebugger.SplitDebuggerMode.showSplitWarnings
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 
 /**
  * Base class for backend-only debugger action handlers.

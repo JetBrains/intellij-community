@@ -9,7 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
+import com.intellij.openapi.vcs.history.StandardDiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

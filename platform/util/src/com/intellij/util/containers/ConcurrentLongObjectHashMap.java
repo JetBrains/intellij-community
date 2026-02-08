@@ -3,7 +3,14 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;

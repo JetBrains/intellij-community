@@ -48,6 +48,15 @@ public final class ReflectionUtilRt {
     return result;
   }
 
+  /**
+   * Collects all methods declared in the given class or interface and its superclasses (including methods from Object)
+   * and interfaces, including public, protected, default (package) access, static, private methods, but excluding {@code <clinit>} method.
+   * <p>
+   * The same method with the same name and parameters may appear in the result several times with different receiver or return type.
+   *
+   * @param clazz The class to collect methods from.
+   * @return A list of methods declared in the class and its superclasses/interfaces. The list is not sorted.
+   */
   @NotNull
   public static List<Method> collectMethods(@NotNull Class<?> clazz) {
     List<Method> result = new ArrayList<>();

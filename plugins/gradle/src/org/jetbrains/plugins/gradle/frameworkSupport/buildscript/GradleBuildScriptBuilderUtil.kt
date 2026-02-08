@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleBuildScriptBuilderUtil")
 
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
@@ -37,13 +37,18 @@ import org.gradle.util.GradleVersion.version
  * 1.9.24                      8.10                        1.8
  * 2.0.20                      8.11                        1.8
  * 2.0.21                      8.12                        1.8
+ * 2.2.0                       9.0.0                       2.2
+ * 2.2.20                      9.2.0                       2.2
+ * 2.2.21                      9.3.0                       2.2
  *
  * Source: https://docs.gradle.org/current/userguide/compatibility.html
  */
 fun getKotlinVersion(gradleVersion: GradleVersion): String {
   val base = gradleVersion.baseVersion
   return when {
-    base >= version("9.2") -> "2.2.20"
+    base >= version("9.3.0") -> "2.2.21"
+    base >= version("9.2.0") -> "2.2.20"
+    base >= version("9.0.0") -> "2.2.0"
     base >= version("8.12") -> "2.0.21"
     base >= version("8.11") -> "2.0.20"
     base >= version("8.10") -> "1.9.24"

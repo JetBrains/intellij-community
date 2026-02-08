@@ -59,7 +59,7 @@ class LinuxDistributionBuilder(
   override val targetLibcImpl: LinuxLibcImpl,
   private val context: BuildContext,
 ) : OsSpecificDistributionBuilder {
-  private val iconPngPath = (if (context.applicationInfo.isEAP) customizer.iconPngPathForEAP else null) ?: customizer.iconPngPath
+  private val iconPngPath = locateIconForLinuxLauncher(customizer, context)
 
   override val targetOs: OsFamily
     get() = OsFamily.LINUX
@@ -103,7 +103,10 @@ class LinuxDistributionBuilder(
     val targetLibcImpl = this.targetLibcImpl
     val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch, targetLibcImpl).keys
     updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
-    context.executeStep(spanBuilder("Build Linux artifacts").setAttribute("arch", arch.name).setAttribute("targetLibcImpl", targetLibcImpl.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
+    context.executeStep(
+      spanBuilder("Build Linux artifacts").setAttribute("arch", arch.name).setAttribute("targetLibcImpl", targetLibcImpl.name),
+      BuildOptions.LINUX_ARTIFACTS_STEP
+    ) {
       if (customizer.buildArtifactWithoutRuntime) {
         launch(Dispatchers.IO + CoroutineName("Build Linux $arch .tar.gz without bundled Runtime")) {
           context.executeStep(
@@ -147,7 +150,7 @@ class LinuxDistributionBuilder(
           val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
           try {
             unTar(tarGzPath, tempTar)
-            RepairUtilityBuilder.generateManifest(unpackedDistribution = tempTar.resolve(rootDirectoryName), OsFamily.LINUX, arch, context)
+            RepairUtilityBuilder.generateManifest(unpackedDistribution = tempTar.resolve(rootDirectoryName), os = OsFamily.LINUX, arch = arch, context = context)
           }
           finally {
             NioFiles.deleteRecursively(tempTar)
@@ -166,17 +169,23 @@ class LinuxDistributionBuilder(
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
     substituteTemplatePlaceholders(
-      sourceFile, targetFile, "@@", listOf(
-      "product_full" to fullName,
-      "product" to context.productProperties.baseFileName,
-      "product_vendor" to context.applicationInfo.shortCompanyName,
-      "system_selector" to context.systemSelector
-    ), convertToUnixLineEndings = true
+      inputFile = sourceFile,
+      outputFile = targetFile,
+      placeholder = "@@",
+      values = listOf(
+        "product_full" to fullName,
+        "product" to context.productProperties.baseFileName,
+        "product_vendor" to context.applicationInfo.shortCompanyName,
+        "system_selector" to context.systemSelector
+      ),
+      convertToUnixLineEndings = true,
     )
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
-    return customizer.generateExecutableFilesPatterns(includeRuntime, arch, libc, context)
+  override suspend fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
+    val base = customizer.generateExecutableFilesPatterns(includeRuntime, arch, libc, context)
+    val pluginPatterns = collectPluginExecutablePatterns(context, OsFamily.LINUX, arch, libc)
+    return base + pluginPatterns
   }
 
   private val rootDirectoryName: String
@@ -405,7 +414,7 @@ private fun generateScripts(distBinDir: Path, arch: JvmArchitecture, targetLibcI
 
   copyInspectScript(context, distBinDir)
 
-  generateLauncherScript(distBinDir, arch, nonCustomizableJvmArgs = emptyList(), targetLibcImpl, context)
+  generateLauncherScript(distBinDir = distBinDir, arch = arch, nonCustomizableJvmArgs = emptyList(), targetLibcImpl = targetLibcImpl, context = context)
 }
 
 private suspend fun addNativeLauncher(distBinDir: Path, targetPath: Path, arch: JvmArchitecture, context: BuildContext) {
@@ -474,13 +483,19 @@ private fun copyScript(sourceFile: Path, targetFile: Path, additionalTemplateVal
 
 private fun writeLinuxVmOptions(distBinDir: Path, context: BuildContext): Path {
   val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
-  val vmOptions = VmOptionsGenerator.generate(context).asSequence() + sequenceOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true")
-  VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
+  val waylandOptions = when (context.productProperties.platformPrefix) {
+    "JetBrainsClient" -> emptySequence() // Wayland auto-detection is disabled for JetBrains Client until rem-dev specific compatibility issues are resolved (IJPL-231136)
+    "Gateway" -> emptySequence() // and for Gateway until system tray will be supported in Wayland toolkit in JBR (IJPL-231661/JBR-9966)
+    else -> sequenceOf("-Dawt.toolkit.name=auto")
+  }
+  val vmOptions = generateVmOptions(context).asSequence() + sequenceOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true") + waylandOptions
+  writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
   return vmOptionsPath
 }
 
-private fun suffix(arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl): String =
-  suffix(arch) + if (targetLibcImpl == LinuxLibcImpl.MUSL) "-musl" else ""
+private fun suffix(arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl): String {
+  return suffix(arch) + if (targetLibcImpl == LinuxLibcImpl.MUSL) "-musl" else ""
+}
 
 private fun getSnapArchName(arch: JvmArchitecture) = when (arch) {
   JvmArchitecture.x64 -> "amd64"

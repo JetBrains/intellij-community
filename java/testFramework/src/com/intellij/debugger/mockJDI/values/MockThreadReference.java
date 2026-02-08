@@ -5,7 +5,11 @@
 package com.intellij.debugger.mockJDI.values;
 
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
-import com.sun.jdi.*;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StackFrame;
+import com.sun.jdi.ThreadGroupReference;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.Value;
 
 import java.util.List;
 

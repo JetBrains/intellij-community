@@ -26,10 +26,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
-import com.intellij.usages.*
+import com.intellij.usages.Usage
+import com.intellij.usages.UsageInfo2UsageAdapter
+import com.intellij.usages.UsageLimitUtil
+import com.intellij.usages.UsageTarget
+import com.intellij.usages.UsageViewManager
+import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.UsageViewManagerImpl
 import com.intellij.util.containers.toArray
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

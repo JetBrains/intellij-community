@@ -7,7 +7,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitTag
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.NonExtendable
 interface GitRepositoryTagsHolder {

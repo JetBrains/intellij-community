@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.AbstractBlockWrapper;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.AlignmentImpl;
+import com.intellij.formatting.CompositeBlockWrapper;
+import com.intellij.formatting.LeafBlockWrapper;
+import com.intellij.formatting.SpacingImpl;
+import com.intellij.formatting.WhiteSpace;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;

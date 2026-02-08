@@ -5,7 +5,7 @@ import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 import kotlin.properties.Delegates
 
 @ApiStatus.Experimental

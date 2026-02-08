@@ -4,11 +4,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiElement(Py:LPAR)('(')
       PyStarExpression
         PsiElement(Py:MULT)('*')
-        PsiErrorElement:Unexpected token
-          <empty list>
-        PsiElement(Py:RPAR)(')')
-      PsiErrorElement:')' expected
-        <empty list>
+      PsiElement(Py:RPAR)(')')
     PsiWhiteSpace(' ')
     PsiElement(Py:RARROW)('->')
     PsiWhiteSpace(' ')

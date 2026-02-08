@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface UnscrambleSupport<T extends JComponent> {
   ExtensionPointName<UnscrambleSupport> EP_NAME = ExtensionPointName.create("com.intellij.unscrambleSupport");

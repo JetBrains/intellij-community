@@ -6,14 +6,22 @@ import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.java.VisibilitySorter
-import com.intellij.ide.util.treeView.smartTree.*
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData
+import com.intellij.ide.util.treeView.smartTree.Filter
+import com.intellij.ide.util.treeView.smartTree.Sorter
+import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 
 open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement : StructureViewTreeElement) :

@@ -5,8 +5,11 @@ import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel.Companion.ID
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 
 internal class WelcomeScreenLeftTabListener: FileEditorManagerListener {
@@ -18,10 +21,20 @@ internal class WelcomeScreenLeftTabListener: FileEditorManagerListener {
     val isChangedFromWelcome = event.oldFile?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType
     val project = event.manager.project
     if (isChangedToWelcome) {
-      ProjectViewImpl.getInstance(project).changeView(ID)
+      safeChangeView(project, WelcomeScreenLeftPanel.ID)
     }
     else if (isChangedFromWelcome) {
-      ProjectViewImpl.getInstance(project).changeView(ProjectViewPane.ID)
+      safeChangeView(project, ProjectViewPane.ID)
     }
+  }
+
+  private fun safeChangeView(project: Project, viewId: String) {
+    val canChangeView = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.contentManagerIfCreated != null
+    if (!canChangeView) {
+      // `ProjectViewImpl.changeView` expects `contentManager` to be not null.
+      return
+    }
+
+    ProjectViewImpl.getInstance(project).changeView(viewId)
   }
 }

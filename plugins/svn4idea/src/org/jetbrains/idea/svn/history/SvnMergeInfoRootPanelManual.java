@@ -22,8 +22,13 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.IntegratedSelectedOptionsDialog;
 import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

@@ -18,7 +18,13 @@ import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModelImpl
-import com.intellij.openapi.editor.impl.zombie.*
+import com.intellij.openapi.editor.impl.zombie.CleaverNecromancer
+import com.intellij.openapi.editor.impl.zombie.Necromancer
+import com.intellij.openapi.editor.impl.zombie.NecromancerAwaker
+import com.intellij.openapi.editor.impl.zombie.Necropolis
+import com.intellij.openapi.editor.impl.zombie.Recipe
+import com.intellij.openapi.editor.impl.zombie.SpawnRecipe
+import com.intellij.openapi.editor.impl.zombie.TurningRecipe
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupModel

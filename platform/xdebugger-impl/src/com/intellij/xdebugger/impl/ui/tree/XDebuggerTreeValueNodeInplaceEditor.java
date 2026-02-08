@@ -12,9 +12,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Rectangle;
 
 public abstract class XDebuggerTreeValueNodeInplaceEditor extends XDebuggerTreeInplaceEditor {
   protected final XValueNodeImpl myValueNode;

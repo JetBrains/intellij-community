@@ -1,55 +1,16 @@
 <idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
-    <codeInsight.completion.intention.offset.provider language="kotlin"
-                                                      implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory$KotlinIntentionCommandOffsetProvider"/>
-
-    <codeInsight.completion.command.factory language="kotlin"
-                                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory"/>
 <!--    <codeInsight.completion.command.provider language="kotlin"-->
 <!--                                             implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider"/>-->
     <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinRenameActionCommandProvider"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinOptimizeImportCompletionCommandProvider"/>
 <!--    <codeInsight.completion.command.provider language="kotlin"-->
 <!--                                               implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommandProvider"/>-->
-    <codeInsight.completion.command.provider language="kotlin"
-                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGenerateCommandCompletion"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToDeclarationCommandCompletionProvider"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToSuperMethodCommandCompletionProvider"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToImplementationCommandCompletionProvider"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinFormatCodeCompletionCommandProvider"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCopyFQNCompletionCommandProvider"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinShowUsagesActionCompletionCommandProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
                                              implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByLineCompletionCommandProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
                                              implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByBlockCompletionCommandProvider"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinDeleteCompletionCommandProvider"/>
-    <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinChangeSignatureCompletionCommand"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCreateFromUsagesCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinExtractParameterCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinExtractMethodCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinInlineMethodCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinMoveCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCopyCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinTypeHierarchyCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinTypeInfoCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinQuickDocumentationCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinSurroundWithCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinSafeDeleteCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinParameterInfoCompletionCommand" order="last"/>
   </extensions>
 
 </idea-plugin>

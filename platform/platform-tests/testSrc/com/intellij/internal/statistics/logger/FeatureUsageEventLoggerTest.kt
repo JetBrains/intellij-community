@@ -2,8 +2,22 @@
 package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.FUCollectorTestCase
-import com.intellij.internal.statistic.eventLog.*
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
+import com.intellij.internal.statistic.eventLog.EventLogFile
+import com.intellij.internal.statistic.eventLog.EventLogFilesProvider
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
+import com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
+import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
+import com.intellij.internal.statistic.eventLog.StatisticsSystemEventIdProvider
+import com.intellij.internal.statistic.eventLog.events.EnumEventField
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.ObjectDescription
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent

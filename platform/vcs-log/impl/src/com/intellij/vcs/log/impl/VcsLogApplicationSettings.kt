@@ -10,7 +10,12 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
-import com.intellij.vcs.log.ui.table.column.*
+import com.intellij.vcs.log.ui.table.column.Author
+import com.intellij.vcs.log.ui.table.column.Commit
+import com.intellij.vcs.log.ui.table.column.Date
+import com.intellij.vcs.log.ui.table.column.Root
+import com.intellij.vcs.log.ui.table.column.TableColumnVisibilityProperty
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import org.jetbrains.annotations.NonNls
 
 @State(name = "Vcs.Log.App.Settings", storages = [Storage("vcs.xml")], category = SettingsCategory.TOOLS)

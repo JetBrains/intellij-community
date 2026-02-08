@@ -5,11 +5,41 @@ import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore.flattenParens
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentExpression
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyDoubleStarExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyParameterList
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyReturnStatement
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PySliceItem
+import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStarExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyYieldExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.types.PyTypeChecker.*
+import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
+import com.jetbrains.python.psi.types.PyTypeChecker.substitute
+import com.jetbrains.python.psi.types.PyTypeChecker.unifyGenericCall
 
 
 object PyExpectedTypeJudgement {
@@ -231,11 +261,22 @@ object PyExpectedTypeJudgement {
           name = "Parameters",
           fields = fields,
           dictClass = dictClass,
-          definitionLevel = PyTypedDictType.DefinitionLevel.INSTANCE,
-          ancestors = emptyList(),
-          declaration = mapping.callableType?.declarationElement
+          isDefinition = false,
+          // TODO: This is incorrect:
+          // `PyTypedDict` declaration is either a `PyClass` node:
+          // ```
+          // class TD(typing.TypedDict):
+          //   ...
+          // ```
+          //
+          // or a `PyTargetExpression` node:
+          // ```
+          // TD = typing.TypedDict("TD", {})
+          // ```
+          declaration = mapping.callableType?.callable ?: return null
         )
       }
+      // TODO merge the type of `**kwargs` with the types of other mapped parameters here
       else {
         return param.getType(ctx)
       }
@@ -431,21 +472,22 @@ object PyExpectedTypeJudgement {
     val elementTypes = tupleType.elementTypes
     val variadicRepeatCount = tupleExpr.elements.size - elementTypes.size + 1
     var arrayIdx = 0
-    for (idx in 0 until tupleType.elementTypes.size) {
-      val elemType = tupleType.elementTypes[idx]
-      if (elemType is PyUnpackedTupleType && elemType.isUnbound) {
-        repeat(variadicRepeatCount) {
-          tupleTypeArray[arrayIdx++] = elemType.elementTypes.firstOrNull()
+    for (elemType in elementTypes.take(tupleTypeArray.size)) {
+      when (elemType) {
+        is PyUnpackedTupleType if (elemType.isUnbound) -> {
+          repeat(variadicRepeatCount) {
+            tupleTypeArray[arrayIdx++] = elemType.elementTypes.firstOrNull()
+          }
         }
-        continue
-      }
-      if (elemType is PyTupleType && elemType.isHomogeneous) {
-        repeat(variadicRepeatCount) {
-          tupleTypeArray[arrayIdx++] = elemType.elementTypes.firstOrNull()
+        is PyTupleType if (elemType.isHomogeneous) -> {
+          repeat(variadicRepeatCount) {
+            tupleTypeArray[arrayIdx++] = elemType.elementTypes.firstOrNull()
+          }
         }
-        continue
+        else -> {
+          tupleTypeArray[arrayIdx++] = elemType
+        }
       }
-      tupleTypeArray[arrayIdx++] = elemType
     }
     if (indexOfExpr < tupleTypeArray.size) {
       return tupleTypeArray[indexOfExpr]

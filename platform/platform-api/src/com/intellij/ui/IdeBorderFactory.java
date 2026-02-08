@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Insets;
 
 import static com.intellij.openapi.util.registry.Registry.intValue;
 

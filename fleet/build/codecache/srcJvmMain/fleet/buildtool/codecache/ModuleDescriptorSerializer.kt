@@ -1,9 +1,9 @@
 package fleet.buildtool.codecache
 
-import java.lang.module.ModuleDescriptor
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
-import java.util.*
+import java.lang.module.ModuleDescriptor
+import java.util.Base64
 
 /**
  * Serialises this module descriptor into the class file format.

@@ -13,6 +13,8 @@
     <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.protobuf" />
-    <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
+    <orderEntry type="library" name="netty-codec-protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
   </component>
 </module>

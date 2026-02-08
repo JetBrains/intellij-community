@@ -13,6 +13,17 @@ internal fun writeProduct(gen: JsonGenerator, product: ProductSpec) {
 }
 
 /**
+ * Writes a name-indexed map of products for O(1) lookup on the client side.
+ */
+internal fun writeProductIndex(gen: JsonGenerator, products: List<ProductSpec>) {
+  val entries = LinkedHashMap<String, ProductSpec>()
+  for (product in products.sortedBy { it.name }) {
+    entries[product.name] = product
+  }
+  gen.writeRawValue(kotlinxJson.encodeToString(entries))
+}
+
+/**
  * Analyzes product composition graphs and writes insights to JSON.
  * Provides statistics and recommendations for each product based on its composition.
  */

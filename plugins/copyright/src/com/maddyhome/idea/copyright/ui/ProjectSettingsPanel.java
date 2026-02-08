@@ -24,20 +24,34 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ElementProducer;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JTable;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ProjectSettingsPanel {
   private final Project myProject;

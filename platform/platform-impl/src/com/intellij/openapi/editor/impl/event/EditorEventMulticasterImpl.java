@@ -3,8 +3,22 @@ package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditReadOnlyListener;
+import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.ErrorStripeListener;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -14,7 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private static final ExtensionPointName<EditorMouseListener> MOUSE_EP = new ExtensionPointName<>("com.intellij.editorFactoryMouseListener");

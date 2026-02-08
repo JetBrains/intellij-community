@@ -3,12 +3,14 @@ package org.jetbrains.kotlin.idea.refactoring.fqName
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 @get:Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
 @get:ApiStatus.ScheduledForRemoval
 val KotlinType.fqName: FqName?
@@ -17,6 +19,7 @@ val KotlinType.fqName: FqName?
         else -> constructor.declarationDescriptor?.fqNameOrNull()
     }
 
+@K1Deprecation
 @Deprecated(
     "Replace with 'org.jetbrains.kotlin.idea.base.psi.kotlinFqName'",
     replaceWith = ReplaceWith("kotlinFqName", "org.jetbrains.kotlin.idea.base.psi.kotlinFqName"),

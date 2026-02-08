@@ -1,0 +1,20 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyFunctionTypeRepresentation
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: test
+      PsiElement(Py:IDENTIFIER)('test')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('A')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('B')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('f')
+    PyParameterListRepresentation
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyNoneLiteralExpression
+      PsiElement(Py:NONE_KEYWORD)('None')

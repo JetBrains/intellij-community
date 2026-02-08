@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin
 
 import org.jetbrains.kotlin.idea.caches.project.SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
-import org.jetbrains.kotlin.konan.target.KonanTarget.*
+import org.jetbrains.kotlin.konan.target.KonanTarget.LINUX_X64
+import org.jetbrains.kotlin.konan.target.KonanTarget.MACOS_X64
+import org.jetbrains.kotlin.konan.target.KonanTarget.MINGW_X64
 import org.junit.Test
 import kotlin.test.assertEquals
 

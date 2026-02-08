@@ -922,7 +922,7 @@ private fun computeContentConstraints(
         if (incomingConstraints.hasBoundedWidth) {
             when {
                 !isMacOs -> maxWidth // Scrollbars on Win/Linux are always overlaid
-                visibility is AlwaysVisible -> maxWidth - scrollbarWidth
+                visibility is AlwaysVisible -> adjustForScrollbar(maxWidth, scrollbarWidth)
                 visibility is WhenScrolling -> maxWidth
                 else -> error("Unsupported visibility style: $visibility")
             }
@@ -934,7 +934,7 @@ private fun computeContentConstraints(
         if (minWidth > 0) {
             when {
                 !isMacOs -> minWidth // Scrollbars on Win/Linux are always overlaid
-                visibility is AlwaysVisible -> minWidth - scrollbarWidth
+                visibility is AlwaysVisible -> adjustForScrollbar(minWidth, scrollbarWidth)
                 visibility is WhenScrolling -> minWidth
                 else -> error("Unsupported visibility style: $visibility")
             }
@@ -946,7 +946,7 @@ private fun computeContentConstraints(
         if (incomingConstraints.hasBoundedHeight) {
             when {
                 !isMacOs -> maxHeight // Scrollbars on Win/Linux are always overlaid
-                visibility is AlwaysVisible -> maxHeight - scrollbarHeight
+                visibility is AlwaysVisible -> adjustForScrollbar(maxHeight, scrollbarHeight)
                 visibility is WhenScrolling -> maxHeight
                 else -> error("Unsupported visibility style: $visibility")
             }
@@ -958,7 +958,7 @@ private fun computeContentConstraints(
         if (minHeight > 0) {
             when {
                 !isMacOs -> minHeight // Scrollbars on Win/Linux are always overlaid
-                visibility is AlwaysVisible -> minHeight - scrollbarHeight
+                visibility is AlwaysVisible -> adjustForScrollbar(minHeight, scrollbarHeight)
                 visibility is WhenScrolling -> minHeight
                 else -> error("Unsupported visibility style: $visibility")
             }
@@ -979,6 +979,17 @@ private fun computeContentConstraints(
         else -> incomingConstraints
     }
 }
+
+/**
+ * Safeguard for if the constraints provided by `Layout` are less than the dimensions of the scrollbar. This way, the
+ * content will be overlaid until the next recomposition when `Layout` hands out its the proper sizing.
+ */
+private inline fun adjustForScrollbar(size: Int, scrollbarSize: Int) =
+    if (size > scrollbarSize) {
+        size - scrollbarSize
+    } else {
+        size
+    }
 
 /**
  * Calculates the safe padding needed to prevent scrollable containers' content from being overlapped by scrollbars.

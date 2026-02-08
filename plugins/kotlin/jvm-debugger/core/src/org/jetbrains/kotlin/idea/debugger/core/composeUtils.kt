@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.DebugProcess
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.JavaPsiFacade
@@ -46,8 +46,8 @@ fun SourcePosition.isInsideProjectWithCompose(): Boolean =
         JavaPsiFacade.getInstance(file.project).findPackage(ANDROIDX_COMPOSE_PACKAGE_NAME) != null
     }.executeSynchronously()
 
-fun getComposableSingletonsClasses(debugProcess: DebugProcess, file: KtFile): List<ReferenceType> {
-    val vm = debugProcess.virtualMachineProxy
+fun getComposableSingletonsClasses(file: KtFile): List<ReferenceType> {
+    val vm = VirtualMachineProxy.getCurrent()
     val composableSingletonsClassName = computeComposableSingletonsClassName(file)
     return vm.classesByName(composableSingletonsClassName).flatMap { referenceType ->
         if (referenceType.isPrepared) vm.nestedTypes(referenceType) else listOf()

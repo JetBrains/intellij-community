@@ -14,7 +14,15 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   private static final Logger LOG = Logger.getInstance(CachingChildrenTreeNode.class);

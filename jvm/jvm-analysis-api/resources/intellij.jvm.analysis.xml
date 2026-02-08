@@ -1,13 +1,11 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <!--todo temporary disabled until it will be a backend module-->
-
     <module name="intellij.platform.core"/>
-    <!--<module name="intellij.platform.uast"/>-->
-    <!--<module name="intellij.java.psi"/>-->
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.platform.analysis"/>
-    <!--<module name="intellij.java.analysis"/>-->
-    <!--<module name="intellij.platform.uast.ide"/>-->
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.platform.uast.ide"/>
 
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>

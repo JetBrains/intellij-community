@@ -17,3 +17,5 @@ fun foo(s: String, x: X, y: Y, z: Z) {
 // EXIST: x
 // ABSENT: y
 // EXIST: z
+
+// IGNORE_K2

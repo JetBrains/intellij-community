@@ -6,14 +6,26 @@ import com.intellij.lang.LighterASTNode
 import com.intellij.lang.properties.parsing.PropertiesElementTypes
 import com.intellij.lang.properties.parsing.PropertiesParserDefinition
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes
-import com.intellij.lang.properties.psi.*
+import com.intellij.lang.properties.psi.PropertiesList
+import com.intellij.lang.properties.psi.PropertiesListStub
+import com.intellij.lang.properties.psi.Property
+import com.intellij.lang.properties.psi.PropertyKeyIndex
+import com.intellij.lang.properties.psi.PropertyStub
 import com.intellij.lang.properties.psi.impl.PropertiesListImpl
 import com.intellij.lang.properties.psi.impl.PropertiesListStubImpl
 import com.intellij.lang.properties.psi.impl.PropertyImpl
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LightTreeUtil
-import com.intellij.psi.stubs.*
+import com.intellij.psi.stubs.DefaultFileStubSerializer
+import com.intellij.psi.stubs.IndexSink
+import com.intellij.psi.stubs.LightStubElementFactory
+import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.stubs.StubInputStream
+import com.intellij.psi.stubs.StubOutputStream
+import com.intellij.psi.stubs.StubRegistry
+import com.intellij.psi.stubs.StubRegistryExtension
+import com.intellij.psi.stubs.StubSerializer
 import java.io.IOException
 
 internal class PropertiesStubRegistryExtension : StubRegistryExtension {

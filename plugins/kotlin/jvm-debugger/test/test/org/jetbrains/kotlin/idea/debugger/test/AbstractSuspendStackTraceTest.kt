@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.process.ProcessOutputTypes
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
@@ -66,8 +65,3 @@ abstract class AbstractSuspendStackTraceTest : KotlinDescriptorTestCaseWithStepp
     }
 }
 
-abstract class AbstractK1IdeK2CodeSuspendStackTraceTest : AbstractSuspendStackTraceTest() {
-    override val compileWithK2 = true
-
-    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-}

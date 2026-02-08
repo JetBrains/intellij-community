@@ -6,9 +6,9 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 
 final class TodoPatternTableCellRenderer extends DefaultTableCellRenderer {

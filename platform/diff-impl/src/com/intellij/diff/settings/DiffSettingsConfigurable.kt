@@ -8,7 +8,12 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindValue
+import com.intellij.ui.dsl.builder.labelTable
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import javax.swing.JLabel
 

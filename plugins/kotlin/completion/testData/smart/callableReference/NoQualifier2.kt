@@ -12,3 +12,5 @@ fun<T> genericF(t: T){}
 
 // EXIST: ::f
 // ABSENT: ::genericF
+
+// IGNORE_K2

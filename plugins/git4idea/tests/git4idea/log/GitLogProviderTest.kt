@@ -7,8 +7,15 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.util.Function
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogProvider.DetailedLogData
+import com.intellij.vcs.log.VcsShortCommitDetails
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.toRefsLoadingPolicy
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.HashImpl
@@ -23,19 +30,25 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromPattern
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import git4idea.config.GitVersion
 import git4idea.repo.GitRepositoryTagsHolderImpl
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.USER_EMAIL
+import git4idea.test.USER_NAME
+import git4idea.test.addCommit
+import git4idea.test.findGitLogProvider
+import git4idea.test.last
+import git4idea.test.log
+import git4idea.test.modify
+import git4idea.test.readAllRefs
+import git4idea.test.setupDefaultUsername
+import git4idea.test.setupUsername
+import git4idea.test.tac
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume
 
-class GitReadRecentCommitsTest : GitReadRecentCommitsTestBase()
+class GitReadRecentCommitsTest : GitReadRecentCommitsTestBase(collectRefsFromLog = true)
 
-class GitExperimentalReadRecentCommitsTestBase : GitReadRecentCommitsTestBase() {
-  override fun setUp() {
-    super.setUp()
-    setRegistryPropertyForTest("git.log.provider.experimental.refs.collection", true.toString())
-  }
-}
+class GitExperimentalReadRecentCommitsTestBase : GitReadRecentCommitsTestBase(collectRefsFromLog = false)
 
 class GitLogProviderTest : GitLogProviderTestBase() {
   fun test_all_log_with_tagged_branch() {
@@ -271,7 +284,12 @@ class GitLogProviderTest : GitLogProviderTestBase() {
 
 }
 
-abstract class GitReadRecentCommitsTestBase : GitLogProviderTestBase() {
+abstract class GitReadRecentCommitsTestBase(val collectRefsFromLog: Boolean) : GitLogProviderTestBase() {
+  override fun setUp() {
+    super.setUp()
+    setRegistryPropertyForTest("git.log.provider.experimental.refs.collection", (!collectRefsFromLog).toString())
+  }
+
   fun test_init_with_tagged_branch() {
     prepareSomeHistory()
     val expectedLogWithoutTaggedBranch = readCommitsFromGit()

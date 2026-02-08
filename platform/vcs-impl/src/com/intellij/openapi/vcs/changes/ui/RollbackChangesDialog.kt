@@ -9,8 +9,14 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.AllChanges
+import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.NonEmptyChangeLists
+import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.SelectedChangeLists
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel

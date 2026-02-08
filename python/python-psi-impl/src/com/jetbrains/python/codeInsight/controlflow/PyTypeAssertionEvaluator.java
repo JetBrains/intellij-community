@@ -11,11 +11,44 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssertStatement;
+import com.jetbrains.python.psi.PyAssignmentExpression;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCaseClause;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyConditionalExpression;
+import com.jetbrains.python.psi.PyConditionalStatementPart;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyGeneratorExpression;
+import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyMatchStatement;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PySetLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyInstantiableType;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyStructuralType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +79,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 2) {
         final PyExpression typeElement = args[1];
 
-        pushAssertion(args[0], myPositive, context ->
-          transformTypeFromAssertion(context.getType(typeElement), false, context, typeElement));
+        pushAssertion(args[0], myPositive, context -> {
+          if (myPositive || isSafeForNegativeAssertion(typeElement, context)) {
+            return transformTypeFromAssertion(context.getType(typeElement), false, context, typeElement);
+          }
+          return null;
+        });
       }
     }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
@@ -55,10 +92,39 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 2) {
         final PyExpression typeElement = args[1];
 
-        pushAssertion(args[0], myPositive, context ->
-          transformTypeFromAssertion(context.getType(typeElement), true, context, typeElement));
+        pushAssertion(args[0], myPositive, context -> {
+          if (myPositive || isSafeForNegativeAssertion(typeElement, context)) {
+            return transformTypeFromAssertion(context.getType(typeElement), true, context, typeElement);
+          }
+          return null;
+        });
       }
     }
+  }
+
+  private static boolean isSafeForNegativeAssertion(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    expression = PyPsiUtils.flattenParens(expression);
+    if (expression instanceof PyReferenceExpression ref) {
+      // Here we check that the reference resolves to a class, not a target in assignment or function parameter. 
+      // This is done to avoid cases like Py3TypeTest.testIsInstanceNegativeNarrowing
+      final List<@Nullable PsiElement> resolvedElements = PyUtil.multiResolveTopPriority(ref, PyResolveContext.defaultContext(context));
+      return ContainerUtil.getOnlyItem(resolvedElements) instanceof PyClass;
+    }
+    if (expression instanceof PyTupleExpression tuple) {
+      for (PyExpression element : tuple.getElements()) {
+        if (!isSafeForNegativeAssertion(element, context)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    // Keep in mind that `isinstance` will only accept `A | B` expression if all operands are classinfo, so no parameterized generics
+    if (expression instanceof PyBinaryExpression binary && binary.getOperator() == PyTokenTypes.OR) {
+      final PyExpression left = binary.getLeftExpression();
+      final PyExpression right = binary.getRightExpression();
+      return isSafeForNegativeAssertion(left, context) && right != null && isSafeForNegativeAssertion(right, context);
+    }
+    return false;
   }
 
   private void visitExpressionInCondition(@NotNull PyExpression node) {
@@ -186,18 +252,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     if (subject == null) return;
     // allowAnyExpr is here because we need negative edges with Never even when subject is not reference expression
     pushAssertion(subject, true, true, true, context -> {
-      PyType subjectType = context.getType(subject);
-      for (PyCaseClause cs : matchStatement.getCaseClauses()) {
-        if (cs.getPattern() == null) continue;
-        if (cs.getGuardCondition() != null) continue;
-        if (cs.getPattern().isIrrefutable()) {
-          subjectType = PyNeverType.NEVER;
-          break;
-        }
-        subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, true, context));
+      List<PyCaseClause> clauses = matchStatement.getCaseClauses();
+      if (!clauses.isEmpty()) {
+        return clauses.getLast().getSubjectTypeAfter(context);
       }
-
-      return subjectType;
+      return null;
     });
   }
 

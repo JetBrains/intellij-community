@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.rename
 
-import com.intellij.compose.ide.plugin.resources.*
+import com.intellij.compose.ide.plugin.resources.ANDROID_RESOURCE_REFERENCE
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesXmlBase
+import com.intellij.compose.ide.plugin.resources.STRINGS_XML_FILENAME
+import com.intellij.compose.ide.plugin.resources.VALUES_DIRNAME
+import com.intellij.compose.ide.plugin.resources.getAllComposeResourcesDirs
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.ide.TitledHandler
 import com.intellij.openapi.actionSystem.CommonDataKeys

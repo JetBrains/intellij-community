@@ -8,9 +8,11 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 
+@K1Deprecation
 abstract class ScratchFileLanguageProvider {
     fun newScratchFile(project: Project, file: VirtualFile): ScratchFile? {
         val scratchFile = createFile(project, file) as? K1KotlinScratchFile ?: return null

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtCallElement>(
     KtCallElement::class.java,
     KotlinBundle.messagePointer("add.names.in.comment.to.call.arguments")

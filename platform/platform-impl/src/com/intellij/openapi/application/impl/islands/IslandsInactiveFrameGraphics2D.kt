@@ -2,7 +2,14 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ui.Graphics2DDelegate
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.Polygon
+import java.awt.Shape
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImageOp
 import java.awt.image.ImageObserver

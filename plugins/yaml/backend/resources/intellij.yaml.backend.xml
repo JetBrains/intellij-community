@@ -1,11 +1,12 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.json.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.searchEverywhere.backend"/>
-    <module name="intellij.yaml"/>
     <module name="intellij.spellchecker"/>
+    <module name="intellij.yaml"/>
+    <!-- endregion -->
   </dependencies>
   
   <extensions defaultExtensionNs="com.intellij">

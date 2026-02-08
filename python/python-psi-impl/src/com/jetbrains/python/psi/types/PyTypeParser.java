@@ -24,7 +24,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -40,11 +48,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
-import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.*;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.many;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.maybe;
+import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.token;
 
 public final class PyTypeParser {
   private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.emptyMap(), Collections.emptyMap(),

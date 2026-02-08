@@ -1,9 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
-import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiCapturedWildcardType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiIntersectionType.createIntersection
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeVisitor
+import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
 import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter

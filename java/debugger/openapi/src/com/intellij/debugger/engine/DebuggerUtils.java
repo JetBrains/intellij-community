@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +23,25 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPostfixExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
@@ -32,7 +51,29 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassNotPreparedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.DoubleValue;
+import com.sun.jdi.Field;
+import com.sun.jdi.FloatValue;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.Location;
+import com.sun.jdi.LongValue;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveType;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.TypeComponent;
+import com.sun.jdi.Value;
+import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.VoidType;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -629,4 +670,10 @@ public abstract class DebuggerUtils {
   }
 
   protected abstract void logErrorImpl(@NotNull Throwable e);
+
+  /**
+   * Should be called in the debugger manager thread only.
+   */
+  @ApiStatus.Internal
+  public abstract @NotNull VirtualMachineProxy getVmProxy();
 }

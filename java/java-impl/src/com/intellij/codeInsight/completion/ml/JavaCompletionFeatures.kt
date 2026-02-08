@@ -4,15 +4,29 @@ package com.intellij.codeInsight.completion.ml
 import com.intellij.codeInsight.template.macro.MacroUtil
 import com.intellij.internal.ml.WordsSplitter
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiInvalidElementAccessException
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.util.PsiScopesUtil
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Internal
 public object JavaCompletionFeatures {

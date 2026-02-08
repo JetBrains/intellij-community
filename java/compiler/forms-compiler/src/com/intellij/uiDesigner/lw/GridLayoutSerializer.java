@@ -6,7 +6,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Insets;
 
 public class GridLayoutSerializer extends LayoutSerializer {
   GridLayoutSerializer() {

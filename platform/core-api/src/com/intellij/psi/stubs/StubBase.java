@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.project.Project;
@@ -40,7 +40,6 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     myStubList = stubList;
   }
 
-  @ApiStatus.Experimental
   protected StubBase(@Nullable StubElement parent, @Nullable IElementType elementType) {
     super(parent);
     myStubList = parent == null ? new MaterialStubList(10) : ((StubBase<?>)parent).myStubList;
@@ -77,7 +76,6 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return myStubList.findChildStubByType(id, elementType);
   }
 
-  @ApiStatus.Experimental
   @Override
   public final @Nullable StubElement<PsiElement> findChildStubByElementType(@NotNull IElementType elementType) {
     return myStubList.findChildStubByType(id, elementType);
@@ -228,18 +226,15 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
       return (IStubElementType<?, ?>)elementType;
     }
     else {
-      // todo IJPL-562 verify this assert makes sense
       throw new IllegalStateException("Stub type is null for the element type: " + elementType);
     }
   }
 
-  @ApiStatus.Experimental
   @Override
   public IElementType getElementType() {
     return myStubList.getStubElementType(id);
   }
 
-  @ApiStatus.Experimental
   @Override
   public ObjectStubSerializer<?, ? extends Stub> getStubSerializer() {
     IElementType elementType = getElementType();

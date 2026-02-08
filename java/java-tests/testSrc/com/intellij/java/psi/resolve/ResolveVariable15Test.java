@@ -15,7 +15,13 @@
  */
 package com.intellij.java.psi.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;

@@ -15,14 +15,19 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public final class PathMacroTable extends JBTable {
   private static final Logger LOG = Logger.getInstance(PathMacroTable.class);

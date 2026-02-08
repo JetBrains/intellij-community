@@ -2,7 +2,11 @@
 package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.CompositeParameterTargetedValue
+import com.intellij.execution.configurations.ParameterTargetValuePart
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.components.Service

@@ -7,7 +7,11 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.roots.ui.SdkAppearanceService
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.CellRendererPanel
+import com.intellij.ui.GroupedComboBoxRenderer
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.IconUtil
 import java.awt.BorderLayout

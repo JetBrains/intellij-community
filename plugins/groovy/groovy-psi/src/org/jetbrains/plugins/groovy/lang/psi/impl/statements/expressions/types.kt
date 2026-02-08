@@ -2,7 +2,12 @@
 @file:JvmName("TypesKt")
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiCapturedWildcardType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
 
 open class GrTypeMapper(val context: PsiElement): PsiTypeMapper() {
 

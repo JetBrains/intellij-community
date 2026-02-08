@@ -54,7 +54,8 @@
 
 package org.jdom.filter2;
 
-import org.jdom.*;
+import org.jdom.Element;
+import org.jdom.Namespace;
 
 /**
  * Factory class of convenience methods to create Filter instances of common

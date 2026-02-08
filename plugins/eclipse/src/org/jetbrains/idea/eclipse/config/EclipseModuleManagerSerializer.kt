@@ -1,14 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
-import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
-import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.*
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.CONELEMENT
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.EXPECTED_POSITION
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.FORCED_JDK
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.LIBELEMENT
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.LINK_PREFIX
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.PREFIX_ATTR
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.SRC_DESCRIPTION
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.SRC_FOLDER
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.SRC_LINK_PREFIX
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.SRC_PREFIX
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.VALUE_ATTR
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.VARELEMENT
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.VAR_ATTRIBUTE
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsProjectLoader

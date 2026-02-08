@@ -6,7 +6,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ui.StartupUiUtil
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 

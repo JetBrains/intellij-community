@@ -19,7 +19,11 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public final class TextBlockTransferable implements Transferable, Sizeable {
   private final Collection<? extends TextBlockTransferableData> myExtraData;

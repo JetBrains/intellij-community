@@ -4,7 +4,24 @@ package org.jetbrains.kotlin.idea.test.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.descriptors.*;
+import org.jetbrains.kotlin.descriptors.CallableDescriptor;
+import org.jetbrains.kotlin.descriptors.ClassDescriptor;
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor;
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorVisitor;
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor;
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor;
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor;
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor;
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor;
+import org.jetbrains.kotlin.descriptors.PropertyGetterDescriptor;
+import org.jetbrains.kotlin.descriptors.PropertySetterDescriptor;
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor;
+import org.jetbrains.kotlin.descriptors.ScriptDescriptor;
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor;
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor;
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
+import org.jetbrains.kotlin.descriptors.VariableDescriptor;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
 

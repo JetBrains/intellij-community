@@ -11,7 +11,10 @@ import com.intellij.stats.completion.storage.FilePathProvider
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
-import org.mockito.Mockito.*
+import org.mockito.Mockito.any
+import org.mockito.Mockito.anyString
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 

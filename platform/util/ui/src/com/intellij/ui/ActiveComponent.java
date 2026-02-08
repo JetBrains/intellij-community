@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface ActiveComponent {
   void setActive(boolean active);

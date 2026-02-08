@@ -4,7 +4,7 @@ package com.intellij.ui.stripe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 
 @ApiStatus.Internal
 public final class ExtraErrorStripePainter extends ErrorStripePainter {

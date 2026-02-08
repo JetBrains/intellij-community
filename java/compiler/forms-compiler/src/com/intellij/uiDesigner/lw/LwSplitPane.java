@@ -4,7 +4,7 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.LayoutManager;
 
 public final class LwSplitPane extends LwContainer{
   public static final String POSITION_LEFT = "left";

@@ -2,7 +2,14 @@
 package com.intellij.openapi.util
 
 import org.jetbrains.annotations.Nls
-import kotlin.annotation.AnnotationTarget.*
+import kotlin.annotation.AnnotationTarget.FIELD
+import kotlin.annotation.AnnotationTarget.FUNCTION
+import kotlin.annotation.AnnotationTarget.LOCAL_VARIABLE
+import kotlin.annotation.AnnotationTarget.PROPERTY_GETTER
+import kotlin.annotation.AnnotationTarget.PROPERTY_SETTER
+import kotlin.annotation.AnnotationTarget.TYPE
+import kotlin.annotation.AnnotationTarget.TYPE_PARAMETER
+import kotlin.annotation.AnnotationTarget.VALUE_PARAMETER
 
 /**
  * See the [IntelliJ Platform UI Guidelines](https://plugins.jetbrains.com/docs/intellij/capitalization.html).

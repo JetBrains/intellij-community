@@ -33,7 +33,8 @@ import org.jetbrains.idea.devkit.inspections.DescriptionTypesKt;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.ListSelectionModel;
 import java.util.List;
 
 /**

@@ -2,7 +2,13 @@
 package com.jetbrains.python.configuration
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
@@ -18,10 +24,15 @@ import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
+import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.collectAddInterpreterActions
+import com.jetbrains.python.sdk.customizeWithSdkValue
+import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.noInterpreterMarker
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel

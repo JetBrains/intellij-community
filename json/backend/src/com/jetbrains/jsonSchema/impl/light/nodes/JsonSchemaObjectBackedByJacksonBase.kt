@@ -10,13 +10,32 @@ import com.jetbrains.jsonSchema.JsonPointerUtil
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
-import com.jetbrains.jsonSchema.impl.*
-import com.jetbrains.jsonSchema.impl.light.*
+import com.jetbrains.jsonSchema.impl.IfThenElse
+import com.jetbrains.jsonSchema.impl.JsonSchemaMetadataEntry
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject
+import com.jetbrains.jsonSchema.impl.JsonSchemaReader
+import com.jetbrains.jsonSchema.impl.JsonSchemaType
+import com.jetbrains.jsonSchema.impl.PatternProperties
+import com.jetbrains.jsonSchema.impl.PropertyNamePattern
+import com.jetbrains.jsonSchema.impl.light.DEPENDENCIES
+import com.jetbrains.jsonSchema.impl.light.ENUM
+import com.jetbrains.jsonSchema.impl.light.INSTANCE_OF
+import com.jetbrains.jsonSchema.impl.light.JsonSchemaNodePointer
+import com.jetbrains.jsonSchema.impl.light.LANGUAGE
+import com.jetbrains.jsonSchema.impl.light.PREFIX
+import com.jetbrains.jsonSchema.impl.light.SCHEMA_KEYWORD_INVARIANT
+import com.jetbrains.jsonSchema.impl.light.SUFFIX
+import com.jetbrains.jsonSchema.impl.light.TYPE_OF
+import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_CASE_INSENSITIVE
+import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_HTML_DESCRIPTION
+import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
+import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_METADATA
 import com.jetbrains.jsonSchema.impl.light.legacy.isOldParserAwareOfFieldName
 import com.jetbrains.jsonSchema.impl.light.legacy.tryReadEnumMetadata
+import com.jetbrains.jsonSchema.impl.light.resolveLocalSchemaNode
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 
 private val ONE_OF_KEY = Key<List<JsonSchemaObject>>("oneOf")

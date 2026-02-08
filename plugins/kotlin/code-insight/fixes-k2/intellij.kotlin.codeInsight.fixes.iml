@@ -64,5 +64,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.searching" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
   </component>
 </module>

@@ -11,14 +11,21 @@ import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDependentBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.util.ThrowableRunnable
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointListener
-import com.intellij.xdebugger.impl.breakpoints.*
+import com.intellij.xdebugger.impl.breakpoints.MonolithInlineBreakpointsCache
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 
 private class MonolithBreakpointManager(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {

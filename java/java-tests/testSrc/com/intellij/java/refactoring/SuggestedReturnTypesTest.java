@@ -30,7 +30,10 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 public class SuggestedReturnTypesTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/suggestedTypes/";

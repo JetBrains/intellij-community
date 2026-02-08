@@ -10,6 +10,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
@@ -37,6 +38,7 @@ internal class UsageNavigation(private val project: Project, private val cs: Cor
       val dataContext = editor?.let {
         DataManager.getInstance().getDataContext(it.component)
       }
+      @OptIn(IntellijInternalApi::class)
       NavigationService.getInstance(project).navigate(usage, NavigationOptions.requestFocus(), dataContext)
       writeIntentReadAction {
         onReady.run()

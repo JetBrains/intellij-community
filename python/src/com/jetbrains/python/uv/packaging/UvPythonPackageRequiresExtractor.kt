@@ -8,15 +8,14 @@ import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementExtractor
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequiresExtractorProvider
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
-import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 
 internal class UvPackageRequirementExtractor(private val uvWorkingDirectory: Path?) : PythonPackageRequirementExtractor {
   override suspend fun extract(pkg: PythonPackage, module: Module): List<PyPackageName> {
-    val uvWorkingDirectory = uvWorkingDirectory ?: Path.of(module.basePath!!)
+    val uvWorkingDirectory = uvWorkingDirectory ?: Path.of(module.baseDir?.path!!)
     val uv = createUvLowLevel(uvWorkingDirectory).getOr {
       thisLogger().info("cannot run uv: ${it.error}")
       return emptyList()
@@ -28,7 +27,7 @@ internal class UvPackageRequirementExtractor(private val uvWorkingDirectory: Pat
   }
 }
 
-internal class UvPackageRequiresExtractorProvider: PythonPackageRequiresExtractorProvider {
+internal class UvPackageRequiresExtractorProvider : PythonPackageRequiresExtractorProvider {
   override fun createExtractor(sdk: Sdk): PythonPackageRequirementExtractor? {
     val data = sdk.sdkAdditionalData as? UvSdkAdditionalData ?: return null
     return UvPackageRequirementExtractor(data.uvWorkingDirectory)

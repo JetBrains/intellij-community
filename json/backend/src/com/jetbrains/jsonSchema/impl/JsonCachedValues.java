@@ -4,7 +4,12 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.json.navigation.JsonQualifiedNameKind;
 import com.intellij.json.navigation.JsonQualifiedNameProvider;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
@@ -39,7 +44,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public final class JsonCachedValues {

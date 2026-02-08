@@ -23,7 +23,12 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractDiagnosticCodeMetaInfoTest
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.allKotlinFiles
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert

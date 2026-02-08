@@ -6,7 +6,12 @@ import com.intellij.model.search.LeafOccurrence
 import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
-import com.intellij.psi.*
+import com.intellij.psi.PsiDiamondType
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.walkUp
 import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage

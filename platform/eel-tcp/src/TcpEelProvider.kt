@@ -11,16 +11,15 @@ import java.nio.file.Path
 class TcpEelProvider : EelProvider {
   override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine? {
     val internalName = TcpEelPathParser.extractInternalMachineId(path) ?: return null
-    val descriptor = TcpEelRegistry.getInstance().register(internalName) ?: return null
+    val descriptor = TcpEelPathParser.toDescriptor(internalName) ?: return null
     val tcpMachine = descriptor.resolveEelMachine() as? TcpEelMachine ?: return null
-    tcpMachine.deploy()
-    tcpMachine.waitForDeployment()
+    tcpMachine.toEelApi(descriptor) // deploy ijent
     return tcpMachine
   }
 
   override fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor? {
     val internalName = TcpEelPathParser.extractInternalMachineId(path) ?: return null
-    return TcpEelRegistry.getInstance().get(internalName)
+    return TcpEelPathParser.toDescriptor(internalName)
   }
 
   override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>? {

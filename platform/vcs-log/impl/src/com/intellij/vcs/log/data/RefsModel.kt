@@ -2,7 +2,12 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRootStoredRefs
+import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.refsToCommit
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus

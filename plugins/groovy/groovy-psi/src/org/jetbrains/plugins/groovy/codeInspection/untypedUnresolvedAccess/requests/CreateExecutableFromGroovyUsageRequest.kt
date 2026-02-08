@@ -3,8 +3,17 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requ
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
-import com.intellij.psi.*
+import com.intellij.lang.jvm.actions.AnnotationRequest
+import com.intellij.lang.jvm.actions.CreateExecutableRequest
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.expectedParameter
+import com.intellij.lang.jvm.actions.expectedTypes
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiJvmSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind.PARAMETER
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall

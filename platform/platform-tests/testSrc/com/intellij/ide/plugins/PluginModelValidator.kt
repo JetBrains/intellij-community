@@ -8,7 +8,11 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.ScopedElementsContainer
-import com.intellij.platform.plugins.parser.impl.elements.*
+import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
+import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.plugins.parser.impl.elements.ServiceElement
 import com.intellij.platform.plugins.testFramework.LoadFromSourceXIncludeLoader
 import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
 import com.intellij.project.IntelliJProjectConfiguration

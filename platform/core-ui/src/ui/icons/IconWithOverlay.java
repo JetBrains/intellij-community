@@ -9,8 +9,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.image.BufferedImage;
 
 /**
@@ -45,7 +50,10 @@ public abstract class IconWithOverlay extends LayeredIcon {
       super.paintIcon(c, g, x, y);
       return;
     }
-    BufferedImage img = UIUtil.createImage(((Graphics2D)g).getDeviceConfiguration(), getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.CEIL);
+    var iconWidth = getIconWidth();
+    var iconHeight = getIconHeight();
+    if (iconWidth <= 0 || iconHeight <= 0) return; // for whatever reason: icons not initialized yet, empty icons mistakenly used...
+    BufferedImage img = UIUtil.createImage(((Graphics2D)g).getDeviceConfiguration(), iconWidth, iconHeight, BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.CEIL);
     Graphics2D g2 = img.createGraphics();
     getMainIcon().paintIcon(c, g2, 0, 0);
     GraphicsConfig config = new GraphicsConfig(g2);

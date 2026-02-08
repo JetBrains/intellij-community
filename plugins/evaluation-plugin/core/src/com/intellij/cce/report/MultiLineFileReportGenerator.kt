@@ -7,7 +7,11 @@ import com.intellij.cce.metric.Metric
 import com.intellij.cce.metric.RelaxedExactMatchOnlyAlphanum
 import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.storages.FeaturesStorage
-import kotlinx.html.*
+import kotlinx.html.DIV
+import kotlinx.html.div
+import kotlinx.html.id
+import kotlinx.html.pre
+import kotlinx.html.style
 import kotlin.math.roundToInt
 
 class MultiLineFileReportGenerator(

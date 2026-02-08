@@ -2,12 +2,10 @@
 package org.intellij.plugins.markdown.service
 
 import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
-import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.jetbrains.annotations.ApiStatus
 

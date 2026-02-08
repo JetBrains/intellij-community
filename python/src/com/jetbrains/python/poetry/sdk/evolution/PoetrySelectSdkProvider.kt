@@ -20,7 +20,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.runPoetry

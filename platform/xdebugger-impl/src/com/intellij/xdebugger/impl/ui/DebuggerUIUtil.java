@@ -7,29 +7,52 @@ import com.intellij.frontend.FrontendApplicationInfo;
 import com.intellij.frontend.FrontendType;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ClientEditorManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
@@ -41,18 +64,21 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.Obsolescent;
+import com.intellij.xdebugger.SplitDebuggerMode;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -64,17 +90,36 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.AbstractAction;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.HierarchyBoundsAdapter;
+import java.awt.event.HierarchyBoundsListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt.asProxy;
 
 public final class DebuggerUIUtil {
   public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
 
   private final static Logger LOG = Logger.getInstance(DebuggerUIUtil.class);
+
+  @ApiStatus.Internal
+  public static final DataKey<Integer> LINE_NUMBER = DataKey.create("x.debugger.line.number");
+
+  @ApiStatus.Internal
+  public static final DataKey<Integer> OFFSET = DataKey.create("x.debugger.offset");
 
   private DebuggerUIUtil() {
   }
@@ -241,8 +286,9 @@ public final class DebuggerUIUtil {
                                                   final JComponent component,
                                                   final boolean showAllOptions,
                                                   final @NotNull XBreakpoint breakpoint) {
-    if (breakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase) {
-      showXBreakpointEditorBalloon(project, point, component, showAllOptions, asProxy(breakpointBase));
+    XBreakpointProxy breakpointProxy = XDebuggerEntityConverter.asProxy(breakpoint);
+    if (breakpointProxy != null) {
+      showXBreakpointEditorBalloon(project, point, component, showAllOptions, breakpointProxy);
     }
   }
 
@@ -262,8 +308,9 @@ public final class DebuggerUIUtil {
                                                   final boolean showActionOptions,
                                                   final boolean showAllOptions,
                                                   final @NotNull XBreakpoint breakpoint) {
-    if (breakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase) {
-      showXBreakpointEditorBalloon(project, point, component, showActionOptions, showAllOptions, asProxy(breakpointBase));
+    XBreakpointProxy breakpointProxy = XDebuggerEntityConverter.asProxy(breakpoint);
+    if (breakpointProxy != null) {
+      showXBreakpointEditorBalloon(project, point, component, showActionOptions, showAllOptions, breakpointProxy);
     }
   }
 
@@ -329,8 +376,8 @@ public final class DebuggerUIUtil {
     project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
-        if (removedBreakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase &&
-            asProxy(breakpointBase).equals(breakpoint)) {
+        XBreakpointProxy removedBreakpointProxy = XDebuggerEntityConverter.asProxy(removedBreakpoint);
+        if (removedBreakpointProxy != null && removedBreakpointProxy.equals(breakpoint)) {
           balloon.hide();
         }
       }
@@ -524,7 +571,7 @@ public final class DebuggerUIUtil {
             tree.rebuildAndRestore(treeState);
           }
         });
-        XDebuggerUtilImpl.rebuildAllSessionsViews(project);
+        rebuildAllSessionsViews(project);
       }
 
       @Override
@@ -533,7 +580,7 @@ public final class DebuggerUIUtil {
           tree.rebuildAndRestore(treeState);
           errorConsumer.consume(errorMessage);
         });
-        XDebuggerUtilImpl.rebuildAllSessionsViews(project);
+        rebuildAllSessionsViews(project);
       }
     });
   }
@@ -595,5 +642,51 @@ public final class DebuggerUIUtil {
     else {
       e.getPresentation().setVisible(enable);
     }
+  }
+
+  @ApiStatus.Internal
+  public static void rebuildAllSessionsViews(@Nullable Project project) {
+    if (project == null) return;
+    XDebugManagerProxy.getInstance().getSessions(project).stream()
+      .filter(XDebugSessionProxy::isSuspended)
+      .forEach(XDebugSessionProxy::rebuildViews);
+  }
+
+  @ApiStatus.Internal
+  public static void rebuildTreeAndViews(XDebuggerTree tree) {
+    if (tree.isDetached()) {
+      tree.rebuild();
+    }
+    rebuildAllSessionsViews(tree.getProject());
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable XSourcePosition getCaretPosition(DataContext context) {
+    Editor editor = getEditor(context);
+    if (editor == null) return null;
+
+    Integer lineNumber = LINE_NUMBER.getData(context);
+    if (lineNumber != null) {
+      return XSourcePositionImpl.create(editor.getVirtualFile(), lineNumber);
+    }
+    Integer offsetFromDataContext = OFFSET.getData(context);
+    if (offsetFromDataContext != null) {
+      return XSourcePositionImpl.createByOffset(editor.getVirtualFile(), offsetFromDataContext);
+    }
+
+    final Document document = editor.getDocument();
+    int offset = editor.getCaretModel().getOffset();
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    return XSourcePositionImpl.createByOffset(file, offset);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Editor getEditor(DataContext context) {
+    Editor editor = CommonDataKeys.EDITOR.getData(context);
+    if (editor == null) {
+      @Nullable FileEditor fileEditor = context.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
+      return fileEditor instanceof TextEditor textEditor ? textEditor.getEditor() : null;
+    }
+    return editor;
   }
 }

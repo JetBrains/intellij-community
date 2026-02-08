@@ -8,7 +8,11 @@ import com.intellij.util.indexing.DataIndexer
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.KIND_FIELD_NAME
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.METADATA_DESC
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.METADATA_EXTRA_INT_FIELD_NAME
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.METADATA_STRICT_VERSION_SEMANTICS_FLAG
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.METADATA_VERSION_FIELD_NAME
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor

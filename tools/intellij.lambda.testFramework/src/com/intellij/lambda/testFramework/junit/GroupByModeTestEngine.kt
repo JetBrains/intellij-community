@@ -1,7 +1,14 @@
 package com.intellij.lambda.testFramework.junit
 
 import com.intellij.openapi.diagnostic.fileLogger
-import org.junit.platform.engine.*
+import org.junit.platform.engine.EngineDiscoveryRequest
+import org.junit.platform.engine.EngineExecutionListener
+import org.junit.platform.engine.ExecutionRequest
+import org.junit.platform.engine.Filter
+import org.junit.platform.engine.TestDescriptor
+import org.junit.platform.engine.TestEngine
+import org.junit.platform.engine.TestExecutionResult
+import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.ClasspathRootSelector
 import org.junit.platform.engine.discovery.PackageSelector
@@ -10,7 +17,7 @@ import org.junit.platform.engine.support.descriptor.EngineDescriptor
 import org.junit.platform.launcher.PostDiscoveryFilter
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 import java.lang.reflect.Field
-import java.util.*
+import java.util.ServiceLoader
 
 internal const val JUPITER_ENGINE_ID = "junit-jupiter"
 

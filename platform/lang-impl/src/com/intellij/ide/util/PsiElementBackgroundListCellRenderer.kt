@@ -19,7 +19,11 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Deferred
 import java.awt.Component
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.DefaultListCellRenderer
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 
 internal class PsiElementBackgroundListCellRenderer(
   private val renderer: PsiElementListCellRenderer<*>

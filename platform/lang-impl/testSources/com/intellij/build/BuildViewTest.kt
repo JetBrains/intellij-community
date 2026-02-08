@@ -2,7 +2,9 @@
 package com.intellij.build
 
 import com.intellij.build.events.BuildEventPresentationData
-import com.intellij.build.events.MessageEvent.Kind.*
+import com.intellij.build.events.MessageEvent.Kind.ERROR
+import com.intellij.build.events.MessageEvent.Kind.INFO
+import com.intellij.build.events.MessageEvent.Kind.WARNING
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.progress.BuildProgressDescriptorImpl
 import com.intellij.execution.Platform

@@ -16,7 +16,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogFilterCollection.*
+import com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.ROOT_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
@@ -39,7 +41,7 @@ import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
 import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
 private val LOG = logger<GitUpdateInfoAsLog>()

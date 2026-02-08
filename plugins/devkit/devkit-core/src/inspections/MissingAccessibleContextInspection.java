@@ -2,7 +2,14 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
@@ -15,11 +22,32 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UBlockExpression;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UIfExpression;
+import org.jetbrains.uast.ULambdaExpression;
+import org.jetbrains.uast.ULocalVariable;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UObjectLiteralExpression;
+import org.jetbrains.uast.UParameter;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UReturnExpression;
+import org.jetbrains.uast.UastBinaryOperator;
+import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class MissingAccessibleContextInspection extends DevKitUastInspectionBase {

@@ -16,7 +16,11 @@ import org.jetbrains.kotlin.idea.debugger.breakpoints.inTheMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimMethodNameMangling
 import org.jetbrains.kotlin.idea.debugger.core.stepping.StopOnReachedMethodFilter
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class KotlinLambdaMethodFilter(
     lambda: KtFunction,

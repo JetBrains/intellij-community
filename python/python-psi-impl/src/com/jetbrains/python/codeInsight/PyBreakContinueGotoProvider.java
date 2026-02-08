@@ -8,7 +8,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyContinueStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyLoopStatement;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**

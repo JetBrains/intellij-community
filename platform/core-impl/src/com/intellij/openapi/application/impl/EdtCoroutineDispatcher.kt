@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.isRunBlockingUnderReadAction
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
@@ -35,19 +36,24 @@ internal sealed class EdtCoroutineDispatcher(
     }
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
-    check(!context.isRunBlockingUnderReadAction()) {
-      "Switching to `$this` from `runBlockingCancellable` inside in a read-action leads to possible deadlock."
+    try {
+      check(!context.isRunBlockingUnderReadAction()) {
+        "Switching to `$this` from `runBlockingCancellable` inside in a read-action leads to possible deadlock."
+      }
+      val lockingAwareBlock = wrapWithLocking(block)
+      val state = context.effectiveContextModality()
+      val runnable = if (state === ModalityState.any()) {
+        ContextAwareRunnable(lockingAwareBlock::run)
+      }
+      else {
+        DispatchedRunnable(context.job, lockingAwareBlock)
+      }
+      val useWeakWriteIntent = type.lockBehavior == EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING
+      ApplicationManagerEx.getApplicationEx().dispatchCoroutineOnEDT(runnable, state, useWeakWriteIntent)
+    } catch (e: Throwable) {
+      logger<EdtCoroutineDispatcher>().error("Critical error during `dispatch` of EDT coroutine. Some coroutines may be lost.", e)
+      throw e
     }
-    val lockingAwareBlock = wrapWithLocking(block)
-    val state = context.effectiveContextModality()
-    val runnable = if (state === ModalityState.any()) {
-      ContextAwareRunnable(lockingAwareBlock::run)
-    }
-    else {
-      DispatchedRunnable(context.job, lockingAwareBlock)
-    }
-    val useWeakWriteIntent = type.lockBehavior == EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING
-    ApplicationManagerEx.getApplicationEx().dispatchCoroutineOnEDT(runnable, state, useWeakWriteIntent)
   }
 
   protected fun CoroutineContext.effectiveContextModality(): ModalityState =
@@ -84,33 +90,38 @@ The following solutions are available:
 
 private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoroutineDispatcher(type) {
   override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-    // The current coroutine is executed with the correct modality state
-    // (the execution would be postponed otherwise).
-    // But the code that's about to be executed may belong to a different coroutine
-    // (e.g., one coroutine emits a value into a flow and another collects it).
-    // If the context modality is lower than the current modality,
-    // we need to dispatch and postpone its execution.
-    if (!EDT.isCurrentThreadEdt()) {
-      return true
-    }
-    val contextModality = context.effectiveContextModality()
-    // If the context modality is explicitly any(), then no dispatch is performed,
-    // as dominates(any()) always returns false, no special any() handling required here.
-    if (!ModalityState.current().accepts(contextModality)) {
-      return true
-    }
-    return when (type) {
-      // `Dispatchers.Main.immediate` must look only at the thread where it is executing.
-      // This is needed to support 3rd party libraries which use this dispatcher for getting the UI thread
-      // Relaxed UI dispatcher is indifferent to locks, so it can run in-place.
-      EdtDispatcherKind.MAIN -> false
-      // Immediate relaxed dispatcher should do redispatch if it runs under Dispatchers.UI
-      // that's because the context of Dispatchers.UI forbids taking locks, so we need to get into an appropriate context
-      EdtDispatcherKind.LAX_UI -> ApplicationManager.getApplication().lockProhibitedAdvice != null
-      // `Dispatchers.EdtImmediate` must perform dispatch when invoked on a thread without locks, because it needs to get into correct context.
-      EdtDispatcherKind.EDT -> !ApplicationManager.getApplication().isWriteIntentLockAcquired
-      // `Dispatchers.UIImmediate` must perform dispatch when invoked on a thread with locks, because it needs to escape locking and forbid using them inside.
-      EdtDispatcherKind.UI -> ApplicationManager.getApplication().isWriteIntentLockAcquired
+    try {
+      // The current coroutine is executed with the correct modality state
+      // (the execution would be postponed otherwise).
+      // But the code that's about to be executed may belong to a different coroutine
+      // (e.g., one coroutine emits a value into a flow and another collects it).
+      // If the context modality is lower than the current modality,
+      // we need to dispatch and postpone its execution.
+      if (!EDT.isCurrentThreadEdt()) {
+        return true
+      }
+      val contextModality = context.effectiveContextModality()
+      // If the context modality is explicitly any(), then no dispatch is performed,
+      // as dominates(any()) always returns false, no special any() handling required here.
+      if (!ModalityState.current().accepts(contextModality)) {
+        return true
+      }
+      return when (type) {
+        // `Dispatchers.Main.immediate` must look only at the thread where it is executing.
+        // This is needed to support 3rd party libraries which use this dispatcher for getting the UI thread
+        // Relaxed UI dispatcher is indifferent to locks, so it can run in-place.
+        EdtDispatcherKind.MAIN -> false
+        // Immediate relaxed dispatcher should do redispatch if it runs under Dispatchers.UI
+        // that's because the context of Dispatchers.UI forbids taking locks, so we need to get into an appropriate context
+        EdtDispatcherKind.LAX_UI -> ApplicationManager.getApplication().lockProhibitedAdvice != null
+        // `Dispatchers.EdtImmediate` must perform dispatch when invoked on a thread without locks, because it needs to get into correct context.
+        EdtDispatcherKind.EDT -> !ApplicationManager.getApplication().isWriteIntentLockAcquired
+        // `Dispatchers.UIImmediate` must perform dispatch when invoked on a thread with locks, because it needs to escape locking and forbid using them inside.
+        EdtDispatcherKind.UI -> ApplicationManager.getApplication().isWriteIntentLockAcquired
+      }
+    } catch (e: Throwable) {
+      logger<EdtCoroutineDispatcher>().error("Critical error during `isDispatchNeeded` of EDT coroutine. Some coroutines may be lost.", e)
+      throw e
     }
   }
 

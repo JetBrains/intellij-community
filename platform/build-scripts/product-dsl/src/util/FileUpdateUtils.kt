@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.util
 
+import org.jetbrains.intellij.build.productLayout.model.error.FileChangeType
+import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
-import org.jetbrains.intellij.build.productLayout.validation.FileChangeType
-import org.jetbrains.intellij.build.productLayout.validation.FileDiff
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
@@ -34,6 +34,23 @@ sealed interface FileUpdateStrategy {
    * Returns diffs collected during operations.
    */
   fun getDiffs(): List<FileDiff>
+}
+
+/**
+ * No-op file updater used when XML writes must be suppressed (e.g., update-suppressions mode).
+ */
+internal object NoopFileUpdateStrategy : FileUpdateStrategy {
+  override fun updateIfChanged(path: Path, newContent: String): FileChangeStatus = FileChangeStatus.UNCHANGED
+
+  override fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus = FileChangeStatus.UNCHANGED
+
+  override fun delete(path: Path) = Unit
+
+  override fun getDiffs(): List<FileDiff> = emptyList()
+}
+
+internal fun FileUpdateStrategy.withUpdateSuppressions(updateSuppressions: Boolean): FileUpdateStrategy {
+  return if (updateSuppressions) NoopFileUpdateStrategy else this
 }
 
 /**

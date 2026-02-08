@@ -2,7 +2,9 @@
 
 package org.jetbrains.eval4j
 
-import org.jetbrains.org.objectweb.asm.Opcodes.*
+import org.jetbrains.org.objectweb.asm.Opcodes.GETSTATIC
+import org.jetbrains.org.objectweb.asm.Opcodes.INVOKESTATIC
+import org.jetbrains.org.objectweb.asm.Opcodes.PUTSTATIC
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode
 import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode

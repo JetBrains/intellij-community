@@ -7,7 +7,9 @@ import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.LayoutManager;
 
 /**
  * @author gregsh

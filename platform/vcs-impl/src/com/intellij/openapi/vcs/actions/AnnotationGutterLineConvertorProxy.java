@@ -11,7 +11,8 @@ import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.util.List;
 
 /**

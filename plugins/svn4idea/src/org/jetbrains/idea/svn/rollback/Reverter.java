@@ -9,7 +9,13 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnFileSystemListener;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ErrorCode;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertiesMap;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
@@ -17,7 +23,11 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 

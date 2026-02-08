@@ -17,7 +17,15 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.task.event.*;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.Failure;
+import com.intellij.openapi.externalSystem.model.task.event.FailureResult;
+import com.intellij.openapi.externalSystem.model.task.event.SkippedResult;
+import com.intellij.openapi.externalSystem.model.task.event.SuccessResult;
+import com.intellij.openapi.externalSystem.model.task.event.TestAssertionFailure;
+import com.intellij.openapi.externalSystem.model.task.event.TestFailure;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;

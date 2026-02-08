@@ -12,14 +12,22 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListChange
+import com.intellij.openapi.vcs.changes.ChangeListData
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.author
+import com.intellij.openapi.vcs.changes.authorDate
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
-import java.util.*
+import java.util.EventListener
 
 private fun Collection<Change>.toPartialAwareSet() =
   CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)

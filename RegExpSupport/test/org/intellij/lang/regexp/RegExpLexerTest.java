@@ -7,7 +7,26 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
-import static org.intellij.lang.regexp.RegExpCapability.*;
+import static org.intellij.lang.regexp.RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS;
+import static org.intellij.lang.regexp.RegExpCapability.COMMENT_MODE;
+import static org.intellij.lang.regexp.RegExpCapability.DANGLING_METACHARACTERS;
+import static org.intellij.lang.regexp.RegExpCapability.EXTENDED_UNICODE_CHARACTER;
+import static org.intellij.lang.regexp.RegExpCapability.MAX_OCTAL_177;
+import static org.intellij.lang.regexp.RegExpCapability.MAX_OCTAL_377;
+import static org.intellij.lang.regexp.RegExpCapability.MIN_OCTAL_2_DIGITS;
+import static org.intellij.lang.regexp.RegExpCapability.MIN_OCTAL_3_DIGITS;
+import static org.intellij.lang.regexp.RegExpCapability.MYSQL_BRACKET_EXPRESSIONS;
+import static org.intellij.lang.regexp.RegExpCapability.NESTED_CHARACTER_CLASSES;
+import static org.intellij.lang.regexp.RegExpCapability.OCTAL_NO_LEADING_ZERO;
+import static org.intellij.lang.regexp.RegExpCapability.OMIT_BOTH_NUMBERS_IN_QUANTIFIERS;
+import static org.intellij.lang.regexp.RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS;
+import static org.intellij.lang.regexp.RegExpCapability.ONE_HEX_CHAR_ESCAPE;
+import static org.intellij.lang.regexp.RegExpCapability.PCRE_BACK_REFERENCES;
+import static org.intellij.lang.regexp.RegExpCapability.PCRE_CONDITIONS;
+import static org.intellij.lang.regexp.RegExpCapability.PCRE_NUMBERED_GROUP_REF;
+import static org.intellij.lang.regexp.RegExpCapability.POSIX_BRACKET_EXPRESSIONS;
+import static org.intellij.lang.regexp.RegExpCapability.TRANSFORMATION_ESCAPES;
+import static org.intellij.lang.regexp.RegExpCapability.WHITESPACE_IN_CLASS;
 
 /**
  * @author Bas Leijdekkers

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
-import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
 

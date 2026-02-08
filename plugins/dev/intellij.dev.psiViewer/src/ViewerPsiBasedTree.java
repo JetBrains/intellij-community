@@ -8,7 +8,7 @@ import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.TreeSelectionListener;
 
 public interface ViewerPsiBasedTree extends Disposable {

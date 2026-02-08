@@ -5,7 +5,7 @@ import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 
-import javax.swing.*;
+import javax.swing.JTable;
 
 /**
  * @author Bas Leijdekkers

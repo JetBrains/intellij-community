@@ -21,10 +21,17 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
+import com.jetbrains.python.sdk.add.v2.ToolValidator
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
+import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
@@ -180,12 +187,10 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     }
   }
 
-  override suspend fun setupEnvSdk(
-    moduleBasePath: Path,
-    baseSdks: List<Sdk>,
-    basePythonBinaryPath: P?,
-    installPackages: Boolean,
-  ): PyResult<Sdk> {
-    return setupNewUvSdkAndEnv(moduleBasePath, baseSdks, pythonVersion.get())
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+    return setupNewUvSdkAndEnv(
+      workingDir = moduleBasePath,
+      version = pythonVersion.get(),
+    )
   }
 }

@@ -5,16 +5,30 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
 
 import java.util.List;
 
-import static com.intellij.codeInspection.deprecation.DeprecationInspectionBase.*;
+import static com.intellij.codeInspection.deprecation.DeprecationInspectionBase.checkDeprecated;
+import static com.intellij.codeInspection.deprecation.DeprecationInspectionBase.getPresentableName;
+import static com.intellij.codeInspection.deprecation.DeprecationInspectionBase.isForRemovalAttributeSet;
 
 /**
  * PSI visitor that detects usages of deprecated APIs, which are deprecated

@@ -16,13 +16,35 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.*
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.actionButton
+import com.intellij.ui.dsl.builder.actionListener
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.enteredTextSatisfies
+import com.intellij.ui.layout.not
+import com.intellij.ui.layout.selected
+import com.intellij.ui.layout.selectedValueIs
 import com.intellij.util.Alarm
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SingleAlarm
@@ -36,13 +58,6 @@ import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
-import kotlin.Boolean
-import kotlin.Enum
-import kotlin.String
-import kotlin.Unit
-import kotlin.apply
-import kotlin.let
-import kotlin.takeIf
 
 private class SettingsGroup(
   @JvmField val groupRow: Row,

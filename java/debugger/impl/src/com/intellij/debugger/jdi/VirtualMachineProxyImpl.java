@@ -22,11 +22,41 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ReferenceTypeImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.DoubleValue;
+import com.sun.jdi.FloatValue;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.LongValue;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.ThreadGroupReference;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.VoidValue;
 import com.sun.jdi.request.EventRequestManager;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
@@ -560,5 +590,13 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
       myDebugProcess.logError("Negative global suspend count number!");
     }
     myModelSuspendCount--;
+  }
+
+  /**
+   * Should be called in the debugger manager thread only.
+   */
+  @ApiStatus.Internal
+  public static @NotNull VirtualMachineProxyImpl getCurrent() {
+    return (VirtualMachineProxyImpl)VirtualMachineProxy.getCurrent();
   }
 }

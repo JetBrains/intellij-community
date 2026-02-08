@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginInstallationState
-import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable

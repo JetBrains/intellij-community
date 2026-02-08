@@ -15,7 +15,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
-import java.util.*
+import java.util.MissingResourceException
 import javax.swing.JComponent
 
 object RemoteTransferUIManager {

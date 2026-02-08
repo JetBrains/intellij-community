@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
@@ -29,7 +30,11 @@ import com.intellij.util.SmartList
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.breakpoints.*
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
@@ -50,6 +55,12 @@ import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
 object XBreakpointUtil {
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isBreakpointInstrumentationSwitchedOn(): Boolean {
+    return Registry.`is`("debugger.breakpoint.instrumentation")
+  }
+
   /**
    * The forcibly shortened version of [XBreakpointType.getShortText].
    */

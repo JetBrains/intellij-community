@@ -2,7 +2,11 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.OpenFileAction.Companion.openFile
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx

@@ -6,7 +6,13 @@ import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil.wrap
 import com.intellij.openapi.application.ModalityState.nonModal
 import com.intellij.openapi.project.Project
@@ -20,7 +26,13 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager.ChangesViewWorkflowListener
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangeListDragBean
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeDnDSupport
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean
+import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.ui.JBColor
@@ -37,8 +49,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
 import com.intellij.vcs.changes.viewModel.ChangesViewProxy
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.ChangesViewCommitPanel
+import com.intellij.vcs.commit.ChangesViewCommitTabTitleUpdater
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
+import com.intellij.vcs.commit.FixedSizeScrollPanel
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -74,10 +90,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
   }
 
   override fun dispose() {
-  }
-
-  override fun scheduleRefresh(callback: Runnable) {
-    changesView?.scheduleRefreshNow(callback)
   }
 
   override fun scheduleRefresh() {
@@ -286,20 +298,25 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       updatePanelLayout()
     }
 
-    private fun closeEditorPreviewIfEmpty() {
-      if (!editorDiffPreview.hasContent()) editorDiffPreview.closePreview()
+    private fun closeEditorPreviewIfNoChanges() {
+      val changeListManager = ChangeListManager.getInstance(project)
+      changeListManager.invokeAfterUpdate(true) {
+        if (changeListManager.allChanges.isEmpty()) {
+          editorDiffPreview.closePreview()
+        }
+      }
     }
 
     fun setCommitUi(commitUi: ChangesViewCommitPanel?) {
       if (commitUi != null) {
         commitUi.registerRootComponent(this)
-        commitUi.postCommitRefreshCallback = { closeEditorPreviewIfEmpty() }
+        commitUi.postCommitCallback = { closeEditorPreviewIfNoChanges() }
         commitPanel = commitUi
         commitPanelSplitter.setSecondComponent(commitUi.getComponent())
       }
       else {
         commitPanelSplitter.setSecondComponent(null)
-        commitPanel?.postCommitRefreshCallback = null
+        commitPanel?.postCommitCallback = null
         commitPanel = null
       }
       configureToolbars()

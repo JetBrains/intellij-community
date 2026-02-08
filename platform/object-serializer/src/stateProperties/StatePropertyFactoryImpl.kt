@@ -4,7 +4,7 @@ package com.intellij.serialization.stateProperties
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.StatePropertyFactory
 import com.intellij.openapi.components.StoredPropertyBase
-import java.util.*
+import java.util.TreeSet
 
 internal class StatePropertyFactoryImpl : StatePropertyFactory {
   override fun bool(defaultValue: Boolean) = ObjectStoredProperty(defaultValue)

@@ -3,8 +3,14 @@
 package com.intellij.settingsSync.core.communicator
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.loadDescriptor
+import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -18,8 +24,13 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.RestartForPluginInstall
 import com.intellij.settingsSync.core.SettingsSyncBundle.message
+import com.intellij.settingsSync.core.SettingsSyncEventListener
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncLocalSettings
+import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
+import com.intellij.settingsSync.core.SettingsSyncSettings
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

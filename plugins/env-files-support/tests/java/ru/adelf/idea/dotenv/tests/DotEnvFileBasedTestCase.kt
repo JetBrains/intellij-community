@@ -1,10 +1,10 @@
 package ru.adelf.idea.dotenv.tests
 
-import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LexerTestCase

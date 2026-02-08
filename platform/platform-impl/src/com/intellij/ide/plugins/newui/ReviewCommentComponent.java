@@ -7,7 +7,11 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.RatesPanel;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,8 +29,11 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.datatransfer.StringSelection;
 
 @ApiStatus.Internal

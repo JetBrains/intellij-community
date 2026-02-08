@@ -3,9 +3,13 @@
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.navigation.*
+import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.codeInsight.navigation.getReferenceRanges
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.multipleTargetsCtrlMouseData
+import com.intellij.codeInsight.navigation.psiCtrlMouseData
+import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project

@@ -2,8 +2,8 @@
 package com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl
 
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.ContentRootBuilder
-import com.intellij.platform.testFramework.junit5.projectStructure.fixture.ModuleDependenciesBuilder
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.ModuleBuilder
+import com.intellij.platform.testFramework.junit5.projectStructure.fixture.ModuleDependenciesBuilder
 
 internal class ModuleBuilderImpl(
   val moduleName: String,

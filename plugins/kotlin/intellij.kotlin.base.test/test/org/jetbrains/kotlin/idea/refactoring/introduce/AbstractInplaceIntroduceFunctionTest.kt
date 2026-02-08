@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest
+import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.nextTemplateVariable
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
-import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.nextTemplateVariable
 
 abstract class AbstractInplaceIntroduceFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(unused: String) {

@@ -5,12 +5,31 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parents
-import com.sun.jdi.*
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.ClassNotLoadedException
+import com.sun.jdi.ClassType
+import com.sun.jdi.InternalException
+import com.sun.jdi.Location
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.CallableNameCalculator
+import org.jetbrains.kotlin.idea.debugger.base.util.findElementsOfTypeInRange
+import org.jetbrains.kotlin.idea.debugger.base.util.getRangeOfLine
+import org.jetbrains.kotlin.idea.debugger.base.util.hasInterface
+import org.jetbrains.kotlin.idea.debugger.base.util.hasSuperClass
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 @ApiStatus.Internal

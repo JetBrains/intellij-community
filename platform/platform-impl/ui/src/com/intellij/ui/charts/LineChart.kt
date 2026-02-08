@@ -8,7 +8,7 @@ import java.awt.Graphics2D
 import java.awt.geom.Area
 import java.awt.geom.Path2D
 import java.awt.geom.Point2D
-import java.util.*
+import java.util.LinkedList
 import kotlin.math.hypot
 import kotlin.math.min
 

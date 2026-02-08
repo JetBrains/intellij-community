@@ -1,6 +1,10 @@
 package com.intellij.execution.multilaunch.statistics
 
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.ObjectDescription
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import org.jetbrains.annotations.ApiStatus
 
 internal object MultiLaunchEventFields {

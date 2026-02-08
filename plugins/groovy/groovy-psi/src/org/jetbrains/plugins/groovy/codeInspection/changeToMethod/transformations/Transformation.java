@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.METHOD_CALL_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedenceForNonBinaryOps;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
 public abstract class Transformation<T extends GrExpression> {
 

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
@@ -9,7 +10,13 @@ import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.anonymousObjectSuperTypeOrNull
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
@@ -18,6 +25,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 fun KtClassOrObject.getSuperTypeEntryByDescriptor(
     descriptor: ClassDescriptor,
     context: BindingContext
@@ -28,6 +36,7 @@ fun KtClassOrObject.getSuperTypeEntryByDescriptor(
     }
 }
 
+@K1Deprecation
 fun makeAbstract(
     member: KtCallableDeclaration,
     originalMemberDescriptor: CallableMemberDescriptor,
@@ -70,6 +79,7 @@ fun makeAbstract(
     }
 }
 
+@K1Deprecation
 fun addSuperTypeEntry(
     delegator: KtSuperTypeListEntry,
     targetClass: KtClassOrObject,

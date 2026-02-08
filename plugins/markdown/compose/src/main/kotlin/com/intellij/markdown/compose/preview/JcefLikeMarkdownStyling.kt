@@ -30,14 +30,20 @@ import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
-import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.*
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 import java.awt.Font
 
 @OptIn(ExperimentalTextApi::class)

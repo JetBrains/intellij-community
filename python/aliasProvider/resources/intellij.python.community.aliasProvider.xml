@@ -19,7 +19,7 @@
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.pydev"/>
-    <module name="intellij.python.community.impl.venv"/>
+    <module name="intellij.python.venv"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.community.services.shared"/>
     <module name="intellij.python.community.services.internal.impl"/>

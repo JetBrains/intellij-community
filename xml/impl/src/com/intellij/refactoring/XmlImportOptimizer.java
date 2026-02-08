@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -11,7 +11,11 @@ import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -38,7 +42,7 @@ public class XmlImportOptimizer implements ImportOptimizer {
 
   @Override
   public boolean supports(@NotNull PsiFile file) {
-    return file instanceof XmlFile;
+    return file instanceof XmlFile && !"JSP".equals(file.getLanguage().getID());
   }
 
   @Override

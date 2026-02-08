@@ -71,6 +71,9 @@ jvm_library(
     "//plugins/kotlin/base/indices/tests",
     "//plugins/kotlin/coverage/tests",
     "//plugins/kotlin/maven/tests",
+    "//plugins/kotlin/project-wizard/tests",
+    "//plugins/kotlin/base/facet/tests",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/tests",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

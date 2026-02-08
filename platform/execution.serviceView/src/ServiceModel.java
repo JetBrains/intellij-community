@@ -2,8 +2,15 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.execution.services.*;
+import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
+import com.intellij.execution.services.ServiceViewContributor;
+import com.intellij.execution.services.ServiceViewDescriptor;
+import com.intellij.execution.services.ServiceViewGroupingContributor;
+import com.intellij.execution.services.ServiceViewItemState;
+import com.intellij.execution.services.ServiceViewLazyContributor;
+import com.intellij.execution.services.ServiceViewOptions;
+import com.intellij.execution.services.ServiceViewProvidingContributor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
@@ -31,8 +38,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 

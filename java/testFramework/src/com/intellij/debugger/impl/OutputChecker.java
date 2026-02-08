@@ -28,7 +28,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -264,6 +268,7 @@ public class OutputChecker {
       result = result.replace("-Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true ", "");
       result = result.replace("-Ddebugger.async.stack.trace.for.all.threads=true ", "");
       result = result.replace("-Ddebugger.agent.support.throwable=false ", "");
+      result = result.replace("-Ddebugger.agent.enable.log.capture=true ", "");
       result = result.replace("--enable-native-access=ALL-UNNAMED ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 

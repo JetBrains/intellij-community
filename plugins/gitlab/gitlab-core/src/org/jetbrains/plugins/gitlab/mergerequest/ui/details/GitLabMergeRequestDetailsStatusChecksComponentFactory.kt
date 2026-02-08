@@ -21,7 +21,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRemove
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestStatusViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.AlreadyResolvedLocally
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.DetailsNotLoaded
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.MergeInProgress
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.SourceRepositoryNotFound
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.event.ActionListener
 import java.awt.event.ComponentAdapter

@@ -13,7 +13,11 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAwa
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The whole arrangement idea is to allow changing file entries order according to the user-provided rules.

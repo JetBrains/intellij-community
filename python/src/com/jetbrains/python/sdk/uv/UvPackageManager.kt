@@ -3,9 +3,13 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.util.cancelOnDispose
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -14,27 +18,43 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.management.resolvePyProjectToml
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import java.nio.file.Path
 
-internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
+internal class UvPackageManager(project: Project, sdk: Sdk, uvLowLevelDeferred: Deferred<PyResult<UvLowLevel>>) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
+  private val uvLowLevel = uvLowLevelDeferred.also { it.cancelOnDispose(this) }
+
+  private suspend fun <T> withUv(action: suspend (UvLowLevel) -> PyResult<T>): PyResult<T> {
+    return when (val uvResult = uvLowLevel.await()) {
+      is Result.Success -> action(uvResult.result)
+      is Result.Failure -> uvResult
+    }
+  }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    val result = if (sdk.uvUsePackageManagement) {
-      uv.installPackage(installRequest, emptyList())
+    return withUv { uv ->
+      if (sdk.uvUsePackageManagement) {
+        uv.installPackage(installRequest, emptyList())
+      }
+      else {
+        uv.addDependency(installRequest, emptyList())
+      }
     }
-    else {
-      uv.addDependency(installRequest, emptyList())
-    }
-    return result
   }
 
   override suspend fun installPackageDetachedCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    return uv.installPackage(installRequest, emptyList())
+    return withUv { uv -> uv.installPackage(installRequest, emptyList()) }
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
@@ -46,27 +66,29 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   }
 
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
-    if (pythonPackages.isEmpty()) return PyResult.success(Unit)
+    return withUv { uv ->
+      if (pythonPackages.isEmpty()) return@withUv PyResult.success(Unit)
 
-    val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages).getOr {
-      return it
+      val (standalonePackages, declaredPackages) = categorizePackages(uv, pythonPackages).getOr {
+        return@withUv it
+      }
+
+      uninstallStandalonePackages(uv, standalonePackages).getOr { return@withUv it }
+      uninstallDeclaredPackages(uv, declaredPackages).getOr { return@withUv it }
+
+      PyResult.success(Unit)
     }
-
-    uninstallStandalonePackages(standalonePackages).getOr { return it }
-    uninstallDeclaredPackages(declaredPackages).getOr { return it }
-
-    return PyResult.success(Unit)
   }
 
   override suspend fun extractDependencies(): PyResult<List<PythonPackage>> {
-    return uv.listTopLevelPackages()
+    return withUv { uv -> uv.listTopLevelPackages() }
   }
 
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
    */
-  private suspend fun categorizePackages(packages: Array<out String>): PyResult<Pair<List<PyPackageName>, List<PyPackageName>>> {
-    val dependencyNames = extractDependencies().getOr {
+  private suspend fun categorizePackages(uv: UvLowLevel, packages: Array<out String>): PyResult<Pair<List<PyPackageName>, List<PyPackageName>>> {
+    val dependencyNames = uv.listTopLevelPackages().getOr {
       return it
     }.map { it.name }
 
@@ -80,7 +102,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   /**
    * Uninstalls standalone packages using UV package manager.
    */
-  private suspend fun uninstallStandalonePackages(packages: List<PyPackageName>): PyResult<Unit> {
+  private suspend fun uninstallStandalonePackages(uv: UvLowLevel, packages: List<PyPackageName>): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       uv.uninstallPackages(packages.map { it.name }.toTypedArray())
     }
@@ -92,7 +114,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   /**
    * Removes declared dependencies using UV package manager.
    */
-  private suspend fun uninstallDeclaredPackages(packages: List<PyPackageName>): PyResult<Unit> {
+  private suspend fun uninstallDeclaredPackages(uv: UvLowLevel, packages: List<PyPackageName>): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       uv.removeDependencies(packages.map { it.name }.toTypedArray())
     }
@@ -102,15 +124,15 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   }
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
-    return uv.listPackages()
+    return withUv { uv -> uv.listPackages() }
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
-    return uv.listOutdatedPackages()
+    return withUv { uv -> uv.listOutdatedPackages() }
   }
 
   override suspend fun syncCommand(): PyResult<Unit> {
-    return uv.sync().mapSuccess { }
+    return withUv { uv -> uv.sync().mapSuccess { } }
   }
 
   override fun syncErrorMessage(): PackageManagerErrorMessage =
@@ -120,21 +142,42 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     )
 
   suspend fun lock(): PyResult<Unit> {
-    uv.lock().getOr {
-      return it
+    return withUv { uv ->
+      uv.lock().getOr {
+        return@withUv it
+      }
+      reloadPackages().mapSuccess { }
     }
-    return reloadPackages().mapSuccess { }
+  }
+
+  override fun getDependencyFile(): VirtualFile? {
+    val uvWorkingDirectory = (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory ?: return null
+    return resolvePyProjectToml(uvWorkingDirectory)
+  }
+
+  override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean = withContext(Dispatchers.IO) {
+    val specification = repositoryManager.findPackageSpecification(requirement) ?: return@withContext false
+    
+    val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(specification))
+
+    withUv { uv ->
+        uv.addDependency(request, emptyList())
+    }.getOr { return@withContext false }
+
+    return@withContext true
   }
 }
 
 class UvPackageManagerProvider : PythonPackageManagerProvider {
-  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
+  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
     if (!sdk.isUv) {
       return null
     }
 
     val uvWorkingDirectory = (sdk.sdkAdditionalData as UvSdkAdditionalData).uvWorkingDirectory ?: Path.of(project.basePath!!)
-    val uv = createUvLowLevel(uvWorkingDirectory, createUvCli().getOr { return null })
-    return UvPackageManager(project, sdk, uv)
+    val uvLowLevel = PyPackageCoroutine.getScope(project).async(start = CoroutineStart.LAZY) {
+      createUvCli().mapSuccess { createUvLowLevel(uvWorkingDirectory, it) }
+    }
+    return UvPackageManager(project, sdk, uvLowLevel)
   }
 }

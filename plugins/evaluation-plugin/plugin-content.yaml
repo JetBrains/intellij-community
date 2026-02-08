@@ -30,10 +30,18 @@
   - name: intellij.evaluationPlugin.languages.xml
   - name: intellij.evaluationPlugin.languages.terminal
   - name: intellij.evaluationPlugin.languages.yaml
-  - name: intellij.evaluationPlugin.inlineCompletion
-  - name: intellij.evaluationPlugin.fullLine
+- name: lib/modules/intellij.evaluationPlugin.agent.jar
+  contentModules:
   - name: intellij.evaluationPlugin.agent
+- name: lib/modules/intellij.evaluationPlugin.fullLine.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.fullLine
+- name: lib/modules/intellij.evaluationPlugin.ijnext.jar
+  contentModules:
   - name: intellij.evaluationPlugin.ijnext
+- name: lib/modules/intellij.evaluationPlugin.inlineCompletion.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.inlineCompletion
 - name: lib/modules/intellij.evaluationPlugin.languages.java.jar
   contentModules:
   - name: intellij.evaluationPlugin.languages.java

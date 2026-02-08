@@ -4,8 +4,8 @@ package com.intellij.coverage.view
 import com.intellij.coverage.CoverageEditorAnnotatorImpl
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.impl.EditorImpl

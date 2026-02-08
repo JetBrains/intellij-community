@@ -107,8 +107,36 @@ class PyTypeRepresentationParser : PyParser() {
     }
 
     fun parseFunctionType(): Boolean {
+      val mark = myBuilder.mark()
+
+      // Parse 'def' types: `def foo.bar(a: int) -> str`
+      if (atToken(PyTokenTypes.DEF_KEYWORD)) {
+        myBuilder.advanceLexer() // consume 'def'
+
+        // Parse dotted name (e.g., foo.bar.baz)
+        if (!atToken(PyTokenTypes.IDENTIFIER)) {
+          mark.rollbackTo()
+          return false
+        }
+
+        val nameMarker = myBuilder.mark()
+        myBuilder.advanceLexer() // consume first identifier
+
+        // Parse remaining dotted parts
+        while (atToken(PyTokenTypes.DOT)) {
+          myBuilder.advanceLexer() // consume dot
+          if (!atToken(PyTokenTypes.IDENTIFIER)) {
+            mark.rollbackTo()
+            return false
+          }
+          myBuilder.advanceLexer() // consume identifier
+        }
+        nameMarker.done(PyElementTypes.REFERENCE_EXPRESSION)
+      }
+
+      parseTypeParameterList()
+
       if (atToken(PyTokenTypes.LPAR)) {
-        val mark = myBuilder.mark()
         parseParameterTypeList()
         // Check if this is a function type (has ->) or just a parenthesized expression/tuple
         if (atToken(PyTokenTypes.RARROW)) {
@@ -118,13 +146,67 @@ class PyTypeRepresentationParser : PyParser() {
           mark.done(PyTypeRepresentationElementTypes.FUNCTION_SIGNATURE)
           return true
         }
-        else {
-          // Not a function type, rollback
-          mark.rollbackTo()
-          return false
+      }
+      // Not a function type, rollback
+      mark.rollbackTo()
+      return false
+    }
+
+    fun parseTypeParameterList() {
+      if (!atToken(PyTokenTypes.LBRACKET)) return
+      val typeParamList = myBuilder.mark()
+      myBuilder.advanceLexer() // consume [
+
+      do {
+        if (!parseTypeParameter()) {
+          myBuilder.error(PyParsingBundle.message("PARSE.expected.type.parameter"))
+        }
+
+        if (atToken(PyTokenTypes.COMMA)) {
+          myBuilder.advanceLexer()
+        }
+        else if (!atToken(PyTokenTypes.RBRACKET)) {
+          break
         }
       }
-      return false
+      while (!atToken(PyTokenTypes.RBRACKET))
+
+      checkMatches(PyTokenTypes.RBRACKET, PyParsingBundle.message("PARSE.expected.symbols", ",", "]"))
+      typeParamList.done(PyElementTypes.TYPE_PARAMETER_LIST)
+    }
+
+    fun parseTypeParameter(): Boolean {
+      if (!atToken(PyTokenTypes.IDENTIFIER) && !atToken(PyTokenTypes.MULT) && !atToken(PyTokenTypes.EXP)) {
+        return false
+      }
+      val typeParamMarker = myBuilder.mark()
+
+      // Handle *Ts or **P
+      if (atAnyOfTokens(PyTokenTypes.MULT, PyTokenTypes.EXP)) {
+        myBuilder.advanceLexer()
+      }
+
+      // Parse identifier
+      if (!atToken(PyTokenTypes.IDENTIFIER)) {
+        typeParamMarker.drop()
+        return false
+      }
+      myBuilder.advanceLexer()
+
+      // Parse bound: T: int
+      if (atToken(PyTokenTypes.COLON)) {
+        myBuilder.advanceLexer()
+        parseExpression()
+      }
+
+      // Parse default: T = int
+      if (atToken(PyTokenTypes.EQ)) {
+        myBuilder.advanceLexer()
+        parseExpression()
+      }
+
+      typeParamMarker.done(PyElementTypes.TYPE_PARAMETER)
+      return true
     }
 
     fun parseParameterTypeList() {
@@ -170,7 +252,7 @@ class PyTypeRepresentationParser : PyParser() {
             }
             namedVarargMarker.done(PyTypeRepresentationElementTypes.NAMED_PARAMETER_TYPE)
           }
-          else {
+          else if (atToken(PyTokenTypes.IDENTIFIER)) {
             // Unnamed *args, just parse the type
             parseExpression()
           }

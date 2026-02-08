@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections.migration
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
+@K1Deprecation
 class OverrideDeprecatedMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<KtNamedDeclaration>(KtNamedDeclaration::class.java),
     MigrationFix {

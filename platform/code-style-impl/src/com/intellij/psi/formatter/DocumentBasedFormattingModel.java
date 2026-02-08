@@ -2,7 +2,11 @@
 
 package com.intellij.psi.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelEx;
+import com.intellij.formatting.FormattingModelWithShiftIndentInsideDocumentRange;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;

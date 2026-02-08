@@ -5,7 +5,15 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementResolveResult
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
+import com.intellij.psi.ResolveResult
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ProcessingContext
@@ -14,10 +22,25 @@ import com.intellij.util.containers.toArray
 import com.jetbrains.python.BaseReference
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.COROUTINE
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GENERATOR
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportedNameDefiner
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeProviderBase
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
 class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, private val importElement: PyElement? = null, range: TextRange? = null) : BaseReference(pyElement, range), PsiPolyVariantReference {

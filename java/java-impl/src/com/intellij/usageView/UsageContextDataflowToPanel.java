@@ -13,16 +13,26 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiVariable;
-import com.intellij.slicer.*;
-import com.intellij.usages.*;
+import com.intellij.slicer.DuplicateMap;
+import com.intellij.slicer.JavaSliceUsage;
+import com.intellij.slicer.SliceAnalysisParams;
+import com.intellij.slicer.SlicePanel;
+import com.intellij.slicer.SliceRootNode;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.UsageContextPanel;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public class UsageContextDataflowToPanel extends UsageContextPanelBase {

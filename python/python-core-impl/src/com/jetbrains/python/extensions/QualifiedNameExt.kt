@@ -16,11 +16,15 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.resolve.*
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+import com.jetbrains.python.psi.resolve.fromModule
+import com.jetbrains.python.psi.resolve.fromSdk
+import com.jetbrains.python.psi.resolve.resolveModuleAt
+import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PySdkUtil
-import java.util.*
+import java.util.Collections
 
 
 interface ContextAnchor {

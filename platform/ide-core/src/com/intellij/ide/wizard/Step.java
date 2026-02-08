@@ -15,7 +15,8 @@
  */
 package com.intellij.ide.wizard;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 /**
  * @author nick

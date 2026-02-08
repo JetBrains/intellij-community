@@ -1,0 +1,97 @@
+### auto-generated section `build intellij.gradle.completion` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_completion",
+  opt_in = [
+    "kotlinx.serialization.InternalSerializationApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+resourcegroup(
+  name = "completion_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "completion",
+  module_name = "intellij.gradle.completion",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":completion_resources"],
+  kotlinc_opts = ":custom_completion",
+  deps = [
+    "//plugins/gradle",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/repository-search/common",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util-ex",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/io",
+    "//libraries/ktor/client",
+    "//platform/eel",
+    "//platform/external-system-api:externalSystem",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/eel-provider",
+    "//platform/backend/observation",
+    "//platform/util/text-matching",
+  ]
+)
+
+jvm_library(
+  name = "completion_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_completion",
+  associates = [":completion"],
+  deps = [
+    "//plugins/gradle",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/repository-search/common",
+    "//plugins/repository-search/common:common_test_lib",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/util-ex",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/io",
+    "//libraries/ktor/client",
+    "//platform/eel",
+    "//platform/external-system-api:externalSystem",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/eel-provider",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
+  ]
+)
+### auto-generated section `build intellij.gradle.completion` end
+
+### auto-generated section `test intellij.gradle.completion` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "completion_test",
+  runtime_deps = [":completion_test_lib"]
+)
+### auto-generated section `test intellij.gradle.completion` end

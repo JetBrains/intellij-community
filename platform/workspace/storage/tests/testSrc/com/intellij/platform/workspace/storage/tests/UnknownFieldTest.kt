@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.UnknownFieldEntity
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Date
 import kotlin.test.assertEquals
 
 class UnknownFieldTest {

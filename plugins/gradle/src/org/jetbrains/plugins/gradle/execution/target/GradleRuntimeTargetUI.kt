@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.BrowsableTargetEnvironmentType
+import com.intellij.execution.target.TargetBrowserHints
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.target.getRuntimeType
+import com.intellij.execution.target.getTargetType
+import com.intellij.execution.target.textFieldWithBrowseTargetButton
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getExtensions
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleFolderDescriptor

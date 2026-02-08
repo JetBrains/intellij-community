@@ -19,7 +19,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
 import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.BundledMaven;
+import org.jetbrains.idea.maven.project.BundledMaven3;
+import org.jetbrains.idea.maven.project.MavenHomeType;
+import org.jetbrains.idea.maven.project.MavenInSpecificPath;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
+import org.jetbrains.idea.maven.project.MavenWrapper;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
@@ -29,7 +37,9 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.idea.maven.utils.MavenUtil.*;
+import static org.jetbrains.idea.maven.utils.MavenUtil.extractMvnFromDaemon;
+import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenDaemon;
+import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome;
 
 @Service(Service.Level.PROJECT)
 public final class MavenDistributionsCache {

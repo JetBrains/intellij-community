@@ -15,8 +15,9 @@
  */
 package com.intellij.util.xml.ui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 
 /**
  * Base component to be associated with (bound to) DOM controls (see {@link DomUIControl})

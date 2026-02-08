@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.plugin
 
 import com.intellij.openapi.components.service
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 interface KotlinPluginModeProvider {
@@ -48,12 +47,3 @@ enum class KotlinPluginMode(
     }
 }
 
-/**
- * A switch to mitigate exceptions from Android plugin
- * because it tries to use K1 frontend in K2 plugin.
- *
- * This is a separate method from [KotlinPluginModeProvider.isK2Mode] to better track and update its usages.
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Deprecated in 2025.1.1")
-fun suppressAndroidPlugin(): Boolean = KotlinPluginModeProvider.isK2Mode()

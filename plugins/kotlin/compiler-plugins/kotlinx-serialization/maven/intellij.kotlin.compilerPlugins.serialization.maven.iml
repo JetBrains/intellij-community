@@ -12,7 +12,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.maven" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.maven" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" />
     <orderEntry type="module" module-name="intellij.maven" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.jps" />
   </component>
 </module>

@@ -1,0 +1,7 @@
+public class Client {
+
+  public void foo(BaseServer server) {
+    Element elem = server.method();
+  }
+
+}

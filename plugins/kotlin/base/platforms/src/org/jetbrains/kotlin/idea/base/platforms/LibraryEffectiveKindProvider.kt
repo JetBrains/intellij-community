@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.util.gist.GistManager
@@ -37,7 +38,6 @@ import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTE
 import java.io.DataInput
 import java.io.DataOutput
 import java.util.concurrent.ConcurrentHashMap
-import com.intellij.platform.backend.workspace.virtualFile
 
 private enum class KnownLibraryKindForIndex {
     COMMON, JS, UNKNOWN

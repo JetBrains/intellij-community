@@ -2,7 +2,14 @@ package com.intellij.configurationScript.providers
 
 import com.intellij.configurationScript.ConfigurationFileManager
 import com.intellij.configurationScript.readIntoObject
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ComponentInfo
+import com.intellij.configurationStore.ProjectStoreFactoryBase
+import com.intellij.configurationStore.ProjectWithModuleStoreImpl
+import com.intellij.configurationStore.SaveSessionProducer
+import com.intellij.configurationStore.SaveSessionProducerBase
+import com.intellij.configurationStore.StateGetter
+import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.configurationStore.deserializeBaseStateWithCustomNameFilter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent

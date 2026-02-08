@@ -2,7 +2,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoManagerProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,9 +26,9 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JRootPane;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 
 
 public abstract class UndoRedoAction extends DumbAwareAction implements LightEditCompatible {

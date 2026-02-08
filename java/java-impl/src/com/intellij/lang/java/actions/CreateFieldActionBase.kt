@@ -9,7 +9,11 @@ import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiImplicitClass
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 
 internal abstract class CreateFieldActionBase(

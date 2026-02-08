@@ -5,16 +5,28 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.ImplicitToStringSearch;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Component;
 import java.util.List;
 
-import static com.intellij.find.findUsages.JavaFindUsagesCollector.*;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.FIND_METHOD_STARTED;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.IMPLEMENTING_METHODS;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.IMPLICIT_CALLS;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.INCLUDE_INHERITED;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.INCLUDE_OVERLOAD;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.OVERRIDING_METHODS;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.SEARCH_FOR_BASE_METHODS;
 
 public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindUsagesOptions> {
   private StateRestoringCheckBox myCbSearchForBase;

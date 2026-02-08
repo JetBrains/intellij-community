@@ -6,8 +6,16 @@ import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
-import java.awt.*
-import javax.accessibility.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics
+import javax.accessibility.Accessible
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
+import javax.accessibility.AccessibleStateSet
+import javax.accessibility.AccessibleValue
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 

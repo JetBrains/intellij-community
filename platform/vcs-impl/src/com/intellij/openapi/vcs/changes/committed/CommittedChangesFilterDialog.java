@@ -13,8 +13,10 @@ import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public final class CommittedChangesFilterDialog extends DialogWrapper {
   private final ChangesBrowserSettingsEditor panel;

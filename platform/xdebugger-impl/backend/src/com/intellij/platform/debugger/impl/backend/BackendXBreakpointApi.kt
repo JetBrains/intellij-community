@@ -6,7 +6,13 @@ import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.findDocument
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeId
+import com.intellij.platform.debugger.impl.rpc.XExpressionDocumentDto
+import com.intellij.platform.debugger.impl.rpc.XExpressionDto
+import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
+import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.XDebuggerManager

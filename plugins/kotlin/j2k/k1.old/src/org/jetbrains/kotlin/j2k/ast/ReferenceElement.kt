@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 
+@K1Deprecation
 class ReferenceElement(val name: Identifier, val typeArgs: List<Element>) : Element() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(name).append(typeArgs, ", ", "<", ">")

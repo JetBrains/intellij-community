@@ -3,10 +3,28 @@ package com.intellij.psi.impl.search
 
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.Searcher
-import com.intellij.model.search.impl.*
+import com.intellij.model.search.impl.InjectionInfo
+import com.intellij.model.search.impl.LanguageInfo
+import com.intellij.model.search.impl.ParametersRequest
+import com.intellij.model.search.impl.QueryRequest
+import com.intellij.model.search.impl.QueryResult
+import com.intellij.model.search.impl.Requests
+import com.intellij.model.search.impl.SearchersQuery
+import com.intellij.model.search.impl.Transformation
+import com.intellij.model.search.impl.ValueResult
+import com.intellij.model.search.impl.WordRequest
+import com.intellij.model.search.impl.XQuery
+import com.intellij.model.search.impl.XResult
+import com.intellij.model.search.impl.XTransformation
+import com.intellij.model.search.impl.decompose
+import com.intellij.model.search.impl.occurrenceProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicatorProvider
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
@@ -25,7 +43,10 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Collections
+import java.util.EnumSet
+import java.util.Queue
 
 private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.searcher")
 

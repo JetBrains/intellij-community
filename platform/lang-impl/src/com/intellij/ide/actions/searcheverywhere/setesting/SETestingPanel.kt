@@ -12,8 +12,24 @@ import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.GridBag
-import java.awt.*
-import javax.swing.*
+import java.awt.BorderLayout
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.Point
+import java.awt.Rectangle
+import javax.swing.AbstractListModel
+import javax.swing.JButton
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JSpinner
+import javax.swing.JTextField
+import javax.swing.SpinnerNumberModel
+import javax.swing.SwingUtilities
 
 internal class SETestingPanel(contributors: List<SearchEverywhereContributor<*>>) : JBSplitter(false), Disposable {
 

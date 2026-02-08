@@ -4,7 +4,11 @@ package org.jetbrains.plugins.terminal.block.feedback
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.*
+import com.intellij.platform.feedback.ActionBasedFeedbackConfig
+import com.intellij.platform.feedback.FeedbackSurvey
+import com.intellij.platform.feedback.FeedbackSurveyType
+import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
+import com.intellij.platform.feedback.InIdeFeedbackSurveyType
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification

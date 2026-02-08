@@ -6,6 +6,7 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -14,9 +15,11 @@ import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class UseWithIndexInspection : IntentionBasedInspection<KtForExpression>(UseWithIndexIntention::class)
 
+@K1Deprecation
 class UseWithIndexIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
     KotlinBundle.messagePointer("use.withindex.instead.of.manual.index.increment")

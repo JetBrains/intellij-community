@@ -14,6 +14,7 @@ jvm_library(
   runtime_deps = [
     "//platform/vcs-api:vcs",
     "//platform/util/progress",
+    "//plugins/repository-search/common",
   ]
 )
 
@@ -44,7 +45,6 @@ jvm_library(
     "//java/testFramework",
     "//platform/workspace/storage",
     "//plugins/repository-search",
-    "//plugins/repository-search:repository-search_test_lib",
     "@lib//:assert_j",
     "//platform/external-system-api/dependency-updater",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
@@ -88,6 +88,8 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-ui-common:ui-common",
     "//platform/execution",
+    "//plugins/repository-search/common",
+    "//plugins/repository-search/common:common_test_lib",
   ],
   runtime_deps = [":maven-tests"]
 )

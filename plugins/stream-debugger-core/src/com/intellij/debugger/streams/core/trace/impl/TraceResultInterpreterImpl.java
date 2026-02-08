@@ -2,7 +2,13 @@
 package com.intellij.debugger.streams.core.trace.impl;
 
 import com.intellij.debugger.streams.core.lib.InterpreterFactory;
-import com.intellij.debugger.streams.core.trace.*;
+import com.intellij.debugger.streams.core.trace.ArrayReference;
+import com.intellij.debugger.streams.core.trace.CallTraceInterpreter;
+import com.intellij.debugger.streams.core.trace.LongValue;
+import com.intellij.debugger.streams.core.trace.TraceInfo;
+import com.intellij.debugger.streams.core.trace.TraceResultInterpreter;
+import com.intellij.debugger.streams.core.trace.TracingResult;
+import com.intellij.debugger.streams.core.trace.Value;
 import com.intellij.debugger.streams.core.trace.impl.interpret.ValuesOrderInfo;
 import com.intellij.debugger.streams.core.wrapper.StreamCall;
 import com.intellij.debugger.streams.core.wrapper.StreamChain;

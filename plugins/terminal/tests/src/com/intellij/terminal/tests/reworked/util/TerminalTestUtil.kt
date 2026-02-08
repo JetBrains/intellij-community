@@ -12,6 +12,7 @@ import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import kotlin.reflect.KMutableProperty0
@@ -22,6 +23,9 @@ object TerminalTestUtil {
     val document = DocumentImpl("", true)
     return MutableTerminalOutputModelImpl(document, maxLength)
   }
+
+  val TerminalOutputModel.text: String
+    get() = getText(startOffset, endOffset).toString()
 
   suspend fun MutableTerminalOutputModel.update(absoluteLineIndex: Long, text: String, styles: List<StyleRange> = emptyList()) {
     updateOutputModel { updateContent(absoluteLineIndex, text, styles) }

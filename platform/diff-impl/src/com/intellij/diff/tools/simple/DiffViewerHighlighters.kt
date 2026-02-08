@@ -2,7 +2,11 @@
 package com.intellij.diff.tools.simple
 
 import com.intellij.diff.tools.util.text.MergeInnerDifferences
-import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.DiffGutterOperation
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.concurrency.annotations.RequiresEdt

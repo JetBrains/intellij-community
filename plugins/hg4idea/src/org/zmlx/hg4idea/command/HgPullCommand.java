@@ -29,7 +29,9 @@ import java.util.List;
 
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.PULL_AUTH_REQUIRED;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.PULL_ERROR;
-import static org.zmlx.hg4idea.command.HgCommandExitCode.*;
+import static org.zmlx.hg4idea.command.HgCommandExitCode.ERROR;
+import static org.zmlx.hg4idea.command.HgCommandExitCode.SUCCESS;
+import static org.zmlx.hg4idea.command.HgCommandExitCode.UNRESOLVED;
 
 public class HgPullCommand {
 

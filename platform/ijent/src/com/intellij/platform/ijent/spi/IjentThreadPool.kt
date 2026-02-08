@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory

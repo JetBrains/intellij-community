@@ -1,10 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.java.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TokenLocationProperty
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPackageStatement
 import com.intellij.psi.util.startOffset
 
 class JavaFunctionCallingVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {

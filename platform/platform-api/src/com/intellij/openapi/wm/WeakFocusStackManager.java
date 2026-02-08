@@ -5,8 +5,11 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 import java.util.List;

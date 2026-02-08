@@ -4,5 +4,7 @@ package org.jetbrains.kotlin.idea.presentation
 
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.psi.NavigatablePsiElement
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 abstract class KtModuleSpecificListCellRenderer<T : NavigatablePsiElement> : PsiElementListCellRenderer<T>()

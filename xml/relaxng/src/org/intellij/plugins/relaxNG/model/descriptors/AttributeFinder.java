@@ -19,7 +19,14 @@ package org.intellij.plugins.relaxNG.model.descriptors;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.kohsuke.rngom.digested.*;
+import org.kohsuke.rngom.digested.DAttributePattern;
+import org.kohsuke.rngom.digested.DChoicePattern;
+import org.kohsuke.rngom.digested.DDataPattern;
+import org.kohsuke.rngom.digested.DElementPattern;
+import org.kohsuke.rngom.digested.DOptionalPattern;
+import org.kohsuke.rngom.digested.DPattern;
+import org.kohsuke.rngom.digested.DValuePattern;
+import org.kohsuke.rngom.digested.DZeroOrMorePattern;
 import org.kohsuke.rngom.nc.NameClass;
 
 import javax.xml.namespace.QName;

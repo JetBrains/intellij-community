@@ -24,7 +24,10 @@ import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
+import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.BOTH;
+import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.GRAY_OUT;
+import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.INLAYS;
+import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.NONE;
 
 public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener, XDebuggerManagerListener {
   private static final int CLEANUP_DELAY_MILLIS = 300;

@@ -13,9 +13,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 @ApiStatus.Internal
 public class PopupListElementRendererWithIcon extends PopupListElementRenderer<Object> implements IconListPopupRenderer {

@@ -2,7 +2,12 @@
 
 package com.intellij.settingsSync.core.plugins
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.DynamicPluginEnabler
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginEnableStateChangedListener
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId

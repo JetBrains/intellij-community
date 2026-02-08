@@ -6,7 +6,13 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastVisibility
 
 fun interface MethodCallEvaluator<T : Any> {
   fun provideValue(evaluator: UNeDfaValueEvaluator<T>, configuration: UNeDfaConfiguration<T>, callExpression: UCallExpression): T?

@@ -12,11 +12,13 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.find.findUsages.JavaFindUsagesCollector.*;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.SEARCH_SCOPE;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.TEXT_OCCURRENCES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.USAGES;
 
 public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
   protected StateRestoringCheckBox myCbIncludeOverloadedMethods;

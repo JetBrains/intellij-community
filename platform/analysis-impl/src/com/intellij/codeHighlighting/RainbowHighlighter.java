@@ -8,7 +8,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorPalette;
+import com.intellij.openapi.editor.colors.EditorColorPaletteFactory;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.Pair;
@@ -19,11 +24,20 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.UnmodifiableView;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 public class RainbowHighlighter {
   private static final JBColor[] RAINBOW_JB_COLORS_DEFAULT = {

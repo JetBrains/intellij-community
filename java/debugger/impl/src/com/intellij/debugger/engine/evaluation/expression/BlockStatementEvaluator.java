@@ -20,9 +20,4 @@ public class BlockStatementEvaluator implements ModifiableEvaluator {
     }
     return result;
   }
-
-  @Override
-  public Modifier getModifier() {
-    return myStatements.length > 0 ? myStatements[myStatements.length - 1].getModifier() : null;
-  }
 }

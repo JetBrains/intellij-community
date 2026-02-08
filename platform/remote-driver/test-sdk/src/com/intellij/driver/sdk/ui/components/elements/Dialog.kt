@@ -52,8 +52,13 @@ class AboutDialogUi(data: ComponentData) : DialogUiComponent(data) {
 }
 
 open class DialogUiComponent(data: ComponentData) : WindowUiComponent(data) {
-  val okButton = x { byAccessibleName("OK") }
-  val cancelButton = x { byAccessibleName("Cancel") }
+  protected open val primaryButtonText: String = "OK"
+  protected open val cancelButtonText: String = "Cancel"
+
+  val okButton: UiComponent
+    get() = x { byAccessibleName(primaryButtonText) }
+  val cancelButton: UiComponent
+    get() = x { byAccessibleName(cancelButtonText) }
 
   fun pressButton(text: String) = x("//div[@class='JButton' and @visible_text='$text']").click()
 

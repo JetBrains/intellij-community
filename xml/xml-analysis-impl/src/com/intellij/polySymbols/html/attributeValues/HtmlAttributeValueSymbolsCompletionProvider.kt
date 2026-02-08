@@ -3,18 +3,18 @@ package com.intellij.polySymbols.html.attributeValues
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor
+import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
+import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
+import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
+import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor
+import com.intellij.polySymbols.html.htmlAttributeValue
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
-import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
-import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
-import com.intellij.polySymbols.html.htmlAttributeValue
-import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
 class HtmlAttributeValueSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttributeValue>() {
   override fun getContext(position: PsiElement): XmlAttributeValue? =

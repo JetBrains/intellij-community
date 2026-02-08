@@ -23,7 +23,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
 
 import static com.intellij.java.debugger.impl.shared.engine.JavaValueTextModificationPreparatorKt.convertToJavaStringLiteral;
 

@@ -6,7 +6,12 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.feedback.*
+import com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
+import com.intellij.platform.feedback.ExternalFeedbackSurveyType
+import com.intellij.platform.feedback.FeedbackSurveyType
+import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
+import com.intellij.platform.feedback.InIdeFeedbackSurveyType
+import com.intellij.platform.feedback.NotificationBasedFeedbackSurveyConfig
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

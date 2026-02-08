@@ -2,8 +2,12 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.actions.SearchEverywhereManagerFactory
-import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
+import com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -49,8 +53,16 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import fleet.kernel.change
 import fleet.kernel.rebase.shared
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager

@@ -4,8 +4,13 @@ package com.intellij.ui;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 
 //todo feel free to rename this class
 public abstract class ListCellRendererWithRightAlignedComponent<T> implements ListCellRenderer<T> {

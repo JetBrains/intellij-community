@@ -22,7 +22,12 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.LineMarkerRenderer
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes

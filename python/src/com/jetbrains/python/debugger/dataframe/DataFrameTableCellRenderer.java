@@ -4,8 +4,8 @@ package com.jetbrains.python.debugger.dataframe;
 import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
 import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import java.awt.Color;
 
 
 class DataFrameTableCellRenderer extends DataViewCellRenderer implements ColoredCellRenderer {

@@ -29,7 +29,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 import static com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProviderKt.getEnabledCustomQuickEvaluateActionHandler;
 import static com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController.DISABLE_VALUE_LOOKUP;

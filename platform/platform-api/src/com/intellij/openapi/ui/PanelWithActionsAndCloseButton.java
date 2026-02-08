@@ -3,7 +3,16 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -13,8 +22,9 @@ import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public abstract class PanelWithActionsAndCloseButton extends JPanel implements UiCompatibleDataProvider, Disposable {
   protected final ContentManager myContentManager;

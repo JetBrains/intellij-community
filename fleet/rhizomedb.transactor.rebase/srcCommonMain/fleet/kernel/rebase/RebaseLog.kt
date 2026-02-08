@@ -1,14 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.*
-import fleet.rpc.core.AssumptionsViolatedException
-import fleet.util.UID
-import fleet.fastutil.ints.Int2ObjectOpenHashMap
-import fleet.fastutil.ints.IntMap
+import com.jetbrains.rhizomedb.DB
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Instruction
+import com.jetbrains.rhizomedb.InstructionEffect
+import com.jetbrains.rhizomedb.Mut
+import com.jetbrains.rhizomedb.Novelty
+import com.jetbrains.rhizomedb.change
+import com.jetbrains.rhizomedb.changeAndReturn
+import com.jetbrains.rhizomedb.collectingNovelty
+import com.jetbrains.rhizomedb.delayingEffects
+import com.jetbrains.rhizomedb.mutate
+import com.jetbrains.rhizomedb.partition
+import com.jetbrains.rhizomedb.toNovelty
 import fleet.bifurcan.BifurcanVector
 import fleet.bifurcan.IBifurcanVector
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.IntMap
+import fleet.kernel.SharedPart
+import fleet.kernel.uidAttribute
+import fleet.rpc.core.AssumptionsViolatedException
+import fleet.util.UID
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 

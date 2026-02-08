@@ -22,14 +22,22 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference.ReferenceType;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 public class DocStringReferenceProvider extends PsiReferenceProvider {

@@ -8,11 +8,23 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedCommitParser
 import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcs.log.graph.GraphCommit
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.TestVcsLogProvider
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl
+import com.intellij.vcs.log.impl.VcsLogSharedSettings
+import com.intellij.vcs.log.impl.VcsRefImpl
 import com.intellij.vcs.test.VcsPlatformTest
 import junit.framework.TestCase
-import kotlinx.coroutines.*
-import java.util.concurrent.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
 

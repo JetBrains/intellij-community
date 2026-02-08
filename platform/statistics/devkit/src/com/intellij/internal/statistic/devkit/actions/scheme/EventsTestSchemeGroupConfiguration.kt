@@ -35,7 +35,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.selected
 import com.intellij.util.IncorrectOperationException
@@ -46,7 +50,7 @@ import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBDimension
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
-import java.util.*
+import java.util.Collections
 import javax.swing.JComponent
 import javax.swing.JPanel
 

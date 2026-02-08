@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -15,16 +16,16 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.evaluateRuntimeKaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WrapSingleStringTemplateEntryWithBracesInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.addSmartCompletionTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
 import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
-import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CompletionContributorGroupWeigher.groupPriority
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import java.util.Optional
@@ -254,43 +255,53 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     open fun shouldExecute(): Boolean = true
 
-    protected fun K2CompletionSectionContext<P>.addElement(element: LookupElement) {
-        sink.addElement(decorateLookupElement(element))
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    protected fun addElement(element: LookupElement) {
+        context.sink.addElement(decorateLookupElement(element))
     }
 
-    protected fun K2CompletionSectionContext<P>.addElements(elements: Iterable<LookupElement>) {
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    protected fun addElements(elements: Iterable<LookupElement>) {
         val decoratedElements = elements.map { decorateLookupElement(it) }
-        sink.addElements(decoratedElements)
+        context.sink.addElements(decoratedElements)
     }
 
     /**
      * Returns the group priority of the completion section that will be applied as weight to the [LookupElement]s
-     * from within the [org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher].
+     * from within the [org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CompletionContributorGroupWeigher].
      *
      * Note: this priority only affects the order of the elements displayed to the user.
      *  It does not affect the order in which the sections are executed.
      */
     protected open fun K2CompletionSectionContext<P>.getGroupPriority(): Int = 0
 
-    private fun K2CompletionSectionContext<P>.decorateLookupElement(
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    private fun decorateLookupElement(
         element: LookupElement,
     ): LookupElement {
-        element.groupPriority = getGroupPriority()
+        element.groupPriority = context.getGroupPriority()
         element.contributorClass = this::class.java
 
-        if (isAtFunctionLiteralStart(parameters.position)) {
+        if (isAtFunctionLiteralStart(context.parameters.position)) {
             element.suppressItemSelectionByCharsOnTyping = true
         }
 
-        val bracesInsertHandler = when (parameters.type) {
+        val bracesInsertHandler = when (context.parameters.type) {
             KotlinFirCompletionParameters.CorrectionType.BRACES_FOR_STRING_TEMPLATE -> InsertStringTemplateBracesInsertHandler
             else -> WrapSingleStringTemplateEntryWithBracesInsertHandler
         }
 
-        return LookupElementDecorator.withDelegateInsertHandler(
+        var element = element
+        if (context.completionContext.parameters.completionType == CompletionType.SMART) {
+            element = element.addSmartCompletionTailInsertHandler()
+        }
+
+        element = LookupElementDecorator.withDelegateInsertHandler(
             LookupElementDecorator.withDelegateInsertHandler(element, bracesInsertHandler),
-            CompletionCharInsertHandler(parameters.delegate.isAutoPopup),
+            CompletionCharInsertHandler(context.parameters.delegate.isAutoPopup),
         )
+
+        return element
     }
 }
 

@@ -21,7 +21,10 @@ import com.intellij.openapi.ui.TitlePanel;
 import com.intellij.xml.util.XmlStringUtil;
 import org.zmlx.hg4idea.HgBundle;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 
 /**
  * The dialog which appears, when user wants to create a Mercurial repository in the folder,

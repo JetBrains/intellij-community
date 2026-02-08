@@ -6,7 +6,6 @@ import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
-import org.junit.Test
 
 class EmptyCommitTest : GitSingleRepoTest() {
 

@@ -65,16 +65,28 @@ inline fun <reified T : Any> ComponentManager.services(includeLocal: Boolean): L
   return getServices(T::class.java, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
 }
 
+/**
+ * In most cases, you should use [service] instead, even in suspending context.
+ * This function is mostly useful during startup.
+ */
 @ApiStatus.Experimental
 suspend inline fun <reified T : Any> serviceAsync(): T {
   return ApplicationManager.getApplication().serviceAsync()
 }
 
+/**
+ * In most cases, you should use [service] instead, even in suspending context.
+ * This function is mostly useful during startup.
+ */
 @ApiStatus.Experimental
 suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): T {
   return (this as ComponentManagerEx).getServiceAsync(T::class.java)
 }
 
+/**
+ * In most cases, you should use [service] instead, even in suspending context.
+ * This function is mostly useful during startup.
+ */
 @ApiStatus.Experimental
 suspend fun <T : Any> ComponentManager.serviceAsync(keyClass: Class<T>): T {
   return (this as ComponentManagerEx).getServiceAsync(keyClass)

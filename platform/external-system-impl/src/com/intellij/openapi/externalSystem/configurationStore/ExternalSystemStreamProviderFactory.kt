@@ -6,7 +6,11 @@ package com.intellij.openapi.externalSystem.configurationStore
 import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.StreamProviderFactory
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module

@@ -2,7 +2,11 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Text;
 import org.jetbrains.idea.svn.api.Depth;
 
 public class SvnConfigurationState {

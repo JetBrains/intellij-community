@@ -4,8 +4,8 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
-import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitForOne

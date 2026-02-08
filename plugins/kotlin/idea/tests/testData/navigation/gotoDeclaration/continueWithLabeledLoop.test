@@ -1,0 +1,18 @@
+// FILE: before.kt
+// IGNORE_K1
+fun some() {
+    outer@ for (j in 0..5) {
+        for (i in 0..5) {
+            <caret>continue@outer
+        }
+    }
+}
+// FILE: after.kt
+// IGNORE_K1
+fun some() {
+    outer@ <caret>for (j in 0..5) {
+        for (i in 0..5) {
+            continue@outer
+        }
+    }
+}

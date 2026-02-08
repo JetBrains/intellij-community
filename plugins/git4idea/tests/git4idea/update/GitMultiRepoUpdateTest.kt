@@ -9,7 +9,12 @@ import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.cd
+import git4idea.test.checkout
+import git4idea.test.git
+import git4idea.test.last
+import git4idea.test.tac
+import git4idea.test.tacp
 import org.junit.Assume.assumeTrue
 
 class GitMultiRepoUpdateTest : GitMultiRepoUpdateBaseTest() {

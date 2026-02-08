@@ -13,8 +13,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Container;
 
 public final class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
   private static final OptionsContainingConfigurable EMPTY_OPTIONS_CONTAINING_CONFIGURABLE = new OptionsContainingConfigurable() {};

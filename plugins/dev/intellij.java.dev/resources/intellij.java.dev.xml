@@ -4,7 +4,7 @@
   <dependencies>
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.dev.codeInsight"/>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
   </dependencies>

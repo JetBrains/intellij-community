@@ -9,7 +9,14 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.asRange
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
 import javax.swing.JCheckBox
 

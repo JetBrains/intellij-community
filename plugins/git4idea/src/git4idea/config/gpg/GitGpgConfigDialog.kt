@@ -26,10 +26,21 @@ import com.intellij.util.ui.NamedColorUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import javax.swing.*
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 class GitGpgConfigDialog(

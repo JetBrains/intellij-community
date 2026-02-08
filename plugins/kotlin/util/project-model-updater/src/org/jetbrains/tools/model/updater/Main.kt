@@ -4,7 +4,7 @@ package org.jetbrains.tools.model.updater
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ApplicationMode
 import org.jetbrains.tools.model.updater.impl.Preferences
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.isRegularFile
 
 class GeneratorPreferences(properties: Properties) : Preferences(properties) {
@@ -14,6 +14,13 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlincVersion: String by MandatoryPreference
     val kotlinGradlePluginVersion: String by MandatoryPreference
     val kotlincArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
+
+    /**
+     * YouTrack ticket for performing kt-master/master merge
+     *
+     * https://youtrack.jetbrains.com/articles/KTIJ-A-40/kt-master-merge-process
+     */
+    val ticket: String? by OptionalPreference
 
     /**
      * The new version of the compiler to be used in the project.

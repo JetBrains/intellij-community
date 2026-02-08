@@ -13,7 +13,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {

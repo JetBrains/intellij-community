@@ -53,7 +53,6 @@ import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Assume.assumeTrue
 import java.awt.HeadlessException
 import java.io.IOException
@@ -480,7 +479,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun refreshFiles(files: List<VirtualFile>) {
     val relativePaths = files.map { dir.relativize(it.path.toNioPathOrNull()!!) }
-    MavenLog.LOG.warn("Refreshing files: $relativePaths")
+    MavenLog.LOG.debug("Refreshing files: $relativePaths")
     LocalFileSystem.getInstance().refreshFiles(files)
   }
 
@@ -628,7 +627,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   private fun setFileContent(file: Path, content: String) {
     val relativePath = dir.relativize(file)
-    MavenLog.LOG.warn("Writing content to $relativePath")
+    MavenLog.LOG.debug("Writing content to $relativePath")
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
   }
 

@@ -10,7 +10,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiUtilCore;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,6 +25,9 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.HashSet;
 import java.util.Set;
 
+/// Implements the "Go to Type Declaration" action.
+///
+/// @see <a href="https://www.jetbrains.com/help/idea/navigating-through-the-source-code.html#go_to_declaration">Go to declaration and its type (IntelliJ Docs)</a>
 public final class GotoTypeDeclarationAction extends BaseCodeInsightAction implements DumbAware, CtrlMouseAction {
 
   @Override
@@ -63,6 +70,10 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
                                            TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
   }
 
+  /// Finds types of symbols in `editor` at `offset`.
+  ///
+  /// This function is the highest-level way to trigger the "Go to Type Declaration" action.
+  /// It's composed of a couple of lower-level functions.
   @ApiStatus.Internal
   public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor,
                                                         int offset,

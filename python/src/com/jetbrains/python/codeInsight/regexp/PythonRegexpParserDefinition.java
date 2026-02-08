@@ -10,7 +10,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
-import static org.intellij.lang.regexp.RegExpCapability.*;
+import static org.intellij.lang.regexp.RegExpCapability.DANGLING_METACHARACTERS;
+import static org.intellij.lang.regexp.RegExpCapability.MIN_OCTAL_3_DIGITS;
+import static org.intellij.lang.regexp.RegExpCapability.OCTAL_NO_LEADING_ZERO;
+import static org.intellij.lang.regexp.RegExpCapability.OMIT_BOTH_NUMBERS_IN_QUANTIFIERS;
+import static org.intellij.lang.regexp.RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS;
+import static org.intellij.lang.regexp.RegExpCapability.SHORTHAND_CLASS_RANGE_END_ERROR;
+import static org.intellij.lang.regexp.RegExpCapability.SHORTHAND_CLASS_RANGE_START_ERROR;
 
 
 public class PythonRegexpParserDefinition extends RegExpParserDefinition {

@@ -17,7 +17,10 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 import java.util.EnumSet;
 
 import static com.intellij.refactoring.introduce.inplace.OccurrencesChooser.ReplaceChoice.ALL;
-import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init.*;
+import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init.CONSTRUCTOR;
+import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init.CUR_METHOD;
+import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init.FIELD_DECLARATION;
+import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init.SETUP_METHOD;
 
 /**
  * @author Maxim.Medvedev

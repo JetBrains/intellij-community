@@ -15,8 +15,8 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
 import com.jetbrains.python.venvReader.tryResolvePath

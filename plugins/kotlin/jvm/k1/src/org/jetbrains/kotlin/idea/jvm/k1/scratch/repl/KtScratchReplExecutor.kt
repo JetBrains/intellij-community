@@ -10,6 +10,7 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cli.common.repl.replInputAsXml
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
 import org.jetbrains.kotlin.cli.common.repl.replRemoveLineBreaksInTheEnd
@@ -28,6 +29,7 @@ import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import javax.xml.parsers.DocumentBuilderFactory
 
+@K1Deprecation
 class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile) : org.jetbrains.kotlin.idea.jvm.k1.scratch.SequentialScratchExecutor(file) {
     private val history: ReplHistory = ReplHistory()
 

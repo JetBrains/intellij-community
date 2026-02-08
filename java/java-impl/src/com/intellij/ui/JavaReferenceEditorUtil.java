@@ -3,7 +3,11 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.Nullable;
 

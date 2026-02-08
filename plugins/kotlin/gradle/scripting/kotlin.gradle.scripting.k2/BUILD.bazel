@@ -165,6 +165,8 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "@lib//:assert_j",
     "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/gradle/completion",
+    "//plugins/gradle/completion:completion_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

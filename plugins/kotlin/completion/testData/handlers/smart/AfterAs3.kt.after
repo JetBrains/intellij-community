@@ -6,3 +6,4 @@ fun bar(o: Any) {
 }
 
 // AUTOCOMPLETE_SETTING: true
+// IGNORE_K2

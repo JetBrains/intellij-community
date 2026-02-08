@@ -22,7 +22,11 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTree
-import javax.swing.tree.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeCellRenderer
+import javax.swing.tree.TreePath
+import javax.swing.tree.TreeSelectionModel
 
 class ModulesEditorTree(
     private val onSelected: (DisplayableSettingItem?) -> Unit,

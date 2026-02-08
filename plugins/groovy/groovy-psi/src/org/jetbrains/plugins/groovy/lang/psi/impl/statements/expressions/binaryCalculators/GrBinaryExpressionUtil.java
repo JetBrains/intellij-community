@@ -7,7 +7,13 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BIG_DECIMAL_RANK;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BIG_INTEGER_RANK;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.DOUBLE_RANK;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.INTEGER_RANK;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.LONG_RANK;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.getTypeFqn;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.getTypeRank;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
 
 public final class GrBinaryExpressionUtil {

@@ -5,7 +5,8 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.ListModel;
 
 @ApiStatus.Internal
 public class CollapsibleGroupedListSelectionModel extends DefaultListSelectionModel {

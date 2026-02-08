@@ -10,7 +10,8 @@ import com.jetbrains.python.debugger.containerview.DataViewStrategy;
 import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 
 public class DataFrameViewStrategy extends DataViewStrategy {
 

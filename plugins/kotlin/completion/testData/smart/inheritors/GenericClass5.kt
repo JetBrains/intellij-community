@@ -11,3 +11,5 @@ fun bar() {
 // EXIST: { itemText: "object : I<String>{...}" }
 // EXIST: { itemText: "object : C<...>(){...}" }
 // NOTHING_ELSE
+
+// IGNORE_K2

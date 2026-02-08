@@ -3,7 +3,12 @@
 
 package com.intellij.facet.impl
 
-import com.intellij.facet.*
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetManagerFactory
+import com.intellij.facet.FacetType
+import com.intellij.facet.FacetTypeId
+import com.intellij.facet.ProjectFacetListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName

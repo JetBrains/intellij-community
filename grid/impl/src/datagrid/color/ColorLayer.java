@@ -7,7 +7,7 @@ import com.intellij.database.datagrid.ModelIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface ColorLayer extends Comparable<ColorLayer> {
 

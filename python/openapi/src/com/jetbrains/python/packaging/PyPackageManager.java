@@ -17,7 +17,6 @@ import java.util.List;
 @Deprecated(forRemoval = true)
 public abstract class PyPackageManager implements Disposable {
 
-  public static final String USE_USER_SITE = "--user";
   @Topic.AppLevel
   public static final Topic<Listener> PACKAGE_MANAGER_TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
@@ -55,15 +54,7 @@ public abstract class PyPackageManager implements Disposable {
     return manager.getSdk();
   }
 
-  public abstract void installManagement() throws ExecutionException;
-
-  public abstract boolean hasManagement() throws ExecutionException;
-
   public abstract void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException;
-
-  public abstract void refresh();
-
-  public abstract @NotNull String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException;
 
   public abstract @Nullable List<PyPackage> getPackages();
 

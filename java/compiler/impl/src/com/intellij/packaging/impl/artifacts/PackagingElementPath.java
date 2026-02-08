@@ -2,7 +2,11 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.ComplexPackagingElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.RenameablePackagingElement;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;

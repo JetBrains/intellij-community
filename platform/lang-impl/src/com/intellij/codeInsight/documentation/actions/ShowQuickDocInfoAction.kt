@@ -4,7 +4,12 @@ package com.intellij.codeInsight.documentation.actions
 
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
+import com.intellij.openapi.actionSystem.PopupAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 

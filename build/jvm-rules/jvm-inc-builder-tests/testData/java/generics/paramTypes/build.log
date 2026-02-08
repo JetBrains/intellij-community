@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Server.class
+End of files
+Compiling files:
+  java/generics/paramTypes/a/Server.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/generics/paramTypes/a/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

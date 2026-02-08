@@ -1,10 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.infos.CandidateInfo
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.toUElement
 
 @ApiStatus.Internal
 class JavaUSimpleNameReferenceExpression(

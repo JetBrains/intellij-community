@@ -21,7 +21,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.ConnectException
 import java.net.http.HttpTimeoutException
-import java.util.*
+import java.util.Locale
+import java.util.Objects
 import java.util.function.Supplier
 import javax.net.ssl.SSLHandshakeException
 

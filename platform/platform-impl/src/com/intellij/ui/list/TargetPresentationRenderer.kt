@@ -11,7 +11,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UpdateScaleHelper
 import java.awt.Component
 import java.util.function.Function
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+import javax.swing.SwingConstants
 
 @Deprecated("Use GotoTargetRendererNew.createFullTargetPresentationRenderer instead")
 internal class TargetPresentationRenderer<T>(

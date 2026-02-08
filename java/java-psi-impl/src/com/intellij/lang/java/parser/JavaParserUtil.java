@@ -5,7 +5,13 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.syntax.element.SyntaxElementTypes;
 import com.intellij.java.syntax.element.lazyParser.ParsingUtil;
 import com.intellij.java.syntax.lexer.JavaLexer;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LighterLazyParseableNode;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
+import com.intellij.lang.PsiBuilderUtil;
+import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.impl.TokenSequence;
 import com.intellij.lang.java.JavaLanguage;
@@ -23,7 +29,13 @@ import com.intellij.platform.syntax.lexer.Lexer;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.platform.syntax.lexer.TokenListUtil;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
-import com.intellij.platform.syntax.psi.*;
+import com.intellij.platform.syntax.psi.ElementTypeConverter;
+import com.intellij.platform.syntax.psi.ElementTypeConverterKt;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
+import com.intellij.platform.syntax.psi.IntelliJLogger;
+import com.intellij.platform.syntax.psi.ParsingDiagnostics;
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -37,7 +49,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.indexing.IndexingDataKeys;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -83,30 +94,6 @@ public final class JavaParserUtil {
   public interface ParserWrapper {
     void parse(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel);
   }
-
-  /**
-   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER =
-    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getPrecedingCommentBinder(LanguageLevel.HIGHEST);
-
-  /**
-   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER =
-    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getSpecialPrecedingCommentBinder(LanguageLevel.HIGHEST);
-
-  /**
-   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER =
-    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getTrailingCommentBinder();
 
 
   private JavaParserUtil() { }

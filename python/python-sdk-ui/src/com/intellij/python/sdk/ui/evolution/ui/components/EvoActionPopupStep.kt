@@ -3,10 +3,19 @@
 package com.intellij.python.sdk.ui.evolution.ui.components
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.lastUpdateAndCheckDumb
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.ListPopupStep
+import com.intellij.openapi.ui.popup.ListPopupStepEx
+import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.SpeedSearchFilter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ListItem
 import com.intellij.openapi.util.NlsContexts.PopupTitle

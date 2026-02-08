@@ -4,8 +4,8 @@ package com.intellij.ui.icons;
 import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 
 public interface UpdatableIcon extends Icon, ModificationTracker {
   /** Notify about painting was done on the c component*/

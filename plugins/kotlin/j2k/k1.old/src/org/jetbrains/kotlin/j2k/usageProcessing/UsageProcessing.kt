@@ -2,11 +2,19 @@
 
 package org.jetbrains.kotlin.j2k.usageProcessing
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiVariable
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeConverter
 import org.jetbrains.kotlin.j2k.SpecialExpressionConverter
 import org.jetbrains.kotlin.j2k.ast.Expression
 
+@K1Deprecation
 interface UsageProcessing {
     val targetElement: PsiElement
     val convertedCodeProcessor: ConvertedCodeProcessor?
@@ -14,16 +22,19 @@ interface UsageProcessing {
     val kotlinCodeProcessors: List<ExternalCodeProcessor>
 }
 
+@K1Deprecation
 interface ConvertedCodeProcessor {
     fun convertVariableUsage(expression: PsiReferenceExpression, codeConverter: CodeConverter): Expression? = null
 
     fun convertMethodUsage(methodCall: PsiMethodCallExpression, codeConverter: CodeConverter): Expression? = null
 }
 
+@K1Deprecation
 interface ExternalCodeProcessor {
     fun processUsage(reference: PsiReference): Array<PsiReference>?
 }
 
+@K1Deprecation
 class UsageProcessingExpressionConverter(val processings: Map<PsiElement, Collection<UsageProcessing>>) : SpecialExpressionConverter {
     override fun convertExpression(expression: PsiExpression, codeConverter: CodeConverter): Expression? {
         if (processings.isEmpty()) return null

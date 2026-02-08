@@ -10,11 +10,19 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListData
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.changes.createNameForChangeList
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.index.showStagingArea
 import git4idea.repo.GitRepository
-import java.util.*
+import java.util.Date
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 

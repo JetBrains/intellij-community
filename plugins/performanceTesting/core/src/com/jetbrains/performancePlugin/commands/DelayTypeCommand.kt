@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.performancePlugin.PerformanceTestSpan
@@ -22,11 +23,16 @@ import com.jetbrains.performancePlugin.utils.HighlightingTestUtil
 import com.jetbrains.performancePlugin.utils.findTypingTarget
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.awt.KeyboardFocusManager
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.seconds
-import com.intellij.openapi.util.Pair
 
 /**
  * Command types text with some delay between typing.

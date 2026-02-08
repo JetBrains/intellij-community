@@ -2,8 +2,17 @@ package training.featuresSuggester.suggesters
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
-import training.featuresSuggester.*
-import training.featuresSuggester.actions.*
+import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggesterSupport
+import training.featuresSuggester.Suggestion
+import training.featuresSuggester.actions.Action
+import training.featuresSuggester.actions.BeforeCompletionChooseItemAction
+import training.featuresSuggester.actions.BeforeEditorTextInsertedAction
+import training.featuresSuggester.actions.BeforeEditorTextRemovedAction
+import training.featuresSuggester.actions.EditorEscapeAction
+import training.featuresSuggester.getParentByPredicate
+import training.featuresSuggester.getParentOfType
 
 class CompletionPopupSuggester : AbstractFeatureSuggester() {
   override val id = "Completion"

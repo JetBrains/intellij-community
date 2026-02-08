@@ -9,7 +9,7 @@ import org.junit.Assume
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
-import java.util.*
+import java.util.EnumSet
 import java.util.jar.Attributes
 import kotlin.io.path.setPosixFilePermissions
 

@@ -9,7 +9,11 @@ import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import org.jetbrains.annotations.ApiStatus.Internal

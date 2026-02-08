@@ -13,11 +13,21 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNamedElementWithCustomPresentation;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.refactoring.rename.*;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
 import com.intellij.spellchecker.statistics.SpellcheckerRateTracker;
@@ -27,7 +37,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -136,7 +146,7 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
 
   private void generateSuggestions(String name, PsiElement element) {
     if (suggestions == null) {
-      TextRange range = restoreRange(name);
+      TextRange range = restoreRange();
       if (range == null) return;
       this.suggestions = SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
         .stream()
@@ -147,15 +157,13 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
     }
   }
 
-  private @Nullable TextRange restoreRange(String currentElementName) {
+  private @Nullable TextRange restoreRange() {
     PsiElement element = pointer.getElement();
     Segment rangeRelativeToFile = this.rangeRelativeToFile.getRange();
     if (element == null || rangeRelativeToFile == null) return null;
 
-    int offset = element.getText().indexOf(currentElementName);
     return TextRange.create(rangeRelativeToFile)
-      .shiftLeft(element.getTextRange().getStartOffset())
-      .shiftLeft(offset);
+      .shiftLeft(element.getTextRange().getStartOffset());
   }
 
   private void runRenamer(PsiElement element, String suggestion) {

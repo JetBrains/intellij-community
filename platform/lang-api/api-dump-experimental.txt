@@ -447,8 +447,8 @@ f:com.intellij.codeInsight.hints.declarative.InlayProviderOption
 *a:com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer
 - com.intellij.codeInspection.options.CustomComponentExtension
 - p:<init>(java.lang.String):V
-- f:render(com.intellij.codeInspection.options.OptCustom,com.intellij.openapi.project.Project):javax.swing.JComponent
-- a:render(java.lang.Object,com.intellij.openapi.project.Project):javax.swing.JComponent
+- f:render(com.intellij.codeInspection.options.OptCustom,com.intellij.codeInspection.options.OptionController,com.intellij.openapi.project.Project):javax.swing.JComponent
+- a:render(java.lang.Object,com.intellij.codeInspection.options.OptionController,com.intellij.openapi.project.Project):javax.swing.JComponent
 *:com.intellij.execution.RunConfigurationProducerSuppressor
 - *sf:Companion:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
 - a:shouldSuppress(com.intellij.execution.actions.RunConfigurationProducer,com.intellij.openapi.project.Project):Z
@@ -581,6 +581,8 @@ com.intellij.ide.bookmark.BookmarksManager
 com.intellij.openapi.roots.ModifiableModelsProvider
 - *a:getGlobalLibraryTableModifiableModel(com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 *:com.intellij.openapi.roots.SkipAddingToWatchedRoots
+c:com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+- *:canOpenLibrarySettings(com.intellij.platform.workspace.jps.entities.LibraryEntity):Z
 *a:com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
 - <init>():V
 - f:createWidgetAction():com.intellij.openapi.actionSystem.AnAction

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +22,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.ApplicationRule;
+import com.intellij.testFramework.DisposableRule;
+import com.intellij.testFramework.EdtRule;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.RunsInEdt;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.rules.ProjectModelRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
@@ -31,19 +36,31 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
-import com.intellij.util.indexing.roots.builders.*;
+import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
+import com.intellij.util.indexing.roots.builders.ModuleRootsFileBasedIteratorBuilder;
+import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
 import kotlin.Pair;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static com.intellij.util.ThreeState.UNSURE;
 import static com.intellij.util.ThreeState.YES;
 
@@ -558,17 +575,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         urls.add(sourcesDir.getUrl());
       });
       assertNothingToRescanAndFinishIndexing();
-
-      updateExcludedRoots(urls -> urls.clear());
-      assertRescanningSdkContent(UNSURE, classesDir, sourcesDir);
-
-      updateExcludedRoots(urls -> {
-        urls.add(sourcesDir.getUrl());
-      });
-      assertRescanningSdkContent(YES, classesDir);
-
-      updateExcludedRoots(urls -> urls.clear());
-      assertRescanningSdkContent(YES, sourcesDir);
     }
 
     @Test
@@ -614,17 +620,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         roots.add(sourcesExcludedDir);
       });
       assertNothingToRescanAndFinishIndexing();
-
-      updateExcludedFromSdkRoots(urls -> urls.clear());
-      assertRescanningSdkContent(UNSURE, classesExcludedDir, sourcesExcludedDir);
-
-      updateExcludedFromSdkRoots(roots -> {
-        roots.add(sourcesExcludedDir);
-      });
-      assertRescanningSdkContent(YES, classesExcludedDir);
-
-      updateExcludedFromSdkRoots(roots -> roots.clear());
-      assertRescanningSdkContent(YES, sourcesExcludedDir);
     }
 
     @Test
@@ -706,17 +701,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         urls.add(sourcesDir.getUrl());
       });
       assertNothingToRescanAndFinishIndexing();
-
-      updateExcludedRoots(urls -> urls.clear());
-      assertRescanningLibraryContent(UNSURE, Collections.singletonList(classesDir), Collections.singletonList(sourcesDir));
-
-      updateExcludedRoots(urls -> {
-        urls.add(sourcesDir.getUrl());
-      });
-      assertRescanningLibraryContent(YES, Collections.singletonList(classesDir), Collections.emptyList());
-
-      updateExcludedRoots(urls -> urls.clear());
-      assertRescanningLibraryContent(YES, Collections.emptyList(), Collections.singletonList(sourcesDir));
     }
 
     private void updateExcludedRoots(Consumer<List<String>> urlsConsumer) {
@@ -744,41 +728,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         }
       }
       assertContainsElements(actualRoots, roots);
-
-      finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);
-    }
-
-    private void assertRescanningSdkContent(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
-      DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
-      statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
-      List<VirtualFile> actualRoots = new ArrayList<>();
-      for (IndexableIteratorBuilder builder : builders) {
-        assertInstanceOf(builder, SdkIteratorBuilder.class);
-        actualRoots.addAll(((SdkIteratorBuilder)builder).getRoots());
-      }
-      assertContainsElements(actualRoots, roots);
-
-      finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);
-    }
-
-    private void assertRescanningLibraryContent(ThreeState finishIndexingWithStatus,
-                                                Collection<VirtualFile> roots,
-                                                Collection<VirtualFile> sourceRoots) {
-      DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
-      statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
-      List<VirtualFile> actualRoots = new ArrayList<>();
-      List<VirtualFile> actualSourceRoots = new ArrayList<>();
-      for (IndexableIteratorBuilder builder : builders) {
-        assertInstanceOf(builder, LibraryIdIteratorBuilder.class);
-        actualRoots.addAll(((LibraryIdIteratorBuilder)builder).getRoots());
-        actualSourceRoots.addAll(((LibraryIdIteratorBuilder)builder).getSourceRoots());
-      }
-      assertContainsElements(actualRoots, roots);
-      assertContainsElements(actualSourceRoots, sourceRoots);
 
       finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);
     }

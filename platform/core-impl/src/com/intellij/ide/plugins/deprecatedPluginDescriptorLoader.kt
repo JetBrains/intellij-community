@@ -5,7 +5,11 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipEntryResolverPool
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 

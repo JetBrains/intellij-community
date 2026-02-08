@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
+@K1Deprecation
 abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
 
     protected fun findQualifiedConversion(

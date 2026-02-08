@@ -10,7 +10,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListCellRenderer;
+import javax.swing.UIManager;
 
 public abstract class LafManager {
   public static LafManager getInstance() {

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.OverrideKeywordHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
@@ -48,7 +48,7 @@ internal class K2DeclarationFromOverridableMembersContributor : K2SimpleCompleti
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
             val elements = OverrideKeywordHandler(context.importStrategyDetector)
                 .createOverrideMemberLookups(context.parameters, declaration, context.project)
-            context.addElements(elements)
+            addElements(elements)
         }
     }
 

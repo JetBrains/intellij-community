@@ -5,17 +5,26 @@ package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.refactoring.RefactoringBundle
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
+import org.jetbrains.kotlin.idea.refactoring.move.getInternalReferencesToUpdateOnPackageNameChange
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
+import org.jetbrains.kotlin.idea.refactoring.move.postProcessMoveUsages
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class KotlinChangePackageRefactoring(val file: KtFile) {
     private val project = file.project
 

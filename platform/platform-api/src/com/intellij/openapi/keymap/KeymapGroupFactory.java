@@ -3,7 +3,7 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.application.ApplicationManager;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 
 public abstract class KeymapGroupFactory {

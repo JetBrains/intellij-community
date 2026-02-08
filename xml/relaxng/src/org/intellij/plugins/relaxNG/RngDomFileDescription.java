@@ -4,7 +4,11 @@ package org.intellij.plugins.relaxNG;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.intellij.plugins.relaxNG.model.annotation.ModelAnnotator;
-import org.intellij.plugins.relaxNG.xml.dom.*;
+import org.intellij.plugins.relaxNG.xml.dom.RngChoice;
+import org.intellij.plugins.relaxNG.xml.dom.RngElement;
+import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
+import org.intellij.plugins.relaxNG.xml.dom.RngGroup;
+import org.intellij.plugins.relaxNG.xml.dom.RngInterleave;
 
 public class RngDomFileDescription<T> extends DomFileDescription<T> {
   public RngDomFileDescription(Class<T> elementClass, String rootTagName) {

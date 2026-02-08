@@ -131,6 +131,53 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
   }
 
   @Test
+  fun pluginKotlinK2Compatibility() {
+    genModuleWithDependencies("kotlin")
+
+    fixture.configureFromTempProjectFile("build.gradle.kts")
+    assertNoUnprocessedTemplates()
+
+    expectFile(PLUGIN_XML_LOCATION,
+      /* language=XML */
+      """
+      <!-- Plugin Configuration File: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+      <idea-plugin>
+          <!-- Unique identifier of the plugin. It should be FQN, cannot be changed between the plugin versions. -->
+          <id>com.example.demo</id>
+      
+          <!-- Public plugin name should be written in Title Case.
+               Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
+          <name>Demo</name>
+      
+          <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+          <vendor url="https://www.yourcompany.com">YourCompany</vendor>
+      
+          <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+               Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
+          <description><![CDATA[
+              Enter short description for your plugin here.<br>
+              <em>most HTML tags may be used</em>
+          ]]></description>
+      
+          <!-- Product and plugin compatibility requirements.
+               Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+      
+          <depends>org.jetbrains.kotlin</depends>
+          <resource-bundle>messages.MyMessageBundle</resource-bundle>
+          <!-- Extensions defined by the plugin.
+               Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+          <extensions defaultExtensionNs="com.intellij">
+              <toolWindow id="MyToolWindow" factoryClass="com.example.demo.MyToolWindowFactory"
+                          icon="AllIcons.Toolwindows.ToolWindowPalette"/>
+          </extensions>
+          <extensions defaultExtensionNs="org.jetbrains.kotlin">
+              <supportsKotlinPluginMode supportsK2="true"/>
+          </extensions>
+      </idea-plugin>
+    """.trimIndent())
+  }
+
+  @Test
   fun pluginJavaDependencies() {
     genModuleWithDependencies("java")
 

@@ -5,14 +5,22 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
 import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeFragmentWithPsi
+import com.intellij.cce.core.CodeTokenWithPsi
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluable.common.getEditorSafe
 import com.intellij.cce.evaluable.completion.BaseCompletionActionsInvoker
-import com.intellij.cce.evaluation.*
+import com.intellij.cce.evaluation.BackgroundStepFactory
+import com.intellij.cce.evaluation.EvaluationProcess
+import com.intellij.cce.evaluation.EvaluationRootInfo
+import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterReader
@@ -43,7 +51,7 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import java.lang.reflect.Type
 import java.nio.file.Paths
-import java.util.*
+import java.util.Random
 
 internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.EvaluationCommand(
   name = "context",

@@ -7,8 +7,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
-import kotlin.jvm.java
-import kotlin.takeIf
 
 val CodeStyleSettings.kotlinCommonSettings: KotlinCommonCodeStyleSettings
     get() = getCommonSettings(KotlinLanguage.INSTANCE) as KotlinCommonCodeStyleSettings

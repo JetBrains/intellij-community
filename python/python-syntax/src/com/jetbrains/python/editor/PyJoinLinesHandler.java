@@ -12,7 +12,12 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstBinaryExpression;
+import com.jetbrains.python.ast.PyAstExpression;
+import com.jetbrains.python.ast.PyAstFile;
+import com.jetbrains.python.ast.PyAstStatement;
+import com.jetbrains.python.ast.PyAstStringElement;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

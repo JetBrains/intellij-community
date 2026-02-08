@@ -12,7 +12,11 @@ import com.intellij.tools.ide.util.common.logOutput
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.lang.management.ManagementFactory
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.pathString
+import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 
 data class VMOptions(

@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -44,10 +45,19 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 public class RenameDialog extends RefactoringDialog implements RenameRefactoringDialog {
   private SuggestedNameInfo mySuggestedNameInfo;
@@ -293,7 +303,9 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
         ProgressManager.checkCanceled();
         return ContainerUtil.filter(
           AutomaticRenamerFactory.EP_NAME.getExtensionList(),
-          renamerFactory -> renamerFactory.isApplicable(myPsiElement) && renamerFactory.getOptionName() != null
+          renamerFactory -> DumbService.getInstance(myProject).isUsableInCurrentContext(renamerFactory) &&
+                            renamerFactory.isApplicable(myPsiElement) &&
+                            renamerFactory.getOptionName() != null
         );
       }
     );
@@ -371,7 +383,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
     final RenameProcessor processor = createRenameProcessor(newName);
 
-    for(Map.Entry<AutomaticRenamerFactory, JCheckBox> e: myAutoRenamerFactories.entrySet()) {
+    for (Map.Entry<AutomaticRenamerFactory, JCheckBox> e : myAutoRenamerFactories.entrySet()) {
       e.getKey().setEnabled(e.getValue().isSelected());
       if (e.getValue().isSelected()) {
         processor.addRenamerFactory(e.getKey());

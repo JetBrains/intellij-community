@@ -14,6 +14,8 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.containers.FList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.hasModuleOutputPath
@@ -287,7 +289,10 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   private fun loadProductModules(productModulesModule: String): ProductModules {
     val relativePath = "META-INF/$productModulesModule/product-modules.xml"
     val debugName = "($relativePath file in $productModulesModule)"
-    val content = context.outputProvider.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
+    @Suppress("RAW_RUN_BLOCKING")
+    val content = runBlocking(Dispatchers.IO) {
+      context.outputProvider.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
+    }
                   ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
     try {
       return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, ProductMode.FRONTEND, repository)
@@ -300,7 +305,10 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   private fun loadRawProductModules(productModulesModule: String): RawProductModules {
     val relativePath = "META-INF/$productModulesModule/product-modules.xml"
     val debugName = "($relativePath file in $productModulesModule)"
-    val content = context.outputProvider.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
+    @Suppress("RAW_RUN_BLOCKING")
+    val content = runBlocking(Dispatchers.IO) {
+      context.outputProvider.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
+    }
                   ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
     try {
       return ProductModulesSerialization.readProductModulesAndMergeIncluded(content.inputStream(), debugName, ResourceFileResolver.createDefault(repository))

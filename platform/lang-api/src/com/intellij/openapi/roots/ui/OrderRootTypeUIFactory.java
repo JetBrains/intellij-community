@@ -10,7 +10,7 @@ import com.intellij.openapi.util.KeyedExtensionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Defines a factory to create visual representations for root types that can be queried from OrderEntry.

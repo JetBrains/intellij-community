@@ -367,6 +367,11 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-76899
+  public void testFieldInDataclassTransformInitIsSkippedDueToFieldSpecifierOverloadMultifile() {
+    doMultiFileTest();
+  }
+
   // PY-42137
   public void testMismatchedOverloadsHaveBothTooFewAndTooManyParameters() {
     doTest();

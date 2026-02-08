@@ -10,7 +10,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;

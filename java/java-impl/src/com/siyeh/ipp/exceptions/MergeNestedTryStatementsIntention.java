@@ -2,7 +2,15 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.PsiResourceListElement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTryStatement;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;

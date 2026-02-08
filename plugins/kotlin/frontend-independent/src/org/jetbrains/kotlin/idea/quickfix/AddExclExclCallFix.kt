@@ -11,7 +11,11 @@ import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 class AddExclExclCallFix(
     element: PsiElement,

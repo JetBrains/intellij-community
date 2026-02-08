@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.push;
 
-import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.CommitLoader;
+import com.intellij.dvcs.push.OutgoingCommitsProvider;
+import com.intellij.dvcs.push.OutgoingResult;
+import com.intellij.dvcs.push.PushSpec;
+import com.intellij.dvcs.push.VcsError;
+import com.intellij.dvcs.push.VcsErrorHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;

@@ -7,14 +7,29 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.DigestUtil
-import git4idea.history.GitLogParser.*
-import git4idea.history.GitLogParser.GitLogOption.*
+import git4idea.history.GitLogParser.GitLogOption
+import git4idea.history.GitLogParser.GitLogOption.AUTHOR_EMAIL
+import git4idea.history.GitLogParser.GitLogOption.AUTHOR_NAME
+import git4idea.history.GitLogParser.GitLogOption.AUTHOR_TIME
+import git4idea.history.GitLogParser.GitLogOption.BODY
+import git4idea.history.GitLogParser.GitLogOption.COMMITTER_EMAIL
+import git4idea.history.GitLogParser.GitLogOption.COMMITTER_NAME
+import git4idea.history.GitLogParser.GitLogOption.COMMIT_TIME
+import git4idea.history.GitLogParser.GitLogOption.HASH
+import git4idea.history.GitLogParser.GitLogOption.PARENTS
+import git4idea.history.GitLogParser.GitLogOption.RAW_BODY
+import git4idea.history.GitLogParser.GitLogOption.REF_NAMES
+import git4idea.history.GitLogParser.GitLogOption.SUBJECT
+import git4idea.history.GitLogParser.ITEMS_SEPARATOR
+import git4idea.history.GitLogParser.NameStatus
 import git4idea.history.GitLogParser.NameStatus.NONE
 import git4idea.history.GitLogParser.NameStatus.STATUS
+import git4idea.history.GitLogParser.RECORD_END
+import git4idea.history.GitLogParser.RECORD_START
 import git4idea.test.GitPlatformTest
 import junit.framework.TestCase
 import java.io.File
-import java.util.*
+import java.util.Date
 
 class GitLogParserTest : GitPlatformTest() {
 

@@ -8,11 +8,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 
+@K1Deprecation
 @Service
 class QuickFixes {
     private val factories: Multimap<DiagnosticFactory<*>, KotlinIntentionActionsFactory> =

@@ -41,7 +41,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -50,6 +49,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
@@ -82,7 +82,11 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.util.*
+import com.intellij.util.CachedValuesManagerImpl
+import com.intellij.util.MemoryDumpHelper
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
@@ -97,7 +101,9 @@ import java.nio.channels.FileChannel
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Collections
+import java.util.Date
+import java.util.IdentityHashMap
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.ToolTipManager
@@ -497,7 +503,7 @@ object DynamicPlugins {
     if (!containerDescriptor.components.isEmpty()) {
       return "Plugin '$pluginId' is not unload-safe because it declares components"
     }
-    if (containerDescriptor.services.any { it.overrides }) {
+    if (!Registry.`is`("ide.plugins.allow.dynamic.services.overrides", false) && containerDescriptor.services.any { it.overrides }) {
       return "Plugin '$pluginId' is not unload-safe because it overrides services"
     }
     return null
@@ -860,7 +866,7 @@ object DynamicPlugins {
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    val notification = service<UpdateCheckerFacade>().getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
+    val notification = UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)
     }
@@ -1065,7 +1071,7 @@ object DynamicPlugins {
     app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
     app.runWriteAction {
       try {
-        val listenerCallbacks = mutableListOf<Runnable>()
+        val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
 
         // 4. load into service container
         loadModules(modules = pluginWithContentModules, app = app, listenerCallbacks = listenerCallbacks)
@@ -1088,7 +1094,15 @@ object DynamicPlugins {
 
         PluginManagerCore.setPluginSet(pluginSet)
 
-        listenerCallbacks.forEach(Runnable::run)
+        if (System.getProperty("revert.IJPL233642", "false") != "true") {
+          listenerCallbacks.sortBy {
+            // put all registryKey EP listeners before anything else FIXME IJPL-233642
+            if (it.ep.name == "com.intellij.registryKey") -1 else 0
+          }
+        }
+        listenerCallbacks.forEach {
+          it.notify.run()
+        }
 
         DynamicPluginsUsagesCollector.logDescriptorLoad(pluginDescriptor)
         PluginManagerCore.clearPluginNonLoadReasonFor(pluginDescriptor.pluginId)
@@ -1273,7 +1287,11 @@ private fun optionalDependenciesOnPlugin(
     .toSet()
 }
 
-private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: ApplicationImpl, listenerCallbacks: MutableList<in Runnable>) {
+private fun loadModules(
+  modules: List<IdeaPluginDescriptorImpl>,
+  app: ApplicationImpl,
+  listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
+) {
   app.registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
   for (openProject in getOpenedProjects()) {
     openProject.getComponentManagerImpl().registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)

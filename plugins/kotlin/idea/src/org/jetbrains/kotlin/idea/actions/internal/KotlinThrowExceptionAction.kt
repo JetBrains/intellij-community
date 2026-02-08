@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.actions.internal
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 
+@K1Deprecation
 class KotlinThrowExceptionAction : AnAction() {
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT

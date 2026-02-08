@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.console.gutter.IconWithTooltip
 import org.jetbrains.kotlin.console.gutter.ReplIcons
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import kotlin.jvm.java
 import kotlin.math.max
 
 internal class ReplOutputProcessor(

@@ -14,8 +14,17 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.CollaborationToolsIcons
-import java.awt.*
-import javax.swing.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Point
+import java.awt.Rectangle
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTree
+import javax.swing.SwingUtilities
 import javax.swing.tree.TreeCellRenderer
 
 internal class CodeReviewProgressRenderer(

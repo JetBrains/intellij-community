@@ -20,7 +20,7 @@ class TestFixtureRule : ExternalResource() {
   }
 
   override fun before() {
-    val headless = TestFrameworkUtil.SKIP_HEADLESS && javaClass.getAnnotation(SkipInHeadlessEnvironment::class.java) != null
+    val headless = TestFrameworkUtil.shouldSkipHeadless() && javaClass.getAnnotation(SkipInHeadlessEnvironment::class.java) != null
     assumeFalse("Class '${javaClass.name}' is skipped because it requires working UI environment", headless)
 
     val slow = TestFrameworkUtil.SKIP_SLOW && javaClass.getAnnotation(SkipSlowTestLocally::class.java) != null

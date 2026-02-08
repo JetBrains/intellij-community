@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.debugger
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.runBlocking

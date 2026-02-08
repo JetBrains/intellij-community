@@ -33,6 +33,9 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   public void testInstanceOfNameConflicts() {
     doTest();
   }
+  public void testInstanceOfDeconstructionNameConflicts() {
+    doTest();
+  }
   public void testInstanceOfControlFlow() {
     doTest();
   }

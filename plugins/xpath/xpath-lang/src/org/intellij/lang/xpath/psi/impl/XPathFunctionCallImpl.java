@@ -30,11 +30,16 @@ import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.context.functions.Function;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFunction;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.namespace.QName;
 
 public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunctionCall {

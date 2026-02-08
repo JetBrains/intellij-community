@@ -6,7 +6,7 @@ import java.nio.file.Path
 import java.security.KeyFactory
 import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
-import java.util.*
+import java.util.Base64
 import kotlin.system.exitProcess
 
 data class DaemonLaunchOptions(

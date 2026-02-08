@@ -1,7 +1,7 @@
 package com.intellij.xml.util;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev

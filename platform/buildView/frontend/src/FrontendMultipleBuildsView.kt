@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildView.frontend
 
-import com.intellij.build.*
+import com.intellij.build.BuildContent
+import com.intellij.build.BuildContentId
+import com.intellij.build.BuildContentManager
+import com.intellij.build.BuildContentManagerImpl
+import com.intellij.build.BuildDescriptor
+import com.intellij.build.BuildId
+import com.intellij.build.BuildViewEvent
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor
@@ -13,7 +19,14 @@ import com.intellij.ide.OccurenceNavigator.OccurenceInfo
 import com.intellij.ide.ui.icons.icon
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.DumbAwareAction
@@ -24,8 +37,15 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.buildView.BuildDataKeys
 import com.intellij.platform.buildView.BuildViewApi
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SystemNotifications
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.Content
@@ -43,7 +63,12 @@ import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
 import java.util.function.Function
-import javax.swing.*
+import javax.swing.DefaultListModel
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.ListSelectionModel
+import javax.swing.SwingUtilities
 import javax.swing.event.ListSelectionListener
 import kotlin.math.max
 

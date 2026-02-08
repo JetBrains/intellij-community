@@ -2,7 +2,6 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.CodeStyleBundle;
-import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;

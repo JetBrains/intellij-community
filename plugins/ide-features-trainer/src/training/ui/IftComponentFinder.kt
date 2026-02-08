@@ -5,7 +5,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import org.assertj.core.api.Assertions
 import org.assertj.core.util.Strings
-import org.assertj.swing.core.*
+import org.assertj.swing.core.ComponentFinder
+import org.assertj.swing.core.ComponentMatcher
+import org.assertj.swing.core.ComponentPrinter
+import org.assertj.swing.core.GenericTypeMatcher
+import org.assertj.swing.core.LabelMatcher
+import org.assertj.swing.core.NameMatcher
+import org.assertj.swing.core.Settings
+import org.assertj.swing.core.TypeMatcher
 import org.assertj.swing.exception.ComponentLookupException
 import org.assertj.swing.format.Formatting
 import org.assertj.swing.hierarchy.ComponentHierarchy

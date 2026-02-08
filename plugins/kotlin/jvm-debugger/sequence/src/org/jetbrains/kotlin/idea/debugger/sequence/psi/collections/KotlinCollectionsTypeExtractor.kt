@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.sequence.psi.collections
 
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.CallTypeExtractor
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
+@K1Deprecation
 class KotlinCollectionsTypeExtractor : CallTypeExtractor.Base() {
     private companion object {
         val LOG = Logger.getInstance(KotlinCollectionsTypeExtractor::class.java)

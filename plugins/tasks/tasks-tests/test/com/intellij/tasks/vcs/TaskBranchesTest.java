@@ -14,8 +14,8 @@ import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -160,7 +160,7 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
       finally {
         dialog.close(DialogWrapper.OK_EXIT_CODE);
       }
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     });
   }
 

@@ -1,10 +1,31 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell.frontend;
 
-import com.intellij.execution.jshell.protocol.*;
-import jdk.jshell.*;
+import com.intellij.execution.jshell.protocol.CodeSnippet;
+import com.intellij.execution.jshell.protocol.Event;
+import com.intellij.execution.jshell.protocol.MessageReader;
+import com.intellij.execution.jshell.protocol.MessageWriter;
+import com.intellij.execution.jshell.protocol.Request;
+import com.intellij.execution.jshell.protocol.Response;
+import jdk.jshell.ExpressionSnippet;
+import jdk.jshell.ImportSnippet;
+import jdk.jshell.JShell;
+import jdk.jshell.JShellException;
+import jdk.jshell.MethodSnippet;
+import jdk.jshell.PersistentSnippet;
+import jdk.jshell.Snippet;
+import jdk.jshell.SnippetEvent;
+import jdk.jshell.SourceCodeAnalysis;
+import jdk.jshell.TypeDeclSnippet;
+import jdk.jshell.VarSnippet;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;

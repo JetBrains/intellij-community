@@ -2,7 +2,12 @@
 package git4idea.push;
 
 import com.intellij.CommonBundle;
-import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.OutgoingCommitsProvider;
+import com.intellij.dvcs.push.PushSettings;
+import com.intellij.dvcs.push.PushSupport;
+import com.intellij.dvcs.push.PushTargetPanel;
+import com.intellij.dvcs.push.Pusher;
+import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -17,7 +22,11 @@ import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.*;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitHooksInfo;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

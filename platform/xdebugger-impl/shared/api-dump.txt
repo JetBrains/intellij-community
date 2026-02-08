@@ -62,7 +62,6 @@ f:com.intellij.xdebugger.impl.mixedmode.XMixedModeExecutionStackDescriptorKt
 c:com.intellij.xdebugger.impl.ui.XDebugSessionData
 - com.intellij.openapi.util.UserDataHolderBase
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
-- <init>(java.util.List,java.lang.String):V
 - getConfigurationName():java.lang.String
 - getWatchExpressions():java.util.List
 - isBreakpointsMuted():Z

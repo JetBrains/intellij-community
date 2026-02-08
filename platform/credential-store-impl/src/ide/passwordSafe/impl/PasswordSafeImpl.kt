@@ -2,10 +2,24 @@
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.configurationStore.SettingsSavingComponent
-import com.intellij.credentialStore.*
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.CredentialStore
+import com.intellij.credentialStore.CredentialStoreBundle
+import com.intellij.credentialStore.CredentialStoreFactory
+import com.intellij.credentialStore.CredentialStoreManager
+import com.intellij.credentialStore.CredentialStoreUiService
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.EncryptionSpec
+import com.intellij.credentialStore.EncryptionType
+import com.intellij.credentialStore.PasswordSafeOptions
+import com.intellij.credentialStore.PasswordSafeSettings
+import com.intellij.credentialStore.ProviderType
+import com.intellij.credentialStore.getDefaultEncryptionType
 import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
-import com.intellij.credentialStore.keePass.*
+import com.intellij.credentialStore.keePass.InMemoryCredentialStore
+import com.intellij.credentialStore.keePass.KeePassCredentialStore
 import com.intellij.credentialStore.keePass.getDefaultDbFile
+import com.intellij.credentialStore.keePass.getDefaultMainPasswordFile
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationManager

@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -21,9 +20,13 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -45,6 +48,7 @@ public class NameSuggestionsField extends JPanel {
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
     final ComboBox<String> comboBox = new ComboBox<>(myComboBoxModel,-1);
+    comboBox.setSwingPopup(false);
     myComponent = comboBox;
     add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
@@ -73,6 +77,7 @@ public class NameSuggestionsField extends JPanel {
       myComboBoxModel = new MyComboBoxModel();
       myComboBoxModel.setSuggestions(nameSuggestions);
       final ComboBox<String> combobox = new ComboBox<>(myComboBoxModel);
+      combobox.setSwingPopup(false);
       combobox.setSelectedIndex(0);
       setupComboBox(combobox, fileType);
       myComponent = combobox;

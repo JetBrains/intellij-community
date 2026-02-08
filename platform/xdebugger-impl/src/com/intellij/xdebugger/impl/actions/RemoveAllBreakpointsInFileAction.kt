@@ -3,13 +3,10 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Consumer
 
 @ApiStatus.Internal
 class RemoveAllBreakpointsInFileAction : DumbAwareAction() {

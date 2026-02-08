@@ -68,6 +68,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
     "//java/java-impl:impl",
     "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/plugin",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.fixes` end

@@ -10,7 +10,7 @@ import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.border.EmptyBorder;
 import java.util.List;
 

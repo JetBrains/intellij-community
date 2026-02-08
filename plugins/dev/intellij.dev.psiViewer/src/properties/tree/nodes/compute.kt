@@ -1,8 +1,12 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes
 
-import com.intellij.dev.psiViewer.properties.tree.*
+import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
+import com.intellij.dev.psiViewer.properties.tree.appendPresentation
 import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
 import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.psiViewerApiMethods
+import com.intellij.dev.psiViewer.properties.tree.prependPresentation
+import com.intellij.dev.psiViewer.properties.tree.withApiClass
+import com.intellij.dev.psiViewer.properties.tree.withApiMethod
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.ui.SimpleTextAttributes

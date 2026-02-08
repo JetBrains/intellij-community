@@ -1,6 +1,13 @@
 package com.intellij.settingsSync.core.plugins
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ContentModuleDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginEnableStateChangedListener
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.ide.plugins.PluginStateListener
+import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -9,8 +16,16 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.RestartForPluginDisable
+import com.intellij.settingsSync.core.RestartForPluginEnable
+import com.intellij.settingsSync.core.SettingsSnapshot
+import com.intellij.settingsSync.core.SettingsSnapshotZipSerializer
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.SyncSettingsEvent
 import com.intellij.settingsSync.core.config.BUNDLED_PLUGINS_ID
+import com.intellij.settingsSync.core.enabledOrDisabled
+import com.intellij.settingsSync.core.getLocalApplicationInfo
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsState.PluginData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel

@@ -19,7 +19,15 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.UastUtils;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.Collection;

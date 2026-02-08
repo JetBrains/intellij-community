@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.Color
-import java.util.*
+import java.util.MissingResourceException
 
 private val LOG = logger<RegistryValue>()
 

@@ -10,7 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationClassBrowser;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public final class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JavaFxPreloaderArtifactProperties myProperties;

@@ -14,7 +14,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
-import static com.intellij.openapi.actionSystem.LangDataKeys.*;
+import static com.intellij.openapi.actionSystem.LangDataKeys.MODULE_CONTEXT;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PROJECT;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_FILE;
+import static com.intellij.openapi.actionSystem.LangDataKeys.VIRTUAL_FILE_ARRAY;
 
 final class ModuleRule {
   static @Nullable Module getData(@NotNull DataMap dataProvider) {

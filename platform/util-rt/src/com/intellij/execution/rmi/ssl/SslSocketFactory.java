@@ -7,17 +7,36 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.Socket;
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.intellij.execution.rmi.ssl.SslUtil.*;
+import static com.intellij.execution.rmi.ssl.SslUtil.SSL_CA_CERT_PATH;
+import static com.intellij.execution.rmi.ssl.SslUtil.SSL_CLIENT_CERT_PATH;
+import static com.intellij.execution.rmi.ssl.SslUtil.SSL_CLIENT_KEY_PATH;
+import static com.intellij.execution.rmi.ssl.SslUtil.SSL_TRUST_EVERYBODY;
+import static com.intellij.execution.rmi.ssl.SslUtil.TrustEverybodyManager;
+import static com.intellij.execution.rmi.ssl.SslUtil.loadCertificates;
+import static com.intellij.execution.rmi.ssl.SslUtil.readCertificate;
+import static com.intellij.execution.rmi.ssl.SslUtil.readPrivateKey;
 
 @ApiStatus.Internal
 public final class SslSocketFactory extends DelegateSslSocketFactory {

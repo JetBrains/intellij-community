@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.math.BigInteger
-import java.util.*
+import java.util.Objects
 
 object MarkdownUtil {
   @ApiStatus.Internal

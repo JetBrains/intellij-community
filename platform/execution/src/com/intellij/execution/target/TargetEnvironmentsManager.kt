@@ -2,14 +2,18 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.target.TargetEnvironmentsManager.OneTargetState.Companion.toOneTargetState
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
-import java.util.*
+import java.util.UUID
 
 @Service(Service.Level.PROJECT)
 @State(name = "RemoteTargetsManager", storages = [Storage("remote-targets.xml")])

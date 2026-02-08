@@ -6,14 +6,29 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.text.HtmlChunk.*;
+import static com.intellij.openapi.util.text.HtmlChunk.body;
+import static com.intellij.openapi.util.text.HtmlChunk.empty;
+import static com.intellij.openapi.util.text.HtmlChunk.html;
+import static com.intellij.openapi.util.text.HtmlChunk.raw;
+import static com.intellij.openapi.util.text.HtmlChunk.span;
+import static com.intellij.openapi.util.text.HtmlChunk.tag;
 
 /**
  * Incompatible type context

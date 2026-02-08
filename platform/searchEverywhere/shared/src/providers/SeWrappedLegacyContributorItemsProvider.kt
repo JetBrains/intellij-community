@@ -7,7 +7,11 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeCommandInfo
+import com.intellij.platform.searchEverywhere.SeCommandInfoFactory
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus

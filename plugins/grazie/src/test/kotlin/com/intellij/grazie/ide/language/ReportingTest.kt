@@ -14,7 +14,11 @@ import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.ide.TextProblemSeverities
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
-import com.intellij.grazie.text.*
+import com.intellij.grazie.text.Rule
+import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextProblem
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -24,7 +28,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.StringOperation
-import java.util.*
+import java.util.Locale
 
 class ReportingTest : BasePlatformTestCase() {
 

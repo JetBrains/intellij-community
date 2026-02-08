@@ -1115,7 +1115,12 @@
     },
     {
       "key": "NavBar.borderColor",
-      "description": "Border above the navbar, visible when the toolbar is on"
+      "description": "Border above the navbar, visible when the toolbar is on (in new UI - when in the top position)"
+    },
+    {
+      "key": "NavBar.borderWidth",
+      "description": "The width of the border above the navbar",
+      "since": "2026.1"
     },
     {
       "key": "NavBar.Breadcrumbs.itemInsets",

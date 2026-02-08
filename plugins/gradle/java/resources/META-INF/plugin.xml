@@ -19,13 +19,13 @@
   <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="gradle-properties-integration.xml">com.intellij.properties</depends>
   <depends optional="true" config-file="gradle-toml-integration.xml">org.toml.lang</depends>
-  <depends optional="true" config-file="gradle-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <content namespace="jetbrains">
     <module name="intellij.gradle.profiler"/>
     <module name="intellij.gradle.java.maven"/>
     <module name="intellij.gradle.analysis"/>
     <module name="intellij.gradle.dependencyUpdater"/>
+    <module name="intellij.gradle.java.performance"/>
   </content>
 
   <resource-bundle>messages.GradleInspectionBundle</resource-bundle>

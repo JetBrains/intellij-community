@@ -1,7 +1,7 @@
 <idea-plugin package="com.intellij.devkit.workspaceModel">
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
     <plugin id="org.jetbrains.kotlin"/>
     <plugin id="org.editorconfig.editorconfigjetbrains"/>
     <module name="intellij.devkit.core"/>

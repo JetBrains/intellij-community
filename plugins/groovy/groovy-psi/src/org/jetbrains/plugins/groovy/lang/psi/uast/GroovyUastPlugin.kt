@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.lang.Language
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.NonNls
@@ -17,8 +21,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.uast.*
+import org.jetbrains.uast.LazyParentUIdentifier
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnnotationEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.classSetOf
 

@@ -7,7 +7,11 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.mediator.common.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.common.rpc.Handshake
 import com.intellij.execution.process.mediator.common.util.rsaDecrypt
-import com.intellij.util.io.*
+import com.intellij.util.io.BaseInputStreamReader
+import com.intellij.util.io.InputHandle
+import com.intellij.util.io.SocketInputHandle
+import com.intellij.util.io.StreamInputHandle
+import com.intellij.util.io.UnixFifoInputHandle
 import com.intellij.util.io.processHandshake.ProcessHandshakeTransport
 import java.io.InputStream
 import java.io.Reader

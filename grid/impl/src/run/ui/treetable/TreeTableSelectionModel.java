@@ -1,6 +1,18 @@
 package com.intellij.database.run.ui.treetable;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridSelection;
+import com.intellij.database.datagrid.GridSelectionImpl;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
+import com.intellij.database.datagrid.RawIndexConverter;
+import com.intellij.database.datagrid.SelectionModel;
+import com.intellij.database.datagrid.SelectionModelUtil;
+import com.intellij.database.datagrid.SelectionModelWithViewColumns;
+import com.intellij.database.datagrid.SelectionModelWithViewRows;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.selection.GridSelectionTracker;
 import com.intellij.database.run.ui.grid.selection.GridSelectionTrackerImpl;

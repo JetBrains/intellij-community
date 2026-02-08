@@ -1,14 +1,15 @@
 <idea-plugin visibility="public">
   <resource-bundle>messages.PropertiesBundle</resource-bundle>
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.xml"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
-    <module name="intellij.properties"/>
-    <module name="intellij.properties.psi"/>
-    <module name="intellij.properties.backend.psi"/>
-    <module name="intellij.spellchecker"/>
     <module name="intellij.platform.structuralSearch"/>
+    <module name="intellij.properties"/>
+    <module name="intellij.properties.backend.psi"/>
+    <module name="intellij.properties.psi"/>
+    <module name="intellij.spellchecker"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

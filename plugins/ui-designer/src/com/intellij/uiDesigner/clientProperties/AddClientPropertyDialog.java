@@ -7,7 +7,10 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
 
 public class AddClientPropertyDialog extends DialogWrapper {

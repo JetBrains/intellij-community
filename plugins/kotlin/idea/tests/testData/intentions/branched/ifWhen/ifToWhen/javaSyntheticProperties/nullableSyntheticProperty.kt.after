@@ -1,0 +1,14 @@
+// WITH_STDLIB
+fun test(person: Person) {
+    when (person.name) {
+        null -> {
+            println("no name")
+        }
+        "Alice" -> {
+            println("Alice")
+        }
+        "Bob" -> {
+            println("Bob")
+        }
+    }
+}

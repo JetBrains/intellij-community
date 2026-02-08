@@ -13,7 +13,11 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugProcessStarter
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XSessionStartedResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise

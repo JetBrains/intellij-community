@@ -10,7 +10,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.templateLanguages.OuterLanguageElement
-import com.intellij.psi.util.*
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
 import org.jetbrains.annotations.Nls
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.YAMLTokenTypes

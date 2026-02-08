@@ -1,11 +1,42 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Add
+import com.jetbrains.rhizomedb.AtomicComposite
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.CreateEntity
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.Instruction
+import com.jetbrains.rhizomedb.Q
+import com.jetbrains.rhizomedb.Remove
+import com.jetbrains.rhizomedb.RetractAttribute
+import com.jetbrains.rhizomedb.RetractEntityInPartition
+import com.jetbrains.rhizomedb.Schema
+import com.jetbrains.rhizomedb.SchemaPart
+import com.jetbrains.rhizomedb.attributeByIdent
+import com.jetbrains.rhizomedb.attributeIdent
+import com.jetbrains.rhizomedb.createUnknownAttribute
+import com.jetbrains.rhizomedb.createUnknownEntityType
+import com.jetbrains.rhizomedb.entitiesToRetract
+import com.jetbrains.rhizomedb.entityType
+import com.jetbrains.rhizomedb.entityTypeByIdent
+import com.jetbrains.rhizomedb.entityTypeIdent
+import com.jetbrains.rhizomedb.getOne
 import com.jetbrains.rhizomedb.impl.EidGen
-import fleet.kernel.*
-import fleet.util.UID
+import com.jetbrains.rhizomedb.lookupOne
+import com.jetbrains.rhizomedb.lookupSingle
+import com.jetbrains.rhizomedb.partition
+import com.jetbrains.rhizomedb.requireAttributeByIdent
 import fleet.fastutil.ints.map
+import fleet.kernel.DurableDbValue
+import fleet.kernel.SharedPart
+import fleet.kernel.deserialize
+import fleet.kernel.encodeDbValue
+import fleet.kernel.sharedId
+import fleet.kernel.uidAttribute
+import fleet.util.UID
 import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 

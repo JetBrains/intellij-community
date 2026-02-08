@@ -1,13 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.lookups
+package org.jetbrains.kotlin.idea.completion.impl.k2.lookups
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.*
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.nextLeaf
+import com.intellij.psi.util.prevLeaf
+import com.intellij.psi.util.startOffset
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -28,10 +32,10 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForCallable
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForClassifier
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile

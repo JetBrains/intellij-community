@@ -21,7 +21,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -91,11 +92,6 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void addInterpreterComboBoxActionListener(ActionListener listener) {
     content.interpreterComboBox.addActionListener(listener);
-  }
-
-  @Override
-  public void removeInterpreterComboBoxActionListener(ActionListener listener) {
-    content.interpreterComboBox.removeActionListener(listener);
   }
 
   @Override

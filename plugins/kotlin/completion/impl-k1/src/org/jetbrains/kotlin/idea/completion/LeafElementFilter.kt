@@ -7,7 +7,9 @@ import com.intellij.psi.filters.ClassFilter
 import com.intellij.psi.filters.ElementFilter
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class LeafElementFilter(private val elementType: IElementType) : ElementFilter {
 
     override fun isAcceptable(element: Any?, context: PsiElement?) = element is LeafPsiElement && element.elementType == elementType

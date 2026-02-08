@@ -16,8 +16,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public abstract class UsageContextPanelBase extends JBPanelWithEmptyText implements UsageContextPanel {
@@ -65,12 +65,6 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
   @Deprecated
   public final void updateLayout(final @Nullable List<? extends UsageInfo> infos) {
     updateLayoutLater(infos);
-  }
-
-  @Override
-  @Deprecated
-  public final void updateLayout(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    updateLayoutLater(infos, usageView);
   }
 
   @RequiresEdt

@@ -17,11 +17,16 @@ data class GitLabDiffPositionInput(
       GitLabDiffPositionInput(
         position.baseSha,
         position.startSha,
-        position.oldLineIndex?.inc(),
+        position.endLineIndexLeft?.inc(),
         position.headSha,
-        position.newLineIndex?.inc(),
+        position.endLineIndexRight?.inc(),
         position.paths,
-        position.lineRange
+        position.lineRange.let { range ->
+          LineRangeDTO(
+            start = range.start.toLinePositionDTO(position.paths),
+            end = range.end.toLinePositionDTO(position.paths)
+          )
+        }
       )
   }
 }
@@ -36,6 +41,9 @@ data class LineRangeDTO(
   val end: LinePositionDTO,
 )
 
+/**
+ * Line position data with 1-based line indexes
+ */
 data class LinePositionDTO(
   val lineCode: String?,
   val type: String?,

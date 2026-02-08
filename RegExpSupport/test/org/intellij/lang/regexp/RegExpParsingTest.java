@@ -3,7 +3,11 @@ package org.intellij.lang.regexp;
 
 import com.intellij.mock.MockSmartPointerManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.testFramework.ParsingTestCase;
 

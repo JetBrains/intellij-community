@@ -15,7 +15,13 @@ import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.Ignored
+import com.intellij.openapi.vcs.IgnoredCheckResult
+import com.intellij.openapi.vcs.NotIgnored
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsIgnoreChecker
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vfs.VfsUtil

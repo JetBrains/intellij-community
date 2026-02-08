@@ -1,7 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessAdapterImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.JavaSourcePositionHighlighter;
+import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.SuspendContextRunnable;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
@@ -44,9 +51,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.debugger.DebuggerBreakpointTestUtilsKt.USE_XSESSION_PAUSE_LISTENER_KEY;

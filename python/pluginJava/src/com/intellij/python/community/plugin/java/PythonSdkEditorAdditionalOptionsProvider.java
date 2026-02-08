@@ -16,9 +16,10 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.impl.PySdkBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.AncestorEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
 
 final class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdditionalOptionsProvider {
   private PythonSdkEditorAdditionalOptionsProvider() {

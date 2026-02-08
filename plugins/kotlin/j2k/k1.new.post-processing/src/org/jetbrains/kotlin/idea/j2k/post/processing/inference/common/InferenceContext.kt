@@ -3,12 +3,14 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtTypeElement
 
+@K1Deprecation
 data class InferenceContext(
     val elements: List<KtElement>,
     val typeVariables: List<TypeVariable>,

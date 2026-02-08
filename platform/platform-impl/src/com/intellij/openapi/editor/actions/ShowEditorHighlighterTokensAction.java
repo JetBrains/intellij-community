@@ -31,7 +31,8 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Point;
 
 @SuppressWarnings("HardCodedStringLiteral")
 final class ShowEditorHighlighterTokensAction extends EditorAction {

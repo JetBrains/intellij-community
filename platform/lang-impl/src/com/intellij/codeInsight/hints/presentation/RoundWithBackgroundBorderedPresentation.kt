@@ -8,12 +8,12 @@ import java.awt.Color
 import java.awt.Graphics2D
 
 class RoundWithBackgroundBorderedPresentation(
-  presentation: RoundWithBackgroundPresentation,
+  presentation: AbstractRoundWithBackgroundPresentation,
   val borderColor: Color? = null,
   val borderWidth: Int = 1,
 ) : StaticDelegatePresentation(presentation) {
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
-    val roundWithBackgroundPresentation = presentation as RoundWithBackgroundPresentation
+    val roundWithBackgroundPresentation = presentation as AbstractRoundWithBackgroundPresentation
     roundWithBackgroundPresentation.paint(g, attributes)
     val borderColor = borderColor ?: attributes.effectColor
     if (borderColor != null) {

@@ -1,14 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
-import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
-import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
-import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
-import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+import com.intellij.platform.workspace.storage.metadata.model.*
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl : MetadataStorageBase() {
@@ -97,8 +93,68 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     addMetadata(typeMetadata)
 
+    typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.ExcludedTestEntity",
+                                  entityDataFqName = "com.intellij.util.indexing.testEntities.impl.ExcludedTestEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "root",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+
+    addMetadata(typeMetadata)
+
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.IndexingTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.IndexingTestEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "roots",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                      fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
+                                                                                                                          primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "excludedRoots",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                      fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
+                                                                                                                          primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+
+    addMetadata(typeMetadata)
+
+    typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.IndexingTestEntity2",
+                                  entityDataFqName = "com.intellij.util.indexing.testEntities.impl.IndexingTestEntity2Data",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
                                   properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
@@ -461,7 +517,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ChildTestEntity", metadataHash = 1915844221)
+    addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ExcludedTestEntity", metadataHash = -473796998)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.IndexingTestEntity", metadataHash = 1477145119)
+    addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.IndexingTestEntity2", metadataHash = -1127209129)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.NonIndexableTestEntity", metadataHash = -1869731996)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.NonRecursiveTestEntity", metadataHash = 1038466544)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.OneMoreWithReferenceTestEntity", metadataHash = -1353528005)

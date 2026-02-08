@@ -174,12 +174,6 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
 
     suspend fun awaitLogIsReady(project: Project): VcsLogManager? = project.serviceAsync<VcsProjectLog>().init(true)
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("awaitLogIsReady is preferred",
-                ReplaceWith("awaitLogIsReady(project) != null",
-                            "com.intellij.vcs.log.impl.VcsProjectLog.Companion.awaitLogIsReady"))
-    suspend fun waitWhenLogIsReady(project: Project): Boolean = awaitLogIsReady(project) != null
-
     @Internal
     @RequiresBackgroundThread
     fun ensureLogCreated(project: Project): Boolean {

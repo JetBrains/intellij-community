@@ -58,7 +58,7 @@ jvm_library(
     "//platform/eel-provider",
     "//python/services/shared",
     "//python/pipenv",
-    "//python/python-venv:community-impl-venv",
+    "//python/python-venv:venv",
     "@lib//:jetbrains-annotations",
     "//python/python-pyproject:pyproject",
     "//python/python-hatch:hatch",
@@ -74,6 +74,7 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-external-index:externalIndex",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -132,7 +133,7 @@ jvm_library(
     "//python/services/shared",
     "//python/services/shared:shared_test_lib",
     "//python/pipenv",
-    "//python/python-venv:community-impl-venv",
+    "//python/python-venv:venv",
     "@lib//:jetbrains-annotations",
     "//python/python-pyproject:pyproject",
     "//python/python-pyproject:pyproject_test_lib",
@@ -153,6 +154,7 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-external-index:externalIndex",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

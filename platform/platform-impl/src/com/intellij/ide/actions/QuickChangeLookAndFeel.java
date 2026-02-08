@@ -10,7 +10,12 @@ import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionHolder;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,8 +46,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {

@@ -11,7 +11,10 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.GroupLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.LayoutStyle;
 import java.util.List;
 
 /**

@@ -12,8 +12,8 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
 
 @ApiStatus.Internal
 public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHandler {

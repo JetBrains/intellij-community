@@ -5,7 +5,9 @@ import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.psi.PsiModifier
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effect
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
-import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.*
+import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.Group
+import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.Leaf
+import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.LineBreak
 import com.intellij.refactoring.suggested.SignaturePresentationBuilder
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 

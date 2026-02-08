@@ -9,8 +9,8 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.xdebugger.DapMode;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.DapMode;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoteStateState implements RemoteState {

@@ -8,19 +8,22 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsState
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.UUID
 import java.util.function.Consumer
 import java.util.stream.Collectors
-import kotlin.io.path.*
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
+import kotlin.io.path.readText
 
-internal object SettingsSnapshotZipSerializer {
+object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
   private const val INFO = "info.json"
   const val PLUGINS = "plugins.json"
@@ -144,7 +147,7 @@ internal object SettingsSnapshotZipSerializer {
     return SettingsSyncPluginsState(emptyMap())
   }
 
-  private fun serializeMetaInfo(snapshotMetaInfo: SettingsSnapshot.MetaInfo): ByteArray {
+  fun serializeMetaInfo(snapshotMetaInfo: SettingsSnapshot.MetaInfo): ByteArray {
     val formattedDate = DateTimeFormatter.ISO_INSTANT.format(snapshotMetaInfo.dateCreated)
     val metaInfo = MetaInfo().apply {
       date = formattedDate
@@ -183,7 +186,7 @@ internal object SettingsSnapshotZipSerializer {
     return SettingsSnapshot.MetaInfo(Instant.now(), appInfo = null)
   }
 
-  private class MetaInfo {
+  class MetaInfo {
     lateinit var date: String
     lateinit var applicationId: String
     var buildNumber: String = ""

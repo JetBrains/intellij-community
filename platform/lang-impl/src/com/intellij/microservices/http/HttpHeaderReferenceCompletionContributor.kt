@@ -38,7 +38,7 @@ internal class HttpHeaderReferenceCompletionContributor : CompletionContributor(
 internal class EnableAutopopupInHttpHeaderReferences : CompletionConfidence() {
   override fun shouldSkipAutopopup(editor: Editor, contextElement: PsiElement, psiFile: PsiFile, offset: Int): ThreeState {
     if (hasHttpReferences(contextElement, offset)) return ThreeState.NO
-    return super.shouldSkipAutopopup(editor, contextElement, psiFile, offset)
+    return ThreeState.UNSURE
   }
 }
 

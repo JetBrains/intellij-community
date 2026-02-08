@@ -6,8 +6,14 @@ import com.intellij.ui.ListExpandableItemsHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.event.*;
+import javax.swing.JList;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov

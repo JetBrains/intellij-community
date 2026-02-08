@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  BaseServer.class
+End of files
+Compiling files:
+  java/membersChange/addFinalMethodHavingNonFinalMethodInSubclass/a/BaseServer.java
+End of files
+Cleaning output files:
+  Server.class
+End of files
+Compiling files:
+  java/membersChange/addFinalMethodHavingNonFinalMethodInSubclass/a/Server.java
+End of files
+------------------------------------------
+Exit code: ERROR

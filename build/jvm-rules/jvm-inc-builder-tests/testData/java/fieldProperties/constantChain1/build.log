@@ -1,0 +1,23 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/fieldProperties/constantChain1/a/A.java
+End of files
+Cleaning output files:
+  B.class
+  C.class
+End of files
+Compiling files:
+  java/fieldProperties/constantChain1/a/B.java
+  java/fieldProperties/constantChain1/a/C.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/fieldProperties/constantChain1/a/Client.java
+End of files
+------------------------------------------
+Exit code: OK

@@ -4,7 +4,7 @@ package com.intellij.ide.bookmark
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 @ApiStatus.Internal
 class BookmarkOccurrence internal constructor(

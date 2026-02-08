@@ -8,12 +8,17 @@ import com.intellij.collaboration.async.collectBatches
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsForSnippetsDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetDTO
+import org.jetbrains.plugins.gitlab.api.gitLabQuery
+import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.http.HttpResponse
 

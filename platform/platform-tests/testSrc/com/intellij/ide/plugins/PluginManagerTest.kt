@@ -7,7 +7,11 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.platform.plugins.parser.impl.*
+import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil

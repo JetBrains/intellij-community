@@ -2,7 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClassInitializerEx
+import org.jetbrains.uast.UEnumConstantEx
+import org.jetbrains.uast.UFieldEx
+import org.jetbrains.uast.ULocalVariableEx
+import org.jetbrains.uast.UParameterEx
+import org.jetbrains.uast.UVariableEx
 
 typealias UFieldExPlaceHolder = UFieldEx
 typealias UParameterExPlaceHolder = UParameterEx

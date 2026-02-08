@@ -13,7 +13,16 @@ import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.change
 import fleet.kernel.rebase.shared
 import fleet.util.UID
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class BackendEditorState(
   parentScope: CoroutineScope,

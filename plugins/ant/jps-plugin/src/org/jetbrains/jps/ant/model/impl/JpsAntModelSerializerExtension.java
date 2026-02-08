@@ -23,7 +23,12 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactExtensionSerial
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class JpsAntModelSerializerExtension extends JpsModelSerializerExtension {
   @Override

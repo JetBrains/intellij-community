@@ -18,8 +18,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.evaluateString
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.getUastParentOfTypes
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 @VisibleForTesting

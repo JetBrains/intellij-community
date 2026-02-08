@@ -5,7 +5,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.FList
 import com.intellij.util.text.NameUtilCore
 import com.intellij.util.text.NameUtilCore.isWordStart
-import com.intellij.util.text.matching.*
+import com.intellij.util.text.matching.AsciiUtils
+import com.intellij.util.text.matching.MatchedFragment
+import com.intellij.util.text.matching.MatchingMode
+import com.intellij.util.text.matching.deprecated
+import com.intellij.util.text.matching.indexOf
+import com.intellij.util.text.matching.indexOfAny
+import com.intellij.util.text.matching.regionMatches
+import com.intellij.util.text.matching.undeprecate
 import org.jetbrains.annotations.NonNls
 
 /**

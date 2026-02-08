@@ -8,7 +8,11 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.RangeMarkerImpl
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.TerminalColorPalette

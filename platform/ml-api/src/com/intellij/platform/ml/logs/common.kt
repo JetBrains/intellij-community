@@ -4,7 +4,19 @@ package com.intellij.platform.ml.logs
 import com.intellij.platform.ml.feature.Feature
 import com.intellij.platform.ml.feature.FeatureDeclaration
 import com.intellij.platform.ml.feature.FeatureValueType
-import com.intellij.platform.ml.logs.schema.*
+import com.intellij.platform.ml.logs.schema.BooleanEventField
+import com.intellij.platform.ml.logs.schema.ClassEventField
+import com.intellij.platform.ml.logs.schema.DoubleEventField
+import com.intellij.platform.ml.logs.schema.EnumEventField
+import com.intellij.platform.ml.logs.schema.EventField
+import com.intellij.platform.ml.logs.schema.EventPair
+import com.intellij.platform.ml.logs.schema.FloatEventField
+import com.intellij.platform.ml.logs.schema.IntEventField
+import com.intellij.platform.ml.logs.schema.LongEventField
+import com.intellij.platform.ml.logs.schema.ObjectDescription
+import com.intellij.platform.ml.logs.schema.ObjectEventData
+import com.intellij.platform.ml.logs.schema.ObjectEventField
+import com.intellij.platform.ml.logs.schema.StringEventField
 import com.intellij.platform.ml.session.DescriptionPartition
 import org.jetbrains.annotations.ApiStatus
 

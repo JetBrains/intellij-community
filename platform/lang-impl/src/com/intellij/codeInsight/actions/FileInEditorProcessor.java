@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -41,10 +42,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Objects;
 
 import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
@@ -252,7 +255,9 @@ public final class FileInEditorProcessor {
       return new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-          getHyperlinkRunnable().run();
+          WriteIntentReadAction.run(() -> {
+            getHyperlinkRunnable().run();
+          });
         }
       };
     }

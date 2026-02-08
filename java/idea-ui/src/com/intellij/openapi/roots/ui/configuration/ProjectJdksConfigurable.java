@@ -26,8 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
-import java.util.*;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class ProjectJdksConfigurable extends MasterDetailsComponent {
   private final ProjectSdksModel myProjectJdksModel;

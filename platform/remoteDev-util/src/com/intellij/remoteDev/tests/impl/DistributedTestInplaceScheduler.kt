@@ -1,7 +1,7 @@
 package com.intellij.remoteDev.tests.impl
 
-import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ExecutionOrder
+import com.jetbrains.rd.util.reactive.IScheduler
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

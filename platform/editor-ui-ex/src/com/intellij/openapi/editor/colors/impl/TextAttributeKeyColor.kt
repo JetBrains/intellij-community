@@ -6,7 +6,7 @@ import com.intellij.ui.ColorWrapper
 import com.intellij.util.ui.ComparableColor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.util.*
+import java.util.Objects
 
 @ApiStatus.Internal
 class TextAttributeKeyColor(color: Color, val keyName: String, val type: TextAttributeKeyColorType) : ColorWrapper(color) {

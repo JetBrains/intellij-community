@@ -8,7 +8,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRootStoredRefs
+import com.intellij.vcs.log.branches
 import com.intellij.vcs.log.graph.GraphColorManagerImpl
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.HeadCommitsComparator

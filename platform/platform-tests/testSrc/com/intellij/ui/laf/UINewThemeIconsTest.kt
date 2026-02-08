@@ -3,7 +3,11 @@ package com.intellij.ui.laf
 
 import com.intellij.ide.ui.FILL_STROKE_SEPARATOR
 import com.intellij.ide.ui.PaletteKeys
-import com.intellij.ui.svg.*
+import com.intellij.ui.svg.ATTR_FILL
+import com.intellij.ui.svg.ATTR_ID
+import com.intellij.ui.svg.ATTR_STROKE
+import com.intellij.ui.svg.AttributeMutator
+import com.intellij.ui.svg.createJSvgDocument
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail

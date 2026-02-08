@@ -13,7 +13,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.LayoutManager;
 
 
 public abstract class AbstractGridLayoutProperty extends Property<RadContainer, Boolean> {

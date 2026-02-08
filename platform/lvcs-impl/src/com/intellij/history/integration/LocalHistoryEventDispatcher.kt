@@ -3,6 +3,7 @@ package com.intellij.history.integration
 
 import com.intellij.history.ActivityId
 import com.intellij.history.core.LocalHistoryFacade
+import com.intellij.history.integration.IdeaGateway.isProjectRelated
 import com.intellij.history.integration.LocalHistoryImpl.Companion.getInstanceImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandEvent
@@ -12,9 +13,19 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFileManagerListener
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.DisposableWrapperList
 
@@ -53,7 +64,7 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
     val projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices
     var containingProjectIndex: ProjectFileIndex? = null
     for (projectIndex in projectIndexes) {
-      val isProjectRelated = projectIndex.isInProjectOrExcluded(dir) || projectIndex.isUnderIgnored(dir)
+      val isProjectRelated = isProjectRelated(projectIndex, dir)
       if (!isProjectRelated) continue
       if (containingProjectIndex != null) return false // more than 1 project contains this dir
 

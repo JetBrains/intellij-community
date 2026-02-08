@@ -28,7 +28,9 @@ import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;

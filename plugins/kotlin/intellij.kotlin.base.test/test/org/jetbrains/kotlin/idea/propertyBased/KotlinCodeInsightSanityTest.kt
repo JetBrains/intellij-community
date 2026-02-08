@@ -7,7 +7,11 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.SkipSlowTestLocally
-import com.intellij.testFramework.propertyBased.*
+import com.intellij.testFramework.propertyBased.DeleteRange
+import com.intellij.testFramework.propertyBased.InvokeIntention
+import com.intellij.testFramework.propertyBased.MadTestingAction
+import com.intellij.testFramework.propertyBased.MadTestingUtil
+import com.intellij.testFramework.propertyBased.StripTestDataMarkup
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.PropertyChecker
 import org.jetbrains.kotlin.idea.KotlinLanguage

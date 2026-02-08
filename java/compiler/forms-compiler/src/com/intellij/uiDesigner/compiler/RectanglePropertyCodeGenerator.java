@@ -5,7 +5,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 public final class RectanglePropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type myRectangleType = Type.getType(Rectangle.class);

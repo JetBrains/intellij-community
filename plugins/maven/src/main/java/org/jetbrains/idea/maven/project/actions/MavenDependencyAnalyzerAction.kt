@@ -4,7 +4,12 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.externalSystem.dependency.analyzer.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAArtifact
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAModule
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerAction
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.Module
 import com.intellij.ui.treeStructure.SimpleTree

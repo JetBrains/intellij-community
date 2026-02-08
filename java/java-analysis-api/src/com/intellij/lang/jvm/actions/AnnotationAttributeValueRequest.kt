@@ -3,7 +3,13 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmField
-import com.intellij.lang.jvm.annotation.*
+import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue
+import com.intellij.lang.jvm.annotation.JvmAnnotationClassValue
+import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
+import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
+import com.intellij.lang.jvm.annotation.JvmNestedAnnotationValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameValuePair
 

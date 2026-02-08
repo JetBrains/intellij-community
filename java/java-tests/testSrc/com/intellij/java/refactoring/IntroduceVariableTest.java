@@ -108,7 +108,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
       }
 
       @Override
-      protected void showErrorMessage(Project project, Editor editor, String message) {
+      protected void showErrorMessage(@NotNull Project project, Editor editor, @NotNull String message) {
         assertEquals("Introducing variable may break code logic<br>Local variable <b><code>c</code></b> is modified in loop body", message);
       }
     });
@@ -349,7 +349,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testNonExpressionPriorityFailure() {
     doTest(new MockIntroduceVariableHandler("sum", true, true, false, "int") {
       @Override
-      protected void showErrorMessage(Project project, Editor editor, String message) {
+      protected void showErrorMessage(@NotNull Project project, Editor editor, @NotNull String message) {
         assertEquals("Cannot perform refactoring.\nExtracting the selected expression changes the semantics of the surrounding expression.", message);
       }
     });

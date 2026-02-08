@@ -2,7 +2,9 @@
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnitMixedFrameworkInspection
-import com.intellij.junit.testFramework.JUnitLibrary.*
+import com.intellij.junit.testFramework.JUnitLibrary.JUNIT3
+import com.intellij.junit.testFramework.JUnitLibrary.JUNIT4
+import com.intellij.junit.testFramework.JUnitLibrary.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor

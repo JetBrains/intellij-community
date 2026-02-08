@@ -2,16 +2,16 @@ MODULES
 project
 
 project.appleMain
-    languageLevel = 1.8
-    apiLevel = 1.8
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
 
 project.appleTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
 
 project.commonMain
-    languageLevel = 1.8
-    apiLevel = 1.8
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
 
 project.commonTest
     languageLevel = {{LATEST_STABLE}}
@@ -28,21 +28,21 @@ project.iosArm64Test
     compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.iosMain
-    languageLevel = 1.8
-    apiLevel = 1.8
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
 
 project.iosTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
 
 project.iosX64Main
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in IosAllOptInAnnotation
 
 project.iosX64Test
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in IosAllOptInAnnotation
 
 project.jsMain
@@ -56,8 +56,8 @@ project.jsTest
     compilerSettings = -main call
 
 project.jvmMain
-    languageLevel = 2.0
-    apiLevel = 2.0
+    languageLevel = 2.2
+    apiLevel = 2.2
     compilerSettings = -opt-in JvmMainOptInAnnotation
 
 project.jvmTest
@@ -67,8 +67,8 @@ project.jvmTest
 project.main
 
 project.nativeMain
-    languageLevel = 1.8
-    apiLevel = 1.8
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
 
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}

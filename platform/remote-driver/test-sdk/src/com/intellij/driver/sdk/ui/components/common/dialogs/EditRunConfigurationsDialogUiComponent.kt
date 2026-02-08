@@ -3,7 +3,11 @@ package com.intellij.driver.sdk.ui.components.common.dialogs
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
-import com.intellij.driver.sdk.ui.components.elements.*
+import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
+import com.intellij.driver.sdk.ui.components.elements.list
+import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.xQuery
 import javax.swing.JDialog
 import javax.swing.JWindow

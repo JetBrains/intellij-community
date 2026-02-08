@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.plugins.ListPluginModel;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -20,12 +19,24 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal

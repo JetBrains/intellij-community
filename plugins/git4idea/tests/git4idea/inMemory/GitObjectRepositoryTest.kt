@@ -10,7 +10,6 @@ import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertMessage
 import git4idea.test.gitAsBytes
 import git4idea.test.tac
-import kotlin.jvm.java
 import kotlin.test.assertContentEquals
 
 class GitObjectRepositoryTest : GitSingleRepoTest() {

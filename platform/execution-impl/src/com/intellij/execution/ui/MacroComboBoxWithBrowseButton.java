@@ -14,8 +14,8 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.ui.TextAccessor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTextField;
+import java.awt.Component;
 
 public final class MacroComboBoxWithBrowseButton extends ComboBox<String> implements TextAccessor {
   private final Module myModule;

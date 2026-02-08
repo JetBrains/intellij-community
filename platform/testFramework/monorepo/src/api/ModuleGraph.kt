@@ -3,9 +3,11 @@ package com.intellij.platform.testFramework.monorepo.api
 
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.OutboundSemiGraph
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModule
 
-internal fun List<JpsModule>.prepareModuleList(): List<JpsModule> {
+@ApiStatus.Internal
+fun List<JpsModule>.prepareModuleList(): List<JpsModule> {
   val graph = DepGraph(this)
 
   val builder = DFSTBuilder(graph)

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.InlayParameterHintsProvider
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
+@K1Deprecation
 class KotlinInlayParameterHintsProvider : InlayParameterHintsProvider {
 
     override fun getDefaultBlackList(): Set<String> =
@@ -72,5 +74,6 @@ class KotlinInlayParameterHintsProvider : InlayParameterHintsProvider {
     }
 }
 
+@K1Deprecation
 fun PsiElement.isNameReferenceInCall() =
     this is KtNameReferenceExpression && parent is KtCallExpression

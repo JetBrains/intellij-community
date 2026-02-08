@@ -2,7 +2,14 @@
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.tools.combined.*
+import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
+import com.intellij.diff.tools.combined.CombinedBlockProducer
+import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+import com.intellij.diff.tools.combined.CombinedDiffComponentProcessorImpl
+import com.intellij.diff.tools.combined.CombinedDiffManager
+import com.intellij.diff.tools.combined.CombinedDiffModel
+import com.intellij.diff.tools.combined.CombinedDiffViewer
+import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project

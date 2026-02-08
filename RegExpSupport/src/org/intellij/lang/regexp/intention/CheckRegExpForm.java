@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -46,15 +46,28 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.regexp.*;
+import org.intellij.lang.regexp.RegExpBundle;
+import org.intellij.lang.regexp.RegExpHighlighter;
+import org.intellij.lang.regexp.RegExpMatch;
+import org.intellij.lang.regexp.RegExpMatchResult;
+import org.intellij.lang.regexp.RegExpMatcherProvider;
+import org.intellij.lang.regexp.RegExpModifierProvider;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Collections;
@@ -201,7 +214,9 @@ public final class CheckRegExpForm {
         final Editor editor = mySampleText.getEditor();
         if (editor == null) return;
         final int offset = editor.getCaretModel().getOffset();
-        highlightSampleGroup(offset, regExpFile);
+        ApplicationManager.getApplication().invokeLater(() -> { // we use invokeLater here to wrap this computation into a write-intent lock
+          highlightSampleGroup(offset, regExpFile);
+        });
       }
     });
 

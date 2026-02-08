@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.async
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import kotlin.coroutines.coroutineContext
 
 suspend fun <T : Any> spin(delayStrategy: DelayStrategy, body: suspend CoroutineScope.(attempt: Int) -> T?): T {

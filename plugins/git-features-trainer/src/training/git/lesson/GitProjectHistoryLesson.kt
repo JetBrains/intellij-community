@@ -22,7 +22,12 @@ import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPER
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import org.assertj.swing.fixture.JPanelFixture
 import org.assertj.swing.fixture.JTableFixture
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.gotItStep
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch

@@ -9,7 +9,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
 import java.nio.file.AccessDeniedException
-import java.util.*
+import java.util.Collections
 
 internal open class SaveSessionProducerManager {
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())

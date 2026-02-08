@@ -73,6 +73,12 @@ project.sharedJvmMain
 project.sharedJvmTest
     targetPlatform = JVM (17)
 
+project.webMain
+    targetPlatform = JS
+
+project.webTest
+    targetPlatform = JS
+
 
 Test configuration:
 - showing only following facet fields: targetPlatform

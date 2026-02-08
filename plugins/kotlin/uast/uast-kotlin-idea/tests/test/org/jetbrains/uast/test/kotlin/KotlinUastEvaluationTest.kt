@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin
 
+import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.UField
 import org.jetbrains.uast.evaluation.getEvaluationContextWithCaching
-import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 
 class KotlinUastEvaluationTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor =

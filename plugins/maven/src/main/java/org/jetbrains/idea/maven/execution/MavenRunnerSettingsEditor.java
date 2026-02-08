@@ -10,7 +10,9 @@ import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenDisablePanelCheckbox;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
 

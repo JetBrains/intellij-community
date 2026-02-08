@@ -6,7 +6,12 @@ import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 import java.util.function.Supplier;

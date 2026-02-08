@@ -7,8 +7,10 @@ import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.util.List;
 
 /**

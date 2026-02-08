@@ -7,12 +7,18 @@ import com.intellij.internal.statistic.eventLog.validator.storage.persistence.Ev
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
-import java.io.File
+import java.nio.file.Path
+import java.util.Properties
+import kotlin.io.path.Path
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.writeText
 import kotlin.system.exitProcess
 
-
+private const val descriptionDirParameter = "--descriptionDir="
 private const val outputFileParameter = "--outputFile="
 private const val pluginsFileParameter = "--pluginsFile="
 private const val pluginIdParameter = "--pluginId="
@@ -25,25 +31,29 @@ private val LOG: Logger
 
 internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
   override fun main(args: List<String>) {
-    var outputFile: String? = null
-    var pluginsFile: String? = null
+    var descriptionDir: Path? = null
+    var outputFile: Path? = null
+    var pluginsFile: Path? = null
     var pluginId: String? = null
-    var errorsFile: String? = null
+    var errorsFile: Path? = null
     var recorderId: String? = null
     var testEventsScheme = false
 
     for (arg in args) {
-      if (arg.startsWith(outputFileParameter)) {
-        outputFile = arg.substringAfter(outputFileParameter)
+      if (arg.startsWith(descriptionDirParameter)) {
+        descriptionDir = Path(arg.substringAfter(descriptionDirParameter))
+      }
+      else if (arg.startsWith(outputFileParameter)) {
+        outputFile = Path(arg.substringAfter(outputFileParameter))
       }
       else if (arg.startsWith(pluginsFileParameter)) {
-        pluginsFile = arg.substringAfter(pluginsFileParameter)
+        pluginsFile = Path(arg.substringAfter(pluginsFileParameter))
       }
       else if (arg.startsWith(pluginIdParameter)) {
         pluginId = arg.substringAfter(pluginIdParameter)
       }
       else if (arg.startsWith(errorsFileParameter)) {
-        errorsFile = arg.substringAfter(errorsFileParameter)
+        errorsFile = Path(arg.substringAfter(errorsFileParameter))
       }
       else if (arg.startsWith(recorderIdParameter)) {
         recorderId = arg.substringAfter(recorderIdParameter)
@@ -52,43 +62,54 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
         testEventsScheme = arg.substringAfter(testEventSchemeParameter).toBoolean()
       }
     }
-    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(true)
-    val groups: List<GroupDescriptor>
-    try {
-      groups = EventsSchemeBuilder.buildEventsScheme(recorderId, pluginId, getPluginsToSkipSchemeGeneration())
+
+    val descriptions = HashMap<String, String>()
+    descriptionDir?.listDirectoryEntries()?.forEach { file ->
+      val recorder = file.nameWithoutExtension
+      file.bufferedReader().use {
+        Properties()
+          .apply { load(file.bufferedReader()) }
+          .forEach { (k, v) -> descriptions["${recorder}.${k}"] = v.toString() }
+      }
+    }
+
+    val groups = try {
+      EventsSchemeBuilder.buildEventsScheme(descriptions, recorderId, pluginId, getPluginsToSkipSchemeGeneration())
     }
     catch (e: IllegalMetadataSchemeStateException) {
       LOG.error(e)
-      if (errorsFile != null) FileUtil.writeToFile(File(errorsFile), e.toString())
+      errorsFile?.createParentDirectories()?.writeText(e.toString())
       exitProcess(0)
     }
     val errors = EventSchemeValidator.validateEventScheme(groups)
-    val errorsList = errors.values.flatten()
-    if (errorsList.isNotEmpty()) {
-      val errorsListString = errorsList.joinToString("\n")
-      LOG.error(IllegalStateException(errorsListString))
-      if (errorsFile != null) FileUtil.writeToFile(File(errorsFile), errorsListString)
+    val errorList = errors.values.flatten()
+    if (errorList.isNotEmpty()) {
+      val errorListString = errorList.joinToString("\n")
+      LOG.error(IllegalStateException(errorListString))
+      errorsFile?.createParentDirectories()?.writeText(errorListString)
     }
 
-    val text: String
-    if (!testEventsScheme) {
-      val eventsScheme = EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
-                                      System.getenv("IDEA_BUILD_NUMBER"),
-                                      groups.filter { errors[it]?.isEmpty() ?: true })
-      text = SerializationHelper.serialize(eventsScheme)
+    val text = if (!testEventsScheme) {
+      val eventsScheme = EventsScheme(
+        System.getenv("INSTALLER_LAST_COMMIT_HASH"),
+        System.getenv("IDEA_BUILD_NUMBER"),
+        groups.filter { errors[it]?.isEmpty() ?: true }
+      )
       logEnabledPlugins(pluginsFile)
+      SerializationHelper.serialize(eventsScheme)
     }
     else {
       val groupsDescriptor = EventGroupRemoteDescriptors()
       for (group in groups) {
         groupsDescriptor.groups.add(
-          EventLogTestMetadataPersistence.createGroupWithCustomRules(group.id, SerializationHelper.serialize(createValidationRules(group))))
+          EventLogTestMetadataPersistence.createGroupWithCustomRules(group.id, SerializationHelper.serialize(createValidationRules(group)))
+        )
       }
-      text = SerializationHelper.serialize(groupsDescriptor)
+      SerializationHelper.serialize(groupsDescriptor)
     }
 
     if (outputFile != null) {
-      FileUtil.writeToFile(File(outputFile), text)
+      outputFile.createParentDirectories().writeText(text)
     }
     else {
       println(text)
@@ -100,8 +121,7 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
   private fun createValidationRules(group: GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
     val eventIds = hashSetOf<String>()
     val eventData = hashMapOf<String, MutableSet<String>>()
-    val events = group.schema
-    events.forEach { event ->
+    group.schema.forEach { event ->
       eventIds.add(event.event)
       event.fields.forEach { dataField ->
         val validationRule = dataField.value
@@ -114,25 +134,23 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
         }
       }
     }
-
-    if (eventIds.isEmpty() && eventData.isEmpty()) return null
-
-    val rules = EventGroupRemoteDescriptors.GroupRemoteRule()
-    rules.event_id = eventIds
-    rules.event_data = eventData
-    return rules
+    return if (eventIds.isEmpty() && eventData.isEmpty()) null
+    else EventGroupRemoteDescriptors.GroupRemoteRule().apply {
+      event_id = eventIds
+      event_data = eventData
+    }
   }
 
-  private fun logEnabledPlugins(pluginsFile: String?) {
+  private fun logEnabledPlugins(pluginsFile: Path?) {
     val text = buildString {
       for (descriptor in PluginManagerCore.loadedPlugins) {
-        if (descriptor.isEnabled) {
+        if (!PluginManagerCore.isDisabled(descriptor.pluginId)) {
           appendLine(descriptor.pluginId.idString)
         }
       }
     }
     if (pluginsFile != null) {
-      FileUtil.writeToFile(File(pluginsFile), text)
+      pluginsFile.createParentDirectories().writeText(text)
     }
     else {
       println("Enabled plugins:")
@@ -141,8 +159,6 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
   }
 
   private fun getPluginsToSkipSchemeGeneration(): Set<String> {
-    val skipGenerationOfBrokenPlugins = System.getenv("SKIP_GENERATION_OF_BROKEN_PLUGINS")
-    if (skipGenerationOfBrokenPlugins == null) return emptySet()
-    return skipGenerationOfBrokenPlugins.split(",").toSet()
+    return System.getenv("SKIP_GENERATION_OF_BROKEN_PLUGINS")?.split(",")?.toSet() ?: emptySet()
   }
 }

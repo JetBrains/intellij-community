@@ -15,7 +15,13 @@
  */
 package com.intellij.java.psi.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LightResolveTestCase;
 import org.jetbrains.annotations.NonNls;

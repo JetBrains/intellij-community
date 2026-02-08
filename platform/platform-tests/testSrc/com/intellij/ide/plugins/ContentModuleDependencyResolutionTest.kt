@@ -2,7 +2,11 @@
 package com.intellij.ide.plugins
 
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.module
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

@@ -26,7 +26,11 @@ import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.render.IconCompOptionalCompPanel
 import com.intellij.ui.speedSearch.SpeedSearchUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Font

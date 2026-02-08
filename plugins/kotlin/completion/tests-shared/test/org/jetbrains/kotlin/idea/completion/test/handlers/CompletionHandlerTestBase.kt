@@ -3,7 +3,10 @@
 package org.jetbrains.kotlin.idea.completion.test.handlers
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupElementRenderer
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.common.timeoutRunBlocking

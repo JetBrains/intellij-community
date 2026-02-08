@@ -10,7 +10,6 @@ import com.intellij.ui.JBColor.namedColor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.UIManager
-import kotlin.collections.get
 
 fun findFileStatusById(id: String?): FileStatus? {
   return FILE_STATUS_MAPPING[id]

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared.ui
 
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -97,11 +97,11 @@ internal object VcsPresentablePath {
    * In split mode we operate [com.intellij.openapi.vcs.RemoteFilePath], so it's always `filePath.isNonLocal == true`.
    * However, it still makes sense to try to show relative paths in the UI.
    */
-  private fun shouldHandleAsNonLocal(filePath: FilePath): Boolean = AppModeAssertions.isMonolith() && filePath.isNonLocal
+  private fun shouldHandleAsNonLocal(filePath: FilePath): Boolean = AppMode.isMonolith() && filePath.isNonLocal
 
   private fun getRelativePathToUserHome(filePath: FilePath): @NlsSafe @SystemDependent String =
-    if (AppModeAssertions.isMonolith()) FileUtil.getLocationRelativeToUserHome(getSystemDependentPath(filePath.path)) else filePath.path
+    if (AppMode.isMonolith()) FileUtil.getLocationRelativeToUserHome(getSystemDependentPath(filePath.path)) else filePath.path
 
   private fun getSystemDependentPath(path: String): @NlsSafe @SystemDependent String =
-    if (AppModeAssertions.isMonolith()) FileUtil.toSystemDependentName(path) else path
+    if (AppMode.isMonolith()) FileUtil.toSystemDependentName(path) else path
 }

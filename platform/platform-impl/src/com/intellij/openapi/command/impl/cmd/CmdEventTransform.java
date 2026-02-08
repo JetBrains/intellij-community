@@ -2,7 +2,8 @@
 package com.intellij.openapi.command.impl.cmd;
 
 import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.impl.*;
+import com.intellij.openapi.command.impl.CommandId;
+import com.intellij.openapi.command.impl.ForeignCommandProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

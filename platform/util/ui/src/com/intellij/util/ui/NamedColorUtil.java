@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Color;
 
 public final class NamedColorUtil {
   public static @NotNull Color getErrorForeground() {
@@ -25,15 +23,6 @@ public final class NamedColorUtil {
    */
   public static @NotNull Color getListSelectionForeground(boolean focused) {
     return JBUI.CurrentTheme.List.Selection.foreground(focused);
-  }
-
-  /**
-   * @deprecated use {@link Cursor#getPredefinedCursor(int)} with {@link Cursor#TEXT_CURSOR} argument instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
-    return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
-           MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
   public static @NotNull Color getBoundsColor() {

@@ -8,7 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import kotlinx.coroutines.future.FutureKt;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
 public class DeferredIconTest extends LightJavaCodeInsightFixtureTestCase {
   @Override

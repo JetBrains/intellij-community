@@ -3,7 +3,11 @@
 
 package org.jetbrains.uast.util
 
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UJumpExpression
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.isPsiAncestor
 
 fun UElement.isInFinallyBlock(): Boolean {
   val jumpTarget = (this as? UJumpExpression)?.jumpTarget

@@ -11,7 +11,11 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ASKED_ADD_EXTERNAL_FILES_PROPERTY
+import com.intellij.openapi.vcs.ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
+import com.intellij.openapi.vcs.SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
 

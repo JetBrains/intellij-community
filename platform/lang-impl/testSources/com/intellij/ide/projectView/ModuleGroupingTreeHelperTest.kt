@@ -11,9 +11,16 @@ import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
-import java.util.*
+import java.util.HashMap
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import kotlin.collections.List
+import kotlin.collections.dropLast
+import kotlin.collections.emptyList
+import kotlin.collections.find
+import kotlin.collections.forEach
+import kotlin.collections.map
+import kotlin.collections.none
 
 class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   private lateinit var tree: Tree

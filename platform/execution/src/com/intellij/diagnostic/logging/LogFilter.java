@@ -17,7 +17,10 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -25,8 +28,8 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 

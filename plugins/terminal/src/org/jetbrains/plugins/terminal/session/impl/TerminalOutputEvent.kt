@@ -4,7 +4,13 @@ package org.jetbrains.plugins.terminal.session.impl
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.impl.dto.*
+import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalBlocksModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalFilterResultInfoDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHyperlinksModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalOutputModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStartupOptionsDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
 import kotlin.time.TimeMark
 
 @ApiStatus.Internal

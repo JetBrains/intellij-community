@@ -2,14 +2,28 @@
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.*;
+import com.intellij.codeInsight.documentation.CachingAdaptiveImageManagerService;
+import com.intellij.codeInsight.documentation.DocumentationActionProvider;
+import com.intellij.codeInsight.documentation.DocumentationCssProvider;
+import com.intellij.codeInsight.documentation.DocumentationFontSize;
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
 import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCssFontResolver;
@@ -42,23 +56,36 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.View;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.datatransfer.StringSelection;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ImageObserver;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static com.intellij.lang.documentation.DocumentationMarkup.*;
+import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTION;
+import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS;
 
 @ApiStatus.Internal
 public final class DocRenderer implements CustomFoldRegionRenderer {

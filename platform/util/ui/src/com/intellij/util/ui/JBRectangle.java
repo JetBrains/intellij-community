@@ -3,7 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.scale.JBUIScale;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 /**
  * @author Konstantin Bulenkov

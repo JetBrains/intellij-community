@@ -10,7 +10,9 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 
 public class ListEditorDialog extends DialogWrapper {

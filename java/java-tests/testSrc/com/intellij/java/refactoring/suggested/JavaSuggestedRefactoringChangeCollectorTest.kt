@@ -9,10 +9,17 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiTypeElement
+import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeCollectorTest
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
-import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeCollectorTest
 
 class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChangeCollectorTest<PsiMethod>() {
   override val fileType: FileType

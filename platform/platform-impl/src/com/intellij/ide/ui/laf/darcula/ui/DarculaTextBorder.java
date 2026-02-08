@@ -10,17 +10,35 @@ import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPONENT_ARC;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.LW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getOutline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintCellEditorBorder;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintFocusBorder;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
 
 /**
  * @author Konstantin Bulenkov

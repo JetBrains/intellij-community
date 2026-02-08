@@ -26,6 +26,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AddList = load("expui/bookmarks/addBookmarksList.svg", "actions/addList.svg", 687312006, 2);
     /** 16x16 */ public static final @NotNull Icon AddMulticaret = load("expui/general/add.svg", "actions/AddMulticaret.svg", 14246848, 2);
     /** 16x16 */ public static final @NotNull Icon AddToDictionary = load("expui/actions/addToDictionary.svg", "actions/addToDictionary.svg", -854911886, 2);
+    /** 16x16 */ public static final @NotNull Icon AiIntentionBulb = load("expui/actions/aiIntentionBulb.svg", -2142579745, 2);
     /** 16x16 */ public static final @NotNull Icon Annotate = load("expui/general/listFiles.svg", "actions/annotate.svg", -264543398, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowCollapse = load("expui/general/chevronLeft.svg", "actions/arrowCollapse.svg", -296923721, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowExpand = load("expui/general/chevronRight.svg", "actions/arrowExpand.svg", 2111993468, 2);
@@ -724,6 +725,7 @@ public class AllIcons {
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOn = load("expui/ide/feedbackRatingOn.svg", "ide/feedbackRatingOn.svg", 1102075748, 0);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOnFocused = load("ide/feedbackRatingOnFocused.svg", -1692491005, 0);
     /** 16x16 */ public static final @NotNull Icon Gift = load("expui/ide/gift.svg", "ide/gift.svg", -1423934596, 2);
+    /** 16x16 */ public static final @NotNull Icon GrayDot = load("ide/grayDot.svg", 699185880, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOff = load("ide/hectorOff.svg", 756397077, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 1387966645, 2);
     /** 16x16 */ public static final @NotNull Icon HectorSyntax = load("ide/hectorSyntax.svg", -415840178, 2);
@@ -1096,7 +1098,8 @@ public class AllIcons {
     /** 40x40 */ public static final @NotNull Icon PluginLogo = load("expui/nodes/pluginLogo.svg", "plugins/pluginLogo.svg", 899855946, 0);
     /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled = load("expui/nodes/pluginLogoDisabled.svg", "plugins/pluginLogoDisabled.svg", 1569910218, 0);
     /** 12x12 */ public static final @NotNull Icon Rating = load("plugins/rating.svg", 1714785539, 2);
-    /** 12x12 */ public static final @NotNull Icon Updated = load("plugins/updated.svg", 1725310914, 2);
+    /** 12x12 */ public static final @NotNull Icon Refresh = load("plugins/refresh.svg", -649384412, 2);
+    /** 12x12 */ public static final @NotNull Icon Updated = load("plugins/updated.svg", -191512259, 2);
   }
 
   public static final class Process {

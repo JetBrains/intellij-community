@@ -19,7 +19,13 @@ import org.jetbrains.kotlin.tools.projectWizard.templates.Template
 import org.jetbrains.kotlin.tools.projectWizard.templates.settings
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.OnUserSettingChangeStatisticsLogger
-import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.CommentLabel
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.DynamicComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitleComponentAlignment
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitledComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.addBorder
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.borderPanel
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components.DropDownComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components.TextFieldComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.TitledComponentsList

@@ -210,9 +210,6 @@ android/wizard-model
 build
 build/cucumber-test-runner
 build/deps
-build/jvm-rules/dependency-graph
-build/jvm-rules/jps-builders-6
-build/jvm-rules/zip
 build/launch
 build/tasks
 build/tests
@@ -240,6 +237,7 @@ fleet/ktor/client/core
 fleet/ktor/network/tls
 fleet/ktor/server/cio
 fleet/lsp.protocol
+fleet/lsp.protocol/test
 fleet/modules/api
 fleet/modules/jvm
 fleet/multiplatform.shims
@@ -367,6 +365,7 @@ jvm/jvm-analysis-refactoring
 jvm/jvm-analysis-testFramework
 libraries/aalto-xml
 libraries/ai.grazie.spell.gec.engine.local
+libraries/androidx-collections
 libraries/asm
 libraries/asm-tools
 libraries/assertj-core
@@ -457,6 +456,7 @@ libraries/ktor/client
 libraries/ktor/client-cio
 libraries/ktor/io
 libraries/ktor/network-tls
+libraries/ktor/server-cio
 libraries/ktor/utils
 libraries/lucene.common
 libraries/lz4
@@ -498,6 +498,8 @@ libraries/xml-rpc
 libraries/xstream
 libraries/xtext-xbase
 libraries/xz
+mps/build
+mps/build/intellij.mps.resources
 notebooks/notebook-ui
 notebooks/visualization
 platform/analysis-api
@@ -519,6 +521,7 @@ platform/build-scripts/dev-server
 platform/build-scripts/downloader
 platform/build-scripts/icons
 platform/build-scripts/product-dsl
+platform/build-scripts/product-dsl/plugin-graph
 platform/build-scripts/testFramework
 platform/build-scripts/testPlugins/testPluginWithMissingDependencies
 platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module
@@ -977,13 +980,18 @@ plugins/gitlab/gitlab-git
 plugins/gitlab/gitlab-yaml
 plugins/gradle
 plugins/gradle-maven
+plugins/gradle/completion
 plugins/gradle/gradle-declarative-sync
 plugins/gradle/gradle-dependency-updater
 plugins/gradle/intellij.gradle.analysis
 plugins/gradle/java
+plugins/gradle/java/performance
 plugins/gradle/jps-plugin
+plugins/gradle/kotlin/tests
 plugins/gradle/native
 plugins/gradle/native/tooling
+plugins/gradle/properties
+plugins/gradle/toml
 plugins/gradle/tooling-extension-api
 plugins/gradle/tooling-extension-impl
 plugins/gradle/tooling-proxy
@@ -1207,7 +1215,6 @@ plugins/kotlin/gradle/gradle-tooling
 plugins/kotlin/gradle/gradle-tooling/impl
 plugins/kotlin/gradle/gradle-tooling/tests
 plugins/kotlin/gradle/gradle/tests
-plugins/kotlin/gradle/multiplatform-tests
 plugins/kotlin/gradle/multiplatform-tests-k2
 plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1
 plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2
@@ -1256,6 +1263,7 @@ plugins/kotlin/jvm-debugger/sequence
 plugins/kotlin/jvm-debugger/test
 plugins/kotlin/jvm-debugger/test/compose
 plugins/kotlin/jvm-debugger/test/k2
+plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.k1
 plugins/kotlin/jvm-debugger/test/parcelize
 plugins/kotlin/jvm-decompiler
 plugins/kotlin/jvm/k1
@@ -1279,6 +1287,7 @@ plugins/kotlin/navigation
 plugins/kotlin/navigation/tests
 plugins/kotlin/onboarding
 plugins/kotlin/onboarding-gradle
+plugins/kotlin/onboarding-maven
 plugins/kotlin/onboarding-promoter
 plugins/kotlin/plugin
 plugins/kotlin/plugin-updater
@@ -1387,11 +1396,11 @@ plugins/properties/copyright
 plugins/properties/properties-common
 plugins/properties/properties-psi-api
 plugins/properties/properties-psi-impl
-plugins/properties/properties-resource-bundle-editor
 plugins/properties/tests
 plugins/rareJavaRefactorings
 plugins/remote-control
 plugins/repository-search
+plugins/repository-search/common
 plugins/restructuredtext
 plugins/search-everywhere-ml
 plugins/search-everywhere-ml/ranking/core
@@ -1402,6 +1411,7 @@ plugins/search-everywhere-ml/ranking/yaml
 plugins/search-everywhere-ml/typos
 plugins/settings-repository
 plugins/settings-sync/jba
+plugins/settings-sync/settingsSync.performanceTesting
 plugins/sh/backend
 plugins/sh/copyright
 plugins/sh/core
@@ -1493,6 +1503,7 @@ python/python-copyright
 python/python-core-impl
 python/python-exec-service
 python/python-exec-service/execService.python
+python/python-external-index
 python/python-features-trainer
 python/python-grazie
 python/python-hatch

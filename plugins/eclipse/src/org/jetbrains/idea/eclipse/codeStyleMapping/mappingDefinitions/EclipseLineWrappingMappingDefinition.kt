@@ -3,14 +3,21 @@ package org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.idea.eclipse.codeStyleMapping.EclipseJavaCodeStyleMappingDefinitionBuilder
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.*
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.const
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
-import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.const
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.convertBoolean
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.convertInt
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.doNotImport
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.invert
 import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.EclipseWrapValue
+import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.annotationWrap
+import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.convertWrap
 import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.keywordFollowedByListWrap
-import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.listInBracketsWrap
+import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.listWrap
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.IndentationPolicy
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.LineWrapPolicy
 
 internal fun EclipseJavaCodeStyleMappingDefinitionBuilder.addLineWrappingMapping() {
   "lineSplit" mapTo

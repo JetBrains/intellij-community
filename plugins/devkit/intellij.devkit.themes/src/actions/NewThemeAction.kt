@@ -5,7 +5,11 @@ import com.intellij.ide.actions.NewFileActionWithCategory
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -29,7 +33,8 @@ import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.themes.DevKitThemesBundle
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.idea.devkit.util.PsiUtil
-import java.util.*
+import java.util.Properties
+import java.util.UUID
 
 internal class NewThemeAction : AnAction(), NewFileActionWithCategory {
   private val THEME_JSON_TEMPLATE = "ThemeJson.json"

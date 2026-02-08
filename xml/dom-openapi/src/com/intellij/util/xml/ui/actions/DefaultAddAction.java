@@ -9,12 +9,17 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.StableElement;
+import com.intellij.util.xml.TypeChooser;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.reflect.Type;
 
 public abstract class DefaultAddAction<T extends DomElement> extends AnAction {

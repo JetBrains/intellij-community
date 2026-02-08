@@ -5,7 +5,11 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -18,7 +22,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class StructuralSearchUtil {

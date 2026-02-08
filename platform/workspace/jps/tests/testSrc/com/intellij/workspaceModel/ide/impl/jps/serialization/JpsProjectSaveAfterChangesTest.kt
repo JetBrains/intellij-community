@@ -1,12 +1,35 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.java.workspace.entities.*
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.javaSettings
+import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.java.workspace.entities.modifyJavaSourceRootPropertiesEntity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.customImlData
+import com.intellij.platform.workspace.jps.entities.getModuleLibraries
+import com.intellij.platform.workspace.jps.entities.groupPath
+import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleCustomImlDataEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
+import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.junit5.TestApplication

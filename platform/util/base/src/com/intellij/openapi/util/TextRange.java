@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * A text range defined by start and end (exclusive) offset.

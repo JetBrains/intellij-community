@@ -448,6 +448,7 @@ a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - <init>():V
 - afterEditorCreated(com.intellij.openapi.editor.Editor):V
 - createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
+- createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode,java.lang.String):com.intellij.openapi.editor.Document
 - createDocument(com.intellij.openapi.project.Project,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
 - createExpression(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.lang.Language,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.XExpression
 - a:getFileType():com.intellij.openapi.fileTypes.FileType

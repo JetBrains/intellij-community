@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializer
 @Serializable
 class MyClass {
 
-/*<# block [companion   object   { ]
+/*<# block [[companion   object   { ]
 [     fun   serializer ( ) :   KSerializer < MyClass > ]
 [ } ]
 
@@ -20,14 +20,14 @@ class MyClass {
 [     override   fun   deserialize ( decoder :   Decoder ) :   MyClass ]
 [     val   descriptor :   SerialDescriptor ]
 [     override   fun   childSerializers ( ) :   Array < KSerializer < * > > ]
-[ }] #>*/
+[ }] <settings-icon>] #>*/
 }
 
 
 @Serializer(MyClass::class)
 class CustomSerialize {
 
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] #>*/
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>] #>*/
 }

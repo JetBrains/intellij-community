@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories
 
-import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -22,9 +21,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
-import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
-import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance

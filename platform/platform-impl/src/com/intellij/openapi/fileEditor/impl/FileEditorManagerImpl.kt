@@ -19,14 +19,28 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.inModalContext
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.currentSessionOrNull
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -37,7 +51,20 @@ import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.ClientFileEditorManager
+import com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorComposite
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileEditorNavigatable
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.NavigatableFileEditor
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
@@ -60,13 +87,23 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -97,22 +134,55 @@ import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.dropWhile
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Color
+import java.awt.Component
+import java.awt.EventQueue
+import java.awt.KeyboardFocusManager
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import java.util.*
+import java.util.EventListener
+import java.util.IdentityHashMap
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
@@ -1179,22 +1249,20 @@ open class FileEditorManagerImpl(
     }
 
     if (EDT.isCurrentThreadEdt()) {
-      return WriteIntentReadAction.compute(Computable {
-        val composite = open()
-        if (composite is EditorComposite) {
-          if (options.waitForCompositeOpen) {
-            blockingWaitForCompositeFileOpen(composite)
-            if (composite.providerSequence.none()) {
-              closeFile(window = window, composite = composite, runChecks = false)
-              return@Computable FileEditorComposite.EMPTY
-            }
-          }
-          else {
-            scheduleCloseIfEmpty(window, composite)
+      val composite = open()
+      if (composite is EditorComposite) {
+        if (options.waitForCompositeOpen) {
+          blockingWaitForCompositeFileOpen(composite)
+          if (composite.providerSequence.none()) {
+            closeFile(window = window, composite = composite, runChecks = false)
+            return FileEditorComposite.EMPTY
           }
         }
-        return@Computable composite
-      })
+        else {
+          scheduleCloseIfEmpty(window, composite)
+        }
+      }
+      return composite
     }
     else {
       return runBlockingCancellable {
@@ -1278,55 +1346,53 @@ open class FileEditorManagerImpl(
     options: FileEditorOpenOptions,
     forceCompositeCreation: Boolean = false,
   ): EditorComposite? {
-    return WriteIntentReadAction.compute(Computable {
-      var composite = if (forceCompositeCreation) null else window.getComposite(file)
-      val isNewEditor = composite == null
-      if (composite == null) {
-        // IJPL-183875: Explicitly set a composite to open a backend supplied composite
-        composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry, hint = options.internalHint)
-                    ?: return@Computable null
-        openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
-      }
+    var composite = if (forceCompositeCreation) null else window.getComposite(file)
+    val isNewEditor = composite == null
+    if (composite == null) {
+      // IJPL-183875: Explicitly set a composite to open a backend supplied composite
+      composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry, hint = options.internalHint)
+                  ?: return null
+      openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
+    }
 
-      window.addComposite(
-        composite = composite,
-        file = composite.file,
-        options = options,
-        isNewEditor = isNewEditor,
-      )
-      if (isNewEditor) {
-        openFileSetModificationCount.increment()
-      }
-      else if (fileEntry != null) {
-        for (editorWithProvider in composite.allEditorsWithProviders) {
-          val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
-            ?.let { editorWithProvider.provider.readState(it, project, file) }
-          if (state != null && state != FileEditorState.INSTANCE) {
-            restoreEditorState(
-              fileEditorWithProvider = editorWithProvider,
-              state = state,
-              exactState = options.isExactState,
-              project = project,
-            )
-          }
+    window.addComposite(
+      composite = composite,
+      file = composite.file,
+      options = options,
+      isNewEditor = isNewEditor,
+    )
+    if (isNewEditor) {
+      openFileSetModificationCount.increment()
+    }
+    else if (fileEntry != null) {
+      for (editorWithProvider in composite.allEditorsWithProviders) {
+        val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
+          ?.let { editorWithProvider.provider.readState(it, project, file) }
+        if (state != null && state != FileEditorState.INSTANCE) {
+          restoreEditorState(
+            fileEditorWithProvider = editorWithProvider,
+            state = state,
+            exactState = options.isExactState,
+            project = project,
+          )
         }
-
-        // restore selected editor
-        val provider = (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl)
-          .getSelectedFileEditorProvider(composite = composite, project = project)
-        if (provider != null) {
-          composite.setSelectedEditor(provider)
-        }
-
-        window.owner.afterFileOpen(file)
       }
 
-      selectionHistory.addRecord(file to window)
+      // restore selected editor
+      val provider = (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl)
+        .getSelectedFileEditorProvider(composite = composite, project = project)
+      if (provider != null) {
+        composite.setSelectedEditor(provider)
+      }
 
-      // update frame and tab title
-      scheduleUpdateFileName(file)
-      return@Computable composite
-    })
+      window.owner.afterFileOpen(file)
+    }
+
+    selectionHistory.addRecord(file to window)
+
+    // update frame and tab title
+    scheduleUpdateFileName(file)
+    return composite
   }
 
   @RequiresEdt

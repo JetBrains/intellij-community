@@ -2,7 +2,11 @@
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 
 @Demo(title = "Gaps",
   description = "<br>\u2022 Horizontal gaps are managed by Cell.gap method. Between label and related component RightGap.SMALL is used, " +

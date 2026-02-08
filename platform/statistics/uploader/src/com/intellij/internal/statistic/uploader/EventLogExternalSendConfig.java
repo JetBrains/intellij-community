@@ -9,7 +9,11 @@ import com.intellij.internal.statistic.eventLog.config.EventLogFileListProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class EventLogExternalSendConfig implements EventLogSendConfig {
   private final @NotNull String myRecorderId;

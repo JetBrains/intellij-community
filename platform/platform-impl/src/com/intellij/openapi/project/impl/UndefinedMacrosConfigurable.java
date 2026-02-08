@@ -10,8 +10,10 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.Collection;
 
 /**

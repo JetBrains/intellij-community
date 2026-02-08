@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.jvm.k1.scratch.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchAction
 
+@K1Deprecation
 class RunScratchFromHereAction : ScratchAction(
     KotlinJvmBundle.messagePointer("scratch.run.from.here.button"),
     AllIcons.Diff.ArrowRight

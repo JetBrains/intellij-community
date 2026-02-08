@@ -2,11 +2,21 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.util.asSafely
 import groovy.lang.Closure
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DOMAIN_OBJECT_COLLECTION
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_JAVA_ARCHIVES_MANIFEST
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_JUNIT_OPTIONS
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TEST_LOGGING_CONTAINER
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_JVM_TASKS_JAR
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock

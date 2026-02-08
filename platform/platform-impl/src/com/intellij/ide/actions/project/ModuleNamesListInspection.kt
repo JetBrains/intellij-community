@@ -4,7 +4,11 @@
 package com.intellij.ide.actions.project
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemDescriptorBase
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project

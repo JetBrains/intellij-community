@@ -5,7 +5,7 @@ package com.intellij.facet.ui;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class FacetConfigurationQuickFix {
   private final @NlsContexts.Button String myFixButtonText;

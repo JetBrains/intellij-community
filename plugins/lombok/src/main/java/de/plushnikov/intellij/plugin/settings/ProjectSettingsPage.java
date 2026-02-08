@@ -7,7 +7,9 @@ import de.plushnikov.intellij.plugin.LombokBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 import static de.plushnikov.intellij.plugin.settings.ProjectSettings.isEnabled;
 import static de.plushnikov.intellij.plugin.settings.ProjectSettings.setEnabled;

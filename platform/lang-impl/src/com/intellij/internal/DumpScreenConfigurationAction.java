@@ -12,8 +12,19 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import java.awt.BufferCapabilities;
+import java.awt.DisplayMode;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.ImageCapabilities;
+import java.awt.Rectangle;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 

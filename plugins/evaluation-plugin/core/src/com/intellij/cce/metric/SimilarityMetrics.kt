@@ -5,7 +5,6 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
 import com.intellij.cce.evaluable.REFERENCE_PROPERTY
-import com.intellij.cce.metric.ProposalSemanticSimilarityScore.Companion.NAME
 import com.intellij.cce.metric.util.CloudSemanticSimilarityCalculator
 import com.intellij.cce.metric.util.computeBleuScore
 import com.intellij.cce.workspace.info.SessionIndividualScore

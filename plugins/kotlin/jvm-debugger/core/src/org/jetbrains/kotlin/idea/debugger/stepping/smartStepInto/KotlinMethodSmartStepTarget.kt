@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import com.intellij.debugger.engine.MethodFilter
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiElement

@@ -5,8 +5,14 @@ import com.intellij.util.asSafely
 import java.awt.Shape
 import java.awt.Toolkit
 import javax.swing.SizeRequirements
-import javax.swing.text.*
+import javax.swing.text.AttributeSet
+import javax.swing.text.BoxView
+import javax.swing.text.Element
 import javax.swing.text.Position.Bias
+import javax.swing.text.StyleConstants
+import javax.swing.text.StyledDocument
+import javax.swing.text.View
+import javax.swing.text.ViewFactory
 import javax.swing.text.html.CSS
 import javax.swing.text.html.HTML
 import javax.swing.text.html.ParagraphView

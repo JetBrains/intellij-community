@@ -9,3 +9,5 @@ class C : B() {
 }
 
 // EXIST: "p1, p2"
+
+// IGNORE_K2

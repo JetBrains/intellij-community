@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.impl.AsyncRendering;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
@@ -58,7 +59,10 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
   @Override
   protected void removeItem(@NotNull LookupElement element, @NotNull ProcessingContext context) {
     super.removeItem(element, context);
-    AsyncRendering.Companion.cancelRendering(element);
+    Lookup lookup = myProcess.getLookup();
+    if (lookup instanceof LookupImpl) {
+      ((LookupImpl)lookup).cancelRendering(element);
+    }
   }
 
   private static boolean isSuddenLiveTemplate(@NotNull LookupElement element) {

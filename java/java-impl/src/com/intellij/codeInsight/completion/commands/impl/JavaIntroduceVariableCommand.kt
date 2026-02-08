@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.getDataContext
+import com.intellij.codeInsight.completion.command.getTargetContext
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.DataManager
 import com.intellij.idea.ActionsBundle

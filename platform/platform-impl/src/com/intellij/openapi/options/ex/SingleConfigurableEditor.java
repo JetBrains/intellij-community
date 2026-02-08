@@ -16,11 +16,15 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -151,7 +155,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
       }
     }
     catch (ConfigurationException e) {
-      if (e.getMessage() != null) {
+      if (!processException(e) && e.getMessage() != null) {
         if (myProject != null) {
           Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
@@ -163,6 +167,11 @@ public class SingleConfigurableEditor extends DialogWrapper {
     }
 
     super.doOKAction();
+  }
+
+  @ApiStatus.Internal
+  protected boolean processException(ConfigurationException configurationException) {
+    return false;
   }
 
   protected static String createDimensionKey(Configurable configurable) {

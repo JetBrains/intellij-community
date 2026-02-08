@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.XDebugSession;

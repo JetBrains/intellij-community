@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
-import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
+import org.jetbrains.kotlin.idea.completion.impl.k2.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.psi.KtFile
 
 

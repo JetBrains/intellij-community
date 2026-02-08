@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.module.Module
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishModuleOutOfBlockModificationEvent
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
@@ -23,6 +24,7 @@ fun Module.toKaModulesForModificationEvents(): List<KaModule> =
  * Publishes an out-of-block modification event for this [Module]'s production and test source [KaModule]s. Must be called in a write
  * action.
  */
+@OptIn(KaPlatformInterface::class)
 fun Module.publishModuleOutOfBlockModificationEvent() {
     ThreadingAssertions.assertWriteAccess()
 

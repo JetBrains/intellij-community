@@ -15,7 +15,7 @@ import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.HashSet;
 import java.util.Set;
 

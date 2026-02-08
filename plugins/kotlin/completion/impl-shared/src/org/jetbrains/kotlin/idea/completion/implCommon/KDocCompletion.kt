@@ -8,13 +8,13 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
-import java.util.Locale
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import java.util.Locale
 
 object KDocTagCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {

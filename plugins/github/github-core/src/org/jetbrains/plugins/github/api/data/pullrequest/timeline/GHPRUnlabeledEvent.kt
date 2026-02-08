@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
-import java.util.*
+import java.util.Date
 
 data class GHPRUnlabeledEvent(override val actor: GHActor?,
                               override val createdAt: Date,

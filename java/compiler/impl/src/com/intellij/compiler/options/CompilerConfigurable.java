@@ -8,7 +8,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class CompilerConfigurable implements SearchableConfigurable.Parent {
   static final String CONFIGURABLE_ID = "project.propCompiler";

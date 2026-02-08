@@ -29,7 +29,12 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import java.awt.*
+import java.awt.BasicStroke
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.RenderingHints
 import java.awt.geom.RoundRectangle2D
 import java.io.File
 import java.io.IOException

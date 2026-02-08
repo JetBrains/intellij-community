@@ -2,7 +2,11 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

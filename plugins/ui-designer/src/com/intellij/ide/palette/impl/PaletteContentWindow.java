@@ -5,8 +5,13 @@ package com.intellij.ide.palette.impl;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.Scrollable;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
 
 
 public class PaletteContentWindow extends JPanel implements Scrollable {

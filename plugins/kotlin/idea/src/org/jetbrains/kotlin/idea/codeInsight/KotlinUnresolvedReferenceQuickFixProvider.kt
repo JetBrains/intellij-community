@@ -5,9 +5,11 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 class KotlinUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(reference: PsiReference, registrar: QuickFixActionRegistrar) {
         val element = reference.element as? KtElement ?: return

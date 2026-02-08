@@ -28,11 +28,9 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import java.nio.file.Path
-import kotlin.collections.forEach
 import kotlin.io.path.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
-import kotlin.sequences.forEach
 
 @TestRoot("gradle/scripting/kotlin.gradle.scripting.k2/")
 @UseK2PluginMode

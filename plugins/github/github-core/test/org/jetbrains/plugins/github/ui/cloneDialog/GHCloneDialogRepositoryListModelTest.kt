@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class GHCloneDialogRepositoryListModelTest {

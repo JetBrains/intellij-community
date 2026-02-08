@@ -6,21 +6,35 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
 import org.jetbrains.kotlin.cli.common.repl.replUnescapeLineBreaks
 import org.jetbrains.kotlin.console.actions.logError
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.utils.repl.ReplEscapeType
-import org.jetbrains.kotlin.utils.repl.ReplEscapeType.*
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.COMPILE_ERROR
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.ERRORS_REPORTED
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.HELP_PROMPT
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.INITIAL_PROMPT
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.INTERNAL_ERROR
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.READLINE_END
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.READLINE_START
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.REPL_INCOMPLETE
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.REPL_RESULT
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.RUNTIME_ERROR
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.SUCCESS
+import org.jetbrains.kotlin.utils.repl.ReplEscapeType.USER_OUTPUT
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import javax.xml.parsers.DocumentBuilderFactory
 
+@K1Deprecation
 data class SeverityDetails(val severity: Severity, val description: String, val range: TextRange)
 
+@K1Deprecation
 class ReplOutputHandler(
     private val runner: KotlinConsoleRunner,
     process: Process,

@@ -17,14 +17,20 @@ import git4idea.remote.hosting.ui.ResolveConflictsLocallyCoordinates
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.mergeabilityStateComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getRemoteDescriptor
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.*
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.AlreadyResolvedLocally
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.DetailsNotLoaded
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.MergeInProgress
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.RepositoryNotFound
 
 typealias GHPRResolveConflictsLocallyViewModel = ResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError>
 

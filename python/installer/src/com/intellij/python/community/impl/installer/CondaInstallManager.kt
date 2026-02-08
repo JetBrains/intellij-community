@@ -63,7 +63,11 @@ object CondaInstallManager {
       if (!path.toFile().setExecutable(true, true)) {
         throw MakeShellScriptExecutableException(path)
       }
-      return GeneralCommandLine(path.absolutePathString(), "-b", "-u")
+      return GeneralCommandLine(path.absolutePathString(), "-b", "-u").apply {
+        // Pass through CONDA_PLUGINS_AUTO_ACCEPT_TOS for automated TOS acceptance
+        // See https://www.anaconda.com/docs/getting-started/tos-plugin
+        System.getenv("CONDA_PLUGINS_AUTO_ACCEPT_TOS")?.let { withEnvironment("CONDA_PLUGINS_AUTO_ACCEPT_TOS", it) }
+      }
     }
   }
 

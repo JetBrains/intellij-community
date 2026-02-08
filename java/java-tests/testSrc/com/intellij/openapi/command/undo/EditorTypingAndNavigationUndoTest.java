@@ -10,7 +10,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.IndentSelectionAction;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -22,10 +26,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
 import java.io.IOException;
 
 public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
@@ -280,7 +284,7 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
     EditorFactory.getInstance().releaseEditor(getFirstEditor());
     myEditors[0] = EditorFactory.getInstance().createEditor(document, myProject);
 
-    UIUtil.dispatchAllInvocationEvents(); // remove references to original editor from event queue
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // remove references to original editor from event queue
     System.gc(); // make sure weak references to original editor are cleared
 
     undoFirstEditor();

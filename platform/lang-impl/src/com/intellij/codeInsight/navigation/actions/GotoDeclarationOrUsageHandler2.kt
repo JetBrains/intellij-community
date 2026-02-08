@@ -5,7 +5,11 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.Companion.gotoDeclaration
-import com.intellij.codeInsight.navigation.impl.*
+import com.intellij.codeInsight.navigation.impl.GTDUActionData
+import com.intellij.codeInsight.navigation.impl.GTDUActionResult
+import com.intellij.codeInsight.navigation.impl.fromGTDProviders
+import com.intellij.codeInsight.navigation.impl.gotoDeclarationOrUsages
+import com.intellij.codeInsight.navigation.impl.toGTDUActionData
 import com.intellij.find.FindUsagesSettings
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant

@@ -6,7 +6,11 @@ import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.codeInsight.ellipsis
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import java.awt.Color
 
 

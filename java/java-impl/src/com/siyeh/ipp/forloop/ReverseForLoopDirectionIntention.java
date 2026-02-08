@@ -3,7 +3,18 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiPostfixExpression;
+import com.intellij.psi.PsiPrefixExpression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
@@ -15,7 +26,17 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.psi.JavaTokenType.EQ;
+import static com.intellij.psi.JavaTokenType.GE;
+import static com.intellij.psi.JavaTokenType.GT;
+import static com.intellij.psi.JavaTokenType.LE;
+import static com.intellij.psi.JavaTokenType.LT;
+import static com.intellij.psi.JavaTokenType.MINUS;
+import static com.intellij.psi.JavaTokenType.MINUSEQ;
+import static com.intellij.psi.JavaTokenType.MINUSMINUS;
+import static com.intellij.psi.JavaTokenType.PLUS;
+import static com.intellij.psi.JavaTokenType.PLUSEQ;
+import static com.intellij.psi.JavaTokenType.PLUSPLUS;
 
 /**
  * @author Bas Leijdekkers

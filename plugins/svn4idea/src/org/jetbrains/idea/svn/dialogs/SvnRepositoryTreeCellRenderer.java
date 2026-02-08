@@ -9,7 +9,7 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
 

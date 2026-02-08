@@ -6,8 +6,11 @@ import com.intellij.ui.paint.LinePainter2D;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 @ApiStatus.Internal
 public final class StrikeoutLabel extends JLabel{

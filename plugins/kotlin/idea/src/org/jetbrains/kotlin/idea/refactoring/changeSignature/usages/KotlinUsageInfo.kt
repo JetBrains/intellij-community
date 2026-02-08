@@ -7,12 +7,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.NotNullablePsiCopyableUserDataProperty
 
+@K1Deprecation
 abstract class KotlinUsageInfo<T : PsiElement> : UsageInfo {
     constructor(element: T) : super(element)
     constructor(reference: PsiReference) : super(reference)

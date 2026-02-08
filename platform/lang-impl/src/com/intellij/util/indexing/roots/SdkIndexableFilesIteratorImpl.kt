@@ -15,7 +15,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.SdkOriginImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Collections
 
 @ApiStatus.Internal
 class SdkIndexableFilesIteratorImpl private constructor(private val sdkName: String,

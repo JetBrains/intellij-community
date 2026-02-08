@@ -15,7 +15,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 @ApiStatus.Internal
 public final class DirectoryPresentationProvider implements ItemPresentationProvider<PsiDirectory> {

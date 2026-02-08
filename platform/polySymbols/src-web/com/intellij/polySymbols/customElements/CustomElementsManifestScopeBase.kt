@@ -8,7 +8,12 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
-import com.intellij.polySymbols.customElements.json.*
+import com.intellij.polySymbols.customElements.json.CustomElementClassOrMixinDeclaration
+import com.intellij.polySymbols.customElements.json.CustomElementsManifest
+import com.intellij.polySymbols.customElements.json.CustomElementsPackage
+import com.intellij.polySymbols.customElements.json.JavaScriptModule
+import com.intellij.polySymbols.customElements.json.SourceReference
+import com.intellij.polySymbols.customElements.json.adaptAllContributions
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider

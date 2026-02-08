@@ -19,7 +19,11 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.createStringTemplate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.findTextRangesInParentForEscapedDollars
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isEscapedDollar
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.templatePrefixLength
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
 class CanUnescapeDollarLiteralInspection :

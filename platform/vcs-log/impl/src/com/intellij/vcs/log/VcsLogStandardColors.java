@@ -3,7 +3,7 @@ package com.intellij.vcs.log;
 
 import com.intellij.ui.JBColor;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class VcsLogStandardColors {
   public static final class Refs {

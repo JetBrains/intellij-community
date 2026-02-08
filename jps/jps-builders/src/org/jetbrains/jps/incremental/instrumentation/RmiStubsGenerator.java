@@ -22,7 +22,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.JpsBuildBundle;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompiledClass;
+import org.jetbrains.jps.incremental.LineOutputWriter;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -36,7 +40,13 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.Remote;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 
 @ApiStatus.Internal

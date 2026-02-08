@@ -8,7 +8,7 @@ import org.jetbrains.jsonProtocol.Optional
 import org.jetbrains.jsonProtocol.ProtocolName
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
-import java.util.*
+import java.util.Arrays
 import kotlin.reflect.KCallable
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty

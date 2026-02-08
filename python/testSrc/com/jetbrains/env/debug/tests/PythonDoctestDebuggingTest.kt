@@ -3,7 +3,6 @@ package com.jetbrains.env.debug.tests
 
 import com.intellij.execution.RunManager.Companion.getInstance
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.projectRoots.Sdk
@@ -13,8 +12,6 @@ import com.jetbrains.env.PyTestTask
 import com.jetbrains.env.debug.tasks.PyCustomConfigDebuggerTask
 import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.run.CommandLinePatcher
-import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.testing.PythonTestConfigurationType
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration
 import org.junit.Assert

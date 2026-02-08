@@ -11,10 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.PsiElement
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.refinedContextModule
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -27,13 +29,9 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtil
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
-import kotlin.collections.filter
-import kotlin.collections.firstOrNull
-import kotlin.collections.orEmpty
 import kotlin.time.Duration.Companion.milliseconds
 
 class KotlinK2CodeFragmentFactory : KotlinCodeFragmentFactoryBase() {
-    @OptIn(KaImplementationDetail::class)
     override fun createPsiCodeFragmentImpl(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(context)
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", item.text, initImports(item.imports), contextElement).apply {
@@ -48,7 +46,9 @@ class KotlinK2CodeFragmentFactory : KotlinCodeFragmentFactoryBase() {
                     .filter { module -> module.implementingModules.isEmpty() } // Looking for a leave
                     .firstOrNull { module -> module.platform.isJvm() }
 
-                virtualFile.analysisContextModule = jvmLeafModule?.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElement)
+                // This is a workaround and should be removed in the future. See IDEA-385152.
+                @OptIn(KaImplementationDetail::class)
+                refinedContextModule = jvmLeafModule?.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElement)
             }
         }
         codeFragment.registerCodeFragmentExtensions(contextElement)

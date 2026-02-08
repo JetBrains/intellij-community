@@ -1,11 +1,11 @@
 package demo
 
 internal class Test {
-    fun getInteger(i: Int): Int {
+    fun getInteger(i: Int?): Int? {
         return i
     }
 
     fun test() {
-        val i = getInteger(10)
+        val i = getInteger(10)!!
     }
 }

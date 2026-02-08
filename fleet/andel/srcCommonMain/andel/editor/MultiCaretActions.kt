@@ -2,18 +2,29 @@
 package andel.editor
 
 import andel.intervals.AnchorStorage
-import andel.operation.*
+import andel.operation.EditLog
+import andel.operation.NewOffsetProvider
+import andel.operation.Operation
+import andel.operation.Sticky
+import andel.operation.compose
+import andel.operation.composeAll
+import andel.operation.isIdentity
+import andel.operation.isNotIdentity
 import andel.text.Text
 import andel.text.TextRange
 import fleet.util.UID
 import fleet.util.logging.KLoggers
 import fleet.util.openmap.BoundedOpenMap
 import fleet.util.openmap.MutableOpenMap
-import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.RestrictsSuspension
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.intrinsics.createCoroutineUnintercepted
 import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
+import kotlin.coroutines.resume
 import kotlin.time.TimeSource
 
 /**

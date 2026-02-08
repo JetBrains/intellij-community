@@ -503,7 +503,56 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     checkOptimizeImportNoIntention();
   }
 
-  public void testOptimizeImportNotOnTheFlyInvalidStaticImportClassNoIntention() {
+  public void testOptimizeImportNotOnTheFlyInvalidStaticImportClassResolveToLocalVariableNoIntention() {
+    myFixture.addFileToProject(
+      "foo/Util.java",
+      """
+        package foo;
+        
+        public class Util {}
+        """
+    );
+    checkOptimizeImportNoIntention();
+  }
+
+
+  public void testOptimizeImportNotOnTheFlyInvalidStaticImportClassResolveToFieldNoIntention() {
+    myFixture.addFileToProject(
+      "foo/Util.java",
+      """
+        package foo;
+        
+        public class Util {}
+        """
+    );
+    checkOptimizeImportNoIntention();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidStaticImportResolveToFieldViaThis() {
+    myFixture.addFileToProject(
+      "foo/Util.java",
+      """
+        package foo;
+        
+        public class Util {}
+        """
+    );
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidStaticImportResolveToMethodViaThis() {
+    myFixture.addFileToProject(
+      "foo/Util.java",
+      """
+        package foo;
+        
+        public class Util {}
+        """
+    );
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidStaticImportClassResolveToParameterNoIntention() {
     myFixture.addFileToProject(
       "foo/Util.java",
       """

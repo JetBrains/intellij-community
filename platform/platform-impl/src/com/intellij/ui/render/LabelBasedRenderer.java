@@ -5,11 +5,13 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JTree;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 
 public class LabelBasedRenderer extends JLabel {
 

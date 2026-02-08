@@ -12,7 +12,7 @@ import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentatio
 import git4idea.ui.branch.hasAnyRemotes
 import git4idea.ui.branch.isTrackingInfosExist
 import git4idea.ui.branch.updateBranches
-import java.util.*
+import java.util.Locale
 
 class GitUpdateSelectedBranchAction
   : GitSingleBranchAction(GitBundle.messagePointer("branches.update")) {

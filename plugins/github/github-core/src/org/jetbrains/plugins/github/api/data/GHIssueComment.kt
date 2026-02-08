@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.api.data
 
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
-import java.util.*
+import java.util.Date
 
 data class GHIssueComment(override val id: String,
                           override val author: GHActor?,

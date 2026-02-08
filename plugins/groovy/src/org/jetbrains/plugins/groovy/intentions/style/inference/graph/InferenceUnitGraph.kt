@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
 import org.jetbrains.plugins.groovy.intentions.style.inference.removeWildcard

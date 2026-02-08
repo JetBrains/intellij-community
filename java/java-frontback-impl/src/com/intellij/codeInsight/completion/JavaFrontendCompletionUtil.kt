@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
-import com.intellij.codeInsight.*
+import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.AutoPopupControllerHelper
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.TailType
+import com.intellij.codeInsight.TailTypes
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker
@@ -11,7 +15,18 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupItem
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.patterns.PlatformPatterns
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiForStatement
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ThreeState

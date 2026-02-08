@@ -13,6 +13,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.createDeclarationByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
+@K1Deprecation
 class ConvertSealedSubClassToObjectFix : LocalQuickFix {
 
     override fun getFamilyName() = KotlinBundle.message("convert.sealed.subclass.to.object.fix.family.name")

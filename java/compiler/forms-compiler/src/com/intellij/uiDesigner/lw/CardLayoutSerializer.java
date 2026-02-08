@@ -5,7 +5,7 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.CardLayout;
 
 public final class CardLayoutSerializer extends LayoutSerializer {
   public static final CardLayoutSerializer INSTANCE = new CardLayoutSerializer();

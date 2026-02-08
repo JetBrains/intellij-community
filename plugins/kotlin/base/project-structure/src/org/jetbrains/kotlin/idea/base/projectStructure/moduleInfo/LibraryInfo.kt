@@ -21,7 +21,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.*
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinedSourceAndClassRootsScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateEntriesVirtualFileSystems
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateTopPackageNames
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 @ApiStatus.Internal

@@ -16,9 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation;
 
+import com.intellij.psi.PsiAnnotationParameterList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import com.intellij.psi.PsiAnnotationParameterList;
 
 /**
  * @author Dmitry.Krasilschikov

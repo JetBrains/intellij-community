@@ -1,6 +1,12 @@
 package com.intellij.cce.evaluation.data
 
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.Suggestion

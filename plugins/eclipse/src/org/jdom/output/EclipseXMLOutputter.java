@@ -58,9 +58,22 @@ package org.jdom.output;
 
 import com.intellij.configurationStore.BaseXmlOutputter;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.CDATA;
+import org.jdom.DocType;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.EntityRef;
+import org.jdom.Namespace;
+import org.jdom.Text;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

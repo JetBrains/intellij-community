@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.ui.DoubleClickListener
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
@@ -40,7 +41,9 @@ internal class ChangesTreeHandlers(private val tree: ChangesTree) {
 
       if (tree.getPathIfCheckBoxClicked(e.point) != null) return false
 
-      return handler.process(e)
+      return WriteIntentReadAction.compute {
+        handler.process(e)
+      }
     }
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.NavigationItem;
@@ -25,13 +26,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VirtualMachine;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -163,7 +172,7 @@ public final class SourceCodeChecker {
   private static void checkAllClasses(DebuggerContextImpl debuggerContext) {
     DebugProcessImpl process = debuggerContext.getDebugProcess();
     @SuppressWarnings("ConstantConditions")
-    VirtualMachine machine = process.getVirtualMachineProxy().getVirtualMachine();
+    VirtualMachine machine = VirtualMachineProxyImpl.getCurrent().getVirtualMachine();
     PositionManagerImpl positionManager = new PositionManagerImpl(process); // only default position manager for now
     List<ReferenceType> types = machine.allClasses();
     System.out.println("Checking " + types.size() + " classes");

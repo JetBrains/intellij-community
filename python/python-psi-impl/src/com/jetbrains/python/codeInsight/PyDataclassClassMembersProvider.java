@@ -9,7 +9,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

@@ -2,10 +2,18 @@
 
 package com.intellij.ide.hierarchy.actions;
 
-import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.HierarchyBrowser;
+import com.intellij.ide.hierarchy.HierarchyBrowserBase;
+import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
+import com.intellij.ide.hierarchy.HierarchyBrowserManager;
+import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -23,7 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 

@@ -3,8 +3,9 @@ package com.intellij.build.progress;
 
 import com.intellij.build.BuildBundle;
 import com.intellij.build.BuildProgressListener;
-import com.intellij.build.events.*;
-import com.intellij.build.events.impl.*;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FinishBuildEvent;
+import com.intellij.build.events.StartBuildEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

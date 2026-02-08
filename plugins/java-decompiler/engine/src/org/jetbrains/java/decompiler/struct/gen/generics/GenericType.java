@@ -9,7 +9,11 @@ import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWr
 import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class GenericType extends VarType implements Type {
 

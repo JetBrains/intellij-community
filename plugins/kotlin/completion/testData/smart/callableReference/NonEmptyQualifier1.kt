@@ -18,3 +18,5 @@ fun bar() {
 // EXIST: { lookupString:"xf1", itemText:"xf1", tailText: "(s: String)", typeText: "Unit" }
 // EXIST: { lookupString:"xfe1", itemText:"xfe1", tailText: "(s: String) for C in <root>", typeText: "Unit" }
 // NOTHING_ELSE
+
+// IGNORE_K2

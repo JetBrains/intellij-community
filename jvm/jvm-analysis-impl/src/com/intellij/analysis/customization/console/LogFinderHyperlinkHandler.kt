@@ -4,7 +4,11 @@ package com.intellij.analysis.customization.console
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
-import com.intellij.codeInspection.logging.*
+import com.intellij.codeInspection.logging.LOGGER_TYPE_SEARCHERS
+import com.intellij.codeInspection.logging.LoggingStringPartEvaluator
+import com.intellij.codeInspection.logging.LoggingUtil
+import com.intellij.codeInspection.logging.findMessageSetterStringArg
+import com.intellij.codeInspection.logging.getLogStringIndex
 import com.intellij.execution.filters.HyperlinkInfoFactory
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
@@ -19,7 +23,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.resolveToUElementOfType
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 
 internal class LogFinderHyperlinkHandler(private val probableClassName: ProbableClassName) : HyperlinkInfoFactory.HyperlinkHandler {
   override fun onLinkFollowed(project: Project, file: VirtualFile, targetEditor: Editor, originalEditor: Editor?) {

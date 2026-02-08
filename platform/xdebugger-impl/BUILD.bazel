@@ -109,6 +109,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/testFramework/extensions:testExtensions",
     "//libraries/stream",
     "//platform/statistics",

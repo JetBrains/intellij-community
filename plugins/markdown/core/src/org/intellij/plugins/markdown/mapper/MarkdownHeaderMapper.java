@@ -2,13 +2,13 @@
 package org.intellij.plugins.markdown.mapper;
 
 import com.intellij.ide.vfs.VirtualFileId;
+import com.intellij.ide.vfs.VirtualFileIdKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader;
-import com.intellij.ide.vfs.VirtualFileIdKt;
 
 /**
  * Mapper class for converting a MarkdownHeader into a MarkdownHeaderInfo.

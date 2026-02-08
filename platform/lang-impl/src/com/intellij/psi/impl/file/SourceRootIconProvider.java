@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class SourceRootIconProvider {
   public static @NotNull Icon getDirectoryIcon(VirtualFile vFile, Project project) {

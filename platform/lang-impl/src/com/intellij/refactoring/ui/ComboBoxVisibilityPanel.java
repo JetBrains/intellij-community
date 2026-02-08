@@ -21,9 +21,13 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UpDownHandler;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.ListCellRenderer;
 import javax.swing.event.ChangeEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;

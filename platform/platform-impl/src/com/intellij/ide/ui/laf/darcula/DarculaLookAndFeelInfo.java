@@ -4,7 +4,7 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.UIManager;
 
 /**
  * @author Konstantin Bulenkov

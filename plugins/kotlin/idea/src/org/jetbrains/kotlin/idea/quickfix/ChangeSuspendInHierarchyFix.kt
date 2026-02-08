@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.ifEmpty
 
+@K1Deprecation
 class ChangeSuspendInHierarchyFix(
     element: KtNamedFunction,
     private val addModifier: Boolean

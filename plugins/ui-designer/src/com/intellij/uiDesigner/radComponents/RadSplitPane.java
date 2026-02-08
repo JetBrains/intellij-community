@@ -6,14 +6,22 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.EventProcessor;
+import com.intellij.uiDesigner.designSurface.FeedbackLayer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JSplitPane;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 

@@ -3,15 +3,46 @@ package org.jetbrains.uast.test.java
 
 import com.intellij.platform.uast.testFramework.env.findElementByText
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import com.intellij.psi.*
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiRecordHeader
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_TYPES_LIST
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnnotationEx
+import org.jetbrains.uast.UAnonymousClass
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.getUCallExpression
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
+import org.jetbrains.uast.withContainingElements
 import org.junit.Assert
 import org.junit.Test
 
@@ -361,6 +392,58 @@ class JavaUastApiTest : AbstractJavaUastTest() {
                                 return true;
                             }
                             return false;
+                        });
+            }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+          TestCase.assertEquals("com.example.Handler.Callback", node.functionalInterfaceType?.canonicalText)
+          return super.visitLambdaExpression(node)
+        }
+      }
+    )
+  }
+
+  @Test
+  fun testLambdaFunctionalInterfaceType2() {
+    val file = myFixture.configureByText(
+      "MyClass.java",
+      """
+        package com.example
+
+        public class Message {
+            public int what;
+        }
+
+        class Looper {}
+
+        class Handler {
+            public interface Callback {
+                boolean handleMessage(Message msg);
+            }
+
+            public Handler() {}
+
+            public Handler(Callback callback) {}
+
+            public Handler(Looper looper) {}
+        }
+
+        final class MyClass {
+            public static void foo() {
+                Handler handler =
+                    new Handler(
+                        msg -> {
+                            switch (msg.what) {
+                                case 1:
+                                    return true;
+                                default:
+                                    return false;
+                            }
                         });
             }
         }

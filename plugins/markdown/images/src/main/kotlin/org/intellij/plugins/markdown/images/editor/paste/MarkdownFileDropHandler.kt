@@ -1,10 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.images.editor.paste
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FileDropEvent
+import com.intellij.openapi.editor.FileDropHandler
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
+import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project

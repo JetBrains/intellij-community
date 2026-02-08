@@ -27,7 +27,17 @@ import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import static com.intellij.rt.ant.execution.AntLoggerConstants.*;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.BUILD;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.BUILD_END;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.ERROR;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.EXCEPTION;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.EXCEPTION_CONTENT;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.MESSAGE;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.MESSAGE_CONTENT;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.TARGET;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.TARGET_END;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.TASK;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.TASK_END;
 
 public final class IdeaAntLogger2 extends DefaultLogger {
   static SegmentedOutputStream ourErr;

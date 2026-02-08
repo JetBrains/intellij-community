@@ -14,9 +14,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.util.application
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 
-internal class UndoDumpHistoryAction : UndoHistoryAction()
+internal class UndoDumpHistoryAction : UndoHistoryAction() {
+  override fun perform(undoManager: UndoManagerImpl, editor: FileEditor?) {
+    dumpState(undoManager, editor)
+  }
+}
 
 @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization") // it is an internal action with ~1 user (me)
 internal class UndoClearHistoryAction : UndoHistoryAction() {
@@ -31,9 +39,10 @@ internal class UndoClearHistoryAction : UndoHistoryAction() {
       .asWarning()
       .ask(undoManager.project)
     if (confirmedClear) {
-      super.perform(undoManager, editor)
-      undoManager.clearAndRepairStacks(editor)
-      super.perform(undoManager, editor)
+      dumpState(undoManager, editor)
+      undoManager.clearStacks(editor)
+      application.messageBus.syncPublisher(UndoManagerStateClearListener.TOPIC).clearUndoStack(undoManager, editor)
+      dumpState(undoManager, editor)
       Notification(
         "Undo/redo",
         "Undo history is cleared",
@@ -55,10 +64,6 @@ internal abstract class UndoHistoryAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    dumpHistory(e)
-  }
-
-  private fun dumpHistory(e: AnActionEvent) {
     val dataContext: DataContext = e.dataContext
     val editor: FileEditor? = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext)
     val undoManager: UndoManager? = UndoRedoAction.getUndoManager(editor, dataContext, false, false)
@@ -68,7 +73,9 @@ internal abstract class UndoHistoryAction : DumbAwareAction() {
     }
   }
 
-  protected open fun perform(undoManager: UndoManagerImpl, editor: FileEditor?) {
+  protected abstract fun perform(undoManager: UndoManagerImpl, editor: FileEditor?)
+
+  protected fun dumpState(undoManager: UndoManagerImpl, editor: FileEditor?) {
     LOG.warn(undoManager.dumpState(editor, "triggered by ${this::class.simpleName}"))
   }
 
@@ -79,4 +86,15 @@ internal abstract class UndoHistoryAction : DumbAwareAction() {
   companion object {
     private val LOG: Logger = logger<UndoDumpHistoryAction>()
   }
+}
+
+@Internal
+@Experimental
+interface UndoManagerStateClearListener {
+  companion object {
+    @Topic.AppLevel
+    val TOPIC: Topic<UndoManagerStateClearListener> = Topic(UndoManagerStateClearListener::class.java, Topic.BroadcastDirection.NONE)
+  }
+
+  fun clearUndoStack(undoManager: UndoManagerImpl, editor: FileEditor?)
 }

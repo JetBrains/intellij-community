@@ -6,8 +6,11 @@ import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 public class AsyncProcessIcon extends AnimatedIcon {
   private static final Icon[] SMALL_ICONS = com.intellij.ui.AnimatedIcon.Default.ICONS.toArray(new Icon[0]);

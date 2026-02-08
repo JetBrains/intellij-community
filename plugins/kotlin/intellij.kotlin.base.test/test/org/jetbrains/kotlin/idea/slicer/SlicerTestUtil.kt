@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.codeInsight.slicer.HackedSliceLeafValueClassNod
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.awt.Font
-import kotlin.collections.forEach
 
 internal class TestSliceTreeStructure(private val rootNode: SliceNode) : AbstractTreeStructureBase(rootNode.project) {
     override fun getProviders() = emptyList<TreeStructureProvider>()

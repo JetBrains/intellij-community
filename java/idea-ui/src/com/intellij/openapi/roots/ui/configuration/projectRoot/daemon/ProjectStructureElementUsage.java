@@ -4,7 +4,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class ProjectStructureElementUsage {
   public abstract ProjectStructureElement getSourceElement();

@@ -13,7 +13,11 @@ import com.intellij.platform.vcs.impl.shared.telemetry.VcsTracer
 import com.intellij.platform.vcs.impl.shared.telemetry.traceSuspending
 import com.intellij.platform.vcs.impl.shared.telemetry.withVcsAttributes
 import com.intellij.util.ArrayUtilRt
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.VcsRefsContainer
 import com.intellij.vcs.log.data.VcsLogSorter
 import com.intellij.vcs.log.impl.LogDataImpl
 import com.intellij.vcsUtil.VcsFileUtil
@@ -102,7 +106,7 @@ internal class GitLogExperimentalProvider(private val project: Project) {
 
   companion object {
     val isEnabled: Boolean
-      get() = Registry.`is`("git.log.provider.experimental.refs.collection", false)
+      get() = Registry.`is`("git.log.provider.experimental.refs.collection", true)
   }
 }
 

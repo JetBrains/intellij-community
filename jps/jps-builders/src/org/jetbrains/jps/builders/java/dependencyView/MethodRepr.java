@@ -11,7 +11,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 
 final class MethodRepr extends ProtoMember implements ProtoMethodEntity {

@@ -2,7 +2,11 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.LibraryDetectionManager;
+import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;

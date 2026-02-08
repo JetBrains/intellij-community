@@ -16,7 +16,7 @@
 
 package org.intellij.plugins.relaxNG.convert;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Map;
 
 public interface AdvancedOptions {

@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
+
+@K1Deprecation
 enum class ConstraintPriority {
     /* order of entries here used when solving system of constraints */
     SUPER_DECLARATION,
@@ -14,10 +17,12 @@ enum class ConstraintPriority {
     USE_AS_RECEIVER,
 }
 
+@K1Deprecation
 sealed class Constraint {
     abstract val priority: ConstraintPriority
 }
 
+@K1Deprecation
 class SubtypeConstraint(
     var subtype: ConstraintBound,
     var supertype: ConstraintBound,
@@ -27,6 +32,7 @@ class SubtypeConstraint(
     operator fun component2() = supertype
 }
 
+@K1Deprecation
 class EqualsConstraint(
     var left: ConstraintBound,
     var right: ConstraintBound,
@@ -36,13 +42,17 @@ class EqualsConstraint(
     operator fun component2() = right
 }
 
+@K1Deprecation
 fun Constraint.copy() = when (this) {
     is SubtypeConstraint -> SubtypeConstraint(subtype, supertype, priority)
     is EqualsConstraint -> EqualsConstraint(left, right, priority)
 }
 
+@K1Deprecation
 sealed class ConstraintBound
+@K1Deprecation
 class TypeVariableBound(val typeVariable: TypeVariable) : ConstraintBound()
+@K1Deprecation
 class LiteralBound private constructor(val state: State) : ConstraintBound() {
     companion object {
         val UPPER = LiteralBound(State.UPPER)
@@ -51,6 +61,7 @@ class LiteralBound private constructor(val state: State) : ConstraintBound() {
     }
 }
 
+@K1Deprecation
 fun State.constraintBound(): LiteralBound? = when (this) {
     State.LOWER -> LiteralBound.LOWER
     State.UPPER -> LiteralBound.UPPER
@@ -58,6 +69,7 @@ fun State.constraintBound(): LiteralBound? = when (this) {
     State.UNUSED -> null
 }
 
+@K1Deprecation
 val ConstraintBound.isUnused
     get() = when (this) {
         is TypeVariableBound -> typeVariable.state == State.UNUSED

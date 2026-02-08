@@ -5,3 +5,5 @@ fun foo(){
 // EXIST: { lookupString:"getInstance", itemText:"Calendar.getInstance", tailText:"() (java.util)", typeText:"Calendar!", attributes:"" }
 // EXIST: { lookupString:"getInstance", itemText:"Calendar.getInstance", tailText:"(Locale!) (java.util)", typeText:"Calendar!", attributes:"" }
 // EXIST: { lookupString:"getInstance", itemText:"Calendar.getInstance", tailText:"(TimeZone!, Locale!) (java.util)", typeText:"Calendar!", attributes:"" }
+
+// IGNORE_K2

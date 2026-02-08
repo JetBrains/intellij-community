@@ -21,11 +21,19 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.addExplicitItParameter
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitLambdaParameterSymbol
+import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
+import org.jetbrains.kotlin.idea.codeinsight.utils.scopeFunctionsList
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.referenceExpressionVisitor
 
 
 internal class NestedLambdaShadowedImplicitParameterInspection :

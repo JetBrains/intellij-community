@@ -8,7 +8,15 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFormattedStringElement;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.jetbrains.python.PyStringFormatParser.*;
+import static com.jetbrains.python.PyStringFormatParser.SubstitutionChunk;
+import static com.jetbrains.python.PyStringFormatParser.parseNewStyleFormat;
+import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 
 public final class PyInjectionUtil {
 

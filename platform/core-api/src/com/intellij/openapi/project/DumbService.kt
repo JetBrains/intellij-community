@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -16,20 +16,29 @@ import com.intellij.openapi.project.DumbService.Companion.DUMB_MODE
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.roots.FileIndexFacade
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import java.util.*
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.Unmodifiable
+import java.util.Collections
 import javax.swing.JComponent
 
 /**
@@ -478,19 +487,20 @@ abstract class DumbService {
   abstract fun runWithWaitForSmartModeDisabled(): AccessToken
 
   /**
+   * This listener is always invoked on EDT after dumb mode changes.
+   * There is no guarantee that this listener runs synchronously with modification of dumb mode status.
+   * Consider using [DumbModeListenerBackgroundable]
+   *
    * @see [DUMB_MODE]
    */
   interface DumbModeListener {
-    /**
-     * The event arrives to EDT thread.
-     */
+    @RequiresEdt
     fun enteredDumbMode() {}
 
-    /**
-     * The event arrives to EDT thread.
-     */
+    @RequiresEdt
     fun exitDumbMode() {}
   }
+
 
   @ApiStatus.Internal
   abstract fun unsafeRunWhenSmart(runnable: Runnable)
@@ -558,7 +568,6 @@ abstract class DumbService {
     }
 
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(project: Project): DumbService = project.service()
 
     @JvmStatic

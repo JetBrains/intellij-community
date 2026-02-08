@@ -8,7 +8,11 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil

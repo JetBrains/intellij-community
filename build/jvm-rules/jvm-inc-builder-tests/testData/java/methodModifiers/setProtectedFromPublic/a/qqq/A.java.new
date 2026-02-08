@@ -1,0 +1,7 @@
+package qqq;
+
+public class A {
+   protected void f() {
+
+   }
+}

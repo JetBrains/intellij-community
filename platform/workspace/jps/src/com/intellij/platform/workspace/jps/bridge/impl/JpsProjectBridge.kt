@@ -2,9 +2,9 @@
 package com.intellij.platform.workspace.jps.bridge.impl
 
 import com.intellij.platform.workspace.jps.bridge.impl.library.JpsLibraryCollectionsCache
-import com.intellij.platform.workspace.jps.bridge.impl.module.*
 import com.intellij.platform.workspace.jps.bridge.impl.module.JpsLibraryDependencyBridge
 import com.intellij.platform.workspace.jps.bridge.impl.module.JpsModuleBridge
+import com.intellij.platform.workspace.jps.bridge.impl.module.JpsModuleDependencyBridge
 import com.intellij.platform.workspace.jps.bridge.impl.module.JpsSdkReferencesTableBridge
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -18,7 +18,12 @@ import org.jetbrains.jps.model.java.impl.JpsJavaAwareProject
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsLibraryCollection
 import org.jetbrains.jps.model.library.JpsLibraryType
-import org.jetbrains.jps.model.module.*
+import org.jetbrains.jps.model.module.JpsDependencyElement
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleType
+import org.jetbrains.jps.model.module.JpsSdkReferencesTable
+import org.jetbrains.jps.model.module.JpsTestModuleProperties
+import org.jetbrains.jps.model.module.JpsTypedModule
 
 internal class JpsProjectBridge(modelBridge: JpsModelBridge,
                                 entityStorage: EntityStorage,

@@ -13,7 +13,7 @@ import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 
 public class XMLColorsPage implements ColorSettingsPage {

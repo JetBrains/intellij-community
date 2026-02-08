@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterUpdater;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;

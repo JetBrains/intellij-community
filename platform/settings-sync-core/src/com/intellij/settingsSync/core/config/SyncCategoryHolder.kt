@@ -1,11 +1,16 @@
 package com.intellij.settingsSync.core.config
 
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.SettingsCategory.*
-import com.intellij.settingsSync.core.SettingsSyncState
+import com.intellij.openapi.components.SettingsCategory.CODE
+import com.intellij.openapi.components.SettingsCategory.KEYMAP
+import com.intellij.openapi.components.SettingsCategory.PLUGINS
+import com.intellij.openapi.components.SettingsCategory.SYSTEM
+import com.intellij.openapi.components.SettingsCategory.TOOLS
+import com.intellij.openapi.components.SettingsCategory.UI
 import com.intellij.settingsSync.core.SettingsSyncBundle.message
+import com.intellij.settingsSync.core.SettingsSyncState
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Locale
 
 internal class SyncCategoryHolder(val descriptor: Category) {
 

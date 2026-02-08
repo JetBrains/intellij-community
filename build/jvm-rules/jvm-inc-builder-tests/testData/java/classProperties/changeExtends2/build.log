@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Victim$SubVictim.class
+  Victim.class
+End of files
+Compiling files:
+  java/classProperties/changeExtends2/a/Victim.java
+End of files
+Cleaning output files:
+  Main.class
+End of files
+Compiling files:
+  java/classProperties/changeExtends2/a/Main.java
+End of files
+------------------------------------------
+Exit code: OK

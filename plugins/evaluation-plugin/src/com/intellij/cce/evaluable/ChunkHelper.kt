@@ -15,7 +15,6 @@ import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.interpreter.PresentableEvalData
 import com.intellij.cce.interpreter.naiveReorder
 import java.util.UUID
-import kotlin.collections.plusAssign
 
 class ChunkHelper(
   private val datasetName: String,

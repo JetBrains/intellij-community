@@ -25,7 +25,12 @@ import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserImpl
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.performInMemoryRebase
-import git4idea.rebase.*
+import git4idea.rebase.GitInteractiveRebaseEditorHandler
+import git4idea.rebase.GitRebaseEditorHandler
+import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.GitRebaseEntryWithDetails
+import git4idea.rebase.GitRebaseUtils
+import git4idea.rebase.GitSquashedCommitsMessage
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.repo.GitRepository

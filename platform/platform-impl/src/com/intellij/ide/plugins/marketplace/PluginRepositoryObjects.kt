@@ -18,7 +18,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Locale
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -61,24 +61,10 @@ data class ModuleDependency(
 
 @Serializable
 @ApiStatus.Internal
-enum class LoadingRule {
-  @SerialName("required")
-  REQUIRED,
-
-  @SerialName("optional")
-  OPTIONAL;
-
-  @Suppress("unused")
-  @JsonValue
-  fun toValue(): String = name.lowercase()
-}
-
-@Serializable
-@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PluginContentModule(
   val moduleName: String = "",
-  val loadingRule: LoadingRule = LoadingRule.OPTIONAL,
+  val loadingRule: String? = null,
 )
 
 @Serializable

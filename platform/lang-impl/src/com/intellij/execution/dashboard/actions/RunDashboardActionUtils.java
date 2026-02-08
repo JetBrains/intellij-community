@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.dashboard.*;
+import com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor;
+import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,7 +18,11 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
 import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.findValue;
@@ -39,34 +46,34 @@ public final class RunDashboardActionUtils {
     if (project == null) return JBIterable.empty();
 
     Set<RunDashboardRunConfigurationNode> result = new LinkedHashSet<>();
+    var uiSelection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (uiSelection != null) {
+      JBIterable<Object> roots = JBIterable.of(uiSelection);
+      if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
 
-    RunDashboardService selectedService = null;
-
-    // todo introduce proper backend node ids, drop selected items usage completely
-    if (IdeProductMode.isMonolith()) {
-      var uiSelection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
-      if (uiSelection != null) {
-        JBIterable<Object> roots = JBIterable.of(uiSelection);
-        if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
-
+      if (IdeProductMode.isMonolith()) {
         var substitutor = ContainerUtil.getFirstItem(LegacyRunDashboardServiceSubstitutor.EP_NAME.getExtensionList());
-        if (substitutor == null) return JBIterable.empty();
-
+        if (substitutor == null) return JBIterable.from(result);
         return JBIterable.from(ContainerUtil.map(result, it -> substitutor.substituteWithBackendService(it, project)));
       }
+      else {
+        return JBIterable.from(result);
+      }
     }
+    return getFallbackSelectionForEmbeddedBackendRunToolwindowActions(e, project, result);
+  }
 
+  private static @NotNull JBIterable<RunDashboardRunConfigurationNode> getFallbackSelectionForEmbeddedBackendRunToolwindowActions(@NotNull AnActionEvent e,
+                                                                                Project project,
+                                                                                Set<RunDashboardRunConfigurationNode> result) {
     var currentContentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     var currentContentDescriptorId = currentContentDescriptor == null ? null : currentContentDescriptor.getId();
+    RunDashboardService selectedService = null;
     if (currentContentDescriptorId != null) {
       // backend case with run toolwindow that is not split in any way and does not properly receive a serialized data context from frontend
       // because of obscure content manager-related wrapping mechanism
       var maybeService = RunDashboardManager.getInstance(project).findService(currentContentDescriptorId);
       selectedService = maybeService instanceof RunDashboardService ? (RunDashboardService)maybeService : null;
-    }
-    if (selectedService == null) {
-      var selectedServiceId = e.getData(SELECTED_DASHBOARD_SERVICE_ID);
-      selectedService = selectedServiceId == null ? null : findValue(selectedServiceId);
     }
 
     JBIterable<Object> roots = JBIterable.of(selectedService);

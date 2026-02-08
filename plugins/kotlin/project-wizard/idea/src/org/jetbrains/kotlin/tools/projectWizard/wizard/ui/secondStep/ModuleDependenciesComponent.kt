@@ -21,7 +21,13 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleDepen
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleReference
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.path
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
-import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.AbstractSingleSelectableListWithIcon
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitleComponentAlignment
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitledComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.addBorder
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.createPanelWithPopupHandler
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.fullTextHtml
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.icon
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Dimension

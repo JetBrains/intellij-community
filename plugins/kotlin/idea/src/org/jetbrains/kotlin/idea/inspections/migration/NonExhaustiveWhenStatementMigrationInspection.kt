@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.quickfix.AddWhenElseBranchFix
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
+@K1Deprecation
 class NonExhaustiveWhenStatementMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<KtWhenExpression>(KtWhenExpression::class.java),
     MigrationFix {

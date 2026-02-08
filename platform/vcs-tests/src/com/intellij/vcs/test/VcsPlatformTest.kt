@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.cd
@@ -22,7 +21,12 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
@@ -31,7 +35,6 @@ import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.KMutableProperty0
 
 abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   protected val testNioRoot: Path

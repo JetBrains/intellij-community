@@ -10,7 +10,10 @@ import com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty;
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;

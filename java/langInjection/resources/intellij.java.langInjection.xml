@@ -10,7 +10,6 @@
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.langInjection.jps"/>
-
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="JAVA" shortName="UnknownLanguage" groupKey="inspections.language.injection.group.name" enabledByDefault="true"

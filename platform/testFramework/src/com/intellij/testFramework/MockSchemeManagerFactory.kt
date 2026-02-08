@@ -5,7 +5,11 @@ import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.EmptySchemesManager
+import com.intellij.openapi.options.Scheme
+import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.options.SchemeProcessor
 import java.nio.file.Path
 
 private val EMPTY = EmptySchemesManager()

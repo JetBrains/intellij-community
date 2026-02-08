@@ -4,7 +4,8 @@ package com.intellij.ui.paint;
 import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics2D;
 
 public enum EffectPainter implements RegionPainter<Font> {
   /**

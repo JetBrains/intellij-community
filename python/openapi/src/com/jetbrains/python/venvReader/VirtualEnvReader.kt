@@ -8,8 +8,8 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.osFamily
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
@@ -22,7 +22,13 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.isSymbolicLink
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 typealias Directory = Path
 
@@ -45,7 +51,6 @@ class VirtualEnvReader private constructor(
     null -> null
   })
 
-  private constructor() : this(forcedVars = null, forcedOs = null)
 
   /**
    * Dir with virtual envs
@@ -133,11 +138,8 @@ class VirtualEnvReader private constructor(
    */
   @RequiresBackgroundThread
   fun findPythonInPythonRoot(pathOrDir: PythonHomePath): PythonBinary? {
-    val pythonNames = when (forcedOs ?: pathOrDir.getEelDescriptor().osFamily) {
-      EelOsFamily.Posix -> POSIX_BINS
-      EelOsFamily.Windows -> WIN_BINS
-    }
-    if (pathOrDir.isRegularFile() && pathOrDir.name.lowercase() in pythonNames) {
+    val pythonPattern = getPythonBinaryPattern(pathOrDir.osFamily)
+    if (pathOrDir.isRegularFile() && pythonPattern.matches(pathOrDir.name)) {
       return pathOrDir
     }
 
@@ -161,7 +163,7 @@ class VirtualEnvReader private constructor(
   fun getVenvRootPath(path: Path): Path? {
     val bin = path.parent
 
-    val binFolderName = when (forcedOs ?: path.getEelDescriptor().osFamily) {
+    val binFolderName = when (forcedOs ?: path.osFamily) {
       EelOsFamily.Posix -> "bin"
       EelOsFamily.Windows -> "Scripts"
     }
@@ -186,20 +188,22 @@ class VirtualEnvReader private constructor(
   }
 
   /**
-   * Looks for python binary among directory entries
+   * Looks for python binary among directory entries.
+   * Prefers the shortest name (e.g., "python" over "python3.12") to ensure consistent results,
+   * since virtual environments create multiple symlinks (python, python3, python3.12)
+   * and Files.newDirectoryStream() order is undefined.
    */
   @RequiresBackgroundThread
   private fun findInterpreter(dir: Path): PythonBinary? =
     try {
       Files.newDirectoryStream(dir).use { stream ->
-        val pythonNames = when (forcedOs ?: dir.getEelDescriptor().osFamily) {
-          EelOsFamily.Posix -> POSIX_BINS
-          EelOsFamily.Windows -> WIN_BINS
-        }
-        stream.firstOrNull {
-          it.name.lowercase() in pythonNames &&
-          it.isRegularFile()
-        }
+        val pythonPattern = getPythonBinaryPattern(forcedOs ?: dir.osFamily)
+        
+        val candidates = stream.filter {
+          it.isRegularFile() && pythonPattern.matches(it.name)
+        }.toList()
+        
+        candidates.minByOrNull { it.name.length }
       }
 
     }
@@ -222,8 +226,7 @@ class VirtualEnvReader private constructor(
 
 
   companion object {
-    @JvmStatic
-    val Instance: VirtualEnvReader = VirtualEnvReader()
+    internal val Instance: VirtualEnvReader = VirtualEnvReader(forcedVars = null, forcedOs = null)
 
 
     /**
@@ -237,8 +240,26 @@ class VirtualEnvReader private constructor(
     @Suppress("VENV_IS_OK") // The only place it should be used in prod
     const val DEFAULT_VIRTUALENV_DIRNAME: String = ".venv"
 
-    private val POSIX_BINS = setOf("pypy", "python")
-    private val WIN_BINS = setOf("pypy.exe", "python.exe")
+    private val POSIX_PYTHON_PATTERN = Regex("^(pypy|python)(\\d+(\\.\\d+)*)?$")
+    private val WIN_PYTHON_PATTERN = Regex("^(pypy|python)(\\d+(\\.\\d+)*)?\\.exe$", RegexOption.IGNORE_CASE)
     private fun getLocalEelIfApp(): EelApi? = if (ApplicationManager.getApplication() != null) localEel else null
+
+    /**
+     * Returns a regex pattern that matches Python binary names.
+     * Matches: python, python3, python3.X, python3.X.Y, python3.X.Y.Z, etc., pypy, pypy3, pypy3.X, pypy3.X.Y, etc.
+     * (and .exe versions on Windows).
+     */
+    private fun getPythonBinaryPattern(osFamily: EelOsFamily): Regex {
+      return when (osFamily) {
+        EelOsFamily.Posix -> POSIX_PYTHON_PATTERN
+        EelOsFamily.Windows -> WIN_PYTHON_PATTERN
+      }
+    }
   }
 }
+
+/**
+ * Default (production) instance
+ */
+@ApiStatus.Internal
+fun VirtualEnvReader(): VirtualEnvReader = Instance

@@ -7,7 +7,9 @@ import com.intellij.debugger.streams.core.trace.dsl.ListVariable
 import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.core.trace.dsl.impl.VariableImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.ListType
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinListVariable(override val type: ListType, name: String) : VariableImpl(type, name), ListVariable {
     override operator fun get(index: Expression): Expression = call("get", index)
     override operator fun set(index: Expression, newValue: Expression): Expression = call("set", index, newValue)

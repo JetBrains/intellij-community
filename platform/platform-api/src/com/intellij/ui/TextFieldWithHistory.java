@@ -19,7 +19,9 @@ import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentListener;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;

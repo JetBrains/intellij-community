@@ -28,7 +28,11 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -36,7 +40,11 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction
-import com.jetbrains.python.packaging.toolwindow.model.*
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
+import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.isReadOnly
@@ -48,7 +56,12 @@ import java.awt.Font
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 class PyPackageDescriptionController(val project: Project) : Disposable {
   private val latestText: String

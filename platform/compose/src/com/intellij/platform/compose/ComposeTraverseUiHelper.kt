@@ -10,9 +10,9 @@ import androidx.compose.ui.semantics.getOrNull
 import com.intellij.ide.ui.search.SearchableOptionEntry
 import com.intellij.ide.ui.search.TraverseUIHelper
 import com.intellij.ide.ui.search.processUiLabel
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
-import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi

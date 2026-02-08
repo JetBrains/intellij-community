@@ -3,7 +3,12 @@ package com.intellij.psi.impl.beanProperties
 
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.AnnotationRequest
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedTypes
+import com.intellij.lang.jvm.actions.expectedParameter
+import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor

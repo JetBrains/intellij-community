@@ -10,10 +10,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpBundle;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpClass;
+import org.intellij.lang.regexp.psi.RegExpClassElement;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpPosixBracketExpression;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 
-import static org.intellij.lang.regexp.psi.RegExpSimpleClass.Kind.*;
+import static org.intellij.lang.regexp.psi.RegExpSimpleClass.Kind.DIGIT;
+import static org.intellij.lang.regexp.psi.RegExpSimpleClass.Kind.NON_DIGIT;
+import static org.intellij.lang.regexp.psi.RegExpSimpleClass.Kind.NON_WORD;
+import static org.intellij.lang.regexp.psi.RegExpSimpleClass.Kind.WORD;
 
 public class RegExpRedundantClassElementInspection extends LocalInspectionTool {
   @Override

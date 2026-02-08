@@ -4,8 +4,13 @@ package com.intellij.codeInsight.completion.command
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy.NEVER_AUTOCOMPLETE
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
+import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.codeInsight.lookup.LookupElementInsertStopper
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys

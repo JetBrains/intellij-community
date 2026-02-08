@@ -11,10 +11,14 @@ import com.intellij.ui.content.TabGroupId;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Container;
 import java.util.ArrayList;
 import java.util.List;
 

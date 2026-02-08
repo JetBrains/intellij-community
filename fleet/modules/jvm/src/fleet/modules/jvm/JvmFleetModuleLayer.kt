@@ -2,7 +2,7 @@ package fleet.modules.jvm
 
 import fleet.modules.api.FleetModule
 import fleet.modules.api.FleetModuleLayer
-import java.util.*
+import java.util.ServiceLoader
 import kotlin.reflect.KClass
 
 data class JvmFleetModuleLayer(val layer: ModuleLayer) : FleetModuleLayer {

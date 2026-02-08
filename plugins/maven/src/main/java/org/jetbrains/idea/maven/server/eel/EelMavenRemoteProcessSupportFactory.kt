@@ -6,7 +6,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport

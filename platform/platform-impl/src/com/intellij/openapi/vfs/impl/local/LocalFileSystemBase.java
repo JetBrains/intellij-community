@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -8,10 +8,21 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
+import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.io.FileTooBigException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LargeFileWriteRequestor;
+import com.intellij.openapi.vfs.LocalFileOperationsHandler;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -34,8 +45,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOError;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.text.Normalizer;
@@ -399,7 +425,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
     var length = Files.size(nioFile);
 
-    if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
+    if (FileSizeLimit.isTooLargeForContentLoading(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
       throw new FileTooBigException("File " + nioFile.toAbsolutePath() + " is too large (=" + length + " b)");
     }
 

@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * This interface is supposed to be implemented by Swing components, for which preferred width and height are not independent. Example is a

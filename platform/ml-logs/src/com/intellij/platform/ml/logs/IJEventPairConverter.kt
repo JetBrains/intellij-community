@@ -1,9 +1,32 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.logs
 
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
+import com.intellij.internal.statistic.eventLog.events.ClassEventField
+import com.intellij.internal.statistic.eventLog.events.DoubleEventField
+import com.intellij.internal.statistic.eventLog.events.EnumEventField
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.FloatEventField
+import com.intellij.internal.statistic.eventLog.events.FloatListEventField
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.IntListEventField
+import com.intellij.internal.statistic.eventLog.events.LongEventField
+import com.intellij.internal.statistic.eventLog.events.LongListEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectDescription
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.platform.ml.logs.IJEventPairConverter.Companion.typedBuild
-import com.jetbrains.mlapi.feature.*
+import com.jetbrains.mlapi.feature.AbstractPrimitiveDeclaration
+import com.jetbrains.mlapi.feature.ClassFeatureDeclaration
+import com.jetbrains.mlapi.feature.EnumFeatureDeclaration
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureSignature
+import com.jetbrains.mlapi.feature.NullableFeatureDeclaration
+import com.jetbrains.mlapi.feature.PrimitiveFeatureDeclaration
+import com.jetbrains.mlapi.feature.PrimitiveType
 import com.jetbrains.mlapi.logs.ObjectArrayDeclaration
 import com.jetbrains.mlapi.logs.ObjectDeclaration
 import com.jetbrains.mlapi.logs.ObjectFeatureDeclaration

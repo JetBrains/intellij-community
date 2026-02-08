@@ -2,22 +2,16 @@
 package com.intellij.ide.plugins
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.LongEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration
 
 @Internal
 internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
-
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(
-    id = "plugins.dynamic",
-    version = 4,
-  )
+  private val GROUP = EventLogGroup(id = "plugins.dynamic", version = 4)
 
   private val LOAD_SUCCESS_EVENT = GROUP.registerEvent(
     eventId = "load.success",
@@ -36,9 +30,9 @@ internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
 
   private val LOAD_PAID_PLUGINS_EVENT = GROUP.registerEvent(
     eventId = "load.paid",
-    eventField1 = LongEventField(name = "duration_s", description = "Paid plugins loading duration in whole seconds"),
+    eventField1 = EventFields.Long(name = "duration_s", description = "Paid plugins loading duration in whole seconds"),
     eventField2 = EventFields.Count,
-    eventField3 = BooleanEventField("restart_required"),
+    eventField3 = EventFields.Boolean("restart_required"),
   )
 
   @Internal

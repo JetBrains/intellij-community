@@ -33,7 +33,6 @@
     <spellchecker.dictionaryLayersProvider implementation="com.intellij.spellchecker.PlatformSettingsDictionaryLayersProvider" order="first"/>
 
     <registryKey key="spellchecker.corrections.limit" defaultValue="3" description="Spellchecker corrections limit" restartRequired="false"/>
-    <registryKey key="spellchecker.inspection.enabled" defaultValue="true" description="Enable spellchecking inspection" restartRequired="false"/>
     <registryKey key="spellchecker.use.standard.project.dictionary.name" defaultValue="true" description="Enables single project dictionary file"
                  restartRequired="false"/>
 

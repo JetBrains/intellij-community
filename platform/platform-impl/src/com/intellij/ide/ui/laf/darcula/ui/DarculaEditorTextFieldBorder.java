@@ -14,12 +14,23 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getOutline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintCellEditorBorder;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
 
 /**
  * @author Konstantin Bulenkov

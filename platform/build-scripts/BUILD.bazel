@@ -89,6 +89,7 @@ jvm_library(
     "//libraries/ktor/client",
     "//platform/plugins/parser/impl",
     "//libraries/maven-resolver-provider",
+    "//platform/build-scripts/product-dsl/plugin-graph",
     "//platform/build-scripts/api",
     "//platform/build-scripts/product-dsl",
   ],

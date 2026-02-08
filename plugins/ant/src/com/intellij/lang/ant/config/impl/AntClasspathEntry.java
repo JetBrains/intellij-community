@@ -26,7 +26,7 @@ import com.intellij.util.config.Externalizer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.util.List;
 

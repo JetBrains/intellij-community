@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.intellij.openapi.vcs.BaseChangeListsTest
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.flow.filter
@@ -17,7 +18,7 @@ import kotlin.time.Duration.Companion.seconds
 internal class ChangeListDnDSupportTest : BaseChangeListsTest() {
   override fun setUp() {
     super.setUp()
-    setRegistryPropertyForTest("vcs.rd.local.changes.enabled", true.toString())
+    setRegistryPropertyForTest(RdLocalChanges.REGISTRY_KEY, true.toString())
   }
 
   fun `test moveChanges moves changes to target changelist`() {

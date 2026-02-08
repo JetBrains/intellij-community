@@ -4,7 +4,11 @@
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.progress.ProcessCanceledException
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future

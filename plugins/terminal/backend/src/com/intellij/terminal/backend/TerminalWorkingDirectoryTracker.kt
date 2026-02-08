@@ -3,10 +3,14 @@ package com.intellij.terminal.backend
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.jediterm.terminal.TtyConnector
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener

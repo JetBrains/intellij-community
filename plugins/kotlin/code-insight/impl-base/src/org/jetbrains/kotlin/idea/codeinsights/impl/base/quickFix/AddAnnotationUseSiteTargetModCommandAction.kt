@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiBasedModCommandAction
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle

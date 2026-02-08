@@ -10,16 +10,25 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.CodeFragmentTableCellEditorBase;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.StringTableCellEditor;
-import com.intellij.ui.*;
+import com.intellij.ui.BooleanTableCellEditor;
+import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.RowEditableTableModel;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 

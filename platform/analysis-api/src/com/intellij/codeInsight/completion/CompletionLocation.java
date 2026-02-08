@@ -35,6 +35,13 @@ public final class CompletionLocation implements UserDataHolder {
   }
 
   /**
+   * @return true if the completion is not actually being executed.
+   */
+  public boolean isTestingMode() {
+    return myCompletionParameters instanceof CompletionParameters parameters && parameters.isTestingMode();
+  }
+
+  /**
    * @return base completion parameters
    */
   public @NotNull BaseCompletionParameters getBaseCompletionParameters() {

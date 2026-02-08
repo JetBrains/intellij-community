@@ -18,7 +18,11 @@ package com.intellij.designer.propertyTable.editors;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.openapi.ui.ComboBox;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

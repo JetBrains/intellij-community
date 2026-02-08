@@ -10,3 +10,4 @@ fun f() = c.<caret>foo()
 // EXIST: foo
 // EXIST: bar
 // ABSENT: zoo
+// IGNORE_K2

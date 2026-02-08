@@ -48,7 +48,14 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageInfoSearcherAdapter;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.impl.UsageViewEx;
 import com.intellij.usages.rules.PsiElementUsage;
@@ -62,11 +69,25 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Provides common infrastructure for building refactorings.
@@ -311,7 +332,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       MessagesService.getInstance().showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
       return;
     }
-    if (!indexNotReadyException.isNull() || DumbService.isDumb(myProject)) {
+    if (!indexNotReadyException.isNull() || !DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(RefactoringBundle.message("refactoring.dumb.mode.notification"),
                                                                                   DumbModeBlockedFunctionality.Refactoring);
       return;
@@ -574,9 +595,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     });
   }
 
-  private void addDoRefactoringAction(@NotNull UsageView usageView, @NotNull Runnable refactoringRunnable, @NotNull String canNotMakeString) {
+  private void addDoRefactoringAction(@NotNull UsageView usageView,
+                                      @NotNull Runnable refactoringRunnable,
+                                      @NotNull String canNotMakeString) {
+    boolean isDumbAware = DumbService.isDumbAware(this);
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString,
-                                        RefactoringBundle.message("usageView.doAction"), false);
+                                        RefactoringBundle.message("usageView.doAction"), false, isDumbAware);
   }
 
   /**
@@ -615,6 +639,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
         PsiElement[] allElements = elements != null ? ArrayUtil.append(elements, primaryElement) : new PsiElement[]{primaryElement};
         for (final RefactoringHelper<?> helper : RefactoringHelper.EP_NAME.getExtensionList()) {
+          if (!DumbService.getInstance(myProject).isUsableInCurrentContext(helper)) continue;
+
           Object operation = ReadAction.compute(() -> {
             return helper.prepareOperation(writableUsageInfos, ContainerUtil.filter(allElements, e -> e != null));
           });

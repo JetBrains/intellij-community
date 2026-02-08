@@ -3,7 +3,17 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.DynamicPlugins;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImplKt;
+import com.intellij.ide.plugins.InstalledPluginsState;
+import com.intellij.ide.plugins.PluginDependencyImpl;
+import com.intellij.ide.plugins.PluginDescriptorLoader;
+import com.intellij.ide.plugins.PluginInstaller;
+import com.intellij.ide.plugins.PluginManagementPolicy;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
@@ -30,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;

@@ -4,7 +4,11 @@ package com.intellij.ide.starters.local.generator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.getResolvedPath
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.writeBytes
+import com.intellij.openapi.vfs.writeText
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission

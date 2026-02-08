@@ -11,7 +11,7 @@ import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
 

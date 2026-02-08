@@ -13,11 +13,17 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,8 +61,11 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     FileTemplateNode(FileTemplateDescriptor descriptor) {
       this(descriptor.getDisplayName(),
            descriptor.getIcon(),
-           descriptor instanceof FileTemplateGroupDescriptor ? ContainerUtil.map(((FileTemplateGroupDescriptor)descriptor).getTemplates(),
-                                                                                      s -> new FileTemplateNode(s)) : Collections.emptyList(),
+           descriptor instanceof FileTemplateGroupDescriptor ?
+             ContainerUtil.sorted(
+               ContainerUtil.map(((FileTemplateGroupDescriptor)descriptor).getTemplates(), s -> new FileTemplateNode(s)),
+               (n1, n2) -> n1.toString().compareToIgnoreCase(n2.toString())
+             ) : Collections.emptyList(),
            descriptor instanceof FileTemplateGroupDescriptor ? null : descriptor.getFileName());
     }
 

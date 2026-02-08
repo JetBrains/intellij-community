@@ -4,7 +4,9 @@ package com.intellij.internal.statistic.envTest.upload
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.internal.statistic.config.EventLogOptions
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+import com.intellij.internal.statistic.eventLog.MachineId
+import com.intellij.internal.statistic.eventLog.SerializationHelper
 import com.intellij.internal.statistic.eventLog.connection.EventLogResultDecorator
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult

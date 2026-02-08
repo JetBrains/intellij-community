@@ -7,6 +7,7 @@ import git4idea.GitLocalBranch
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.repo.GitRepository
+import git4idea.repo.GitWorkingTreeHolderImpl
 import git4idea.repo.expectEvent
 import git4idea.repo.getAndInit
 import git4idea.test.GitSingleRepoTest
@@ -27,7 +28,7 @@ internal abstract class GitWorkingTreeTestBase : GitSingleRepoTest() {
     expectedWorkingTreeLastCommit: String,
   ) {
     val holder = GitRepositoriesHolder.getAndInit(project)
-    repo.workingTreeHolder.ensureUpToDateForTests()
+    repo.ensureWorkingTreesUpToDateForTests()
     assertSameElements(repo.workingTreeHolder.getWorkingTrees(), getExpectedDefaultWorkingTrees())
 
     holder.expectEvent(
@@ -60,6 +61,10 @@ internal abstract class GitWorkingTreeTestBase : GitSingleRepoTest() {
       val newBranch = repo.branches.findLocalBranch(branchName)
       assertNotNull(newBranch)
       return newBranch!!
+    }
+
+    fun GitRepository.ensureWorkingTreesUpToDateForTests() {
+      (workingTreeHolder as GitWorkingTreeHolderImpl).ensureUpToDateForTests()
     }
   }
 }

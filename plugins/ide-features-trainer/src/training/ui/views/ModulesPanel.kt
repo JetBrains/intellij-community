@@ -9,7 +9,12 @@ import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.ui.UISettings
-import training.util.*
+import training.util.DataLoader
+import training.util.learningProgressString
+import training.util.openLinkInBrowser
+import training.util.rigid
+import training.util.scaledRigid
+import training.util.wrapWithUrlPanel
 import java.awt.Dimension
 import java.awt.Font
 import javax.swing.Box

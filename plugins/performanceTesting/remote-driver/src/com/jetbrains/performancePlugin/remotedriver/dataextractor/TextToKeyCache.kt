@@ -2,7 +2,7 @@
 package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
 import com.jetbrains.performancePlugin.remotedriver.LruCache
-import java.util.*
+import java.util.Collections
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 

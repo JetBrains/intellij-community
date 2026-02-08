@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 /**
  * @author Eugene Belyaev
@@ -36,7 +38,6 @@ public class ThreadsViewConfigurable implements Configurable {
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_LINE_NUMBER", myLineNumberCheckBox));
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_SOURCE_NAME", mySourceCheckBox));
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_THREAD_GROUPS", myShowGroupsCheckBox));
-    myDataBinding.addBinding(new ToggleButtonBinding("SHOW_SYNTHETIC_FRAMES", myShowSyntheticsCheckBox));
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_CURRENT_THREAD", myShowCurrentThreadChechBox));
   }
 

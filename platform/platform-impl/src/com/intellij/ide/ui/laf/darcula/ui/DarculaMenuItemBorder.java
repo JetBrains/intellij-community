@@ -10,7 +10,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 /**
  * @author Konstantin Bulenkov

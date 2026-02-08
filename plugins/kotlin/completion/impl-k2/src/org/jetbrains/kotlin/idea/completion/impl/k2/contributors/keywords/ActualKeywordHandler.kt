@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
@@ -25,12 +25,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.implCommon.ActualCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
@@ -76,7 +76,7 @@ internal class ActualKeywordHandler(
         if (!isTopLevelDeclaration) return emptyList()
 
         val module = position.module ?: return emptyList()
-        val kaModule = KotlinProjectStructureProvider.getModule(project, position, useSiteModule = null)
+        val kaModule = KaModuleProvider.getModule(project, position, useSiteModule = null)
         val dependsOnModules = kaModule.transitiveDependsOnDependencies
         if (dependsOnModules.isEmpty()) return emptyList()
 

@@ -1,7 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.ui
 
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ChangeListener
+import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayHintsCollector
+import com.intellij.codeInsight.hints.InlayHintsProvider
+import com.intellij.codeInsight.hints.InlayHintsSink
+import com.intellij.codeInsight.hints.NoSettings
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement

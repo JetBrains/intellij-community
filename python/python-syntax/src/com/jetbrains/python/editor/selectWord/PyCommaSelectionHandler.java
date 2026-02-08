@@ -23,7 +23,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstKeyValueExpression;
+import com.jetbrains.python.ast.PyAstKeywordArgument;
+import com.jetbrains.python.ast.PyAstNamedParameter;
+import com.jetbrains.python.ast.PyAstNumericLiteralExpression;
+import com.jetbrains.python.ast.PyAstReferenceExpression;
+import com.jetbrains.python.ast.PyAstStarArgument;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

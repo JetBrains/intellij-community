@@ -16,7 +16,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitActivity;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitImpl;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
+import git4idea.commands.GitMessageWithFilesDetector;
+import git4idea.commands.GitStandardProgressAnalyzer;
+import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.update.GitUpdateResult;
@@ -31,7 +40,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static git4idea.GitNotificationIdsHolder.*;
+import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_DETECTED;
+import static git4idea.GitNotificationIdsHolder.REBASE_ABORT;
+import static git4idea.GitNotificationIdsHolder.REBASE_UPDATE_PROJECT_ERROR;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 
 public final class GitRebaser {

@@ -11,7 +11,10 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 @ApiStatus.Internal
 public final class InvertBooleanDialog extends RefactoringDialog {

@@ -35,6 +35,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                   includeContentNonIndexableSets: Boolean,
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean,
+                  includeExternalNonIndexableSets: Boolean,
                   includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
 
   /**
@@ -52,6 +53,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                                                   includeContentNonIndexableSets: Boolean,
                                                   includeExternalSets: Boolean,
                                                   includeExternalSourceSets: Boolean,
+                                                  includeExternalNonIndexableSets: Boolean,
                                                   includeCustomKindSets: Boolean): Collection<E>
 
   /**
@@ -66,6 +68,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean,
   ): Collection<WorkspaceEntity>
 

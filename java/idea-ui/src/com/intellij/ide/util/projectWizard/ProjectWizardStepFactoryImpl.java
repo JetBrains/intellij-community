@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Eugene Zhuravlev

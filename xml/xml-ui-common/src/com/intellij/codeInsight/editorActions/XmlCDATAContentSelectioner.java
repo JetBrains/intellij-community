@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

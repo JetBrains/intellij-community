@@ -7,7 +7,7 @@ import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.Objects
 import java.util.regex.Pattern
 
 @ApiStatus.Internal

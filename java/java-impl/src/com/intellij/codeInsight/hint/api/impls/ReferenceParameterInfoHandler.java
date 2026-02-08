@@ -1,10 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.hint.api.*;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.codeInsight.hint.api.JavaParameterInfo;
+import com.intellij.codeInsight.hint.api.JavaParameterPresentation;
+import com.intellij.codeInsight.hint.api.JavaSignaturePresentation;
+import com.intellij.codeInsight.hint.api.ReadOnlyJavaParameterInfoHandler;
+import com.intellij.codeInsight.hint.api.ReadOnlyJavaParameterUpdateInfoContext;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.ParameterInfoUtils;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.util.Range;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;

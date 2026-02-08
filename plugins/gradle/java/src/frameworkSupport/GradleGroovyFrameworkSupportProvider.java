@@ -11,7 +11,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Vladislav.Soroka

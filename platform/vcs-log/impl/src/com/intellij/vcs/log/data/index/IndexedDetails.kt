@@ -2,14 +2,18 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.LoadingDetailsImpl
 import com.intellij.vcs.log.data.VcsLogStorage
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 
 @ApiStatus.Internal
 class IndexedDetails(private val dataGetter: IndexDataGetter,

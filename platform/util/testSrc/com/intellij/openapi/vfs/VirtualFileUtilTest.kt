@@ -1,13 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.io.NioPathAssertion.Companion.assertNioPath
 import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.vfs.VirtualFileAssertion.Companion.assertVirtualFile
-import com.intellij.testFramework.utils.vfs.*
+import com.intellij.testFramework.utils.vfs.createDirectory
+import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.testFramework.utils.vfs.deleteChildrenRecursively
+import com.intellij.testFramework.utils.vfs.deleteRecursively
+import com.intellij.testFramework.utils.vfs.getDirectory
+import com.intellij.testFramework.utils.vfs.getFile
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.IOException

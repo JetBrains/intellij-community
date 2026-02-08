@@ -4,3 +4,4 @@ class A(s: String) {
 
 // EXIST: hashCode
 // ABSENT: substring
+// IGNORE_K2

@@ -3,7 +3,12 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ord
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ExportableOrderEntry
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderEntry
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData
@@ -219,7 +224,11 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
         "jetbrains.kotlin:kotlin-test:{{KGP_VERSION}}",
         "jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}}",
         "hamcrest:hamcrest-core:1.3",
-        "junit:4.13.2"
+        "junit:4.13.2",
+
+        // after 2.0.*
+        "org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}}",
     )
 
     private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^(Gradle: )?Kotlin/Native.*".toRegex()

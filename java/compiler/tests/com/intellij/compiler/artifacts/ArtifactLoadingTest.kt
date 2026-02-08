@@ -16,8 +16,15 @@ import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.testFramework.*
-import org.junit.Assert.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.OpenProjectTaskBuilder
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.useProject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

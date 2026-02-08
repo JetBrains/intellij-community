@@ -4,7 +4,7 @@ package com.intellij.platform.debugger.impl.rpc
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.DocumentPatchVersionAccessor
 import com.intellij.ide.rpc.FrontendDocumentId
-import com.intellij.ide.rpc.util.TextRangeId
+import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.Document
@@ -113,11 +113,11 @@ data class XBreakpointDtoState(
 @ApiStatus.Internal
 @Serializable
 data class XLineBreakpointInfo(
-  val isTemporary: Boolean,
-  val line: Int,
-  val fileUrl: String,
-  val highlightingRange: TextRangeId?,
-  val file: VirtualFileId?,
+    val isTemporary: Boolean,
+    val line: Int,
+    val fileUrl: String,
+    val highlightingRange: TextRangeDto?,
+    val file: VirtualFileId?,
 )
 
 @ApiStatus.Internal

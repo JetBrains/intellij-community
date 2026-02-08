@@ -12,7 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 
 import static com.intellij.codeInsight.template.emmet.ZenCodingTemplate.doWrap;
 
@@ -38,7 +38,7 @@ public abstract class EmmetAbbreviationTestCase extends LightPlatformCodeInsight
     ApplicationManager.getApplication().runWriteAction(() -> TemplateManager.getInstance(getProject()).startTemplate(getEditor(), selectedText, template));
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     checkResultByText(expectedResult);
   }
@@ -55,7 +55,7 @@ public abstract class EmmetAbbreviationTestCase extends LightPlatformCodeInsight
     });
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   public void emmetWrap(String sourceData, String emmetExpression, String expectedData) {
@@ -67,7 +67,7 @@ public abstract class EmmetAbbreviationTestCase extends LightPlatformCodeInsight
       state.nextTab();
     }
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     checkResultByText(expectedData);
   }
@@ -78,7 +78,7 @@ public abstract class EmmetAbbreviationTestCase extends LightPlatformCodeInsight
     executeAction(IdeActions.ACTION_UPDATE_TAG_WITH_EMMET);
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     checkResultByText(expectedData);
   }

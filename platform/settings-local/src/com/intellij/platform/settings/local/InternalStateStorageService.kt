@@ -19,7 +19,6 @@ import com.intellij.util.xmlb.__json
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer

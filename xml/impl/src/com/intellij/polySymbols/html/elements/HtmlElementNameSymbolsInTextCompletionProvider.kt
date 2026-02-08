@@ -6,14 +6,14 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.HtmlCompletionContributor.canProvideHtmlElementInTextCompletion
 import com.intellij.codeInsight.completion.HtmlCompletionContributor.patchResultSetForHtmlElementInTextCompletion
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
+import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.html.HTML_ELEMENTS
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlDocument
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
-import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
 internal class HtmlElementNameSymbolsInTextCompletionProvider : PolySymbolsCompletionProviderBase<XmlElement>() {
 

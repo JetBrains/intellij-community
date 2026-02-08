@@ -2,10 +2,28 @@
 package com.intellij.debugger.memory.agent.parsers
 
 import com.intellij.debugger.engine.ReferringObject
-import com.intellij.debugger.memory.agent.*
+import com.intellij.debugger.memory.agent.CompoundRootReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgent
+import com.intellij.debugger.memory.agent.MemoryAgentActionResult
+import com.intellij.debugger.memory.agent.MemoryAgentArrayReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentConstantPoolReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentFieldReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentKindReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentReferenceKind
+import com.intellij.debugger.memory.agent.MemoryAgentReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentTruncatedReferringObject
+import com.intellij.debugger.memory.agent.ReferringObjectsInfo
+import com.intellij.debugger.memory.agent.UnexpectedValueFormatException
 import com.intellij.openapi.util.Pair
-import com.sun.jdi.*
-import java.util.*
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.BooleanValue
+import com.sun.jdi.Field
+import com.sun.jdi.IntegerValue
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.PrimitiveValue
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.Value
+import java.util.LinkedList
 
 object BooleanParser : ResultParser<Boolean> {
   override fun parse(value: Value): Boolean {

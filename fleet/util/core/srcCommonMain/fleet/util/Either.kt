@@ -3,6 +3,8 @@
 
 package fleet.util
 
+import fleet.util.Either.Companion.error
+import fleet.util.Either.Companion.value
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor

@@ -8,7 +8,12 @@ import com.intellij.ide.ui.percentValue
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZoomSwitcherClosed
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionHolder
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project

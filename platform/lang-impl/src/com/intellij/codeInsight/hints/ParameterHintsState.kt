@@ -4,58 +4,58 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import com.intellij.openapi.editor.impl.zombie.LimbedZombie
-import java.io.DataInput
-import java.io.DataOutput
 
 
 private typealias Limb = Pair<Int, HintData>
 
-internal class ParameterHintsZombie(limbs: List<Limb>) : LimbedZombie<Limb>(limbs) {
+internal class ParameterHintsZombie private constructor(
+  limbs: List<Limb>,
+) : LimbedZombie<Limb>(limbs) {
 
   object Necromancy : LimbedNecromancy<ParameterHintsZombie, Limb>(spellLevel=0) {
-
-    override fun buryLimb(grave: DataOutput, limb: Limb) {
-      val (offset, hintData) = limb
-      writeInt(grave, offset)
-      writeHintData(grave, hintData)
-    }
-
-    override fun exhumeLimb(grave: DataInput): Limb {
-      val offset:        Int = readInt(grave)
-      val hintData: HintData = readHintData(grave)
-      return Pair(offset, hintData)
-    }
 
     override fun formZombie(limbs: List<Limb>): ParameterHintsZombie {
       return ParameterHintsZombie(limbs)
     }
 
-    private fun writeHintData(grave: DataOutput, value: HintData) {
-      writeString(grave, value.presentationText)
-      writeBool(grave, value.relatesToPrecedingText)
-      writeWidthAdjustment(grave, value.widthAdjustment)
+    override fun Out.writeLimb(limb: Limb) {
+      val (offset, hintData) = limb
+      writeInt(offset)
+      writeHintData(hintData)
     }
 
-    private fun readHintData(grave: DataInput): HintData {
-      val text:                          String = readString(grave)
-      val relatesToPrecedingText:       Boolean = readBool(grave)
-      val widthAdjustment: HintWidthAdjustment? = readWidthAdjustment(grave)
+    override fun In.readLimb(): Limb {
+      val offset:        Int = readInt()
+      val hintData: HintData = readHintData()
+      return Pair(offset, hintData)
+    }
+
+    private fun Out.writeHintData(value: HintData) {
+      writeString(value.presentationText)
+      writeBool(value.relatesToPrecedingText)
+      writeWidthAdjustment(value.widthAdjustment)
+    }
+
+    private fun In.readHintData(): HintData {
+      val text:                          String = readString()
+      val relatesToPrecedingText:       Boolean = readBool()
+      val widthAdjustment: HintWidthAdjustment? = readWidthAdjustment()
       return HintData(text, relatesToPrecedingText, widthAdjustment)
     }
 
-    private fun writeWidthAdjustment(grave: DataOutput, widthAdjustment: HintWidthAdjustment?) {
-      writeNullable(grave, widthAdjustment) {
-        writeString(grave, it.editorTextToMatch)
-        writeStringNullable(grave, it.hintTextToMatch)
-        writeInt(grave, it.adjustmentPosition)
+    private fun Out.writeWidthAdjustment(widthAdjustment: HintWidthAdjustment?) {
+      writeNullable(widthAdjustment) {
+        writeString(it.editorTextToMatch)
+        writeStringOrNull(it.hintTextToMatch)
+        writeInt(it.adjustmentPosition)
       }
     }
 
-    private fun readWidthAdjustment(grave: DataInput): HintWidthAdjustment? {
-      return readNullable(grave) {
-        val editorTextToMatch: String = readString(grave)
-        val hintTextToMatch:  String? = readStringNullable(grave)
-        val adjustmentOffset:     Int = readInt(grave)
+    private fun In.readWidthAdjustment(): HintWidthAdjustment? {
+      return readNullable {
+        val editorTextToMatch: String = readString()
+        val hintTextToMatch:  String? = readStringOrNull()
+        val adjustmentOffset:     Int = readInt()
         HintWidthAdjustment(editorTextToMatch, hintTextToMatch, adjustmentOffset)
       }
     }

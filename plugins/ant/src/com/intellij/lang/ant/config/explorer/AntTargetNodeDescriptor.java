@@ -5,7 +5,11 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.config.ExecutionEvent;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
 import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
@@ -26,7 +30,8 @@ import com.intellij.util.ui.UIUtil;
 import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 
 final class AntTargetNodeDescriptor extends AntNodeDescriptor {

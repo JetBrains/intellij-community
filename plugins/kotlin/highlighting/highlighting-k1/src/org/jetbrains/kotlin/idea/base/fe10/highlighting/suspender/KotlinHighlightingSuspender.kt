@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.highlighter.ElementAnnotator
 import org.jetbrains.kotlin.idea.highlighter.ElementAnnotator.Companion.suppressDeprecatedAnnotationRegistryKey
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit
  *
  * Do not rethrow exception too often to disable HL for a while
  */
+@K1Deprecation
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class KotlinHighlightingSuspender(private val project: Project) {

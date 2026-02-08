@@ -6,7 +6,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Recursively traverses {@link PyType} trees in DFS order.
@@ -187,6 +191,11 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     @Override
     public @NotNull List<@Nullable PyType> visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
       return Collections.unmodifiableList(new ArrayList<>(unsafeUnionType.getMembers()));
+    }
+
+    @Override
+    public @NotNull List<@Nullable PyType> visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+      return Collections.unmodifiableList(new ArrayList<>(intersectionType.getMembers()));
     }
 
     @Override

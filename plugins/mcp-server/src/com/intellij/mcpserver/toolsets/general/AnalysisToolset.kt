@@ -5,7 +5,11 @@ package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
-import com.intellij.build.events.*
+import com.intellij.build.events.BuildIssueEvent
+import com.intellij.build.events.FileMessageEvent
+import com.intellij.build.events.FinishBuildEvent
+import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.StartBuildEvent
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
@@ -13,9 +17,14 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
 import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.mcpserver.*
+import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpCallInfo
+import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.mcpserver.util.projectDirectory
@@ -40,7 +49,11 @@ import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
 import com.intellij.task.impl.ProjectTaskManagerImpl
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable

@@ -6,7 +6,16 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
 import org.jetbrains.uast.java.JavaUAnnotation

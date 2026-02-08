@@ -15,11 +15,15 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.util.List;
 
 import static com.intellij.util.text.DateFormatUtil.formatPrettyDateTime;

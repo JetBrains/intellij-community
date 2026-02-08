@@ -2,8 +2,12 @@
 package training.learn.lesson.general.completion
 
 import org.jetbrains.annotations.Nls
-import training.dsl.*
+import training.dsl.LearningDslBase
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.defaultRestoreDelay
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains

@@ -21,7 +21,12 @@ import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle

@@ -7,8 +7,14 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffRangeUtil;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.MergeConflictType;
 import com.intellij.diff.util.MergeConflictType.Type;
+import com.intellij.diff.util.MergeRangeUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +26,9 @@ import java.util.List;
 
 import static com.intellij.diff.tools.util.base.HighlightPolicy.BY_LINE;
 import static com.intellij.diff.tools.util.base.HighlightPolicy.BY_WORD;
-import static com.intellij.diff.tools.util.base.IgnorePolicy.*;
+import static com.intellij.diff.tools.util.base.IgnorePolicy.DEFAULT;
+import static com.intellij.diff.tools.util.base.IgnorePolicy.IGNORE_WHITESPACES;
+import static com.intellij.diff.tools.util.base.IgnorePolicy.TRIM_WHITESPACES;
 
 public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
   private static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES};

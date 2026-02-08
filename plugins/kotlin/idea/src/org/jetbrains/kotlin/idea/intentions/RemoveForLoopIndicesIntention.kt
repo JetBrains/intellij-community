@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -17,12 +18,14 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class RemoveForLoopIndicesInspection : IntentionBasedInspection<KtForExpression>(
     RemoveForLoopIndicesIntention::class,
     KotlinBundle.message("index.is.not.used.in.the.loop.body")
 )
 
+@K1Deprecation
 class RemoveForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
     KotlinBundle.messagePointer("remove.indices.in.for.loop")

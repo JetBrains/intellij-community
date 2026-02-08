@@ -94,7 +94,8 @@ private fun PrinterContext.expectedKonanDistForFamily(family: Family, konanTarge
             appendLine("looked at: ${chosenDist.canonicalPath}")
             appendLine("Try regenerating using:")
             val platformPrefix = "org.jetbrains.kotlin.native.platform."
-            appendLine("ls ~/.konan/kotlin-native-prebuilt-*-${versionClassifier}/klib/platform/${anyTargetFromFamily.name}/ | fgrep ${platformPrefix} | cut -c ${platformPrefix.length}- | sort | xargs -n1 echo 'Kotlin/Native:' > '${chosenDist.canonicalPath}'")
+            val cutStartPosition = platformPrefix.length + 1 // cut string org.jetbrains.kotlin.native.platform.osx => osx
+            appendLine("ls ~/.konan/kotlin-native-prebuilt-*-${versionClassifier}/klib/platform/${anyTargetFromFamily.name}/ | fgrep ${platformPrefix} | cut -c $cutStartPosition- | sort | xargs -n1 echo 'Kotlin/Native:' > '${chosenDist.canonicalPath}'")
         }
     }
 

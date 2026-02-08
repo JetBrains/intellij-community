@@ -6,8 +6,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 /**
  * @see JBPopupFactory

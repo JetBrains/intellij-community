@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.picker;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface ColorListener {
   void colorChanged(Color color, Object source);

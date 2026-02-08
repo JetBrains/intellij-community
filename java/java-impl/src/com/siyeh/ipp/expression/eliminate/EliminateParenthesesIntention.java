@@ -1,8 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression.eliminate;
 
-import com.intellij.modcommand.*;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
@@ -17,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.modcommand.ModCommand.*;
+import static com.intellij.modcommand.ModCommand.chooseAction;
+import static com.intellij.modcommand.ModCommand.nop;
+import static com.intellij.modcommand.ModCommand.psiUpdateStep;
 
 public final class EliminateParenthesesIntention extends PsiBasedModCommandAction<PsiJavaToken> {
   public EliminateParenthesesIntention() {

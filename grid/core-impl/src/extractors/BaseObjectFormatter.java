@@ -17,10 +17,18 @@ import java.math.BigInteger;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.intellij.database.run.ui.grid.editors.FormatsCache.*;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.getDateFormatProvider;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.getDecimalFormatProvider;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.getLongFormatProvider;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.getTimeFormatProvider;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.getTimestampFormatProvider;
 
 public class BaseObjectFormatter implements ObjectFormatter {
   private static final Logger LOG = Logger.getInstance(BaseObjectFormatter.class);

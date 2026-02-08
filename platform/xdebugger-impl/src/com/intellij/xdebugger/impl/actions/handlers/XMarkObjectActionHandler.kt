@@ -8,10 +8,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
-import com.intellij.ui.ComponentUtil
-import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.ui.ComponentUtil
+import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialog

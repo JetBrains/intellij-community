@@ -10,7 +10,6 @@ import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcome
 import com.jetbrains.python.parser.icons.PythonParserIcons
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon

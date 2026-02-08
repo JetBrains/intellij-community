@@ -5,7 +5,17 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
+import org.jetbrains.kotlin.analysis.api.components.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.components.isDoubleType
+import org.jetbrains.kotlin.analysis.api.components.isIntType
+import org.jetbrains.kotlin.analysis.api.components.isLongType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.isUIntType
+import org.jetbrains.kotlin.analysis.api.components.isULongType
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -24,16 +34,27 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
+import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
 
 internal abstract class AbstractSimplifiableCallChainInspection :
     KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, CallChainConversion>() {

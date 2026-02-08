@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization
 
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.CustomFoldRegionRenderer
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 

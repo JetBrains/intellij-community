@@ -3,7 +3,11 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBreakStatement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class JavaUBreakExpression(

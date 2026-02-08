@@ -8,7 +8,8 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.NlsActions.*
+import com.intellij.openapi.util.NlsActions.ActionDescription
+import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.io.FileUtil
 import javax.swing.Icon
 

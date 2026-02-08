@@ -20,7 +20,11 @@ import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,7 +38,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public final class PublicMethodNotExposedInInterfaceInspection extends BaseInspection {
 

@@ -1,0 +1,5 @@
+package package2;
+
+public class A {
+  public int method() {return 100;}
+}

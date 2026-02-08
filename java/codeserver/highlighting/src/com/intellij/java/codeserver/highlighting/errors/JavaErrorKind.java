@@ -5,7 +5,12 @@ import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.Range;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;

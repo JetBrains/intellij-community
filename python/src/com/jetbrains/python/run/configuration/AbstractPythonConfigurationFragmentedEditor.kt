@@ -2,7 +2,13 @@
 package com.jetbrains.python.run.configuration
 
 import com.intellij.diagnostic.logging.LogsGroupFragment
-import com.intellij.execution.ui.*
+import com.intellij.execution.ui.BeforeRunComponent
+import com.intellij.execution.ui.BeforeRunFragment
+import com.intellij.execution.ui.CommonParameterFragments
+import com.intellij.execution.ui.CommonTags
+import com.intellij.execution.ui.RunConfigurationFragmentedEditor
+import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.RawCommandLineEditor

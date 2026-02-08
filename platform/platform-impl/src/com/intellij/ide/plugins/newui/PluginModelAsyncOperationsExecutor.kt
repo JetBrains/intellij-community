@@ -160,7 +160,7 @@ internal object PluginModelAsyncOperationsExecutor {
   fun switchPlugins(coroutineScope: CoroutineScope, pluginModelFacade: PluginModelFacade, enable: Boolean, callback: (List<PluginUiModel>) -> Unit) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val models = mutableListOf<PluginUiModel>()
-      val group = pluginModelFacade.getModel().downloadedGroup
+      val group = pluginModelFacade.getModel().userInstalled
       if (group == null || group.ui == null) {
         val appInfo = ApplicationInfoEx.getInstanceEx()
 

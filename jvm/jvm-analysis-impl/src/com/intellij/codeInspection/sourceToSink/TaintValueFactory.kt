@@ -7,13 +7,31 @@ import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInspection.restriction.AnnotationContext
 import com.intellij.codeInspection.restriction.RestrictionInfo.RestrictionInfoKind
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationOwner
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEllipsisType
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.MethodMatcher
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.sourceAnnotations
+import org.jetbrains.uast.toUElement
 import kotlin.streams.asSequence
 
 

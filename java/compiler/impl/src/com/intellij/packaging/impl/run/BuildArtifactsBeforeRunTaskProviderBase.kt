@@ -20,7 +20,11 @@ import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.packaging.artifacts.*
+import com.intellij.packaging.artifacts.Artifact
+import com.intellij.packaging.artifacts.ArtifactListener
+import com.intellij.packaging.artifacts.ArtifactManager
+import com.intellij.packaging.artifacts.ArtifactPointer
+import com.intellij.packaging.artifacts.ArtifactPointerManager
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.useReactiveWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel

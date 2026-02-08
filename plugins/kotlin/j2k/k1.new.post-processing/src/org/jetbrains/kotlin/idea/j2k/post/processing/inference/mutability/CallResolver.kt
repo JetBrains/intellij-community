@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
+@K1Deprecation
 class CallResolver(private val fqNames: Set<FqName>) {
     private val shortNames = fqNames.map { it.shortName().identifier }.toSet()
 

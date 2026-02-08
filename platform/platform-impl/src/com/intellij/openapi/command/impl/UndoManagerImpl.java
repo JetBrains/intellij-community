@@ -35,9 +35,18 @@ import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 public class UndoManagerImpl extends UndoManager {
 
@@ -78,7 +87,7 @@ public class UndoManagerImpl extends UndoManager {
   @NonInjectable
   protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project project ? project : null;
-    myUndoSharedState = new UndoSharedState(this::isPerClientSupported);
+    myUndoSharedState = new UndoSharedState(getUndoCapabilities());
   }
 
   @Override
@@ -284,8 +293,14 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  public void clearAndRepairStacks(@Nullable FileEditor editor) {
-    clearStacks(editor);
+  public UndoCapabilities getUndoCapabilities() {
+    return UndoCapabilities.Default.INSTANCE;
+  }
+
+  @ApiStatus.Internal
+  public final int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
+    UndoClientState state = Objects.requireNonNull(getClientState(), "undo/redo is not available");
+    return state.getStackSize(docRef, isUndo);
   }
 
   @ApiStatus.Internal
@@ -301,62 +316,6 @@ public class UndoManagerImpl extends UndoManager {
         Disposer.dispose(disposable);
       }
     }
-  }
-
-  @ApiStatus.Internal
-  protected void notifyUndoRedoStarted(@Nullable FileEditor editor, @NotNull Disposable disposable, boolean isUndo) {
-    ApplicationManager.getApplication()
-      .getMessageBus()
-      .syncPublisher(UndoRedoListener.Companion.getTOPIC())
-      .undoRedoStarted(myProject, this, editor, isUndo, disposable);
-  }
-
-  @ApiStatus.Internal
-  protected boolean isTransparentSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isConfirmationSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isCompactSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isGlobalSplitSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isPerClientSupported() {
-    return true;
-  }
-
-  // TODO: remove it
-  @ApiStatus.Internal
-  public boolean isGroupIdChangeSupported() {
-    return true;
-  }
-
-  // TODO: IT IS A PRIORITY ONE
-  @ApiStatus.Internal
-  public boolean isCommandRestartSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isEditorStateRestoreSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected final int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
-    UndoClientState state = Objects.requireNonNull(getClientState(), "undo/redo is not available");
-    return state.getStackSize(docRef, isUndo);
   }
 
   void onCommandStarted(@NotNull CmdEvent cmdStartEvent) {
@@ -474,6 +433,13 @@ public class UndoManagerImpl extends UndoManager {
     }
   }
 
+  private void notifyUndoRedoStarted(@Nullable FileEditor editor, @NotNull Disposable disposable, boolean isUndo) {
+    ApplicationManager.getApplication()
+      .getMessageBus()
+      .syncPublisher(UndoRedoListener.Companion.getTOPIC())
+      .undoRedoStarted(myProject, this, editor, isUndo, disposable);
+  }
+
   private @NotNull Pair<@ActionText String, @ActionDescription String> getUndoOrRedoActionNameAndDescription(@Nullable FileEditor editor, boolean undo) {
     UndoClientState state = getClientState(editor);
     String desc = null;
@@ -500,8 +466,7 @@ public class UndoManagerImpl extends UndoManager {
     return isUndoRedoAvailableUnsafe(editor, undo);
   }
 
-  @ApiStatus.Internal
-  protected boolean isUndoRedoAvailableUnsafe(@Nullable FileEditor editor, boolean undo) {
+  private boolean isUndoRedoAvailableUnsafe(@Nullable FileEditor editor, boolean undo) {
     UndoClientState state = getClientState(editor);
     return state != null && state.isUndoRedoAvailable(editor, undo);
   }

@@ -3,7 +3,6 @@ package com.intellij.cce.highlighter
 
 import com.intellij.cce.core.Session
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
-import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupArranger
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder

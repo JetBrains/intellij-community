@@ -7,14 +7,19 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Contract
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 import org.jetbrains.uast.util.emptyClassSet
-import java.util.*
+import java.util.Collections
 
 @Service(Service.Level.PROJECT)
 @Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))

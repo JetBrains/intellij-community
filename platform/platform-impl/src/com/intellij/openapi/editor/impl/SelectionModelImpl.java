@@ -3,7 +3,13 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.SelectionEvent;

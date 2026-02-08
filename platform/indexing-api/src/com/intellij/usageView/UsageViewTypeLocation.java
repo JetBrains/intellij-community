@@ -4,7 +4,11 @@ package com.intellij.usageView;
 
 import com.intellij.ide.TypePresentationService;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;

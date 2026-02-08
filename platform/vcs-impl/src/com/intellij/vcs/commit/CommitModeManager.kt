@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
-import java.util.*
+import java.util.EventListener
 
 private const val TOGGLE_COMMIT_UI = "vcs.non.modal.commit.toggle.ui"
 private const val COMMIT_TOOL_WINDOW_SETTINGS_KEY = "vcs.commit.tool.window"

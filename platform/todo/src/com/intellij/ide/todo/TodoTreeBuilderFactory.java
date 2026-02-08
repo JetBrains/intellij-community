@@ -17,7 +17,7 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public interface TodoTreeBuilderFactory {
   TodoTreeBuilder createTreeBuilder(JTree tree,Project project);

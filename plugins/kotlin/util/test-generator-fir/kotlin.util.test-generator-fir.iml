@@ -29,12 +29,9 @@
     <orderEntry type="module" module-name="intellij.kotlin.uast.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions.tests" scope="TEST" />
@@ -49,7 +46,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.searching.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.move" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.copyright.tests" />
@@ -65,5 +61,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.tests" scope="TEST" />
   </component>
 </module>

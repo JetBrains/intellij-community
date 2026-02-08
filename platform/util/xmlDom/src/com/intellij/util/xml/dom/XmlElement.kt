@@ -5,7 +5,7 @@ package com.intellij.util.xml.dom
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 
 // defaults for kotlinx serialization
 @ApiStatus.Internal

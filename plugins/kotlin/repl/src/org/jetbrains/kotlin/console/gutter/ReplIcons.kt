@@ -4,12 +4,15 @@ package org.jetbrains.kotlin.console.gutter
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import javax.swing.Icon
 
+@K1Deprecation
 data class IconWithTooltip(val icon: Icon, @NlsContexts.Tooltip val tooltip: String?)
 
+@K1Deprecation
 object ReplIcons {
     val BUILD_WARNING_INDICATOR: IconWithTooltip = IconWithTooltip(AllIcons.General.Warning, null)
     val HISTORY_INDICATOR: IconWithTooltip = IconWithTooltip(

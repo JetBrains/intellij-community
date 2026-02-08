@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiParameter
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory

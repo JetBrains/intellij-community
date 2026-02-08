@@ -4,7 +4,12 @@ package com.intellij.collaboration.ui.codereview.diff.action
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 import com.intellij.collaboration.ui.codereview.diff.toActionName
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 
 abstract class CodeReviewDiscussionsToggleAction : ActionGroup(), DumbAware {

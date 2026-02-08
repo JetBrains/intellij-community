@@ -5,12 +5,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 
+@K1Deprecation
 class ResolutionAnchorModuleDependencyProviderExtension(private val project: Project) : ModuleDependencyProviderExtension {
     /**
      * Consider modules M1, M2, M3, library L1 resolving via Resolution anchor M2, other libraries L2, L3 with the following dependencies:

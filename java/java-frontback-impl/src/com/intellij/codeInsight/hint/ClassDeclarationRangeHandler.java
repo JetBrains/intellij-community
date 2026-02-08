@@ -2,7 +2,12 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConstructorCall;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReferenceList;
 import org.jetbrains.annotations.NotNull;
 
 public final class ClassDeclarationRangeHandler implements DeclarationRangeHandler {

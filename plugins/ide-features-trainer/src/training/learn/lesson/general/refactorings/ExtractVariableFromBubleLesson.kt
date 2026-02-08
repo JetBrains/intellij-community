@@ -4,8 +4,13 @@ package training.learn.lesson.general.refactorings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser.BaseReplaceChoice
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.defaultRestoreDelay
+import training.dsl.restoreRefactoringOptionsInformer
+import training.dsl.showWarningIfInplaceRefactoringsDisabled
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 

@@ -8,7 +8,14 @@ import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.*;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.MovedRecord;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.OFFSET_BUCKET;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.PaddingRecord;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.RECORD_TYPE_ACTUAL;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.RECORD_TYPE_MOVED;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.RECORD_TYPE_PADDING;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.recordLayout;
 import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static org.junit.Assert.assertEquals;
 

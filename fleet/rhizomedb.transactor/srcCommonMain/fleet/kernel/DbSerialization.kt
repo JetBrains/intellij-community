@@ -1,9 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.DbJson
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.Q
+import com.jetbrains.rhizomedb.displayAttribute
+import com.jetbrains.rhizomedb.displayEntity
+import com.jetbrains.rhizomedb.getOne
 import com.jetbrains.rhizomedb.impl.attributeSerializer
+import com.jetbrains.rhizomedb.partition
 import fleet.util.UID
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 
 fun DbContext<Q>.sharedId(eid: EID, uidAttribute: Attribute<UID>): UID? =
@@ -71,10 +81,12 @@ private fun DbContext<Q>.serializeScalar(
   when (value) {
     is JsonElement -> DurableDbValue.Scalar(lazyOf(value))
     else -> {
-      val serializer = requireNotNull(attributeSerializer(attribute)) {
-        "serializer not found for ${displayAttribute(attribute)}"
-      }
+      val serializer = requireSerializer(attribute)
       DurableDbValue.Scalar(lazy { DbJson.encodeToJsonElement(serializer, value) })
     }
   }
 
+fun DbContext<Q>.requireSerializer(attribute: Attribute<*>): KSerializer<Any> =
+  requireNotNull(attributeSerializer(attribute)) {
+    "serializer not found for ${displayAttribute(attribute)}"
+  }

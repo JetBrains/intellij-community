@@ -6,7 +6,12 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static javax.swing.SwingConstants.CENTER;

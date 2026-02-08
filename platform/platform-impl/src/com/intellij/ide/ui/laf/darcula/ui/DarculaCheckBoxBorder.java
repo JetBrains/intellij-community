@@ -6,10 +6,14 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.CellRendererPane;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 /**
  * @author Konstantin Bulenkov

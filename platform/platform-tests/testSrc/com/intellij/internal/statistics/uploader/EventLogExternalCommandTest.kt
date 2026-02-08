@@ -1,11 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.uploader
 
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogFile
+import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
+import com.intellij.internal.statistic.eventLog.EventLogSendConfig
+import com.intellij.internal.statistic.eventLog.FilesToSendProvider
+import com.intellij.internal.statistic.eventLog.MachineId
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader
 import com.intellij.internal.statistic.uploader.EventLogExternalSendConfig
 import com.intellij.internal.statistic.uploader.EventLogUploaderCliParser
-import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.*
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.BUCKET_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.DEVICE_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.ID_REVISION_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.LOGS_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.MACHINE_ID_OPTION
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.RECORDERS_OPTION
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

@@ -1,7 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic
 
-import com.intellij.psi.*
+import com.intellij.psi.HierarchicalMethodSignature
+import com.intellij.psi.JVMElementFactories
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterList
 import com.intellij.psi.impl.PsiSuperMethodImplUtil.getHierarchicalMethodSignature
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightModifierList

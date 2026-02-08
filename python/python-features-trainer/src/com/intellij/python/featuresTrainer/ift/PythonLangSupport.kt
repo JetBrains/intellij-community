@@ -25,6 +25,7 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.projectCreation.createVenvAndSdk
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
@@ -89,7 +90,7 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ShowingMessa
   @Throws(NoSdkException::class)
   @RequiresEdt
   override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk = runWithModalProgressBlocking(project, "...") {
-    when (val r = createVenvAndSdk(project)) {
+    when (val r = createVenvAndSdk(ModuleOrProject.ProjectOnly(project))) {
       is Result.Failure -> {
         errorSink.emit(r.error, project)
         null

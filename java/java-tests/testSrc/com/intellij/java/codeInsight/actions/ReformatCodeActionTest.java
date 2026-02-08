@@ -3,7 +3,12 @@ package com.intellij.java.codeInsight.actions;
 
 import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.codeInsight.actions.ReformatFilesOptions;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.JavaModuleType;

@@ -25,7 +25,11 @@ import com.intellij.grazie.spellcheck.hunspell.HunspellDictionary
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.ModificationTracker
@@ -34,7 +38,8 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.Collections
+import java.util.TreeMap
 import java.util.concurrent.atomic.AtomicLong
 
 @State(

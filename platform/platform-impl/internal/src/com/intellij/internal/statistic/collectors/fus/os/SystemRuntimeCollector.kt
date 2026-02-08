@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
-import java.util.*
+import java.util.Locale
 import kotlin.math.min
 import kotlin.math.roundToInt
 

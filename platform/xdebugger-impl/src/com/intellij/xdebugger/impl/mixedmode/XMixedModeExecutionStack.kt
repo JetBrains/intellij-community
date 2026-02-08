@@ -3,17 +3,16 @@ package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
-import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.mixedMode.nativeThreadId
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.impl.util.notifyOnFrameChanged
 import com.intellij.xdebugger.mixedMode.MixedModeStackBuilder
+import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
+import com.intellij.xdebugger.mixedMode.nativeThreadId
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

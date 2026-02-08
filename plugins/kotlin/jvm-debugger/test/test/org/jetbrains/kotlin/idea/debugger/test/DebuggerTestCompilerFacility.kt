@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -16,17 +14,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IndexingTestUtil
-import org.jetbrains.kotlin.analyzer.AnalysisResult
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.JvmDefaultMode
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
-import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
@@ -44,7 +41,7 @@ data class TestCompileConfiguration(
 const val COMPILER_ARGS_FILENAME = "compiler.args"
 
 open class DebuggerTestCompilerFacility(
-    private val project: Project,
+    protected val project: Project,
     files: List<TestFileWithModule>,
     private val jvmTarget: JvmTarget,
     private val compileConfig: TestCompileConfiguration,
@@ -246,29 +243,6 @@ open class DebuggerTestCompilerFacility(
         return options
     }
 
-    open fun analyzeSources(ktFiles: List<KtFile>): Pair<LanguageVersionSettings, AnalysisResult> {
-        return runReadAction {
-            val resolutionFacade = KotlinCacheService.getInstance(project)
-                .getResolutionFacadeWithForcedPlatform(ktFiles, JvmPlatforms.unspecifiedJvmPlatform)
-            val analysisResult = try {
-                resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
-            } catch (_: ProcessCanceledException) {
-                // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
-                resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
-            }
-            analysisResult.throwIfError()
-            resolutionFacade.languageVersionSettings to analysisResult
-        }
-    }
-
-    // Returns the qualified name of the main test class.
-    internal fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String? {
-        return runReadAction {
-            val (languageVersionSettings, analysisResult) = analyzeSources(jvmKtFiles)
-            findMainClass(analysisResult.bindingContext, languageVersionSettings, jvmKtFiles)?.asString()
-        }
-    }
-
     private fun createPsiFilesAndCollectKtFiles(testFiles: List<TestFile>, srcDir: File): List<KtFile> {
         val ktFiles = mutableListOf<KtFile>()
         for (file in testFiles) {
@@ -304,7 +278,7 @@ open class DebuggerTestCompilerFacility(
     }
 }
 
-internal fun File.refreshAndToVirtualFile(): VirtualFile? = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this)
+fun File.refreshAndToVirtualFile(): VirtualFile? = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this)
     ?.also { IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects() }
 
 private fun List<TestFile>.copy(destination: File) {

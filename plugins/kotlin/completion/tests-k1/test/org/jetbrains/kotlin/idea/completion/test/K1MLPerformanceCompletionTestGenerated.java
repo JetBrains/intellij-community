@@ -628,9 +628,29 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/callableReference/ExpressionQualifier.kt");
             }
 
+            @TestMetadata("ExtensionOnNestedClasses.kt")
+            public void testExtensionOnNestedClasses() throws Exception {
+                runTest("../testData/basic/common/callableReference/ExtensionOnNestedClasses.kt");
+            }
+
             @TestMetadata("GenericConstructor.kt")
             public void testGenericConstructor() throws Exception {
                 runTest("../testData/basic/common/callableReference/GenericConstructor.kt");
+            }
+
+            @TestMetadata("GenericExtensionCallableReference.kt")
+            public void testGenericExtensionCallableReference() throws Exception {
+                runTest("../testData/basic/common/callableReference/GenericExtensionCallableReference.kt");
+            }
+
+            @TestMetadata("GenericExtensionCallableReferenceWithTypeAlias.kt")
+            public void testGenericExtensionCallableReferenceWithTypeAlias() throws Exception {
+                runTest("../testData/basic/common/callableReference/GenericExtensionCallableReferenceWithTypeAlias.kt");
+            }
+
+            @TestMetadata("GenericNestedClassesExtensionReference.kt")
+            public void testGenericNestedClassesExtensionReference() throws Exception {
+                runTest("../testData/basic/common/callableReference/GenericNestedClassesExtensionReference.kt");
             }
 
             @TestMetadata("HigherOrderFunction.kt")
@@ -766,11 +786,6 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("SingleConstructor.kt")
             public void testSingleConstructor() throws Exception {
                 runTest("../testData/basic/common/constructor/SingleConstructor.kt");
-            }
-
-            @TestMetadata("SubclassConstructor.kt")
-            public void testSubclassConstructor() throws Exception {
-                runTest("../testData/basic/common/constructor/SubclassConstructor.kt");
             }
         }
 

@@ -4,7 +4,13 @@ package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.Expression
+import com.intellij.codeInsight.template.ExpressionContext
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -12,6 +18,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
@@ -24,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtPackageDirective
 
 private const val PACKAGE_NAME_VAR = "PACKAGE_NAME"
 
+@K1Deprecation
 @ApiStatus.Internal
 class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackageDirective>(
     KtPackageDirective::class.java,

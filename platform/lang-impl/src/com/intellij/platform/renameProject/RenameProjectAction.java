@@ -16,7 +16,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author lene

@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxColorProvider
 import java.awt.Color
-import java.util.*
+import java.util.Locale
 
 class JavaFxColorProviderFormatTest : AbstractJavaFXTestCase() {
   override fun getTestDataPath() = PluginPathManager.getPluginHomePath("javaFX") + "/testData/colorProviderFormat"

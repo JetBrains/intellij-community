@@ -4,7 +4,11 @@ package com.intellij.python.featuresTrainer.ift.lesson.run
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskTestContext
+import training.dsl.highlightButtonById
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.run.CommonDebugLesson
 
 class PythonDebugLesson : CommonDebugLesson("python.debug.workflow") {

@@ -21,7 +21,12 @@ import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.NettyUtil;
-import org.jetbrains.io.jsonRpc.*;
+import org.jetbrains.io.jsonRpc.Client;
+import org.jetbrains.io.jsonRpc.ClientListener;
+import org.jetbrains.io.jsonRpc.ClientManager;
+import org.jetbrains.io.jsonRpc.ClientManagerKt;
+import org.jetbrains.io.jsonRpc.ExceptionHandler;
+import org.jetbrains.io.jsonRpc.MessageServer;
 
 import java.util.List;
 import java.util.Map;

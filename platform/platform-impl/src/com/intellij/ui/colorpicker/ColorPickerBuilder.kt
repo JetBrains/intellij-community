@@ -28,7 +28,14 @@ import java.awt.Container
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JSeparator
+import javax.swing.KeyStroke
+import javax.swing.LayoutFocusTraversalPolicy
 
 val PICKER_BACKGROUND_COLOR: JBColor = JBColor(Color(252, 252, 252), Color(64, 64, 64))
 val PICKER_TEXT_COLOR: Color = Color(186, 186, 186)

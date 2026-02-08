@@ -3,10 +3,15 @@ package com.intellij.codeInspection.sourceToSink
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.options.JavaClassValidator
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.RegexValidator
 import com.intellij.codeInspection.options.StringValidator
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.codeInspection.restriction.AnnotationContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -20,7 +25,22 @@ import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.psiutils.MethodMatcher
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {

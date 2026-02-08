@@ -18,7 +18,7 @@ import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.util.Objects;
 import java.util.Optional;

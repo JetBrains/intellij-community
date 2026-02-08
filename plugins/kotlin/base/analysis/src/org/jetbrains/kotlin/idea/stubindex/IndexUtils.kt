@@ -11,8 +11,25 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.stubs.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDynamicType
+import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtIntersectionType
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.stubs.KotlinAnnotationEntryStub
+import org.jetbrains.kotlin.psi.stubs.KotlinCallableStubBase
+import org.jetbrains.kotlin.psi.stubs.KotlinFileStub
+import org.jetbrains.kotlin.psi.stubs.KotlinModifierListStub
+import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub
+import org.jetbrains.kotlin.psi.stubs.KotlinPropertyAccessorStub
+import org.jetbrains.kotlin.psi.stubs.KotlinPropertyStub
+import org.jetbrains.kotlin.psi.stubs.KotlinStubWithFqName
+import org.jetbrains.kotlin.psi.stubs.KotlinTypeAliasStub
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

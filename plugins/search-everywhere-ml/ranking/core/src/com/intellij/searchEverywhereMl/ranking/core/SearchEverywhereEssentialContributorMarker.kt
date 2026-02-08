@@ -11,7 +11,7 @@ import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.isEssentialContributorPredictionExperiment
 import com.intellij.searchEverywhereMl.ranking.core.model.CatBoostModelFactory
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereCatBoostBinaryClassifierModel
-import java.util.*
+import java.util.WeakHashMap
 
 
 /**

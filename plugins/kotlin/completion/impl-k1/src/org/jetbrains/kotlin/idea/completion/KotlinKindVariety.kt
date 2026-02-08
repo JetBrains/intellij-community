@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.platform.ml.impl.turboComplete.KindVariety
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 
 /**
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
  * The names are used later to create [com.intellij.platform.ml.impl.turboComplete.KindCollector]s,
  * which are later reordered via [com.intellij.turboComplete.SortingExecutor].
  */
+@K1Deprecation
 enum class KotlinCompletionKindName {
   DSL_FUNCTION,
   SMART_ADDITIONAL_ITEM,
@@ -36,6 +38,7 @@ enum class KotlinCompletionKindName {
   PARAMETER_OR_VAR_NAME_AND_TYPE,
 }
 
+@K1Deprecation
 object KotlinKindVariety : KindVariety {
     override fun kindsCorrespondToParameters(parameters: CompletionParameters): Boolean {
     return parameters.position.language == KotlinLanguage.INSTANCE

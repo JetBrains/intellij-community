@@ -17,7 +17,11 @@ package com.intellij.ui.colorpicker
 
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import javax.swing.JComponent
 
 private val BORDER = JBColor(Color(0, 0, 0, 26), Color(255, 255, 255, 26))

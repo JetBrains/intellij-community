@@ -7,8 +7,26 @@ import com.intellij.util.asSafely
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.parseDataclassParameters
-import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyDictCompExpression
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyPossibleClassMember
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PySetCompExpression
+import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyTupleType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isNoneType
 import org.jetbrains.annotations.PropertyKey
 
 private val DICT_KEY_METHODS: List<String> = listOf("get", "pop", "setdefault")

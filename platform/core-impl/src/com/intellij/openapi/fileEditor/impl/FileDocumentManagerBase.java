@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,7 +57,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       return null;
     }
 
-    boolean tooLarge = FileSizeLimit.isTooLarge(file.getLength(), file.getExtension());
+    boolean tooLarge = FileSizeLimit.isTooLargeForContentLoading(file.getLength(), file.getExtension());
     if (file.getFileType().isBinary() && tooLarge) {
       return null;
     }

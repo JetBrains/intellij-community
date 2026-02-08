@@ -95,5 +95,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.descriptions" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
 </module>

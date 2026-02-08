@@ -2,7 +2,18 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
@@ -13,7 +24,7 @@ import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /// @see <a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.9">JLS 8.8.9 Default Constructor</a>
 public class LightDefaultConstructor extends LightMethod implements SyntheticElement {

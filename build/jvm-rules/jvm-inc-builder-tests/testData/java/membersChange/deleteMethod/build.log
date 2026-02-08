@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Server.class
+End of files
+Compiling files:
+  java/membersChange/deleteMethod/a/Server.java
+End of files
+Cleaning output files:
+  Super.class
+End of files
+Compiling files:
+  java/membersChange/deleteMethod/a/Super.java
+End of files
+------------------------------------------
+Exit code: ERROR

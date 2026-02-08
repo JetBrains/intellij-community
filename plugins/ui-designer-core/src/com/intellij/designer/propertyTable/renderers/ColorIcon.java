@@ -6,7 +6,11 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;

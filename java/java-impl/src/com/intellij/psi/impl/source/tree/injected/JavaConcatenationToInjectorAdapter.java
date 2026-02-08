@@ -4,7 +4,17 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFragment;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiTemplate;
+import com.intellij.psi.PsiTypeCastExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

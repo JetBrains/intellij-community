@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.TargetPlatform
 
@@ -174,25 +174,25 @@ interface KotlinProjectConfigurator {
 
     fun addUndoConfigurationListener(
         project: Project,
-        modules: List<Module>?,
+        modules: Collection<Module>,
         isAutoConfig: Boolean,
         notificationHolder: KotlinAutoConfigurationNotificationHolder
     ) {
         // Auto-config only ever works on a single module
-        val firstModule = modules?.firstOrNull()
+        val theOnlyModule = modules.takeIf { isAutoConfig }?.singleOrNull()
         UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
             override fun undo() {
                 queueSyncIfNeeded(project)
-                if (isAutoConfig && firstModule != null) {
-                    notificationHolder.showAutoConfigurationUndoneNotification(firstModule)
+                theOnlyModule?.let {
+                    notificationHolder.showAutoConfigurationUndoneNotification(it)
                 }
-                KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
+                KotlinProjectSetupFUSCollector.logConfigureKtUndone(project)
             }
 
             override fun redo() {
                 queueSyncIfNeeded(project)
-                if (isAutoConfig && firstModule != null) {
-                    notificationHolder.reshowAutoConfiguredNotification(firstModule)
+                theOnlyModule?.let {
+                    notificationHolder.reshowAutoConfiguredNotification(it)
                 }
             }
         })

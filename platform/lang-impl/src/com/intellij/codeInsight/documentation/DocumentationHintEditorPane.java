@@ -11,12 +11,18 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.StyledDocument;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.FontMetrics;
+import java.awt.Point;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
 import java.util.Map;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocPopupPreferredMinWidth;

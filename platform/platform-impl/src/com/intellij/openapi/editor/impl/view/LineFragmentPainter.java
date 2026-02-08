@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 interface LineFragmentPainter {
 
   void paintBeforeLineStart(
+    IterationState iterationState,
     TextAttributes attributes,
     boolean hasSoftWrap,
     int columnEnd,

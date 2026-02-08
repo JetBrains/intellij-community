@@ -3,7 +3,8 @@ package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 data class GitLabResourceLabelEventDTO(
   val action: String,

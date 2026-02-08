@@ -19,14 +19,12 @@ package com.intellij.history.core.changes;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.util.io.DataInputOutputUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public abstract class Change {
   private final long myId;
@@ -50,13 +48,6 @@ public abstract class Change {
   public abstract boolean affectsPath(String paths);
 
   public abstract boolean affectsProject(String projectId);
-
-  /**
-   * @deprecated Use {@link Change#affectsMatching(HistoryPathFilter)} instead.
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public abstract boolean affectsMatching(@NotNull Pattern pattern);
 
   public abstract boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter);
 

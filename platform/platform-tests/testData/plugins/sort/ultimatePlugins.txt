@@ -124,7 +124,6 @@
 + -org-intellij-grails-
 + -com-intellij-spring-ws-
 + -com-intellij-spring-data-
-+ -com-intellij-spring-osgi-
 + -Java EE: Web Services (JAX-WS)-
 + -com-intellij-spring-security-
 + -com-intellij-spring-integration-

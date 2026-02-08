@@ -12,7 +12,11 @@ import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerManagerListener
 import javax.swing.SwingUtilities
 
 internal class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {

@@ -10,7 +10,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.function.Consumer;

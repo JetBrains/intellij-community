@@ -5,8 +5,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.project.InitialVfsRefreshService
@@ -39,7 +43,11 @@ import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesServic
 import com.intellij.util.indexing.dependencies.ScanningRequestToken
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
-import com.intellij.util.indexing.diagnostic.*
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistoryImpl
+import com.intellij.util.indexing.diagnostic.ScanningStatistics
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.IndexableFileScanner.ScanSession
@@ -49,7 +57,15 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -374,6 +390,7 @@ class UnindexedFilesScanner (
   ) {
     try {
       if (!IndexInfrastructure.hasIndices()) {
+        scanningHistory.setWasCancelled("'idea.skip.indices.initialization' flag is set")
         return
       }
       scanUnindexedFiles(indicator, progressReporter, markRef, scanningIterators)

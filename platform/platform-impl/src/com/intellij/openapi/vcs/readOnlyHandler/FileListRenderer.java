@@ -8,8 +8,9 @@ import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
 import com.intellij.ui.list.TargetPopup;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
 
 /**
  * Please use {@link TargetPopup#createTargetPresentationRenderer}

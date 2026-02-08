@@ -2,7 +2,12 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.BracePair;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageBraceMatching;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;

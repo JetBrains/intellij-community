@@ -31,7 +31,12 @@ import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GR
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_LINE_WIDTH
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_NODE_WIDTH
 import git4idea.rebase.interactive.dialog.view.CommitMessageCellEditor
-import java.awt.*
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import javax.swing.DefaultListSelectionModel
 import javax.swing.JTable
 import javax.swing.ListSelectionModel

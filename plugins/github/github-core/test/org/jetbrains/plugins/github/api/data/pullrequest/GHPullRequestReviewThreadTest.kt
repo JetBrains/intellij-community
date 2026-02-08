@@ -13,7 +13,7 @@ import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.GHReactable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThreadTest.Util.Commit
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Date
 
 class GHPullRequestReviewThreadTest {
   @Test

@@ -11,7 +11,12 @@ import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
-import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.fus.BatchLatencyReporter
+import org.jetbrains.plugins.terminal.fus.DurationAndTextLength
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.percentileOf
+import org.jetbrains.plugins.terminal.fus.thirdLargestOf
+import org.jetbrains.plugins.terminal.fus.totalDurationOf
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto

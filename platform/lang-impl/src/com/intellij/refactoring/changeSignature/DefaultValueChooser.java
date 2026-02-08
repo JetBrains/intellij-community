@@ -9,7 +9,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.EditorTextField;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

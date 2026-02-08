@@ -5,7 +5,11 @@ import com.intellij.icons.AllIcons.Ide.RoundShadow
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.JBValue.UIInteger
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 

@@ -4,8 +4,13 @@ package org.jetbrains.java.decompiler.main.collectors;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.struct.attr.StructLineNumberTableAttribute;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class BytecodeMappingTracer {
   public static final BytecodeMappingTracer DUMMY = new BytecodeMappingTracer();

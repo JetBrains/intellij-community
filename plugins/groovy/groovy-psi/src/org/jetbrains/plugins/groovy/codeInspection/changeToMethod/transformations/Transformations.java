@@ -20,9 +20,47 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBNOT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMPARE_TO;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDEC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mEQUAL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mINC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNOT_EQUAL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_LSHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_RSHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.AND;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.BITWISE_NEGATE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.DIV;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.EQUALS;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.LEFT_SHIFT;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.MINUS;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.MOD;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.MULTIPLY;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.NEGATIVE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.NEXT;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.OR;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.PLUS;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.POSITIVE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.POWER;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.PREVIOUS;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.RIGHT_SHIFT;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.RIGHT_SHIFT_UNSIGNED;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.XOR;
 
 public interface Transformations {
   Transformation<? extends GrExpression> AS_TYPE_TRANSFORMATION = new AsTypeTransformation();

@@ -8,9 +8,13 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 public final class DocCommentPanel extends JPanel {
   private final JRadioButton myRbJavaDocAsIs;

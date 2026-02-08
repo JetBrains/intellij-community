@@ -1,8 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeHighlighting.*
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeHighlighting.Pass
+import com.intellij.codeHighlighting.TextEditorHighlightingPass
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.hints.HintUtils
+import com.intellij.codeInsight.hints.HintsBuffer
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayHintsPass
+import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.InlayHintsSinkImpl
+import com.intellij.codeInsight.hints.ProviderWithSettings
+import com.intellij.codeInsight.hints.SettingsKey
+import com.intellij.codeInsight.hints.getCollectorWrapperFor
+import com.intellij.codeInsight.hints.getPlaceholderCollectorFor
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory

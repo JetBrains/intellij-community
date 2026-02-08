@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.platform.vcs.impl.frontend.changes.ChangesTreeEditorDiffPreview
 import com.intellij.platform.vcs.impl.frontend.changes.SelectedData
 import com.intellij.platform.vcs.impl.frontend.shelf.subscribeToShelfTreeSelectionChanged
@@ -13,6 +12,7 @@ import com.intellij.platform.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfApi
+import com.intellij.util.ui.tree.TreeUtil
 import fleet.kernel.ref
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

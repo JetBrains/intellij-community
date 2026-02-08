@@ -20,7 +20,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProje
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInProjectStructureActionBase {
   private final Tree myTree;

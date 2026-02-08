@@ -3,12 +3,12 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Egor

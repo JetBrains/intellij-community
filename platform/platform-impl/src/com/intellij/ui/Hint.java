@@ -5,7 +5,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @see LightweightHint

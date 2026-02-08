@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.idea.caches.lightClasses
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
-import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.*
+import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.MATCH
+import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.NO_MATCH
+import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.UNSURE
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.LightClassInheritanceHelper
 import org.jetbrains.kotlin.asJava.classes.defaultJavaAncestorQualifiedName

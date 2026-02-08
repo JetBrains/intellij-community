@@ -13,7 +13,10 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class ProductModulesXmlSerializer {
   public static @NotNull RawProductModules parseModuleXml(@NotNull InputStream inputStream) throws XMLStreamException {

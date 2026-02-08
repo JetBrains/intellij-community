@@ -1,0 +1,65 @@
+================ Step #1 =================
+Cleaning output files:
+  D1.class
+  D2.class
+  D3.class
+  D4.class
+  D5.class
+  D6.class
+  D7.class
+  D8.class
+End of files
+Compiling files:
+  java/annotations/annotationsTracker/a/D1.java
+  java/annotations/annotationsTracker/a/D2.java
+  java/annotations/annotationsTracker/a/D3.java
+  java/annotations/annotationsTracker/a/D4.java
+  java/annotations/annotationsTracker/a/D5.java
+  java/annotations/annotationsTracker/a/D6.java
+  java/annotations/annotationsTracker/a/D7.java
+  java/annotations/annotationsTracker/a/D8.java
+End of files
+Cleaning output files:
+  C1.class
+  C2.class
+  C3.class
+  C4.class
+  C5.class
+  C51.class
+  C6.class
+  C7.class
+  C8.class
+  D1Sub.class
+  D1Sub2.class
+  D2Sub.class
+  D2Sub2.class
+  D3Sub.class
+  D3Sub2.class
+  D4Sub.class
+  D4Sub2.class
+  D5Sub.class
+  D5Sub2.class
+End of files
+Compiling files:
+  java/annotations/annotationsTracker/a/C1.java
+  java/annotations/annotationsTracker/a/C2.java
+  java/annotations/annotationsTracker/a/C3.java
+  java/annotations/annotationsTracker/a/C4.java
+  java/annotations/annotationsTracker/a/C5.java
+  java/annotations/annotationsTracker/a/C51.java
+  java/annotations/annotationsTracker/a/C6.java
+  java/annotations/annotationsTracker/a/C7.java
+  java/annotations/annotationsTracker/a/C8.java
+  java/annotations/annotationsTracker/a/D1Sub.java
+  java/annotations/annotationsTracker/a/D1Sub2.java
+  java/annotations/annotationsTracker/a/D2Sub.java
+  java/annotations/annotationsTracker/a/D2Sub2.java
+  java/annotations/annotationsTracker/a/D3Sub.java
+  java/annotations/annotationsTracker/a/D3Sub2.java
+  java/annotations/annotationsTracker/a/D4Sub.java
+  java/annotations/annotationsTracker/a/D4Sub2.java
+  java/annotations/annotationsTracker/a/D5Sub.java
+  java/annotations/annotationsTracker/a/D5Sub2.java
+End of files
+------------------------------------------
+Exit code: OK

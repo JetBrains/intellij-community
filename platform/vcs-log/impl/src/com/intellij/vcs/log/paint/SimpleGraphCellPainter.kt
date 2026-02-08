@@ -13,7 +13,11 @@ import com.intellij.vcs.log.graph.NodePrintElement
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.RenderingHints
+import java.awt.Stroke
 import java.awt.geom.Ellipse2D
 import java.awt.geom.Line2D
 import kotlin.math.floor

@@ -1,9 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.MappingScopedItemsContainer
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
-import com.intellij.collaboration.util.*
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.computeEmitting
+import com.intellij.collaboration.util.filePath
+import com.intellij.collaboration.util.getOrNull
+import com.intellij.collaboration.util.onFailure
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -21,7 +30,13 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed

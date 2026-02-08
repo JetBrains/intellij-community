@@ -17,7 +17,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds

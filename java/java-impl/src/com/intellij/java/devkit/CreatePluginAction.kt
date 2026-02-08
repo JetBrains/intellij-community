@@ -2,12 +2,16 @@
 package com.intellij.java.devkit
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.util.PlatformUtils
 
 private const val DEVKIT_PLUGIN_ID = "DevKit"
@@ -34,11 +38,10 @@ internal class CreatePluginAction : DumbAwareAction() {
     )
 
     val dataContext = e.dataContext
-    ProgressManager.getInstance().run(
-      getInstallAndEnableTask(null, plugins, true, true, null) {
-        proceedToWizard(dataContext)
-      }
-    )
+
+    installAndEnable(null, plugins, true, true, null) {
+      proceedToWizard(dataContext)
+    }
   }
 
   private fun proceedToWizard(d: DataContext) {

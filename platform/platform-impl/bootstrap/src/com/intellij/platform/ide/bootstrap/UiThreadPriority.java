@@ -7,7 +7,7 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.platform.win32.Kernel32;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 

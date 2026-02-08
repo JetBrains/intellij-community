@@ -20,7 +20,22 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_INITIALIZER;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INSTANCEOF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PARAMETER_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TRY_RESOURCE_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_INSTANCEOF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
 /**
  * @author Max Medvedev

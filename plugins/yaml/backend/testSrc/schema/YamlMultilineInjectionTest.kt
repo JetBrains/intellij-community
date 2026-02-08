@@ -2,7 +2,6 @@
 package org.jetbrains.yaml.schema
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -17,11 +16,11 @@ import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.injectionForHost
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase

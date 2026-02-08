@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -10,14 +11,24 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.ExternalSuperFunctionInfo
+import org.jetbrains.kotlin.nj2k.FunctionInfo
+import org.jetbrains.kotlin.nj2k.InternalSuperFunctionInfo
+import org.jetbrains.kotlin.nj2k.JKTypeInfo
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseMethodSymbol
 import org.jetbrains.kotlin.nj2k.tree.JKMethod
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.tree.JKTypeElement
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKCapturedType
+import org.jetbrains.kotlin.nj2k.types.JKParametrizedType
+import org.jetbrains.kotlin.nj2k.types.JKStarProjectionType
+import org.jetbrains.kotlin.nj2k.types.JKType
+import org.jetbrains.kotlin.nj2k.types.isCollectionType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class AddElementsInfoConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {

@@ -11,7 +11,6 @@ import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.xml.dom.readXmlAsModel
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import kotlin.io.path.exists
 import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconClasses
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -29,6 +28,7 @@ import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import javax.xml.stream.XMLStreamException
+import kotlin.io.path.exists
 
 @JvmRecord
 internal data class ModifiedClass(

@@ -17,7 +17,11 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.net.ssl.*
+import com.intellij.util.net.ssl.CertificateConfigurable
+import com.intellij.util.net.ssl.CertificateInfoPanel
+import com.intellij.util.net.ssl.CertificateListener
+import com.intellij.util.net.ssl.CertificateTreeBuilder
+import com.intellij.util.net.ssl.CertificateUtil
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI

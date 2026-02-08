@@ -7,8 +7,22 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.ChangelistBuilder;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
@@ -17,7 +31,14 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.tasks.*;
+import com.intellij.tasks.ChangeListInfo;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskType;
+import com.intellij.tasks.TestRepository;
 import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskChangelistSupport;
@@ -29,7 +50,6 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
 import com.intellij.vcs.commit.CheckinHandlersNotifier;
 import com.intellij.vcs.commit.LocalChangesCommitter;
@@ -41,8 +61,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 import static java.util.Collections.singletonList;
 
@@ -421,12 +446,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     runOpenTaskDialog(task);
 
     myChangeListManager.ensureUpToDate();
-    UIUtil.dispatchAllInvocationEvents(); // event from TaskManagerImpl.myChangeListListener
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // event from TaskManagerImpl.myChangeListListener
 
     runOpenTaskDialog(new LocalTaskImpl("next", ""));
 
     myChangeListManager.ensureUpToDate();
-    UIUtil.dispatchAllInvocationEvents(); // event from TaskManagerImpl.myChangeListListener
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // event from TaskManagerImpl.myChangeListListener
 
     final String changelistName = myTaskManager.getChangelistName(task);
     myChangeListManager.removeChangeList(changelistName);
@@ -513,7 +538,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     finally {
       dialog.close(DialogWrapper.OK_EXIT_CODE);
     }
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   public void testChangelistNameWithoutId() {

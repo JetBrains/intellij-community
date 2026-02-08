@@ -15,7 +15,14 @@
  */
 package com.intellij.refactoring.util.classRefs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeCastExpression;
 
 /**
  * ClassReferenceVisitor that does nothing.

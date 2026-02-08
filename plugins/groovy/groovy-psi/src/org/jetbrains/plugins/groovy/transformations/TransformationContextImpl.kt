@@ -2,7 +2,21 @@
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiDisjunctionType
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.impl.light.LightPsiClassBuilder
 import com.intellij.psi.util.MethodSignature
@@ -21,9 +35,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
-import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.expandReflectedMethods
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.getAllFields
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.getReferenceListTypes
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.getSuperClass
 import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder
-import java.util.*
+import java.util.LinkedList
 
 internal class TransformationContextImpl(private val myCodeClass: GrTypeDefinition) : TransformationContext {
   private val myProject: Project = myCodeClass.project

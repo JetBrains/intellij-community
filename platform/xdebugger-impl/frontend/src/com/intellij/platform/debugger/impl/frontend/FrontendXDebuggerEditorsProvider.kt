@@ -10,7 +10,14 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEditorsProviderDto
+import com.intellij.platform.debugger.impl.rpc.XExpressionDocumentDto
+import com.intellij.platform.debugger.impl.rpc.XExpressionDto
+import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
+import com.intellij.platform.debugger.impl.rpc.language
+import com.intellij.platform.debugger.impl.rpc.toRpc
+import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.XExpression

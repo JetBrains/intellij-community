@@ -3,11 +3,15 @@ package com.intellij.driver.sdk.ui.components.elements
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.StringTable
-import com.intellij.driver.sdk.ui.*
+import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
+import com.intellij.driver.sdk.ui.CellRendererReader
+import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 import javax.swing.JTable
 

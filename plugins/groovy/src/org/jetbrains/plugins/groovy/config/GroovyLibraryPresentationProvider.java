@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.util.Arrays;
 

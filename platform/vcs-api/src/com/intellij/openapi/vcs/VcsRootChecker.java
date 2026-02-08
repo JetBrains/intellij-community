@@ -51,14 +51,6 @@ public abstract class VcsRootChecker {
   }
 
   /**
-   * @deprecated Override {@link #validateRoot(VirtualFile)}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean validateRoot(@NotNull String path) {
-    return isRoot(path);
-  }
-
-  /**
    * Returns the VCS supported by this checker.
    */
   public abstract @NotNull VcsKey getSupportedVcs();

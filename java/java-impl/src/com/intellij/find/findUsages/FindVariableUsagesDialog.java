@@ -10,11 +10,18 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiParameter;
 import com.intellij.ui.StateRestoringCheckBox;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Component;
 import java.util.List;
 
-import static com.intellij.find.findUsages.JavaFindUsagesCollector.*;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.FIND_VARIABLE_STARTED;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.READ_ACCESS;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.SEARCH_FOR_ACCESSORS;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.SEARCH_FOR_BASE_ACCESSOR;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.SEARCH_IN_OVERRIDING;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.WRITE_ACCESS;
 
 public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableFindUsagesOptions> {
   private StateRestoringCheckBox myCbSearchForAccessors;

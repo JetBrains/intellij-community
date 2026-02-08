@@ -2,14 +2,25 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.platform.uast.testFramework.common.UElementToParentMap
+import com.intellij.platform.uast.testFramework.common.visitUFileAndGetResult
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.sourcePsiElement
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfExpectedTypes
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import com.intellij.platform.uast.testFramework.common.UElementToParentMap
-import com.intellij.platform.uast.testFramework.common.visitUFileAndGetResult
+import org.jetbrains.uast.withContainingElements
 import org.junit.ComparisonFailure
 import kotlin.test.assertIsNot
 import kotlin.test.assertNotNull

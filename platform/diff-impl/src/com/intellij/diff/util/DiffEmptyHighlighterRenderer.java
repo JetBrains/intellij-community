@@ -11,7 +11,8 @@ import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Point;
 
 @ApiStatus.Internal
 public class DiffEmptyHighlighterRenderer implements CustomHighlighterRenderer {

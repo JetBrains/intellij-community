@@ -5,8 +5,9 @@ package com.intellij.openapi.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Graphics2D;
 
 public interface Painter {
   boolean needsRepaint();

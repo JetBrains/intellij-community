@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.Pseudocode
@@ -12,12 +13,29 @@ import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.*
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.AddToCollectionTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.AssignToListTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.CountTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.FindTransformationMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.ForEachTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.MaxOrMinTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.SumTransformationBase
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.AsSequenceTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.FilterTransformationBase
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.FlatMapTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.IntroduceIndexMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.MapTransformation
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils.isSubtypeOfClass
@@ -25,6 +43,7 @@ import org.jetbrains.kotlin.resolve.calls.smartcasts.ExplicitSmartCasts
 import org.jetbrains.kotlin.resolve.calls.smartcasts.ImplicitSmartCasts
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 object MatcherRegistrar {
     val matchers: Collection<TransformationMatcher> = listOf(
         FindTransformationMatcher,
@@ -40,6 +59,7 @@ object MatcherRegistrar {
     )
 }
 
+@K1Deprecation
 data class MatchResult(
     val sequenceExpression: KtExpression,
     val transformationMatch: TransformationMatch.Result,
@@ -47,6 +67,7 @@ data class MatchResult(
 )
 
 //TODO: loop which is already over Sequence
+@K1Deprecation
 fun match(loop: KtForExpression, useLazySequence: Boolean, reformat: Boolean): MatchResult? {
     val (inputVariable, indexVariable, sequenceExpression) = extractLoopData(loop) ?: return null
 
@@ -139,6 +160,7 @@ fun match(loop: KtForExpression, useLazySequence: Boolean, reformat: Boolean): M
     }
 }
 
+@K1Deprecation
 fun convertLoop(loop: KtForExpression, matchResult: MatchResult): KtExpression {
     val resultTransformation = matchResult.transformationMatch.resultTransformation
 
@@ -165,6 +187,7 @@ fun convertLoop(loop: KtForExpression, matchResult: MatchResult): KtExpression {
     return result
 }
 
+@K1Deprecation
 data class LoopData(
     val inputVariable: KtCallableDeclaration,
     val indexVariable: KtCallableDeclaration?,
@@ -364,12 +387,14 @@ private fun mergeTransformations(match: TransformationMatch.Result, reformat: Bo
     )
 }
 
+@K1Deprecation
 data class IntroduceIndexData(
     val indexVariable: KtCallableDeclaration,
     val initializationStatement: KtExpression,
     val incrementExpression: KtUnaryExpression
 )
 
+@K1Deprecation
 fun matchIndexToIntroduce(loop: KtForExpression, reformat: Boolean): IntroduceIndexData? {
     if (loop.destructuringDeclaration != null) return null
     val (inputVariable, indexVariable) = extractLoopData(loop) ?: return null

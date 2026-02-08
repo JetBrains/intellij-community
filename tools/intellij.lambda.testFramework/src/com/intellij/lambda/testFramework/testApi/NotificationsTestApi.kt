@@ -1,11 +1,11 @@
 package com.intellij.lambda.testFramework.testApi
 
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.remoteDev.tests.LambdaIdeContext
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

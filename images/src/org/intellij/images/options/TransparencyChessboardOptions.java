@@ -17,7 +17,7 @@ package org.intellij.images.options;
 
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Background chessboard options.

@@ -30,9 +30,15 @@ import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;

@@ -12,7 +12,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.ERROR;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.WARNING;
 
 public final class GrNullVoidConverter extends GrTypeConverter {
 

@@ -10,8 +10,9 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import java.awt.Insets;
 
 public abstract class AlignedIconWithTextAction extends IconWithTextAction {
   private static final int SIDE_BORDER_WIDTH = 4;

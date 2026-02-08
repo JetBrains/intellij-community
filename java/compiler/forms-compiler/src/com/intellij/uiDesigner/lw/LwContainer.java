@@ -8,7 +8,8 @@ import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.LayoutManager;
 import java.util.ArrayList;
 
 public class LwContainer extends LwComponent implements IContainer{

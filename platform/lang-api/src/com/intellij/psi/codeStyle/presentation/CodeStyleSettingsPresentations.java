@@ -13,7 +13,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.BRACE_PLACEMENT_VALUES;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.BRACE_VALUES;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALUES;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALUES_FOR_SINGLETON;
 
 final class CodeStyleSettingsPresentations {
   private final @NotNull Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> myBlankLinesStandardSettings;

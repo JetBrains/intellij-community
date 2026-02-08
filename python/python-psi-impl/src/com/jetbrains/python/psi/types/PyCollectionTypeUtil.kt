@@ -4,7 +4,12 @@
 package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 
 object PyCollectionTypeUtil {

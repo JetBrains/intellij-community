@@ -17,7 +17,7 @@ package com.intellij.designer.model;
 
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Alexander Lobas

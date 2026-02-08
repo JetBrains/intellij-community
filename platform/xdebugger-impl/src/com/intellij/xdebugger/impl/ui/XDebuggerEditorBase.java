@@ -8,7 +8,11 @@ import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -34,7 +38,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ErrorStripeEditorCustomization;
+import com.intellij.ui.Expandable;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
@@ -58,15 +68,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class XDebuggerEditorBase implements Expandable {
@@ -79,6 +105,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   private @Nullable XSourcePosition mySourcePosition;
   private int myHistoryIndex = -1;
   private @Nullable PsiElement myContext;
+  private final @Nullable String myPurpose;
 
   private final LanguageChooser myLanguageChooser = new LanguageChooser();
   private final JLabel myExpandButton = new JLabel(AllIcons.General.ExpandComponent);
@@ -91,7 +118,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
                                 @NotNull EvaluationMode mode,
                                 @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition) {
-    this(project, debuggerEditorsProvider, mode, historyId, sourcePosition, null);
+    this(project, debuggerEditorsProvider, mode, historyId, sourcePosition, null, null);
   }
 
   XDebuggerEditorBase(final Project project,
@@ -99,13 +126,15 @@ public abstract class XDebuggerEditorBase implements Expandable {
                                 @NotNull EvaluationMode mode,
                                 @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition,
-                                @Nullable PsiElement psiContext) {
+                                @Nullable PsiElement psiContext,
+                                @Nullable String purpose) {
     myProject = project;
     myDebuggerEditorsProvider = debuggerEditorsProvider;
     myMode = mode;
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
     myContext = psiContext;
+    myPurpose = purpose;
 
     // setup expand button
     myExpandButton.setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"));
@@ -200,7 +229,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   public void setContext(@Nullable PsiElement context) {
     if (myContext != context) {
       myContext = context;
-      setExpression(getExpression());
+      rebuildDocument();
     }
   }
 
@@ -229,6 +258,14 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   protected abstract void doSetText(XExpression text);
+
+  /**
+   * Triggers inner document rebuild with the latest context preserving the same expression.
+   * For example, to use the updated marked objects in code completion.
+   */
+  public void rebuildDocument() {
+    setExpression(getExpression());
+  }
 
   public void setExpression(@Nullable XExpression text) {
     if (text == null) {
@@ -318,8 +355,10 @@ public abstract class XDebuggerEditorBase implements Expandable {
     if (myContext != null && provider instanceof XDebuggerEditorsProviderBase) {
       return ((XDebuggerEditorsProviderBase)provider).createDocument(myProject, text, myContext, myMode);
     }
-    else {
+    else if (myPurpose == null) {
       return provider.createDocument(myProject, text, mySourcePosition, myMode);
+    } else {
+      return provider.createDocument(myProject, text, mySourcePosition, myMode, myPurpose);
     }
   }
 

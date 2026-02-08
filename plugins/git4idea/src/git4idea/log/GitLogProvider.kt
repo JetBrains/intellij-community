@@ -21,8 +21,30 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.*
-import com.intellij.vcs.log.VcsLogFilterCollection.*
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogDiffHandler
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogFilterCollection.BRANCH_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.DATE_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.PARENT_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.REVISION_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.TEXT_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.USER_FILTER
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsLogProperties
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogProviderRequirementsEx
+import com.intellij.vcs.log.VcsLogRangeFilter
+import com.intellij.vcs.log.VcsLogRefManager
+import com.intellij.vcs.log.VcsLogRefresher
+import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.VcsRefsContainer
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.VcsLogSorter
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
@@ -53,8 +75,14 @@ import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepositoryTagsHolder
+import git4idea.repo.GitTagsHolderListener
 import git4idea.repo.asSubmodule
-import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.*
+import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.LoadingCommitsOnTaggedBranch
+import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.ReadingBranches
+import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.ReadingTags
+import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.SortingCommits
+import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.ValidatingData
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.annotations.CalledInAny
 import kotlin.math.min
@@ -225,15 +253,22 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
 
   override fun subscribeToRootRefreshEvents(roots: Collection<VirtualFile>, refresher: VcsLogRefresher): Disposable {
     val connection = project.messageBus.connect()
+    connection.subscribe(GitRepositoryTagsHolder.TAGS_UPDATED, GitTagsHolderListener { repository ->
+      refreshOnRepoUpdate(repository, roots, refresher)
+    })
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
-      project.trackActivityBlocking(VcsActivityKey) {
-        val root = repository.root
-        if (roots.contains(root)) {
-          refresher.refresh(root)
-        }
-      }
+      refreshOnRepoUpdate(repository, roots, refresher)
     })
     return connection
+  }
+
+  private fun refreshOnRepoUpdate(repository: GitRepository, registeredRoots: Collection<VirtualFile>, refresher: VcsLogRefresher) {
+    project.trackActivityBlocking(VcsActivityKey) {
+      val root = repository.root
+      if (registeredRoots.contains(root)) {
+        refresher.refresh(root)
+      }
+    }
   }
 
   @Throws(VcsException::class)

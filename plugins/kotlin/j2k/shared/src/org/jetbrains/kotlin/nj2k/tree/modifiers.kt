@@ -6,10 +6,14 @@ import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.nj2k.isInterface
-import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.ABSTRACT
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.nj2k.tree.Modality.OPEN
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.INNER
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
-import org.jetbrains.kotlin.nj2k.tree.Visibility.*
+import org.jetbrains.kotlin.nj2k.tree.Visibility.INTERNAL
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

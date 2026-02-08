@@ -4,12 +4,22 @@ package org.jetbrains.kotlin.caches.resolve
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analyzer.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
+import org.jetbrains.kotlin.analyzer.ModuleContent
+import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.analyzer.ResolverForModule
+import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
+import org.jetbrains.kotlin.analyzer.ResolverForProject
 import org.jetbrains.kotlin.analyzer.common.CommonAnalysisParameters
 import org.jetbrains.kotlin.analyzer.common.configureCommonSpecificComponents
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.container.*
+import org.jetbrains.kotlin.container.StorageComponentContainer
+import org.jetbrains.kotlin.container.composeContainer
+import org.jetbrains.kotlin.container.get
+import org.jetbrains.kotlin.container.tryGetService
+import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.context.ModuleContext
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
@@ -30,13 +40,22 @@ import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolver
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolverImpl
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.has
+import org.jetbrains.kotlin.platform.idePlatformKind
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.resolve.BindingTrace
+import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
+import org.jetbrains.kotlin.resolve.PlatformConfiguratorBase
+import org.jetbrains.kotlin.resolve.SealedClassInheritorsProvider
+import org.jetbrains.kotlin.resolve.configureDefaultCheckers
 import org.jetbrains.kotlin.resolve.jvm.JavaDescriptorResolver
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
 import org.jetbrains.kotlin.resolve.jvm.extensions.PackageFragmentProviderExtension
@@ -49,6 +68,7 @@ import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragmen
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPartProvider
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 class CompositeResolverForModuleFactory(
     private val commonAnalysisParameters: CommonAnalysisParameters,
     private val jvmAnalysisParameters: JvmPlatformParameters,

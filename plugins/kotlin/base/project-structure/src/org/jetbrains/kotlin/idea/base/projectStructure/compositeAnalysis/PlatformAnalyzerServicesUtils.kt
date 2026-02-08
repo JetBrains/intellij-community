@@ -5,22 +5,27 @@ package org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analyzer.common.CommonPlatformAnalyzerServices
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
-import org.jetbrains.kotlin.platform.*
-import org.jetbrains.kotlin.platform.isWasm
+import org.jetbrains.kotlin.platform.JsPlatform
+import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.WasmPlatform
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.isNative
-import org.jetbrains.kotlin.platform.wasm.*
-import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.platform.wasm.WasmPlatformWithTarget
+import org.jetbrains.kotlin.platform.wasm.WasmTarget
+import org.jetbrains.kotlin.platform.wasm.isWasmJs
+import org.jetbrains.kotlin.platform.wasm.isWasmWasi
+import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.resolve.konan.platform.NativePlatformAnalyzerServices
 import org.jetbrains.kotlin.wasm.resolve.WasmJsPlatformAnalyzerServices
 import org.jetbrains.kotlin.wasm.resolve.WasmPlatformAnalyzerServices
 import org.jetbrains.kotlin.wasm.resolve.WasmWasiPlatformAnalyzerServices
-import java.lang.IllegalStateException
 
 fun TargetPlatform.findAnalyzerServices(project: Project): PlatformDependentAnalyzerServices = when {
     isCommon() -> {

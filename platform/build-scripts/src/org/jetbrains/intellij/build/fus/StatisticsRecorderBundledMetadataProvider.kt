@@ -9,10 +9,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
-import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
-import com.jetbrains.fus.reporting.configuration.ConfigurationClient
 import com.google.gson.JsonParser
 import com.jetbrains.fus.reporting.FusJsonSerializer
+import com.jetbrains.fus.reporting.configuration.ConfigurationClient
+import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.model.serialization.SerializationException
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes

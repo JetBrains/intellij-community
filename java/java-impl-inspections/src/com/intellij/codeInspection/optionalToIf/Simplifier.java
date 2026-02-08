@@ -2,7 +2,11 @@
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.optionalToIf.Instruction.*;
+import com.intellij.codeInspection.optionalToIf.Instruction.Assignment;
+import com.intellij.codeInspection.optionalToIf.Instruction.Check;
+import com.intellij.codeInspection.optionalToIf.Instruction.Declaration;
+import com.intellij.codeInspection.optionalToIf.Instruction.Return;
+import com.intellij.codeInspection.optionalToIf.Instruction.Throw;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReference;

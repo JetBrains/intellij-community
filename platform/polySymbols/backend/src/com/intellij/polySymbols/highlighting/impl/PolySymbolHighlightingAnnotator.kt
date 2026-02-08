@@ -49,7 +49,7 @@ import com.intellij.psi.util.startOffset
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.PropertyKey
-import java.util.*
+import java.util.LinkedList
 
 private val INSPECTION_TOOL_INFO_CACHE = Key.create<MutableMap<String, InspectionToolInfo>>("polySymbols.inspectionTools")
 

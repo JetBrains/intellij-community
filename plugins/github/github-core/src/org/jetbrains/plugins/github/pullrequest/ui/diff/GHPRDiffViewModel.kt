@@ -1,10 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.combineStates
+import com.intellij.collaboration.async.computationStateFlow
+import com.intellij.collaboration.async.mapNullableScoped
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
-import com.intellij.collaboration.ui.codereview.diff.model.*
+import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel
+import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
+import com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+import com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
+import com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
@@ -16,7 +27,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHUser

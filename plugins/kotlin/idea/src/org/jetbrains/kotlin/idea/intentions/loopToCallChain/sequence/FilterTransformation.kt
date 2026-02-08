@@ -2,21 +2,41 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence
 
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
-import org.jetbrains.kotlin.idea.base.psi.isNullExpression
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ChainedCallGenerator
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.MatchingState
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.SequenceTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatch
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.generateLambda
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isSimpleName
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.FindTransformationMatcher
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.result.MaxOrMinTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.unwrapBlock
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 abstract class FilterTransformationBase : SequenceTransformation {
     abstract val effectiveCondition: Condition
 
@@ -286,6 +306,7 @@ abstract class FilterTransformationBase : SequenceTransformation {
     }
 }
 
+@K1Deprecation
 class FilterTransformation(
     override val loop: KtForExpression,
     override val inputVariable: KtCallableDeclaration,
@@ -323,6 +344,7 @@ class FilterTransformation(
     }
 }
 
+@K1Deprecation
 class FilterIsInstanceTransformation(
     override val loop: KtForExpression,
     override val inputVariable: KtCallableDeclaration,
@@ -340,6 +362,7 @@ class FilterIsInstanceTransformation(
     }
 }
 
+@K1Deprecation
 class FilterNotNullTransformation(
     override val loop: KtForExpression,
     override val inputVariable: KtCallableDeclaration,
@@ -369,6 +392,7 @@ class FilterNotNullTransformation(
     }
 }
 
+@K1Deprecation
 class TakeWhileTransformation(
     override val loop: KtForExpression,
     val inputVariable: KtCallableDeclaration,

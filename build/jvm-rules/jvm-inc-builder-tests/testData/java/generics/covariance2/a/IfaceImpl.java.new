@@ -1,0 +1,7 @@
+public class IfaceImpl implements Iface {
+  
+  public Iface foo() {
+    return this;
+  }
+
+}

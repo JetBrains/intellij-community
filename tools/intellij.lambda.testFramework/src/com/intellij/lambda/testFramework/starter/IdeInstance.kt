@@ -33,6 +33,9 @@ object IdeInstance {
   fun isStarted(): Boolean = _ide != null
 
   fun startIde(runMode: IdeRunMode): IdeWithLambda = synchronized(this) {
+    // Allow IDE building to access test modules
+    System.setProperty("idea.build.pack.test.source.enabled", "true")
+
     try {
       if (isStarted() && currentIdeMode == runMode && IdeStartConfig.current == currentIdeConfig) {
         LOG.info("IDE is already running in mode: $runMode and there were no requests to change it's config. Reusing the current instance of IDE.")

@@ -5,7 +5,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
-import java.util.*
+import java.util.HexFormat
+import java.util.Locale
 
 internal class TerminalShellIntegrationController(terminalController: Terminal) {
   private val dispatcher = EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)

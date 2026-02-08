@@ -6,7 +6,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 public class JBTableWithResizableCells extends JBTable {

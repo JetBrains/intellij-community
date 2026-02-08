@@ -2,15 +2,28 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundType
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeEnhancer
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeImpl
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeParameter
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.WithForcedStateBoundType
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.enhanceWith
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue
@@ -20,6 +33,7 @@ import org.jetbrains.kotlin.resolve.jvm.checkers.mustNotBeNull
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 
+@K1Deprecation
 class NullabilityBoundTypeEnhancer(private val resolutionFacade: ResolutionFacade) : BoundTypeEnhancer() {
     override fun enhance(
         expression: KtExpression,

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -16,6 +16,8 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
@@ -23,6 +25,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.xdebugger.DapMode;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -33,8 +36,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
@@ -43,16 +44,20 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.platform.debugger.impl.shared.CoroutineUtilsKt.createMutableSharedFlow;
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt.asProxy;
 import static com.intellij.xdebugger.impl.rpc.models.XBreakpointValueIdKt.storeGlobally;
 import static kotlinx.coroutines.CoroutineScopeKt.cancel;
@@ -196,7 +201,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public void setSuspendPolicy(long requestId, @NotNull SuspendPolicy policy) {
     updateStateIfNeededAndNotify(requestId, policy, myState::getSuspendPolicy, (p) -> {
       myState.setSuspendPolicy(p);
-      if (p == SuspendPolicy.NONE) {
+      if (p == SuspendPolicy.NONE && !DapMode.isDap()) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("debugger.breakpoint.non.suspending");
       }
     });

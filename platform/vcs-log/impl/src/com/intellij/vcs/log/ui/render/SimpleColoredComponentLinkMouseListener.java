@@ -7,9 +7,10 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.vcs.log.ui.table.VcsLogNewUiTableCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 public class SimpleColoredComponentLinkMouseListener extends TableLinkMouseListener {

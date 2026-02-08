@@ -3,12 +3,19 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.hints.InlayHintsUtils
-import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.openapi.editor.Document
+import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
+import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
+import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.OwnBypassCollector
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel

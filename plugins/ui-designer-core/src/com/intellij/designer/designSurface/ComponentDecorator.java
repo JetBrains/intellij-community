@@ -5,7 +5,7 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 
 /**
  * @author Alexander Lobas

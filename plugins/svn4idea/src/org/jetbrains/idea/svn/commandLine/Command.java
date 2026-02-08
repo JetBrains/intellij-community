@@ -8,7 +8,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 

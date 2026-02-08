@@ -1,7 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
@@ -19,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -36,10 +44,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Color;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -157,7 +166,9 @@ public final class ExecutionUtil {
         notification.setListener((_notification, event) -> {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             _notification.expire();
-            _listener.hyperlinkUpdate(event);
+            WriteIntentReadAction.run(() -> {
+              _listener.hyperlinkUpdate(event);
+            });
           }
         });
       }

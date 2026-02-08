@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
-import com.intellij.codeInsight.template.emmet.tokens.*;
+import com.intellij.codeInsight.template.emmet.tokens.IdentifierToken;
+import com.intellij.codeInsight.template.emmet.tokens.NumberToken;
+import com.intellij.codeInsight.template.emmet.tokens.OperationToken;
+import com.intellij.codeInsight.template.emmet.tokens.StringLiteralToken;
+import com.intellij.codeInsight.template.emmet.tokens.TextToken;
+import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
+import com.intellij.codeInsight.template.emmet.tokens.ZenCodingTokens;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

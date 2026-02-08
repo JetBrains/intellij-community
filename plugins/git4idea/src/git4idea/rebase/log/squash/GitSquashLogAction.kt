@@ -6,11 +6,16 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.table.size
-import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
 import git4idea.rebase.GitSquashedCommitsMessage
-import git4idea.rebase.log.*
+import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.rebase.log.GitMultipleCommitEditingAction
+import git4idea.rebase.log.GitNewCommitMessageActionDialog
+import git4idea.rebase.log.executeInMemoryWithFallback
+import git4idea.rebase.log.focusCommitWhenReady
+import git4idea.rebase.log.getOrLoadDetails
+import git4idea.rebase.log.notifySuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

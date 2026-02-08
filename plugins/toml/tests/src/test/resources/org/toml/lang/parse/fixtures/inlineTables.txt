@@ -64,3 +64,110 @@ TOML File
           PsiElement(NUMBER)('2')
       PsiWhiteSpace(' ')
       PsiElement(})('}')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('animal')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlInlineTable
+      PsiElement({)('{')
+      PsiWhiteSpace(' ')
+      TomlKeyValue
+        TomlKey
+          TomlKeySegment
+            PsiElement(BARE_KEY)('type')
+          PsiElement(.)('.')
+          TomlKeySegment
+            PsiElement(BARE_KEY)('name')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        TomlLiteral
+          PsiElement(BASIC_STRING)('"pug"')
+      PsiWhiteSpace(' ')
+      PsiElement(})('}')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('contact')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlInlineTable
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      TomlKeyValue
+        TomlKey
+          TomlKeySegment
+            PsiElement(BARE_KEY)('personal')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        TomlInlineTable
+          PsiElement({)('{')
+          PsiWhiteSpace('\n        ')
+          TomlKeyValue
+            TomlKey
+              TomlKeySegment
+                PsiElement(BARE_KEY)('name')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            TomlLiteral
+              PsiElement(BASIC_STRING)('"Donald Duck"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n        ')
+          TomlKeyValue
+            TomlKey
+              TomlKeySegment
+                PsiElement(BARE_KEY)('email')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            TomlLiteral
+              PsiElement(BASIC_STRING)('"donald@duckburg.com"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          PsiElement(})('}')
+      PsiElement(,)(',')
+      PsiWhiteSpace('\n    ')
+      TomlKeyValue
+        TomlKey
+          TomlKeySegment
+            PsiElement(BARE_KEY)('work')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        TomlInlineTable
+          PsiElement({)('{')
+          PsiWhiteSpace('\n        ')
+          TomlKeyValue
+            TomlKey
+              TomlKeySegment
+                PsiElement(BARE_KEY)('name')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            TomlLiteral
+              PsiElement(BASIC_STRING)('"Coin cleaner"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n        ')
+          TomlKeyValue
+            TomlKey
+              TomlKeySegment
+                PsiElement(BARE_KEY)('email')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            TomlLiteral
+              PsiElement(BASIC_STRING)('"donald@ScroogeCorp.com"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          PsiElement(})('}')
+      PsiElement(,)(',')
+      PsiWhiteSpace('\n')
+      PsiElement(})('}')

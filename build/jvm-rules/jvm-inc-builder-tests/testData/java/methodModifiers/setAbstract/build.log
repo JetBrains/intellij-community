@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  Super.class
+End of files
+Compiling files:
+  java/methodModifiers/setAbstract/a/Super.java
+End of files
+Cleaning output files:
+  AnonDerived$1.class
+  AnonDerived.class
+  Derived.class
+End of files
+Compiling files:
+  java/methodModifiers/setAbstract/a/AnonDerived.java
+  java/methodModifiers/setAbstract/a/Derived.java
+End of files
+------------------------------------------
+Exit code: ERROR

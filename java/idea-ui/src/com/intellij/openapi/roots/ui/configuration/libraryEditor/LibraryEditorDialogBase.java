@@ -12,8 +12,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import java.awt.Component;
 
 public abstract class LibraryEditorDialogBase extends DialogWrapper {
   protected JTextField myNameField;

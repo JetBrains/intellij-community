@@ -47,7 +47,8 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyEvent
 import java.io.File
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Deque
 import java.util.function.Function
 import javax.swing.JComponent
 

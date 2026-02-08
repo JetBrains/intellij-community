@@ -6,9 +6,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 

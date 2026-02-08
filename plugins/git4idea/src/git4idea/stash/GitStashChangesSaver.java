@@ -36,7 +36,11 @@ import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static git4idea.GitNotificationIdsHolder.UNSTASH_WITH_CONFLICTS;
 

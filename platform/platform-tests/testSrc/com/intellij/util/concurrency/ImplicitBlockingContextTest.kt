@@ -1,17 +1,35 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import com.intellij.concurrency.*
+import com.intellij.concurrency.IntelliJContextElement
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
+import com.intellij.concurrency.installThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.IntelliJCoroutinesFacade
 import io.kotest.mpp.atomics.AtomicReference
-import kotlinx.coroutines.*
-import org.junit.jupiter.api.Assertions.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.coroutines.*
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
 
 @OptIn(InternalCoroutinesApi::class)
 @TestApplication

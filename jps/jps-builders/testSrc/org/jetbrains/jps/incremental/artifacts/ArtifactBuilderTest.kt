@@ -23,7 +23,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.DigestInputStream
 import java.security.MessageDigest
-import java.util.*
+import java.util.Base64
 import java.util.concurrent.TimeUnit
 import java.util.jar.JarFile
 import java.util.zip.CRC32

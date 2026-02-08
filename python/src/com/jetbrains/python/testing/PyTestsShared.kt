@@ -2,10 +2,19 @@
 package com.jetbrains.python.testing
 
 import com.google.gson.Gson
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
+import com.intellij.execution.Location
+import com.intellij.execution.PsiLocation
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.RefactoringListenerProvider
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RuntimeConfigurationError
+import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -43,26 +52,38 @@ import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.extensions.*
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
+import com.jetbrains.python.extensions.ModuleBasedContextAnchor
+import com.jetbrains.python.extensions.QNameResolveContext
+import com.jetbrains.python.extensions.asPsiElement
+import com.jetbrains.python.extensions.asVirtualFile
+import com.jetbrains.python.extensions.getElementAndResolvableName
+import com.jetbrains.python.extensions.getQName
+import com.jetbrains.python.extensions.getSdk
+import com.jetbrains.python.extensions.isWellFormed
+import com.jetbrains.python.extensions.resolveToElement
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.psi.resolve.isPackageAvailable
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.reflection.DelegationProperty
 import com.jetbrains.python.reflection.Properties
 import com.jetbrains.python.reflection.Property
 import com.jetbrains.python.reflection.getProperties
-import com.jetbrains.python.run.*
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.run.CompositeRefactoringElementListener
+import com.jetbrains.python.run.PyWorkingDirectoryRenamer
+import com.jetbrains.python.run.PythonConfigurationFactoryBase
+import com.jetbrains.python.run.PythonRunConfiguration
 import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
@@ -481,7 +502,7 @@ abstract class PyAbstractTestConfiguration(
   project: Project,
   private val testFactory: PyAbstractTestFactory<*>,
 )
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired),
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, packageSpec = testFactory.packageSpec),
     PyRerunAwareConfiguration,
     RefactoringListenerProvider,
     SMRunnerConsolePropertiesProvider {
@@ -779,14 +800,16 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
   abstract fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean
 
   /**
-   * Test framework needs package to be installed
+   * Marker fully-qualified name used to detect if the framework is installed.
+   * Override this in subclasses to provide framework-specific packageSpec FQN.
+   * If null, [packageSpec] will be used as the module name to resolve.
    */
-  open val packageRequired: String? = null
+  open val packageSpec: PackageAvailabilitySpec? = null
 
   open fun isFrameworkInstalled(project: Project, sdk: Sdk): Boolean {
-    val requiredPackage = packageRequired ?: return true // No package required
-    val isInstalled = PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(requiredPackage)
-    return isInstalled
+    // example is unittest, it's part of stdlib, so no need to check.
+    val spec = packageSpec ?: return true
+    return isPackageAvailable(project, sdk, spec)
   }
 }
 

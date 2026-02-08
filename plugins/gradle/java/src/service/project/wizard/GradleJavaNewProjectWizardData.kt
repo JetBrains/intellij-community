@@ -3,27 +3,13 @@ package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.ApiStatus
 
 interface GradleJavaNewProjectWizardData : GradleNewProjectWizardData {
 
   val addSampleCodeProperty: GraphProperty<Boolean>
 
   var addSampleCode: Boolean
-
-  @Deprecated("Use addSampleCodeProperty instead")
-  val generateOnboardingTipsProperty: ObservableMutableProperty<Boolean>
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use addSampleCodeProperty instead")
-    get() = addSampleCodeProperty
-
-  @Deprecated("Use addSampleCode instead")
-  val generateOnboardingTips: Boolean
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use addSampleCode instead")
-    get() = addSampleCode
 
   companion object {
 

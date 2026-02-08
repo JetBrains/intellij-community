@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
+@K1Deprecation
 enum class Modifier(private val str: String) {
     PUBLIC("public"),
     PROTECTED("protected"),
@@ -20,8 +22,10 @@ enum class Modifier(private val str: String) {
     fun toKotlin(): String = str
 }
 
+@K1Deprecation
 val ACCESS_MODIFIERS = setOf(Modifier.PUBLIC, Modifier.PROTECTED, Modifier.PRIVATE, Modifier.INTERNAL)
 
+@K1Deprecation
 class Modifiers(modifiers: Collection<Modifier>) : Element() {
     val modifiers = modifiers.toSet()
 
@@ -61,9 +65,11 @@ class Modifiers(modifiers: Collection<Modifier>) : Element() {
     }
 }
 
+@K1Deprecation
 fun Modifiers.filter(predicate: (Modifier) -> Boolean): Modifiers
         = Modifiers(modifiers.filter(predicate)).assignPrototypesFrom(this)
 
+@K1Deprecation
 infix fun CodeBuilder.appendWithSpaceAfter(modifiers: Modifiers): CodeBuilder {
     if (!modifiers.isEmpty) {
         this append modifiers append " "

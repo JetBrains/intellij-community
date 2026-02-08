@@ -1,7 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
-import com.intellij.junit.testFramework.JUnitLibrary.*
+import com.intellij.junit.testFramework.JUnitLibrary.HAMCREST
+import com.intellij.junit.testFramework.JUnitLibrary.JUNIT3
+import com.intellij.junit.testFramework.JUnitLibrary.JUNIT4
+import com.intellij.junit.testFramework.JUnitLibrary.JUNIT5
+import com.intellij.junit.testFramework.JUnitLibrary.JUNIT5_7_0
+import com.intellij.junit.testFramework.JUnitLibrary.JUNIT6
+import com.intellij.junit.testFramework.JUnitLibrary.PIONEER
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk

@@ -14,7 +14,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ListCellRenderer;
 import java.util.HashMap;
 import java.util.Map;
 

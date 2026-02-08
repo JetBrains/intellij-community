@@ -3,7 +3,11 @@ package com.intellij.testFramework.nastradamus
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
-import com.intellij.nastradamus.model.*
+import com.intellij.nastradamus.model.BuildInfo
+import com.intellij.nastradamus.model.ChangeEntity
+import com.intellij.nastradamus.model.SortRequestEntity
+import com.intellij.nastradamus.model.TestCaseEntity
+import com.intellij.nastradamus.model.TestResultRequestEntity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.PlatformTestUtil
@@ -11,12 +15,16 @@ import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.junit.*
+import org.junit.After
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import java.net.URI
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.readText

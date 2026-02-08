@@ -11,7 +11,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.function.Predicate;
 
-import static com.intellij.util.SystemProperties.*;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * Wraps a storage (name, opening-method, check-is-closed-method), and ensuring only 1 opened instance of the storage

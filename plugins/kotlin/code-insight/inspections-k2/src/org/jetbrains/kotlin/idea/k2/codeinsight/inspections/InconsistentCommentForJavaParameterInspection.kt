@@ -14,7 +14,13 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.getArgumentNameComments
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.getBlockCommentWithName
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasArgumentNameComments
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class InconsistentCommentForJavaParameterInspection: LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : KtVisitorVoid() {

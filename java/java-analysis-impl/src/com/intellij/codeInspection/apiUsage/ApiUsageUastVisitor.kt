@@ -1,12 +1,41 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.apiUsage
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiJavaModuleReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiNameValuePair
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnonymousClass
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.tryResolve
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 /**

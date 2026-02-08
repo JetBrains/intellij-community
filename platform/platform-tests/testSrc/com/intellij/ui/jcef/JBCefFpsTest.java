@@ -8,8 +8,12 @@ import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.AWTException;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.Robot;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.concurrent.CountDownLatch;

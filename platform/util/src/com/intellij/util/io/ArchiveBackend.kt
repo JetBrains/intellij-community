@@ -4,7 +4,7 @@ package com.intellij.util.io
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
+import java.util.ServiceLoader
 
 @ApiStatus.Internal
 /**

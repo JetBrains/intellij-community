@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupBottomPanelProvider
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -14,17 +15,19 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ConfigurableWithId
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.terminal.frontend.view.completion.TerminalLookupBottomPanelProvider.ShortcutPreset
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.actionButton
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -32,7 +35,6 @@ import org.jetbrains.plugins.terminal.TERMINAL_CONFIGURABLE_ID
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import java.awt.event.KeyEvent
-import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 import javax.swing.text.JTextComponent
@@ -179,10 +181,11 @@ internal class TerminalCommandCompletionSettingsAction : DumbAwareAction(
 
     TerminalCompletionPopupPromotion.doNotShowAgain()
 
-    // TODO: it should highlight the Command Completion options group in the settings dialog.
-    ShowSettingsUtil.getInstance().showSettingsDialog(project, Predicate { configurable: Configurable ->
-      configurable is ConfigurableWithId && configurable.getId() == TERMINAL_CONFIGURABLE_ID
-    }, null)
+    ShowSettingsUtilImpl.showSettingsDialog(
+      project,
+      idToSelect = TERMINAL_CONFIGURABLE_ID,
+      filter = TerminalBundle.message("terminal.command.completion")
+    )
   }
 }
 

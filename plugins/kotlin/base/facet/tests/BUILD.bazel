@@ -6,6 +6,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
+    "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
@@ -27,7 +28,6 @@ jvm_library(
     "//platform/backend/workspace",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/project-configuration",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
   ]
 )
 
@@ -69,7 +69,6 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//plugins/kotlin/base/facet",
-    "//plugins/kotlin/plugin/common",
     "//java/idea-ui:ui-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/project-configuration",

@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class GroovyScriptUtil {
   public static final GroovyRunnableScriptType DEFAULT_TYPE = new GroovyRunnableScriptType("default") {

@@ -10,9 +10,11 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.format;
 
-import com.intellij.find.usages.api.*;
+import com.intellij.find.usages.api.PsiUsage;
+import com.intellij.find.usages.api.SearchTarget;
+import com.intellij.find.usages.api.Usage;
+import com.intellij.find.usages.api.UsageSearchParameters;
+import com.intellij.find.usages.api.UsageSearcher;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.psi.PsiExpression;

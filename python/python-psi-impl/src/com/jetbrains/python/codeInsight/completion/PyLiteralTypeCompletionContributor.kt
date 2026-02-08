@@ -1,6 +1,11 @@
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -12,7 +17,11 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.StringLiteralExpression
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyExpectedTypeJudgement
+import com.jetbrains.python.psi.types.PyLiteralType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Provides literal type variants in the following cases:

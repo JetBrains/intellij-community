@@ -1,6 +1,11 @@
 package com.intellij.database.actions;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.SelectionModel;
+import com.intellij.database.datagrid.SelectionModelWithViewColumns;
 import com.intellij.database.run.actions.GridAction;
 import com.intellij.database.run.ui.ResultViewWithColumns;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;

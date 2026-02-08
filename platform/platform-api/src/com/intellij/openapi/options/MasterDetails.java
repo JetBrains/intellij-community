@@ -17,7 +17,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.ui.DetailsComponent;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface MasterDetails {
 

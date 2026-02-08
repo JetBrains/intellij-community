@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
-import andel.text.*
+import andel.text.Text
+import andel.text.TextView
+import andel.text.charSequence
+import andel.text.line
+import andel.text.lineEndOffset
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.LineIterator

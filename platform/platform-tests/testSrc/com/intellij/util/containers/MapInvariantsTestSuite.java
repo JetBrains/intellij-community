@@ -9,8 +9,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 @RunWith(Parameterized.class)
 public class MapInvariantsTestSuite {

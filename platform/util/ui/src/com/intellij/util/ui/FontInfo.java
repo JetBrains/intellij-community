@@ -3,7 +3,9 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsSafe;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
 import java.util.ArrayList;
 import java.util.Collections;

@@ -3,7 +3,13 @@ package com.intellij.polySymbols.patterns
 
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.impl.*
+import com.intellij.polySymbols.patterns.impl.CompletionParameters
+import com.intellij.polySymbols.patterns.impl.CompletionResults
+import com.intellij.polySymbols.patterns.impl.ListParameters
+import com.intellij.polySymbols.patterns.impl.ListResult
+import com.intellij.polySymbols.patterns.impl.MatchParameters
+import com.intellij.polySymbols.patterns.impl.MatchResult
+import com.intellij.polySymbols.patterns.impl.removeEmptySegments
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams

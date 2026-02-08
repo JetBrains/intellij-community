@@ -1,7 +1,11 @@
 package com.intellij.python.sdkConfigurator.frontend
 
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.state.ToggleableState
 import com.intellij.python.common.tools.ToolId
@@ -10,7 +14,12 @@ import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
 import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
 import com.intellij.python.sdkConfigurator.common.impl.ToolIdDTO
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableMap
+import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHGitRefName
-import java.util.*
+import java.util.Date
 
 data class GHPRHeadRefForcePushedEvent(override val actor: GHActor?,
                                        override val createdAt: Date,

@@ -5,7 +5,12 @@ package com.intellij.codeInsight.codeVision.ui
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollingModel
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseEventArea
+import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.event.VisibleAreaEvent
+import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.rd.swing.proxyProperty
@@ -14,7 +19,11 @@ import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.switchMap
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Window
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent

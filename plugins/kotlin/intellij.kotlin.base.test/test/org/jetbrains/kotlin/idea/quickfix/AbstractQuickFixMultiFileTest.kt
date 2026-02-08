@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
-import kotlin.collections.addAll
 
 abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun doTestWithExtraFile(beforeFileName: String) {

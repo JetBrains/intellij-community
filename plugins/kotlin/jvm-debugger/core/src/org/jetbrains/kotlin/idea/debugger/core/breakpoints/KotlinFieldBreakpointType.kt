@@ -25,8 +25,13 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xml.CommonXmlStrings
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinBreakpointFiltersPanel
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpoint
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpointPropertiesPanel
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinPropertyBreakpointProperties
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.dialog.AddFieldBreakpointDialog
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isBreakpointApplicable
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtFile

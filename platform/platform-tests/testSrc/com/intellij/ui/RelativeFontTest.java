@@ -3,10 +3,10 @@ package com.intellij.ui;
 
 import junit.framework.TestCase;
 
+import javax.swing.JLabel;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.beans.PropertyChangeListener;
-import javax.swing.JLabel;
 
 public final class RelativeFontTest extends TestCase {
   private static final RelativeFont BOLD_ITALIC_FONT = RelativeFont.NORMAL.style(Font.BOLD | Font.ITALIC);

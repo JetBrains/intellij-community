@@ -12,3 +12,5 @@ fun foo(x: X, y: Y) {
 
 // EXIST: x
 // ABSENT: y
+
+// IGNORE_K2

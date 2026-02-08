@@ -12,7 +12,13 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.DictionaryLayer;
@@ -188,9 +194,8 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
       result.add(SpellCheckerQuickFixFactory.rename(typo, range, element, tracker));
     } else {
-      List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions);
+      result.addAll(SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions));
       result.addAll(SpellCheckerQuickFixFactory.additionalFixes());
-      result.addAll(fixes);
     }
 
     SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());

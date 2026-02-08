@@ -6,8 +6,10 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 import static java.lang.String.format;
 

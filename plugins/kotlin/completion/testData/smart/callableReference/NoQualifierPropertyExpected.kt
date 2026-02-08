@@ -14,3 +14,5 @@ fun fInt() = 0
 // EXIST: { lookupString: "::vInt", itemText: "::vInt", tailText: " (<root>)", typeText: "Int" }
 // ABSENT: ::vString
 // ABSENT: ::fInt
+
+// IGNORE_K2

@@ -6,7 +6,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

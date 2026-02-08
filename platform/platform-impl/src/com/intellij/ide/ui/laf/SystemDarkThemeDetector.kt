@@ -2,7 +2,10 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.jna.JnaLoader
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -18,7 +21,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
-import java.util.*
+import java.util.Locale
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 

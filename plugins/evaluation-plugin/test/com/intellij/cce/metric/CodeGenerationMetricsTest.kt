@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.Lookup
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.Suggestion
+import com.intellij.cce.core.SuggestionSource
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluable.AIA_HAS_SYNTAX_ERRORS
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

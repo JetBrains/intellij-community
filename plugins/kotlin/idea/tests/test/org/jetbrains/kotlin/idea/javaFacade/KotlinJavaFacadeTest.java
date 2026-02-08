@@ -2,7 +2,14 @@
 
 package org.jetbrains.kotlin.idea.javaFacade;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -14,7 +21,13 @@ import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 import org.jetbrains.kotlin.name.SpecialNames;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtClass;
+import org.jetbrains.kotlin.psi.KtDeclaration;
+import org.jetbrains.kotlin.psi.KtElement;
+import org.jetbrains.kotlin.psi.KtNamedFunction;
+import org.jetbrains.kotlin.psi.KtParameter;
+import org.jetbrains.kotlin.psi.KtProperty;
+import org.jetbrains.kotlin.psi.KtPropertyAccessor;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;

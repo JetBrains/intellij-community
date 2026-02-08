@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;

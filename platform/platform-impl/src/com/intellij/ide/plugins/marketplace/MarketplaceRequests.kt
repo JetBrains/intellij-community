@@ -156,10 +156,26 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
-      activity: PluginUpdateActivity = PluginUpdateActivity.AVAILABLE_VERSIONS,
+    ): List<IdeCompatibleUpdate> {
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, sendMachineId = false)
+    }
+
+    fun checkInstalledPluginUpdate(
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false,
+    ): List<IdeCompatibleUpdate> {
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, sendMachineId = true)
+    }
+
+    private fun loadLastCompatiblePluginUpdate(
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false,
+      sendMachineId: Boolean,
     ): List<IdeCompatibleUpdate> {
       LOG.info("Looking for the last compatible plugin updates for:\n$allIds\n" +
-               "Activity: $activity")
+               "send machine ID: $sendMachineId")
 
       val chunks = mutableListOf<MutableList<PluginId>>()
       chunks.add(ArrayList(100))
@@ -182,7 +198,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
 
       return chunks.flatMap {
-        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions, activity)
+        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions, sendMachineId)
       }
     }
 
@@ -202,7 +218,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       ids: Collection<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
-      activity: PluginUpdateActivity = PluginUpdateActivity.AVAILABLE_VERSIONS,
+      sendMachineId: Boolean = false,
     ): List<IdeCompatibleUpdate> {
       try {
         if (ids.isEmpty()) return emptyList()
@@ -219,7 +235,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
           "os" to buildOsParameter(),
           "arch" to CpuArch.CURRENT.name
         ).apply {
-          if (machineId != null && activity == PluginUpdateActivity.INSTALLED_VERSIONS) {
+          if (machineId != null && sendMachineId) {
             add("mid" to machineId)
           }
           addAll(ids.map { "pluginXmlId" to it.idString })

@@ -4,8 +4,9 @@ package org.jetbrains.plugins.github
 import com.intellij.openapi.util.Pair
 import junit.framework.TestCase
 import org.jetbrains.plugins.github.api.GHRepositoryPath
-import org.jetbrains.plugins.github.util.GithubUrlUtil.*
-import java.util.*
+import org.jetbrains.plugins.github.util.GithubUrlUtil.getHostFromUrl
+import org.jetbrains.plugins.github.util.GithubUrlUtil.getUserAndRepositoryFromRemoteUrl
+import org.jetbrains.plugins.github.util.GithubUrlUtil.makeGithubRepoUrlFromRemoteUrl
 
 class GithubUrlUtilTest : TestCase() {
   private class TestCase<T> {

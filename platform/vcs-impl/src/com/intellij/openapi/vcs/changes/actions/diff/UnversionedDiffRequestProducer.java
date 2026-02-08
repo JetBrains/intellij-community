@@ -2,8 +2,8 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.DiffEditorTitleCustomizer;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.impl.DiffEditorTitleDetails;

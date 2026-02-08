@@ -14,8 +14,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType

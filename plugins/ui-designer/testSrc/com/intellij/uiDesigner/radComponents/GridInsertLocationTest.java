@@ -8,7 +8,7 @@ import com.intellij.uiDesigner.designSurface.GridInsertLocation;
 import com.intellij.uiDesigner.designSurface.GridInsertMode;
 import junit.framework.TestCase;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
 
 public class GridInsertLocationTest extends TestCase {

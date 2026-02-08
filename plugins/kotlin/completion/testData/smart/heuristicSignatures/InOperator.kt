@@ -22,3 +22,5 @@ fun foo(a: A,  cA: Collection<A>, cB: Collection<B>, cC: Collection<C>, cAny: Co
 // EXIST: aB
 // ABSENT: aC
 // EXIST: aAny
+
+// IGNORE_K2

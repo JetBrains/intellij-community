@@ -8,6 +8,7 @@ import com.intellij.ide.util.PsiClassListCellRenderer
 import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.modcommand.ActionContext
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -65,7 +66,9 @@ public open class JvmClassIntentionActionGroup(
 
       val step = object : BaseListPopupStep<JvmClass>(message("target.class.chooser.title"), targetActions.keys.toList()) {
         override fun onChosen(selectedValue: JvmClass, finalChoice: Boolean): PopupStep<*>? {
-          invokeAction(targetActions[selectedValue]!!)
+          WriteIntentReadAction.run {
+            invokeAction(targetActions[selectedValue]!!)
+          }
           return null
         }
       }

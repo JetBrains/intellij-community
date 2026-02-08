@@ -52,7 +52,8 @@ internal class ShellCommandTreeBuilder private constructor(
 
   private suspend fun buildSubcommandTree(root: ShellCommandNode) {
     while (curIndex < arguments.size) {
-      val name = arguments[curIndex]
+      val curArgument = arguments[curIndex]
+      val name = curArgument.removeQuotes()
       val currentTokens = arguments.take(curIndex + 1)
       val suggestionsProvider = createSuggestionsProvider(currentTokens)
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root)
@@ -67,7 +68,8 @@ internal class ShellCommandTreeBuilder private constructor(
         curIndex++
       }
       else {
-        val node = suggestion?.let { createChildNode(name, it, root) } ?: ShellUnknownNode(name, root)
+        val node = suggestion?.let { createChildNode(curArgument, it, root) }
+                   ?: ShellUnknownNode(curArgument, root)
         if (node !is ShellAliasNode) {
           root.children.add(node)
           curIndex++
@@ -87,7 +89,8 @@ internal class ShellCommandTreeBuilder private constructor(
 
   private suspend fun buildOptionTree(root: ShellOptionNode) {
     while (curIndex < arguments.size) {
-      val name = arguments[curIndex]
+      val curArgument = arguments[curIndex]
+      val name = curArgument.removeQuotes()
       val currentTokens = arguments.take(curIndex + 1)
       val suggestionsProvider = createSuggestionsProvider(currentTokens)
       val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root)
@@ -95,11 +98,11 @@ internal class ShellCommandTreeBuilder private constructor(
       val node = if (suggestion == null) {
         // option requires an argument, then probably provided name is this argument
         suggestionsProvider.getAvailableArguments(root).find { !it.isOptional }?.let {
-          ShellArgumentNode(name, it, root)
+          ShellArgumentNode(curArgument, it, root)
         }
       }
       else {
-        createChildNode(name, suggestion, root)
+        createChildNode(curArgument, suggestion, root)
       }
       if (node != null) {
         root.children.add(node)
@@ -172,5 +175,13 @@ internal class ShellCommandTreeBuilder private constructor(
   private fun createSuggestionsProvider(commandTokens: List<String>): ShellCommandTreeSuggestionsProvider {
     val context = contextProvider.getContext(commandTokens)
     return ShellCommandTreeSuggestionsProvider(context, generatorsExecutor)
+  }
+
+  private fun String.removeQuotes(): String {
+    return if (startsWith('"') && endsWith('"')
+               || startsWith("'") && endsWith("'")) {
+      if (length > 1) substring(1, length - 1) else ""
+    }
+    else this
   }
 }

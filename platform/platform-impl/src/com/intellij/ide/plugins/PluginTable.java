@@ -14,10 +14,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListSelectionModel;
+import javax.swing.TransferHandler;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Graphics;
 import java.awt.datatransfer.Transferable;
 
 @ApiStatus.Internal

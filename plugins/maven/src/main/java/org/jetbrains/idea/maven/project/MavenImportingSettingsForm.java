@@ -20,7 +20,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

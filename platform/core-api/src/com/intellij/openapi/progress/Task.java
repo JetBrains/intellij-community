@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * <h3>Obsolescence notice</h3>
@@ -57,12 +57,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
   protected final @Nullable Project myProject;
   protected final @Nullable JComponent myParentComponent;
-
-  /** @deprecated please use {@link #getTitle} / {@link #setTitle} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected @ProgressTitle @NotNull String myTitle;
+  private @ProgressTitle @NotNull String myTitle;
 
   private final boolean myCanBeCancelled;
   private @NlsContexts.Button String myCancelText = CoreBundle.message("button.cancel");

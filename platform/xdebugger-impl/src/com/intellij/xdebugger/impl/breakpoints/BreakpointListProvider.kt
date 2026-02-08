@@ -19,7 +19,6 @@ import com.intellij.util.ui.NamedColorUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerBundle.message
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction

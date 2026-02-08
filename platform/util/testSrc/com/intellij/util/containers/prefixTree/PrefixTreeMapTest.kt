@@ -3,8 +3,8 @@ package com.intellij.util.containers.prefixTree
 
 import com.intellij.util.containers.prefixTree.map.asMap
 import com.intellij.util.containers.prefixTree.map.asMutableMap
-import org.assertj.core.api.Assertions.entry
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 
 class PrefixTreeMapTest {

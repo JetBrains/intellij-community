@@ -2,22 +2,34 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.ChangeListColumn;
+import com.intellij.openapi.vcs.DefaultRepositoryLocation;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.versionBrowser.*;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockContentRevision;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 public class MockCommittedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeListImpl, ChangeBrowserSettings> {
   private final List<CommittedChangeListImpl> myChangeLists = new ArrayList<>();

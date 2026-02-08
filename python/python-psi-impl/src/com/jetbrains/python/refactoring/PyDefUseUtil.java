@@ -24,16 +24,34 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.codeInsight.controlflow.*;
+import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlow;
+import com.jetbrains.python.codeInsight.controlflow.PyWithContextExitInstruction;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyImplicitImportNameDefiner;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -51,18 +69,20 @@ public final class PyDefUseUtil {
                                                          boolean acceptTypeAssertions,
                                                          boolean acceptImplicitImports,
                                                          @NotNull TypeEvalContext context) {
-    return getLatestDefs(ControlFlowCache.getControlFlow(block), varName, anchor, acceptTypeAssertions, acceptImplicitImports, context);
+    return getLatestDefs(ControlFlowCache.getControlFlow(block), block, varName, anchor, acceptTypeAssertions, acceptImplicitImports,
+                         context);
   }
 
 
   public static @NotNull List<Instruction> getLatestDefs(@NotNull PyControlFlow controlFlow,
+                                                         @NotNull ScopeOwner scopeOwner,
                                                          @NotNull String varName,
                                                          @NotNull PsiElement anchor,
                                                          boolean acceptTypeAssertions,
                                                          boolean acceptImplicitImports,
                                                          @NotNull TypeEvalContext context) {
     final Instruction[] instructions = controlFlow.getInstructions();
-    int startNum = findStartInstructionId(anchor, controlFlow);
+    int startNum = findStartInstructionId(anchor, controlFlow, scopeOwner);
     if (startNum < 0) {
       return Collections.emptyList();
     }
@@ -152,13 +172,19 @@ public final class PyDefUseUtil {
     return varQname.getComponentCount() > elementQname.getComponentCount() && varQname.matchesPrefix(elementQname);
   }
 
-  private static int findStartInstructionId(@NotNull PsiElement startAnchor, @NotNull PyControlFlow flow) {
+  private static int findStartInstructionId(@NotNull PsiElement startAnchor, @NotNull PyControlFlow flow, @NotNull ScopeOwner scopeOwner) {
     PsiElement realCfgAnchor = startAnchor;
     final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(startAnchor);
     if (augAssignment != null) {
       realCfgAnchor = augAssignment;
     }
-    int instr = flow.getInstruction(realCfgAnchor);
+    int instr = -1;
+    for (PsiElement element = realCfgAnchor; element != null && element != scopeOwner; element = element.getParent()) {
+      instr = flow.getInstruction(element);
+      if (instr >= 0) {
+        break;
+      }
+    }
     if (instr < 0) {
       return instr;
     }

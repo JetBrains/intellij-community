@@ -2,7 +2,13 @@
 package com.intellij.uiTests.robot
 
 import com.intellij.remoterobot.client.FindByXpathRequest
-import com.intellij.remoterobot.data.*
+import com.intellij.remoterobot.data.ByteResponse
+import com.intellij.remoterobot.data.CommonResponse
+import com.intellij.remoterobot.data.ComponentDataResponse
+import com.intellij.remoterobot.data.FindComponentsResponse
+import com.intellij.remoterobot.data.ObjectContainer
+import com.intellij.remoterobot.data.Response
+import com.intellij.remoterobot.data.ResponseStatus
 import com.intellij.remoterobot.data.js.ExecuteScriptRequest
 import com.intellij.remoterobot.encryption.Encryptor
 import com.intellij.remoterobot.encryption.EncryptorFactory
@@ -18,7 +24,11 @@ import com.intellij.uiTests.robot.routing.StaticFile
 import com.intellij.uiTests.robot.routing.route
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpUtil
+import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.util.CharsetUtil
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response

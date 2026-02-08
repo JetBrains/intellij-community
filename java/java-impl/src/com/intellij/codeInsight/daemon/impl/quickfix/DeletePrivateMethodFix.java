@@ -13,7 +13,11 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class DeletePrivateMethodFix extends PsiBasedModCommandAction<PsiMethod> {
   private final ThreeState myDeleteCalled;

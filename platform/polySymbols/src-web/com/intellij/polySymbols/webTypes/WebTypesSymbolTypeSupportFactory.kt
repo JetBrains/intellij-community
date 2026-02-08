@@ -10,7 +10,7 @@ import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.polySymbols.webTypes.json.jsTypesSyntaxWithLegacy
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Internal
 interface WebTypesSymbolTypeSupportFactory {

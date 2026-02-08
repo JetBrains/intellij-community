@@ -12,7 +12,11 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.*
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.siblings
+import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.obtainMarkerNumber
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBulk
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
@@ -20,7 +24,11 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
-import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 

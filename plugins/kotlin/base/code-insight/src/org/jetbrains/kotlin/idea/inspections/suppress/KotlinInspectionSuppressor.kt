@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.inspections.suppress
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionSuppressor
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.RedundantSuppressionDetector
+import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil

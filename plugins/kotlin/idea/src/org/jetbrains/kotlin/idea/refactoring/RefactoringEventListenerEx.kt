@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.util.messages.Topic
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 @Deprecated("Please use the frontend-agnostic KotlinRefactoringListener instead")
 interface KotlinRefactoringEventListener {
     companion object {

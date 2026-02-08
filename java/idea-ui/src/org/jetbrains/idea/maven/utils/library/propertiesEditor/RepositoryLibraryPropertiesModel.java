@@ -21,8 +21,13 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.aether.ArtifactKind;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.ComboBoxModel;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
 
 public class RepositoryLibraryPropertiesModel {
   private String version;

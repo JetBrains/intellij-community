@@ -19,7 +19,11 @@ package com.pme.exe.res.icon;
 
 import com.pme.exe.Bin;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 /**
  * @author Sergey Zhulin

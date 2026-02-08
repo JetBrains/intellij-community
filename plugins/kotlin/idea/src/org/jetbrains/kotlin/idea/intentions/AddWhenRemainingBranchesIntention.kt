@@ -3,11 +3,13 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.quickfix.AddWhenRemainingBranchesFix
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
+@K1Deprecation
 class AddWhenRemainingBranchesIntention : SelfTargetingIntention<KtWhenExpression>(
     KtWhenExpression::class.java, KotlinBundle.messagePointer("add.remaining.branches")
 ) {

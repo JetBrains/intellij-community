@@ -22,6 +22,7 @@
   - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-jwt-jvm/0/utils-jwt-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/user/strg/user-strg-model-jvm/0/user-strg-model-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/indexing/indexing-server-api-jvm/0/indexing-server-api-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/indexing/indexing-provider-api-jvm/0/indexing-provider-api-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/client/client-common-jvm/0/client-common-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
@@ -31,7 +32,6 @@
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nmt-jvm/0/model-nmt-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nlc-jvm/0/model-nlc-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0/model-def-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-syn-jvm/0/model-syn-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-qa-jvm/0/model-qa-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0/model-emb-jvm-0.jar

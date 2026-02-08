@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions
 
-import com.intellij.diff.*
+import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffContentFactoryEx
+import com.intellij.diff.DiffContext
+import com.intellij.diff.DiffDialogHints
+import com.intellij.diff.DiffExtension
+import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.MutableDiffRequestChain
 import com.intellij.diff.contents.DiffContent
@@ -15,13 +20,21 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
-import com.intellij.diff.util.*
 import com.intellij.diff.util.BlankDiffWindowUtil
+import com.intellij.diff.util.DiffNotificationProvider
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.ThreeSide
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorDropHandler

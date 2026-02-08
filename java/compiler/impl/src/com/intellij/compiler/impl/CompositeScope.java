@@ -17,7 +17,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class CompositeScope extends ExportableUserDataHolderBase implements CompileScope{
   private final List<CompileScope> myScopes = new ArrayList<>();

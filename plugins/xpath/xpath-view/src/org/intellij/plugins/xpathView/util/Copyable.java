@@ -15,9 +15,9 @@
  */
 package org.intellij.plugins.xpathView.util;
 
-import java.util.List;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public interface Copyable<T> {
     T copy();

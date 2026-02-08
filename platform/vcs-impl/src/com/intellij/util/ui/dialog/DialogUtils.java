@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 

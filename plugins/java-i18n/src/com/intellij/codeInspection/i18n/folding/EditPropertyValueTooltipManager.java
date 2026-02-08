@@ -13,7 +13,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingPopupManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -29,12 +33,17 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.Point;
 import java.util.Arrays;
 
-import static com.intellij.codeInsight.hint.HintManager.*;
+import static com.intellij.codeInsight.hint.HintManager.ABOVE;
+import static com.intellij.codeInsight.hint.HintManager.HIDE_BY_ANY_KEY;
+import static com.intellij.codeInsight.hint.HintManager.HIDE_BY_SCROLLING;
+import static com.intellij.codeInsight.hint.HintManager.HIDE_BY_TEXT_CHANGE;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EDIT_PROPERTY_VALUE;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_REGION;
 

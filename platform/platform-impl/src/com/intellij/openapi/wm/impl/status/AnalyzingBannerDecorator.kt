@@ -14,7 +14,6 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.JPanel
-import kotlin.getValue
 
 /**
  * Places analyzing progress indicator on top, adds a banner under it.

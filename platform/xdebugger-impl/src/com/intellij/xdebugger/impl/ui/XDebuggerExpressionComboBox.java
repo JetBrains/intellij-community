@@ -38,8 +38,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ComboBoxEditor;
+import javax.swing.JComponent;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -52,9 +53,17 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private XExpression myExpression;
   private Function<? super Document, ? extends Document> myDocumentProcessor = Function.identity();
 
+  public XDebuggerExpressionComboBox(@NotNull Project project,
+                                     @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
+                                     @Nullable @NonNls String historyId,
+                                     @Nullable XSourcePosition sourcePosition,
+                                     boolean showEditor,
+                                     boolean languageInside) {
+    this(project, debuggerEditorsProvider, historyId, sourcePosition, showEditor, languageInside, null);
+  }
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
-                                     @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
-    super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
+                                     @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside, @Nullable String purpose) {
+    super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition, null, purpose);
     myComboBox = createComboBox(myModel, 100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;

@@ -4,14 +4,20 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.BuildRange
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @Throws(IOException::class, JDOMException::class)
 fun parseUpdateData(

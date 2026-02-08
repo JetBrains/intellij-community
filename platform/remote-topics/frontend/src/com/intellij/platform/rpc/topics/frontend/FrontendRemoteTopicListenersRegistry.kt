@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener

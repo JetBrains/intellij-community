@@ -2,19 +2,45 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
-import org.jetbrains.kotlin.idea.base.psi.isNullExpression
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.AssignToVariableResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ChainedCallGenerator
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.CommentSavingRangeHolder
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.MatchingState
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatch
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.VariableInitialization
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.countUsages
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.deleteWithLabels
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.findVariableInitializationBeforeLoop
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.generateLambda
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isConstant
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isStableInLoop
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isVariableReference
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.nextStatement
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.Condition
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.FilterTransformationBase
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
@@ -40,6 +66,7 @@ import org.jetbrains.kotlin.types.typeUtil.nullability
  *     }
  *     return ...
  */
+@K1Deprecation
 object FindTransformationMatcher : TransformationMatcher {
     override val indexVariableAllowed: Boolean
         get() = false

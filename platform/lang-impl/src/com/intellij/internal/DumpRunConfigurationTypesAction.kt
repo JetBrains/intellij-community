@@ -3,8 +3,17 @@ package com.intellij.internal
 
 import com.intellij.execution.EnvFilesOptions
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.ConfigurationType.CONFIGURATION_TYPE_EP
+import com.intellij.execution.configurations.LocatableConfiguration
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.execution.configurations.RunConfigurationOptions
+import com.intellij.execution.configurations.RunConfigurationWithSuppressedDefaultDebugAction
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption
+import com.intellij.execution.configurations.SearchScopeProvidingRunProfile
+import com.intellij.execution.configurations.VirtualConfigurationType
 import com.intellij.execution.runners.ProgramRunner.PROGRAM_RUNNER_EP
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
 import com.intellij.execution.ui.FragmentedSettingsEditor

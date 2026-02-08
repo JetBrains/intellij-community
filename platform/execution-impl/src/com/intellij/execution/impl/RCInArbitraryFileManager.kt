@@ -5,9 +5,9 @@ package com.intellij.execution.impl
 
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -23,7 +23,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
 import java.nio.file.AccessDeniedException
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CancellationException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read

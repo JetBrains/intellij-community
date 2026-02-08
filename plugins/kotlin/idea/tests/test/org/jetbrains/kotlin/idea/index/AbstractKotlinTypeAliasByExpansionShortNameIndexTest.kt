@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.index
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.junit.Assert
 import kotlin.reflect.KMutableProperty0
 

@@ -32,7 +32,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 import java.util.zip.ZipOutputStream
 
 private class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("create.backup.for.debugging.kotlin.incremental.compilation")) {

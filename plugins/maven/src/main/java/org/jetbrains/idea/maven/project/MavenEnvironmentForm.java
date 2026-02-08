@@ -6,7 +6,11 @@ import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
+import com.intellij.openapi.ui.TextComponentAccessors;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -28,10 +32,13 @@ import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.utils.MavenEelUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.file.Path;
@@ -41,7 +48,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.idea.maven.project.MavenHomeKt.*;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.getAllKnownHomes;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 public class MavenEnvironmentForm implements PanelWithAnchor {
   private JPanel panel;

@@ -9,17 +9,25 @@ import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.NameWithTypeLookupElementDecoratorInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
-import org.jetbrains.kotlin.idea.completion.contributors.keywords.SuperKeywordLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.SuperKeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.handlers.KeywordConstructLookupObject
 import org.jetbrains.kotlin.idea.completion.handlers.KeywordConstructorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.handlers.LineAdjusterInsertionHandler
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.ChainedInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.CompoundInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.SuperLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TailTextInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TypeParameterInWhenClauseILookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TypeParameterInWhenClauseInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AnonymousObjectInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.InsertRequiredTypeArgumentsInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WrapSingleStringTemplateEntryWithBracesInsertHandler
@@ -30,15 +38,28 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookup
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.NamedArgumentInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
-import org.jetbrains.kotlin.idea.completion.lookups.QuotedNamesAwareInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.UniqueLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.QuotedNamesAwareInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.UniqueLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.AnonymousObjectLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.AsIdentifierCustomInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.CallableIdentifierInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.ClassifierInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.ClassifierLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.OperatorNameLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.PackagePartInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.PackagePartLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.VariableInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.VariableLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.WithCallArgsInsertionHandler
 
 @ApiStatus.Internal
 val serializableInsertionHandlerSerializersModule: SerializersModule = SerializersModule {
     polymorphic(SerializableLookupObject::class) {
         subclass(ClassifierLookupObject::class, ClassifierLookupObject.serializer())
+        subclass(AnonymousObjectLookupObject::class, AnonymousObjectLookupObject.serializer())
         subclass(TypeParameterInWhenClauseILookupObject::class, TypeParameterInWhenClauseILookupObject.serializer())
         subclass(WhenConditionLookupObject::class, WhenConditionLookupObject.serializer())
         subclass(FunctionCallLookupObject::class, FunctionCallLookupObject.serializer())
@@ -58,6 +79,7 @@ val serializableInsertionHandlerSerializersModule: SerializersModule = Serialize
     polymorphic(SerializableInsertHandler::class) {
         subclass(NamedArgumentInsertHandler::class, NamedArgumentInsertHandler.serializer())
         subclass(BracketOperatorInsertionHandler::class, BracketOperatorInsertionHandler.serializer())
+        subclass(AnonymousObjectInsertHandler::class, AnonymousObjectInsertHandler.serializer())
         subclass(TypeInsertHandler::class, TypeInsertHandler.serializer())
         subclass(InsertStringTemplateBracesInsertHandler::class, InsertStringTemplateBracesInsertHandler.serializer())
         subclass(KeywordCompletion.UseSiteAnnotationTargetInsertHandler::class, KeywordCompletion.UseSiteAnnotationTargetInsertHandler.serializer())

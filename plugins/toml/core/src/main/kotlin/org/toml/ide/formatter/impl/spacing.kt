@@ -10,7 +10,15 @@ import com.intellij.formatting.Spacing
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.toml.ide.formatter.TomlFmtContext
-import org.toml.lang.psi.TomlElementTypes.*
+import org.toml.lang.psi.TomlElementTypes.COMMA
+import org.toml.lang.psi.TomlElementTypes.DOT
+import org.toml.lang.psi.TomlElementTypes.EQ
+import org.toml.lang.psi.TomlElementTypes.KEY
+import org.toml.lang.psi.TomlElementTypes.L_BRACKET
+import org.toml.lang.psi.TomlElementTypes.L_CURLY
+import org.toml.lang.psi.TomlElementTypes.R_BRACKET
+import org.toml.lang.psi.TomlElementTypes.R_CURLY
+import org.toml.lang.psi.TomlElementTypes.TABLE_HEADER
 import com.intellij.psi.tree.TokenSet.create as ts
 
 fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings): SpacingBuilder =

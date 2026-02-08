@@ -6,7 +6,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHReaction
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import java.util.*
+import java.util.Date
 
 data class GHPRDetailsFull(
   val id: GHPRIdentifier,

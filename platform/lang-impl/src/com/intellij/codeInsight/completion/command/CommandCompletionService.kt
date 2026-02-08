@@ -6,8 +6,13 @@ import com.intellij.codeInsight.completion.command.configuration.ApplicationComm
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.editorLineStripeHint.EditorLineStripeTextRenderer
 import com.intellij.codeInsight.highlighting.HighlightManager
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.CharFilter.CUSTOM_DEFAULT_CHAR_FILTERS
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupCustomizer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateColors
@@ -29,7 +34,11 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile

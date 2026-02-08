@@ -17,8 +17,14 @@ import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
-import com.intellij.ide.*
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.cancelAndJoinBlocking
+import com.intellij.ide.cancelAndTryJoin
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectNewWindowDoNotAskOption
 import com.intellij.ide.impl.ProjectUtil
@@ -36,9 +42,15 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
@@ -55,16 +67,28 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.project.ProjectCloseHandler
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.getProjectDataPathRoot
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.LIGHT_PROJECT_NAME
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.PROJECT_PATH
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
@@ -76,13 +100,17 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.platform.*
+import com.intellij.platform.PROJECT_NEWLY_CREATED
+import com.intellij.platform.PROJECT_NEWLY_OPENED
+import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.provider.EelUnavailableException
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
@@ -100,7 +128,22 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.runSuppressing
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.registerProjectRoot
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -712,7 +755,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             }
 
             if (!addToOpened(project)) {
-              throw CancellationException("project name=${project.name}, locationHash=${project.locationHash} is already opened")
+              throw CancellationException("project name=${project.name}, locationHash=${project.locationHash} in '${options.projectRootDir?:projectIdentityFile}' is already opened")
             }
 
             // The project is loaded and is initialized, project services and components can be accessed.

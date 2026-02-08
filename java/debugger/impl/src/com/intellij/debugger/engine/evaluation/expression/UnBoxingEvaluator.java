@@ -11,7 +11,12 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.Field;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

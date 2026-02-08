@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 
-import static org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.*;
+import static org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.obfuscatePasswordParameters;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 

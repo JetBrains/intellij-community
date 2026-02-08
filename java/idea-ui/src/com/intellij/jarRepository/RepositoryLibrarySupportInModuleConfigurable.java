@@ -14,7 +14,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibrarySupport;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSupportInModuleConfigurable {
   private final @NotNull RepositoryLibraryDescription libraryDescription;

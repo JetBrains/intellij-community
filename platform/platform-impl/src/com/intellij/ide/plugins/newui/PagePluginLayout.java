@@ -4,7 +4,7 @@ package com.intellij.ide.plugins.newui;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Alexander Lobas

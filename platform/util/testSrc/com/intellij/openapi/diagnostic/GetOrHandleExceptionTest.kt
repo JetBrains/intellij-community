@@ -5,7 +5,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowable
 import org.junit.jupiter.api.Test
 
 class GetOrHandleExceptionTest {

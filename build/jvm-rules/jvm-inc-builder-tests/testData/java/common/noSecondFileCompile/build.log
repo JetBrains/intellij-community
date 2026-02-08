@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  B.class
+  C.class
+End of files
+Compiling files:
+  java/common/noSecondFileCompile/a/A.java
+  java/common/noSecondFileCompile/a/C.java
+End of files
+------------------------------------------
+Exit code: OK

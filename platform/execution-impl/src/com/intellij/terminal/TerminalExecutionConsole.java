@@ -8,14 +8,24 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.InputFilter;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.ColoredProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,15 +56,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BoundedRangeModel;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.*;
+import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.DEFAULT_CONVERT_LF_TO_CRLF_FOR_PROCESS_WITHOUT_PTY;
+import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.DEFAULT_INITIAL_TERM_SIZE;
+import static com.intellij.terminal.TerminalExecutionConsoleBuilderKt.createDefaultConsoleSettingsProvider;
 
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private static final Logger LOG = Logger.getInstance(TerminalExecutionConsole.class);
@@ -157,7 +170,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     if (myFirstOutput.compareAndSet(false, true) &&
         contentType == ConsoleViewContentType.SYSTEM_OUTPUT &&
-        getProcess() instanceof WinConPtyProcess) {
+        getProcess() instanceof WinConPtyProcess winConPtyProcess &&
+        !winConPtyProcess.isConPtyInheritCursor()) {
       moveScreenToScrollbackBufferAndShowAllOutput();
     }
   }
@@ -184,6 +198,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     verticalScrollModel.addChangeListener(new javax.swing.event.ChangeListener() {
       private boolean myIgnoreScrollEvent = false;
       private int myEventCount = 0;
+      private long mySecondScrollTimeMillis = -1;
 
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -193,13 +208,17 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         int id = myEventCount++;
         // id == 0 -> vertical scrollbar change caused by `ESC[2J` (moving screen lines to scrollback buffer)
         // id == 1 -> vertical scrollbar change caused by the initial terminal resize according to the UI component actual bounds
-        if (id > 1) {
+        // id == 2 -> vertical scrollbar change caused by the additional initial resize in RemDev
+        if (id > 2 || (id == 2 && System.currentTimeMillis() - mySecondScrollTimeMillis > 1000)) {
           verticalScrollModel.removeChangeListener(this);
           return;
         }
+        if (id == 1) {
+          mySecondScrollTimeMillis = System.currentTimeMillis();
+        }
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!disposed.isDisposed()) {
-            if (id == 1) {
+            if (id >= 1) {
               runIgnoringScrollEvents(() -> {
                 verticalScrollModel.setValue(0); // scroll to bottom
               });

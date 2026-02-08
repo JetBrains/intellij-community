@@ -74,7 +74,7 @@ project.linuxX64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:linuxMain, project:nativeMain
     targetPlatform = Native (linux_x64)
-    compilerSettings = -nopack -nostdlib
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.linuxX64Test
     externalProjectId = project
@@ -84,7 +84,7 @@ project.linuxX64Test
     dependsOnModuleNames = project:commonTest, project:linuxTest, project:nativeTest
     additionalVisibleModuleNames = project:commonMain, project:linuxMain, project:linuxX64Main, project:nativeMain
     targetPlatform = Native (linux_x64)
-    compilerSettings = -nopack -nostdlib
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.macosMain
     externalProjectId = project
@@ -110,7 +110,7 @@ project.macosX64Main
     mppVersion = M3
     dependsOnModuleNames = project:appleMain, project:commonMain, project:macosMain, project:nativeMain
     targetPlatform = Native (macos_x64)
-    compilerSettings = -nopack -nostdlib
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.macosX64Test
     externalProjectId = project
@@ -120,7 +120,7 @@ project.macosX64Test
     dependsOnModuleNames = project:appleTest, project:commonTest, project:macosTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:macosMain, project:macosX64Main, project:nativeMain
     targetPlatform = Native (macos_x64)
-    compilerSettings = -nopack -nostdlib
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.mingwMain
     externalProjectId = project
@@ -146,7 +146,7 @@ project.mingwX64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:mingwMain, project:nativeMain
     targetPlatform = Native (mingw_x64)
-    compilerSettings = -nopack -nostdlib
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.mingwX64Test
     externalProjectId = project
@@ -156,7 +156,7 @@ project.mingwX64Test
     dependsOnModuleNames = project:commonTest, project:mingwTest, project:nativeTest
     additionalVisibleModuleNames = project:commonMain, project:mingwMain, project:mingwX64Main, project:nativeMain
     targetPlatform = Native (mingw_x64)
-    compilerSettings = -nopack -nostdlib
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.nativeMain
     externalProjectId = project

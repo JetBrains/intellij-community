@@ -16,13 +16,20 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
-import training.FeaturesTrainerIcons
 import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.Lesson
 import training.statistic.StatisticBase.logShowNewLessonsNotificationState
-import training.util.*
+import training.util.SHOW_NEW_LESSONS_NOTIFICATION
+import training.util.enableLessonsAndPromoters
+import training.util.filterUnseenLessons
+import training.util.iftNotificationGroup
+import training.util.iftPluginIsUsing
+import training.util.isLearningProject
+import training.util.learningPanelWasOpenedInCurrentVersion
+import training.util.learningToolWindow
+import training.util.trainerPluginConfigName
 
 private class LearnProjectStateListener : ProjectManagerListener {
   override fun projectOpened(project: Project) {

@@ -19,7 +19,8 @@ package org.intellij.plugins.relaxNG.convert;
 import com.intellij.openapi.ui.ComboBox;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import java.util.HashMap;
 import java.util.Map;
 

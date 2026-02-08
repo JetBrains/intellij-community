@@ -14,7 +14,7 @@ import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 
 @ApiStatus.Internal
 public class EditSourceForDialogAction extends EditSourceAction {

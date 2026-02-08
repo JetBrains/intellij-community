@@ -7,7 +7,11 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.lang.jvm.actions.createConstructorActions
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiConstructorCall
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.SmartList
 

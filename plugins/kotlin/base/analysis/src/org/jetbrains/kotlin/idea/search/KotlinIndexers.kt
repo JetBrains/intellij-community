@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
-import java.util.*
+import java.util.ArrayDeque
 
 const val KOTLIN_NAMED_ARGUMENT_SEARCH_CONTEXT: Short = 0x20
 

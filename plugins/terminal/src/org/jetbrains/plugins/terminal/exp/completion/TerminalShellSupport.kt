@@ -1,11 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.KeyedLazyInstanceEP
+import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.shellSupport.TerminalShLangService
 import org.jetbrains.plugins.terminal.util.ShellType
 
 @ApiStatus.Experimental
@@ -19,9 +22,15 @@ interface TerminalShellSupport {
   val lineContinuationChar: Char
 
   /**
-   * @return the token list for the last shell command in [command] text
+   * @return the token list for the last shell command in [command] text.
+   * If the ShellScript plugin is available, it will be used to parse the command.
+   * If not available, the command will be parsed using the built-in ParametersListUtil.
    */
-  fun getCommandTokens(project: Project, command: String): List<String>? = null
+  fun getCommandTokens(project: Project, command: String): List<String> {
+    val fromShellScriptSupport = serviceOrNull<TerminalShLangService>()?.getShellCommandTokens(project, command)
+    if (fromShellScriptSupport != null) return fromShellScriptSupport
+    return ParametersListUtil.parse(command, true, true, false)
+  }
 
   /**
    * @param aliasesDefinition the string with all aliases of the shell

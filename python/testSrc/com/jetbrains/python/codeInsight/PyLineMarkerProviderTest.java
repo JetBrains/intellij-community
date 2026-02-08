@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import java.awt.event.MouseEvent;
 import java.util.List;
 

@@ -11,18 +11,11 @@
   <dependencies>
     <module name="intellij.settingsSync.core"/>
     <plugin id="com.intellij.marketplace"/>
-    <plugin id="com.jetbrains.performancePlugin"/>
   </dependencies>
 
-  <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
-    <!-- The implicit main module of the plugin depends on internal modules (intellij.settingsSync.core), so it's required to set the namespace for it
-         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+    <module name="intellij.settingsSync.performanceTesting"/>
   </content>
-
-  <extensions defaultExtensionNs="com.jetbrains">
-    <performancePlugin.commandProvider implementation="com.intellij.settingsSync.jba.performanceTesting.SettingsSyncCommandProvider"/>
-  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <settingsSync.communicatorProvider implementation="com.intellij.settingsSync.jba.JbaCommunicatorProvider"/>

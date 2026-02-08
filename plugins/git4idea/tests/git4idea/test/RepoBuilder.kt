@@ -5,7 +5,7 @@ import com.intellij.openapi.vcs.Executor.append
 import com.intellij.openapi.vcs.Executor.touch
 import git4idea.repo.GitRepository
 import java.io.File
-import java.util.*
+import java.util.Random
 
 fun build(repo: GitRepository, f: RepoBuilder.() -> Unit) {
   val builder = RepoBuilder(repo)

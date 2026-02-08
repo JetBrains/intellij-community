@@ -3,15 +3,19 @@ package com.intellij.restructuredtext.python.run.docutils;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.restructuredtext.python.PythonRestBundle;
 import com.intellij.restructuredtext.python.run.RestConfigurationEditor;
 import com.intellij.restructuredtext.python.run.RestRunConfiguration;
-import com.intellij.restructuredtext.python.PythonRestBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -2,7 +2,11 @@
 package com.intellij.psi.impl.java.stubs.serializers;
 
 import com.intellij.psi.impl.java.stubs.impl.PsiRequiresStatementStubImpl;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubSerializer;
 import com.intellij.psi.tree.java.IJavaElementType;
 import org.jetbrains.annotations.NotNull;
 

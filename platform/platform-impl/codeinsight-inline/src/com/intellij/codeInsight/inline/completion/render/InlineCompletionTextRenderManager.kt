@@ -22,7 +22,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
-import java.util.*
+import java.util.LinkedList
 
 /**
  * Accumulates all the text to be rendered at one offset and renders them.

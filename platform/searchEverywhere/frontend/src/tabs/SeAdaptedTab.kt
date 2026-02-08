@@ -6,16 +6,19 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeFilter
+import com.intellij.platform.searchEverywhere.SeFilterState
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+import com.intellij.platform.searchEverywhere.toProviderId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.UUID
 
 /**
  * Adapted tab for unsupported legacy SearchEverywhereContributors

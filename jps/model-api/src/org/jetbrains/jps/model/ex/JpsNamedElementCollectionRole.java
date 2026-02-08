@@ -2,7 +2,10 @@
 package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementCreator;
+import org.jetbrains.jps.model.JpsNamedElement;
+import org.jetbrains.jps.model.JpsNamedElementCollection;
 
 public final class JpsNamedElementCollectionRole<E extends JpsNamedElement> extends JpsElementChildRoleBase<JpsNamedElementCollection<E>>
                                                             implements JpsElementCreator<JpsNamedElementCollection<E>> {

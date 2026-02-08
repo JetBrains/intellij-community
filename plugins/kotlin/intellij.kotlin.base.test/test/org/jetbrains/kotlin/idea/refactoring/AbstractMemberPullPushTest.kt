@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.google.gson.JsonParser
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -17,23 +18,30 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.util.findElementsByCommentPrefix
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
-import java.io.File
-import kotlin.collections.forEach
-import kotlin.collections.iterator
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.pathString
+import kotlin.io.path.readText
 
 abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCase() {
     val fixture: JavaCodeInsightTestFixture get() = myFixture
 
     protected fun doTest(path: String, action: (mainFile: PsiFile) -> Unit) {
-        val mainFile = File(path)
-        val afterFile = File("$path.after")
+        val mainFile = Path(path)
+        val afterFile = Path("$path.after")
         val conflictFile = getConflictFile(path)
+        val dialogFile = getDialogFile(path)
 
-        fixture.testDataPath = mainFile.parent
+        fixture.testDataPath = mainFile.parent.pathString
 
         val mainFileName = mainFile.name
-        val mainFileBaseName = FileUtil.getNameWithoutExtension(mainFileName)
-        val extraFiles = mainFile.parentFile.listFiles { _, name ->
+        val mainFileBaseName = mainFile.nameWithoutExtension
+        val extraFiles = mainFile.parent.listDirectoryEntries().filter { file ->
+            val name = file.name
             name != mainFileName && name.startsWith("$mainFileBaseName.") && (name.endsWith(".kt") || name.endsWith(".java"))
         }
         val extraFilesToPsi = extraFiles.associateBy { fixture.configureByFile(it.name) }
@@ -43,6 +51,14 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
             markMembersInfo(file)
             extraFilesToPsi.keys.forEach(::markMembersInfo)
 
+            val expectedDialogMessage = if (dialogFile.exists()) parseDialogMessage(dialogFile) else null
+            if (expectedDialogMessage != null) {
+                TestDialogManager.setTestDialog { actualDialogMessage ->
+                    assertEquals(expectedDialogMessage, actualDialogMessage)
+                    Messages.OK
+                }
+            }
+
             action(file)
 
             assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }
@@ -51,7 +67,7 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
 
             KotlinTestUtils.assertEqualsToFile(afterFile, file.text!!)
             for ((extraPsiFile, extraFile) in extraFilesToPsi) {
-                KotlinTestUtils.assertEqualsToFile(File("${extraFile.path}.after"), extraPsiFile.text)
+                KotlinTestUtils.assertEqualsToFile(Path("${extraFile.pathString}.after"), extraPsiFile.text)
             }
         } catch (e: Exception) {
             val message = when (e) {
@@ -63,11 +79,25 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
         }
     }
 
-    private fun getConflictFile(path: String): File {
-        val suffix = getSuffix()
-        val conflictFile = if (suffix != null) File("$path.messages.$suffix") else null
-        return conflictFile?.takeIf { it.exists() } ?: File("$path.messages")
+    private object TestFileExtension {
+        const val MESSAGES = "messages"
+        const val DIALOG = "dialog"
     }
+
+    private fun getConflictFile(path: String): Path =
+        getTestFile(path, TestFileExtension.MESSAGES)
+
+    private fun getDialogFile(path: String): Path =
+        getTestFile(path, TestFileExtension.DIALOG)
+
+    private fun getTestFile(path: String, extension: String): Path {
+        val suffix = getSuffix()
+        val testFile = if (suffix != null) Path("$path.${extension}.$suffix") else null
+        return testFile?.takeIf { it.exists() } ?: Path("$path.${extension}")
+    }
+
+    private fun parseDialogMessage(file: Path): String =
+        file.readText().trim()
 
     protected open fun getSuffix(): String? {
         return null

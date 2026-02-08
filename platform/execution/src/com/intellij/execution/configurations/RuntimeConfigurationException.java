@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.util.ThrowableRunnable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 

@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.transformations.singleton
 
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.FINAL_MASK
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.PRIVATE_MASK
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.PUBLIC_MASK
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.STATIC_MASK
 import org.jetbrains.plugins.groovy.lang.psi.impl.booleanValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField

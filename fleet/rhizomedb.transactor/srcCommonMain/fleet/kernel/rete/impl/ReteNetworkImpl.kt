@@ -1,16 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete.impl
 
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.rete.*
-import fleet.kernel.rete.ReteNetwork
-import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.DatomEntry
-import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.RevalidationEntry
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.Change
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.EAVa
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Pattern
+import com.jetbrains.rhizomedb.asOf
+import com.jetbrains.rhizomedb.deduplicateValues
 import fleet.fastutil.longs.Long2ObjectOpenHashMap
 import fleet.fastutil.longs.LongSet
 import fleet.kernel.rete.Cardinality
-import kotlinx.coroutines.flow.MutableStateFlow
+import fleet.kernel.rete.Collector
+import fleet.kernel.rete.DatomPort
+import fleet.kernel.rete.Match
+import fleet.kernel.rete.OnTokens
+import fleet.kernel.rete.Producer
+import fleet.kernel.rete.Query
+import fleet.kernel.rete.QueryObserver
+import fleet.kernel.rete.QueryScope
+import fleet.kernel.rete.Rete
+import fleet.kernel.rete.ReteNetwork
+import fleet.kernel.rete.ReteState
+import fleet.kernel.rete.RevalidationPort
+import fleet.kernel.rete.Subscription
+import fleet.kernel.rete.SubscriptionScope
+import fleet.kernel.rete.Token
+import fleet.kernel.rete.dbOrThrow
+import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.DatomEntry
+import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.RevalidationEntry
 import fleet.util.PriorityQueue
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.jvm.JvmInline
 
 internal class IdGen(private val observerId: Int) {

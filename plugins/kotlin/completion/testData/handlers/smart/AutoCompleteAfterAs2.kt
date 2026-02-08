@@ -3,3 +3,4 @@ fun bar(o: Any): String {
 }
 
 // AUTOCOMPLETE_SETTING: true
+// IGNORE_K2

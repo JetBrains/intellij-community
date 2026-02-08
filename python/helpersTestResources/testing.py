@@ -19,7 +19,7 @@ if six.PY2:
     from io import open
 
 _test_root = os.path.dirname(os.path.abspath(__file__))
-_helpers_root = os.path.dirname(_test_root)
+_helpers_root = os.path.dirname(_test_root) + "/helpers"
 _test_data_root = os.path.join(_test_root, 'data')
 _override_test_data = False
 

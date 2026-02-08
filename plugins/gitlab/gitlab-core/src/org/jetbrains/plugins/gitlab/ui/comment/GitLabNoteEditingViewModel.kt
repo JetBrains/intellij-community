@@ -14,18 +14,27 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewSubmittableTextViewModel.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewSubmittableTextViewModel.FileUploadResult
 import org.jetbrains.plugins.gitlab.upload.GitLabUploadFileUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.Image
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import javax.swing.Action
 
 interface GitLabCodeReviewSubmittableTextViewModel : CodeReviewSubmittableTextViewModel {
@@ -65,8 +74,8 @@ interface GitLabNoteEditingViewModel : GitLabCodeReviewSubmittableTextViewModel 
       projectData: GitLabProject,
       mergeRequest: GitLabMergeRequest,
       currentUser: GitLabUserDTO,
-      position: GitLabMergeRequestNewDiscussionPosition
-    ): NewGitLabNoteViewModel =
+      position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
+    ): NewGitLabNoteViewModelWithAdjustablePosition =
       NewDiffGitLabNoteViewModel(project, parentCs, "", projectData, mergeRequest, currentUser, position)
 
     internal fun forReplyNote(
@@ -143,6 +152,11 @@ interface NewGitLabNoteViewModel :
   fun submitAsDraft()
 }
 
+interface NewGitLabNoteViewModelWithAdjustablePosition : NewGitLabNoteViewModel {
+  val position: StateFlow<GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition>
+  fun updatePosition(newPosition: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition)
+}
+
 private abstract class NewGitLabNoteViewModelBase(
   project: Project,
   parentCs: CoroutineScope,
@@ -190,17 +204,26 @@ private class NewStandaloneGitLabNoteViewModel(project: Project,
   override suspend fun doSubmitAsDraft(text: String) = mergeRequest.addDraftNote(text)
 }
 
-private class NewDiffGitLabNoteViewModel(project: Project,
-                                         parentCs: CoroutineScope,
-                                         initialText: String,
-                                         projectData: GitLabProject,
-                                         private val mergeRequest: GitLabMergeRequest,
-                                         currentUser: GitLabUserDTO,
-                                         private val position: GitLabMergeRequestNewDiscussionPosition)
-  : NewGitLabNoteViewModelBase(project, parentCs, projectData, initialText, currentUser, ) {
+private class NewDiffGitLabNoteViewModel(
+  project: Project,
+  parentCs: CoroutineScope,
+  initialText: String,
+  projectData: GitLabProject,
+  private val mergeRequest: GitLabMergeRequest,
+  currentUser: GitLabUserDTO,
+  position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
+) : NewGitLabNoteViewModelBase(project, parentCs, projectData, initialText, currentUser), NewGitLabNoteViewModelWithAdjustablePosition {
+  private val _position = MutableStateFlow(position)
+  override val position = _position.asStateFlow()
   override val canSubmitAsDraft: Boolean = mergeRequest.canAddPositionalDraftNotes
-  override suspend fun doSubmit(text: String) = mergeRequest.addNote(position, text)
-  override suspend fun doSubmitAsDraft(text: String) = mergeRequest.addDraftNote(position, text)
+  override fun updatePosition(newPosition: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition) {
+    _position.value = newPosition
+  }
+
+  override suspend fun doSubmit(text: String) =
+    mergeRequest.addNote(position.value.position, text)
+
+  override suspend fun doSubmitAsDraft(text: String) = mergeRequest.addDraftNote(position.value.position, text)
 }
 
 private class NewReplyGitLabNoteViewModel(project: Project,

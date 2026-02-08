@@ -9,7 +9,11 @@ import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.lightEdit.LightEditCompatible
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CompositeShortcutSet
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document

@@ -13,7 +13,11 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.InitialConfigImportState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -43,7 +47,9 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.Math.max;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 @ApiStatus.Internal
 public class UpdateCheckerService {

@@ -11,12 +11,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.refactoring.move.MoveHandler
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
-import org.jetbrains.kotlin.idea.core.script.v1.*
+import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
+import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
+import org.jetbrains.kotlin.idea.core.script.v1.hasUnknownScriptExt
+import org.jetbrains.kotlin.idea.core.script.v1.isEnabled
+import org.jetbrains.kotlin.idea.core.script.v1.isStandaloneKotlinScript
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
@@ -24,6 +29,7 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 
+@K1Deprecation
 class ScriptingSupportChecker: EditorNotificationProvider {
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {

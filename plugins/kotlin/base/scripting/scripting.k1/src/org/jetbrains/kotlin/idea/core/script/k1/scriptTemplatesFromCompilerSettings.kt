@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
@@ -17,6 +18,7 @@ import kotlin.io.path.Path
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
+@K1Deprecation
 class ScriptTemplatesFromCompilerSettingsProvider(
     private val project: Project
 ) : ScriptDefinitionsSource {

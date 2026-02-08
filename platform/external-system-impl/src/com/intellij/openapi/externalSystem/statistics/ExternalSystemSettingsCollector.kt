@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import java.util.*
+import java.util.Locale
 
 internal class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP

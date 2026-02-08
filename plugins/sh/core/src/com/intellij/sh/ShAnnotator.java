@@ -11,11 +11,20 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.sh.psi.*;
+import com.intellij.sh.psi.ShAssignmentCommand;
+import com.intellij.sh.psi.ShFunctionDefinition;
+import com.intellij.sh.psi.ShGenericCommandDirective;
+import com.intellij.sh.psi.ShShellParameterExpansion;
+import com.intellij.sh.psi.ShSimpleCommandElement;
+import com.intellij.sh.psi.ShSubshellCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.sh.highlighter.ShHighlighterColors.*;
+import static com.intellij.sh.highlighter.ShHighlighterColors.COMPOSED_VARIABLE;
+import static com.intellij.sh.highlighter.ShHighlighterColors.FUNCTION_DECLARATION;
+import static com.intellij.sh.highlighter.ShHighlighterColors.GENERIC_COMMAND;
+import static com.intellij.sh.highlighter.ShHighlighterColors.SUBSHELL_COMMAND;
+import static com.intellij.sh.highlighter.ShHighlighterColors.VARIABLE_DECLARATION;
 
 final class ShAnnotator implements Annotator, DumbAware {
   @Override

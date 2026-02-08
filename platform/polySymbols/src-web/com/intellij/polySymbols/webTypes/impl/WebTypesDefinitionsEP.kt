@@ -6,10 +6,10 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.util.text.SemVer
-import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.polySymbols.webTypes.readWebTypes
+import com.intellij.util.text.SemVer
+import com.intellij.util.xmlb.annotations.Attribute
 import java.io.IOException
 
 open class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {

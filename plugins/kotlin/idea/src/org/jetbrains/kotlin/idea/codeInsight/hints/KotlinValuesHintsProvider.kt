@@ -6,9 +6,11 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import javax.swing.JComponent
 
+@K1Deprecation
 @Deprecated("Use org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinValuesHintsProvider")
 class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsProvider.Settings>() {
 

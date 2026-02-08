@@ -17,7 +17,7 @@ package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.util.ui.ColumnInfo;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 

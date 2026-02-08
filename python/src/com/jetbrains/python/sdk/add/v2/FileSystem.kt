@@ -8,10 +8,17 @@ import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
@@ -30,11 +37,20 @@ import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.BASE_DIR
+import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
+import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.asBinToExecute
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.detectTool
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +87,7 @@ sealed interface FileSystem<P : PathHolder> {
   suspend fun validateVenv(homePath: P): PyResult<Unit>
   suspend fun suggestVenv(projectPath: Path): PyResult<P>
   suspend fun wrapSdk(sdk: Sdk): SdkWrapper<P>
-  suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<P>>
+  suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<P>>
   fun preferredInterpreterBasePath(): P? = null
   suspend fun resolvePythonBinary(pythonHome: P): P?
 
@@ -130,7 +146,10 @@ sealed interface FileSystem<P : PathHolder> {
       parsePath(suggestedVirtualEnvPath)
     }
 
-    override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Eel, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<PathHolder.Eel>> {
+    override suspend fun getSystemPythonFromSelection(
+      pathToPython: PathHolder.Eel,
+      requireSystemPython: Boolean,
+    ): PyResult<DetectedSelectableInterpreter<PathHolder.Eel>> {
       val sysPythonValidationInfo = SystemPythonService().registerSystemPython(pathToPython.path)
       val (vanillaPython, isSystem) = when (sysPythonValidationInfo) {
         is Result.Failure -> {
@@ -166,9 +185,11 @@ sealed interface FileSystem<P : PathHolder> {
       SdkWrapper(sdk, PathHolder.Eel(Path.of(adjustedHomePath)))
     }
 
-    override suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
+    override suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
       // Venvs are not detected manually, but must migrate to VenvService or so
-      val pythonBinaries = VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, null)
+      val context: UserDataHolder = UserDataHolderBase()
+      context.putUserData(BASE_DIR, projectPathPrefix)
+      val pythonBinaries = VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, context)
       val suggestedPythonBinaries = VanillaPythonWithPythonInfoImpl.createByPythonBinaries(pythonBinaries)
 
       val venvs: List<VanillaPythonWithPythonInfo> = suggestedPythonBinaries.mapNotNull { (venv, r) ->
@@ -300,11 +321,14 @@ sealed interface FileSystem<P : PathHolder> {
       return BinOnTarget(path.pathString, targetEnvironmentConfiguration)
     }
 
-    override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Target, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<PathHolder.Target>> {
+    override suspend fun getSystemPythonFromSelection(
+      pathToPython: PathHolder.Target,
+      requireSystemPython: Boolean,
+    ): PyResult<DetectedSelectableInterpreter<PathHolder.Target>> {
       return registerSystemPython(pathToPython)
     }
 
-    override suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<PathHolder.Target>> {
+    override suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<PathHolder.Target>> {
       val fullPathOnTarget = pythonLanguageRuntimeConfiguration.pythonInterpreterPath
       val pathHolder = PathHolder.Target(fullPathOnTarget)
       val systemPython = getSystemPythonFromSelection(pathHolder, requireSystemPython = false).getOr { return emptyList() }
@@ -330,19 +354,20 @@ sealed interface FileSystem<P : PathHolder> {
   }
 }
 
-internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<InstallableSelectableInterpreter<P>> = when ((this as? FileSystem.Eel)?.eelApi) {
-  localEel -> {
-    getSdksToInstall()
-      .mapNotNull { sdk ->
-        LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
-      }
-      .sortedByDescending { it.first }
-      .map { (languageLevel, sdk) ->
-        InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
-      }
+internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<InstallableSelectableInterpreter<P>> =
+  when ((this as? FileSystem.Eel)?.eelApi) {
+    localEel -> {
+      getSdksToInstall()
+        .mapNotNull { sdk ->
+          LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
+        }
+        .sortedByDescending { it.first }
+        .map { (languageLevel, sdk) ->
+          InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
+        }
+    }
+    else -> emptyList()
   }
-  else -> emptyList()
-}
 
 internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpreters(
   projectPathPrefix: Path,
@@ -382,9 +407,10 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
 }
 
 internal suspend fun <P : PathHolder> FileSystem<P>.getDetectedSelectableInterpreters(
+  projectPathPrefix: Path,
   existingSelectableInterpreters: List<ExistingSelectableInterpreter<P>>,
 ): List<DetectedSelectableInterpreter<P>> = withContext(Dispatchers.IO) {
   val existingSdkPaths = existingSelectableInterpreters.map { it.homePath }.toSet()
-  val detected = detectSelectableVenv().filterNot { it.homePath in existingSdkPaths }
+  val detected = detectSelectableVenv(projectPathPrefix).filterNot { it.homePath in existingSdkPaths }
   detected
 }

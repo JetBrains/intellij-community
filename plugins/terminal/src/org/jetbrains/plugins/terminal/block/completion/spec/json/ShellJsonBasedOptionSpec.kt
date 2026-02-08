@@ -33,6 +33,8 @@ internal class ShellJsonBasedOptionSpec(
 
   override val isHidden: Boolean = false
 
+  override val shouldEscape: Boolean = true
+
   override val isRequired: Boolean
     get() = data.isRequired
 

@@ -2,12 +2,30 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.AssignToVariableResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ChainedCallGenerator
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.MatchingState
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.SequenceTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatch
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.VariableInitialization
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.countUsages
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.findVariableInitializationBeforeLoop
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.generateLambda
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isPlusPlusOf
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isZeroConstant
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.FilterTransformationBase
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
+@K1Deprecation
 class CountTransformation(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,

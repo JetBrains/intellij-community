@@ -24,7 +24,12 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VersionManagingFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -42,7 +47,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class IdeaGateway {
   private static final Logger LOG = Logger.getInstance(IdeaGateway.class);
@@ -57,7 +66,7 @@ public class IdeaGateway {
     return isVersioned(f, false);
   }
 
-  public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
+  public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeUnderAnyContentRoot) {
     if (VersionManagingFileSystem.isDisabled(f)) {
       return false;
     }
@@ -75,31 +84,48 @@ public class IdeaGateway {
 
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
-    int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
+    int numberOfOpenProjects = versionedFilterData.myProjectFileIndices.size();
 
     // optimisation: FileTypeManager.isFileIgnored(f) will be checked inside ProjectFileIndex.isUnderIgnored()
     if (numberOfOpenProjects == 0) {
-      if (shouldBeInContent) return false; // there is no project, so the file can't be in content
+      if (shouldBeUnderAnyContentRoot) return false; // there is no project, so the file can't be in content
       if (FileTypeManager.getInstance().isFileIgnored(f)) return false;
 
       return true;
     }
 
-    boolean isExcludedFromAll = true;
-    boolean isInContent = false;
-
+    boolean underAnyProjectContentRoot = false;
     for (int i = 0; i < numberOfOpenProjects; ++i) {
-      ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
-
-      if (index.isUnderIgnored(f)) return false;
-      isInContent |= index.isInContent(f);
-      isExcludedFromAll &= index.isExcluded(f);
+      ProjectFileIndex projectFileIndex = versionedFilterData.myProjectFileIndices.get(i);
+      boolean isProjectRelated = isProjectRelated(projectFileIndex, f);
+      // isIsContent returns true when the file or directory is under the content root of the project,
+      // AND is not excluded or ignored
+      if (isProjectRelated && projectFileIndex.isInContent(f)) {
+        // File is under the content root and isn't ignored/excluded. Track it in LVCS.
+        return true;
+      }
+      underAnyProjectContentRoot |= isProjectRelated;
     }
 
-    if (isExcludedFromAll) return false;
-    if (shouldBeInContent && !isInContent) return false;
+    if (underAnyProjectContentRoot) {
+      // File is under the content root of at least one project, but it is ignored/excluded by all these projects.
+      // Do not track it in LVCS.
+      return false;
+    }
+    else if (shouldBeUnderAnyContentRoot) {
+      // At this moment the file isn't under any content root, and callsite asks us only for files that
+      // are under any content root. Do not track it in LVCS.
+      return false;
+    }
+    else {
+      // File isn't under the content root of any project, call-site doesn't care if it is.
+      // Check only if the file matches any ignored pattern.
+      return !FileTypeManager.getInstance().isFileIgnored(f);
+    }
+  }
 
-    return true;
+  static boolean isProjectRelated(ProjectFileIndex projectFileIndex, VirtualFile file) {
+    return projectFileIndex.isInProjectOrExcluded(file) || projectFileIndex.isUnderIgnored(file);
   }
 
   public @NotNull String getPathOrUrl(@NotNull VirtualFile file) {
@@ -163,7 +189,6 @@ public class IdeaGateway {
   }
 
   protected static final class VersionedFilterData {
-    final List<Project> myOpenedProjects = new ArrayList<>();
     final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
 
     VersionedFilterData() {
@@ -173,7 +198,6 @@ public class IdeaGateway {
         if (each.isDefault()) continue;
         if (!each.isInitialized()) continue;
 
-        myOpenedProjects.add(each);
         myProjectFileIndices.add(ProjectRootManager.getInstance(each).getFileIndex());
       }
     }

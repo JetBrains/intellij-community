@@ -9,7 +9,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotationOwner
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 

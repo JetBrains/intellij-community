@@ -1,13 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.ResolveResult
 import com.jetbrains.python.fixture.PythonCommonTestCase
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.testing.pyTestFixtures.*
+import com.jetbrains.python.testing.pyTestFixtures.CONFTEST_PY
+import com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReference
+import com.jetbrains.python.testing.pyTestFixtures.REQUEST_FIXTURE
+import com.jetbrains.python.testing.pyTestFixtures._PYTEST_DIR
+import com.jetbrains.python.testing.pyTestFixtures.reservedFixtureClassSet
+import com.jetbrains.python.testing.pyTestFixtures.reservedFixturesSet
 import junit.framework.TestCase
 
 class PyTestFixtureResolvingTest : PyTestCase() {

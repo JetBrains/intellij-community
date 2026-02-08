@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import static com.intellij.database.datagrid.GridUtil.*;
+import static com.intellij.database.datagrid.GridUtil.IN_REFERENCE;
+import static com.intellij.database.datagrid.GridUtil.IS_REFERENCED;
+import static com.intellij.database.datagrid.GridUtil.OUT_REFERENCES;
 
 public class GotoReferencingResultAction extends GotoResultAction {
 

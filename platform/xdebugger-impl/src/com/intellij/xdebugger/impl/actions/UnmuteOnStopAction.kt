@@ -8,17 +8,17 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.util.application
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class UnmuteOnStopAction : ToggleAction(), DumbAware, SplitDebuggerAction {
   override fun isSelected(e: AnActionEvent): Boolean {
-    return XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isUnmuteOnStop
+    return XDebuggerSettingsManager.getInstance().generalSettings.isUnmuteOnStop
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isUnmuteOnStop = state
+    XDebuggerSettingsManager.getInstance().generalSettings.isUnmuteOnStop = state
     saveSettingsForRemoteDevelopment(e.coroutineScope, application)
   }
 

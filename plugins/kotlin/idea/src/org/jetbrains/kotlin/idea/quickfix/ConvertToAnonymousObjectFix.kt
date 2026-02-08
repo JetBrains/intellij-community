@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.tower.WrongResolutionToClassifier
 import org.jetbrains.kotlin.resolve.sam.getAbstractMembers
 
+@K1Deprecation
 class ConvertToAnonymousObjectFix(element: KtNameReferenceExpression) : KotlinQuickFixAction<KtNameReferenceExpression>(element) {
     override fun getFamilyName() = KotlinBundle.message("convert.to.anonymous.object")
 

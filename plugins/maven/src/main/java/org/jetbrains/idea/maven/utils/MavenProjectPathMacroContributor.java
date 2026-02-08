@@ -3,10 +3,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.nio.file.Path;

@@ -4,8 +4,8 @@ package com.intellij.openapi.ui.ex;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import java.awt.Dimension;
 
 public class MultiLineLabel extends JLabel {
   public MultiLineLabel() { }

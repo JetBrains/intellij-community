@@ -19,7 +19,11 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 

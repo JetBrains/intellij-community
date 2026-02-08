@@ -11,3 +11,4 @@ fun usage() {
 }
 
 // EXIST: {"lookupString":"TaRunnable","tailText":" {...} (function: () -> Unit) (<root>)","typeText":"Runnable"}
+// IGNORE_K2

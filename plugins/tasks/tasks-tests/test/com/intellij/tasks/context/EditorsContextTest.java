@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
+import com.intellij.idea.IJIgnore;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.FileEditorManagerTestCase;
@@ -10,6 +11,7 @@ import org.jdom.Element;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@IJIgnore(issue = "AT-3959")
 @SkipInHeadlessEnvironment
 public class EditorsContextTest extends FileEditorManagerTestCase {
   public void testDockableContainer() {

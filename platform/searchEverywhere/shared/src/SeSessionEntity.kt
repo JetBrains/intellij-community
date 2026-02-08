@@ -5,8 +5,8 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import fleet.kernel.DurableEntityType
 import fleet.kernel.change
-import fleet.kernel.ref
 import fleet.kernel.rebase.shared
+import fleet.kernel.ref
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 

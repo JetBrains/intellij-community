@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * {@link FoldRegion} with a custom (size and rendered content) placeholder representation. Such a region can only spans whole-lines

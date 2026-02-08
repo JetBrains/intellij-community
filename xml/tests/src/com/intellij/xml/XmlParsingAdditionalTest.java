@@ -12,8 +12,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.junit.runner.RunWith;
 
 import java.io.File;

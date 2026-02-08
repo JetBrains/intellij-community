@@ -8,7 +8,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.packaging.artifacts.*
+import com.intellij.packaging.artifacts.Artifact
+import com.intellij.packaging.artifacts.ArtifactListener
+import com.intellij.packaging.artifacts.ArtifactPointerManager
+import com.intellij.packaging.artifacts.ArtifactType
+import com.intellij.packaging.artifacts.LegacyBridgeJpsArtifactEntitySourceFactory
+import com.intellij.packaging.artifacts.ModifiableArtifact
+import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl

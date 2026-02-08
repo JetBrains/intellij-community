@@ -1,12 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.NodeSortOrder;
+import com.intellij.ide.projectView.NodeSortSettings;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.LoadedModuleDescription;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleDescription;
+import com.intellij.openapi.module.ModuleGrouper;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +25,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.OptionalLong;
+import java.util.Set;
 
 public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   protected AbstractProjectNode(Project project, @NotNull Project value, ViewSettings viewSettings) {

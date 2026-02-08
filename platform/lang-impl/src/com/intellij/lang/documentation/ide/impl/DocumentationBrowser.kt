@@ -16,9 +16,19 @@ import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.InternalLinkResult
 import com.intellij.platform.ide.documentation.DocumentationBrowserFacade
 import com.intellij.util.lateinitVal
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 internal class DocumentationBrowser private constructor(

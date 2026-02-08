@@ -15,20 +15,53 @@ import com.intellij.ide.impl.DataValidators
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionGroupExpanded
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionPromoter
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
+import com.intellij.openapi.actionSystem.ActionWithDelegate
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CheckedActionGroup
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.UpdateSession
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
 import com.intellij.openapi.actionSystem.util.ActionSystem
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.SafeForRunBlockingUnderReadAction
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -59,36 +92,71 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.ThreadContextElement
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Window
 import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JMenu
+import javax.swing.JPopupMenu
+import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
+import kotlin.time.Duration.Companion.seconds
 
 internal val EMPTY_MENU_ACTION_ICON: Icon = EmptyIcon.create(16, 1)
 
@@ -298,8 +366,8 @@ object Utils {
     val fastTrackTime = getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true)
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
-      else if (isLockRequired(group)) Dispatchers.EDT[CoroutineDispatcher]!!
-      else Dispatchers.UI[CoroutineDispatcher]!!
+      else if (isLockRequired(group)) lockingEdtCoroutineDispatcher
+      else nonLockingEdtCoroutineDispatcher
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, uiKind, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, uiKind)) {
@@ -1015,6 +1083,10 @@ object Utils {
    * Using to prevent deadlock when EDT is blocked by runWithInputEventEdtDispatcher and important sync call from
    * the backend main thread is requiring to run something on the EDT
    *
+   * A 1-second delay is applied before cancellation to allow actions time to complete (if the action is not blocked by the backend).
+   * If the action completes within the delay, it won't be cancelled. This prevents user actions from being
+   * immediately interrupted during backend operations while still resolving potential deadlocks.
+   *
    * @param block The suspending function to execute after cancelling the current input event processing.
    * @return The result of the provided block function.
    */
@@ -1022,7 +1094,10 @@ object Utils {
   suspend fun <T> cancelCurrentInputEventProcessingAndRun(context: CoroutineContext, block: () -> T): T = coroutineScope {
     val cancelJob = launch(cancellationDispatcher) {
       ourCurrentInputEventProcessingJobFlow.collectLatest {
-        it?.cancel()
+        if (it != null) {
+          delay(1.seconds)
+          it.cancel()
+        }
       }
     }
     return@coroutineScope withContext(context) {
@@ -1111,6 +1186,25 @@ object Utils {
     assert(ApplicationManager.getApplication().isUnitTestMode()) { "isUnitTestMode must be true"}
     return PreCachedDataContext(component, true)
   }
+
+  /**
+   * When we are updating a group of actions, the group itself and each individual action in it may have different rules regarding their lock usage.
+   * In this case, we tailor a dispatcher for each individual action specifically.
+   *
+   * There is an exception -- when actions are updated in fast-track mode, and we process them with [AltEdtDispatcher] regardless of the locking mode.
+   * Also, actions can be updated with [BlockingEventLoop].
+   */
+  internal fun adaptToLockPolicy(dispatcher: CoroutineDispatcher, isRWLockRequired: Boolean): CoroutineDispatcher = when (dispatcher) {
+    lockingEdtCoroutineDispatcher if !isRWLockRequired -> nonLockingEdtCoroutineDispatcher
+    nonLockingEdtCoroutineDispatcher if isRWLockRequired -> lockingEdtCoroutineDispatcher
+    else -> dispatcher
+  }
+
+  private val lockingEdtCoroutineDispatcher: CoroutineDispatcher
+    get() = Dispatchers.EDT[CoroutineDispatcher]!!
+
+  private val nonLockingEdtCoroutineDispatcher: CoroutineDispatcher
+    get() = Dispatchers.UI[CoroutineDispatcher]!!
 }
 
 @ApiStatus.Internal

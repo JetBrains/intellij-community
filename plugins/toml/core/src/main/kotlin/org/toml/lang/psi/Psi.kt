@@ -5,7 +5,12 @@
 
 package org.toml.lang.psi
 
-import com.intellij.psi.*
+import com.intellij.psi.ContributedReferenceHost
+import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReferenceContributor
 
 interface TomlElement : PsiElement
 

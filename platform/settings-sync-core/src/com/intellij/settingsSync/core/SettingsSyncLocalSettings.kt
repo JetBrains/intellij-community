@@ -1,9 +1,14 @@
 package com.intellij.settingsSync.core
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.UUID
 
 interface SettingsSyncLocalState {
   val applicationId: UUID

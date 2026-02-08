@@ -5,7 +5,12 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.FileStatusMap;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoUpdater;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoUpdaterImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInsight.highlighting.HyperlinkAnnotator;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -29,22 +34,34 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 @SkipSlowTestLocally
 public class HighlightAfterRandomTypingTest extends LightDaemonAnalyzerTestCase {
@@ -147,7 +164,7 @@ class X {
       configureFromFileText("A.java", text);
       List<HighlightInfo> infos = doHighlighting();
       assertEmpty(DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR));
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     }
     LOG.debug(System.currentTimeMillis() - time+"ms");
@@ -222,7 +239,7 @@ class X {
       for (int k=0; k<"/*--*/".length();k++) {
         backspace();
       }
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       long end = System.currentTimeMillis();
       time[i] = end - start;
@@ -374,7 +391,7 @@ class X {
         backspace();
         backspace();
         backspace();
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
         List<HighlightInfo> after = ContainerUtil.sorted(highlightErrors(), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
         assertEquals("highlighters didn't restore; seed="+seed, initErrors, after);
@@ -441,7 +458,7 @@ class X {
 
       try {
         typeAndCheck(seed, N, random, initErrors);
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
       catch (Throwable e) {
         System.err.println("Error running with seed " + seed + "L");
@@ -537,7 +554,7 @@ class X {
           });
         });
 
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
         List<HighlightInfo> after = doHighlightAndSort(seed);
         assertEquals("highlighters didn't restore; seed="+seed, initErrors, after);

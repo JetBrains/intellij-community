@@ -1,0 +1,11 @@
+================ Step #1 =================
+Cleaning output files:
+  A1.class
+  C1.class
+End of files
+Compiling files:
+  java/annotations/metaAnnotationChanged/a/A1.java
+  java/annotations/metaAnnotationChanged/a/C1.java
+End of files
+------------------------------------------
+Exit code: OK

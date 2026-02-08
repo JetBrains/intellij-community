@@ -20,7 +20,7 @@ import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ShCompositeElementImpl extends ASTWrapperPsiElement implements ShCompositeElement {
   public ShCompositeElementImpl(ASTNode node) {

@@ -1,7 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.impl
 
-import com.intellij.ide.browsers.*
+import com.intellij.ide.browsers.OpenInBrowserRequest
+import com.intellij.ide.browsers.ReloadMode
+import com.intellij.ide.browsers.WebBrowserService
+import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.ide.browsers.WebBrowserXmlService
+import com.intellij.ide.browsers.createOpenInBrowserRequest
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement

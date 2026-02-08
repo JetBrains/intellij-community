@@ -11,27 +11,11 @@ object JavaPluginLayout {
       spec.directoryName = "java"
       spec.mainJarName = "java-impl.jar"
 
-      spec.withProjectLibrary("netty-jps", "rt/netty-jps.jar")
-
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
-      for (moduleName in listOf(
-        "intellij.platform.jps.build",
-        "intellij.platform.jps.build.dependencyGraph",
-      )) {
-        spec.withModule(moduleName, "jps-builders.jar")
-      }
-      spec.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
-
-      for (moduleName in listOf(
-        "intellij.java.compiler.antTasks",
-        "intellij.java.guiForms.compiler",
-        "intellij.java.compiler.instrumentationUtil",
-        "intellij.java.compiler.instrumentationUtil.java8"
-      )) {
-        spec.withModule(moduleName, "javac2.jar")
-      }
 
       spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
+
+      spec.withProjectLibrary("netty-codec-protobuf", "netty-codec-protobuf.jar")
 
       spec.withProjectLibrary("Eclipse", "ecj")
       spec.withProjectLibrary("jps-javac-extension")

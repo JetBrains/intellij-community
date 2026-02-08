@@ -15,7 +15,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.update
-import com.intellij.util.indexing.testEntities.*
+import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.util.indexing.testEntities.NonRecursiveFileCustomData
+import com.intellij.util.indexing.testEntities.NonRecursiveFileSetContributor
+import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
@@ -66,9 +70,9 @@ class NonRecursiveWorkspaceFileSetTest {
       it.addEntity(NonRecursiveTestEntity(url, NonPersistentEntitySource))
     }
     readAction {
-      val fileSet = workspaceFileIndex.findFileSetWithCustomData(file, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
+      val fileSet = workspaceFileIndex.findFileSetWithCustomData(file, true, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
       assertNull(fileSet)
-      val nonRecursiveDirFileSet = workspaceFileIndex.findFileSetWithCustomData(nonRecursiveDir, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
+      val nonRecursiveDirFileSet = workspaceFileIndex.findFileSetWithCustomData(nonRecursiveDir, true, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
       assertNotNull(nonRecursiveDirFileSet)
     }
   }
@@ -89,9 +93,9 @@ class NonRecursiveWorkspaceFileSetTest {
       it.addEntity(NonRecursiveTestEntity(url, NonPersistentEntitySource))
     }
     readAction {
-      val fileSet = workspaceFileIndex.findFileSetWithCustomData(file, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
+      val fileSet = workspaceFileIndex.findFileSetWithCustomData(file, true, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
       assertNull(fileSet)
-      val nonRecursiveDirFileSet = workspaceFileIndex.findFileSetWithCustomData(nonRecursiveDir, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
+      val nonRecursiveDirFileSet = workspaceFileIndex.findFileSetWithCustomData(nonRecursiveDir, true, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
       assertNotNull(nonRecursiveDirFileSet)
     }
   }

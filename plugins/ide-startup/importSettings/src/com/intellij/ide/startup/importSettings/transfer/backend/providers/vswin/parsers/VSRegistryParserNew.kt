@@ -28,11 +28,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Date
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
 class VSRegistryParserNew private constructor(val hive: VSHive) {
   companion object {

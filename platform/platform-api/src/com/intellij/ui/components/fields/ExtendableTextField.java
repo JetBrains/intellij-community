@@ -17,10 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.border.Border;
 import javax.swing.plaf.TextUI;
-import java.awt.*;
+import java.awt.Container;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;

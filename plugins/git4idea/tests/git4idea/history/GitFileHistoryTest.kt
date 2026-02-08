@@ -3,7 +3,12 @@ package git4idea.history
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.child
+import com.intellij.openapi.vcs.Executor.echo
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.Executor.ourCurrentDir
+import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -14,7 +19,14 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
 import git4idea.GitUtil
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.add
+import git4idea.test.addCommit
+import git4idea.test.checkout
+import git4idea.test.checkoutNew
+import git4idea.test.commit
+import git4idea.test.last
+import git4idea.test.mv
 import junit.framework.TestCase
 import org.apache.commons.lang3.RandomStringUtils
 import java.io.File

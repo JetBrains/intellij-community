@@ -1,4 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+/**
+ * Discovers module sets from provider objects using reflection.
+ *
+ * This file provides the reflection-based discovery mechanism that finds all module set
+ * definitions in provider classes like [CommunityModuleSets] and [UltimateModuleSets].
+ * Any public no-argument function returning [ModuleSet] is automatically discovered.
+ *
+ * **Discovery rules**:
+ * - Function must be public
+ * - Function must take no parameters
+ * - Function must return [ModuleSet]
+ *
+ * **Caching**: Method handles are cached per class to avoid repeated reflection overhead.
+ *
+ * **Key function**: [discoverModuleSets] - discovers and invokes all module set functions
+ * from a provider object.
+ *
+ * @see ModuleSet for the discovered type
+ * @see <a href="../../docs/module-sets.md">Module Sets Documentation</a>
+ */
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.productLayout.discovery

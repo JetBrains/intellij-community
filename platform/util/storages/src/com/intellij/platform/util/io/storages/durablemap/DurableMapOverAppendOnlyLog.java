@@ -21,15 +21,26 @@ import java.io.IOException;
 import java.util.function.BiPredicate;
 
 /**
- * Simplest implementation: (key, value) pairs stored in append-only log, {@link DurableIntToMultiIntMap} is used to keep
- * and update the mapping.
+ * Simplest {@link DurableMap} implementation: (key, value) pairs stored in append-only log, {@link DurableIntToMultiIntMap} is used
+ * to keep and update the mapping.
  * <p/>
- * Intended for read-dominant use-cases: i.e. for not too many updates -- otherwise ao-log grows up quickly.
+ * Use {@link DurableMapFactory} to create/open the map:
+ * <pre>
+ *   val map = DurableMapFactory.withDefaults(keyDescriptor, valuesDescriptor)
+ *                              .open(storagePath);
+ *   ...
+ *   map.close(); //use .closeAndUnsafelyUnmap() if better suited
+ * </pre>
  * <p/>
- * Map doesn't allow null keys. It does allow null values, but {@code .put(key,null)} is equivalent to {@code .remove(key)}
- * Map needs a compaction from time to time
- * <p/>
- * Construct with {@link DurableMapFactory}, not with constructor
+ * Features:
+ * <ol>
+ *  <li>Intended for insert & read-dominant use-cases: i.e. not for updates-dominant -- because append-only-log grows up quickly
+ *  after many updates, and map will require compaction ({@link #compact(ThrowableComputable)}) very often.</li>
+ *  <li>Implementation doesn't allow null keys. It does allow null values, but {@code .put(key,null)} is equivalent to {@code .remove(key)}</li>
+ *  <li>If used with updates, {@link #compactionScore()} needs to be checked periodically, to run compaction
+ *  ({@link #compact(ThrowableComputable)} then needed</li>
+ *  <li>Implementation is thread-safe, but not concurrent: all methods are just protected with a single exclusive lock </li>
+ * </ol>
  */
 @ApiStatus.Internal
 public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unmappable {

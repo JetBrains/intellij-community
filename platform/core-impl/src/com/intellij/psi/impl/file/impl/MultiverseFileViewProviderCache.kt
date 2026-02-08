@@ -100,7 +100,7 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
 
     // cache.cache is in fact ConcurrentWeakValueHashMap.
     // calling cache.cache.remove(unrelated-object) calls ConcurrentWeakValueHashMap#processQueue under the hood
-    cache.cache.remove(NULL)
+    cache.cache.remove(NullFile)
   }
 
   override fun trySetContext(viewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext? {
@@ -144,7 +144,7 @@ object MultiverseFileViewProviderCacheLog {
   }
 }
 
-private val NULL: VirtualFile = LightVirtualFile()
+private object NullFile : LightVirtualFile()
 
 private typealias FullCacheMap = ConcurrentMap<VirtualFile, FileProviderMap>
 

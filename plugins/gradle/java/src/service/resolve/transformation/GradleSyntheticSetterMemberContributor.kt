@@ -2,11 +2,21 @@
 package org.jetbrains.plugins.gradle.service.resolve.transformation
 
 import com.intellij.lang.java.beans.PropertyKind
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.ResolveState
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PropertyUtilBase.*
+import com.intellij.psi.util.PropertyUtilBase.getAccessorName
+import com.intellij.psi.util.PropertyUtilBase.getAllProperties
+import com.intellij.psi.util.PropertyUtilBase.getPropertyName
+import com.intellij.psi.util.PropertyUtilBase.isSimplePropertyGetter
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.config.isGradleFile
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames

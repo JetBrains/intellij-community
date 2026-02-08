@@ -7,14 +7,34 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.ActivityData
+import com.intellij.platform.lvcs.impl.ActivityDiffData
+import com.intellij.platform.lvcs.impl.ActivityFilter
+import com.intellij.platform.lvcs.impl.ActivityItem
+import com.intellij.platform.lvcs.impl.ActivityProvider
+import com.intellij.platform.lvcs.impl.ActivityScope
+import com.intellij.platform.lvcs.impl.ActivitySelection
+import com.intellij.platform.lvcs.impl.DirectoryDiffMode
+import com.intellij.platform.lvcs.impl.FilterKind
+import com.intellij.platform.lvcs.impl.LocalHistoryActivityProvider
 import com.intellij.platform.lvcs.impl.actions.isShowSystemLabelsEnabled
+import com.intellij.platform.lvcs.impl.hasMultipleFiles
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.EventListener
 
 @OptIn(FlowPreview::class)
 internal class ActivityViewModel(private val project: Project, gateway: IdeaGateway, internal val activityScope: ActivityScope,

@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics;
@@ -83,8 +82,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final boolean myInlineKeysNoMapping;
   private boolean myExternalKeysNoMapping;
   private final boolean myRegisterForStats;
-
-  private final @Nullable PersistentEnumeratorWal<Data> myWal;
 
   private static final int MAX_DATA_SEGMENT_LENGTH = 128;
 
@@ -180,12 +177,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       close();
       throw t;
     }
-
-    myWal = enableWal ? new PersistentEnumeratorWal<>(dataDescriptor,
-                                                      false,
-                                                      file.resolveSibling(file.getFileName() + ".wal"),
-                                                      ConcurrencyUtil.newSameThreadExecutorService(),
-                                                      true) : null;
   }
 
   private void doExpensiveSanityCheck() {
@@ -641,9 +632,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         int newValueId = writeData(value, valueHC);
         //FIXME RC: use of myValuesCount -- prevents get rid of getReadLock() here
         ++myValuesCount;
-        if (myWal != null) {
-          myWal.enumerate(value, newValueId);
-        }
 
         if (IOStatistics.DEBUG && (myValuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
           IOStatistics.dump("Enumerator " + myFile + ": " + getStatistics());
@@ -717,18 +705,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public void force() {
-    try {
-      super.force();
-    }
-    finally {
-      if (myWal != null) {
-        myWal.flush();
-      }
-    }
-  }
-
-  @Override
   protected void dumpKeysOnCorruption() {
     try {
       force();
@@ -762,9 +738,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       super.close();
     }
     finally {
-      if (myWal != null) {
-        myWal.close();
-      }
       if (myRegisterForStats) {
         StorageStatsRegistrar.INSTANCE.unregisterEnumerator(myFile);
       }

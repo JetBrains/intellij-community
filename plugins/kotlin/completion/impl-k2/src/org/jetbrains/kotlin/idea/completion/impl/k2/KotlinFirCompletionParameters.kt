@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionType
@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.InsertRequiredTypeArgumentsInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion.correctParametersForInStringTemplateCompletion
 import org.jetbrains.kotlin.psi.KtFile
 

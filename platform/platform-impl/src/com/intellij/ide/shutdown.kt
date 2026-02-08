@@ -2,7 +2,6 @@
 package com.intellij.ide
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.isCoroutineDumpEnabled
 import com.intellij.openapi.application.ApplicationManager
@@ -22,7 +21,15 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ObjectUtils
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration

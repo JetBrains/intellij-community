@@ -6,7 +6,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleVersion
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -14,6 +15,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import java.nio.file.Path
 
+@K1Deprecation
 class ProjectGradleSettingsListener(
   private val project: Project,
   private val coroutineScope: CoroutineScope

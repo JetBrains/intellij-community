@@ -1,6 +1,10 @@
 package com.intellij.database.run.ui.grid.renderers;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.extractors.ObjectFormatterUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Disposer;

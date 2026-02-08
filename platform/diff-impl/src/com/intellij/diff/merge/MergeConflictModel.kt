@@ -4,7 +4,12 @@ package com.intellij.diff.merge
 import com.intellij.diff.comparison.ComparisonMergeUtil
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.fragments.MergeLineFragment
-import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.MergeConflictResolutionStrategy
+import com.intellij.diff.util.MergeConflictType
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.diagnostic.logger
@@ -19,7 +24,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Handles all merge-related stuff
@@ -325,7 +330,7 @@ private class TextAutoResolver(private val mergeRequest: TextMergeRequest) {
     assert(change.conflictType.resolutionStrategy === MergeConflictResolutionStrategy.TEXT)
 
     val texts: List<CharSequence> = ThreeSide.map { side: ThreeSide ->
-      DiffUtil.getLinesContent(mergeRequest.getDocument(side), change.getStartLine(side), change.getEndLine(side))
+      DiffUtil.getLinesContent(mergeRequest.getDocumentWithOutputAsBase(side), change.getStartLine(side), change.getEndLine(side))
     }
 
     val leftText: CharSequence = ThreeSide.LEFT.select(texts)
@@ -346,6 +351,8 @@ private class TextAutoResolver(private val mergeRequest: TextMergeRequest) {
 }
 
 private fun TextMergeRequest.getDocument(side: ThreeSide): Document = side.select(contents).document
+private fun TextMergeRequest.getDocumentWithOutputAsBase(side: ThreeSide): Document =
+  if (side == ThreeSide.BASE) outputContent.document else side.select(contents).document
 
 private fun buildResultLineRanges(changesDatas: List<InitChangeData>): List<LineRange> = changesDatas
   .map {

@@ -3,6 +3,7 @@ package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
@@ -26,9 +27,10 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.tree.TreePath;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -98,15 +100,14 @@ class InstancesWithStackFrameView {
     mySplitter.setHonorComponentsMinimumSize(false);
     myHidedProportion = DEFAULT_SPLITTER_PROPORTION;
 
-    final MemoryViewDebugProcessData data =
-      DebuggerManager.getInstance(project).getDebugProcess(debugSession.getDebugProcess().getProcessHandler())
-        .getUserData(MemoryViewDebugProcessData.KEY);
+    DebugProcessImpl debugProcess = ((DebugProcessImpl)DebuggerManager.getInstance(project).getDebugProcess(debugSession.getDebugProcess().getProcessHandler()));
+    final MemoryViewDebugProcessData data = debugProcess.getUserData(MemoryViewDebugProcessData.KEY);
     tree.addTreeSelectionListener(e -> {
       ObjectReference ref = getSelectedReference(tree);
       if (ref != null && data != null) {
         List<StackFrameItem> stack = data.getTrackedStacks().getStack(ref);
         if (stack != null) {
-          list.setFrameItems(stack);
+          list.setFrameItems(stack, debugProcess);
           if (mySplitter.getProportion() == 1.f) {
             mySplitter.setProportion(DEFAULT_SPLITTER_PROPORTION);
           }
@@ -118,7 +119,7 @@ class InstancesWithStackFrameView {
         list.setEmptyText(JavaDebuggerBundle.message("status.text.select.instance.to.see.stack.frame"));
       }
 
-      list.setFrameItems(Collections.emptyList());
+      list.clearFrameItems();
     });
   }
 

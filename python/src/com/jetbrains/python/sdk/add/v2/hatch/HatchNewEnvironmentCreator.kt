@@ -16,7 +16,13 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.ToolValidator
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
+import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
@@ -69,12 +75,9 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
     return Result.success(Unit)
   }
 
-  override suspend fun setupEnvSdk(
-    moduleBasePath: Path,
-    baseSdks: List<Sdk>,
-    basePythonBinaryPath: P?,
-    installPackages: Boolean,
-  ): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+    val basePythonBinaryPath = model.getOrInstallBasePython()
+
     val hatchEnv = model.hatchViewModel.selectedEnvFromAvailable.get()?.hatchEnvironment
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
     val basePythonBinaryEelPath = when (basePythonBinaryPath) {

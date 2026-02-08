@@ -20,7 +20,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware {

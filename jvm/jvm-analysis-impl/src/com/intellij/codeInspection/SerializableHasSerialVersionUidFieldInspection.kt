@@ -9,7 +9,13 @@ import com.intellij.lang.jvm.actions.createAddFieldActions
 import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.lang.jvm.actions.fieldRequest
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiEnumConstantInitializer
+import com.intellij.psi.PsiJvmSubstitutor
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.HardcodedMethodConstants
 import com.siyeh.ig.fixes.SerialVersionUIDBuilder

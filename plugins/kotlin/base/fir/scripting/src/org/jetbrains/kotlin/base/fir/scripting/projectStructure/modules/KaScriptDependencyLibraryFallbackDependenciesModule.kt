@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ideProjectStructureProvid
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaLibraryFallbackDependenciesModuleImpl
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.platform.TargetPlatform
-import java.util.*
+import java.util.Objects
 
 internal class KaScriptDependencyLibraryFallbackDependenciesModule(
     override val dependentLibrary: KaScriptDependencyLibraryModuleImpl

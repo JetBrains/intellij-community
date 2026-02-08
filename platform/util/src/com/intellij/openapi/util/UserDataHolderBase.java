@@ -5,7 +5,11 @@ import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.util.containers.VarHandleWrapper;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.Serializable;
 import java.util.Objects;

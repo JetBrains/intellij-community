@@ -42,22 +42,48 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionPausedInfo
+import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabAbstractInfo
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoNoInit
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
-import com.intellij.util.*
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.EventDispatcher
+import com.intellij.util.SmartList
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.application
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.xdebugger.*
-import com.intellij.xdebugger.breakpoints.*
+import com.intellij.xdebugger.DapMode
+import com.intellij.xdebugger.SplitDebuggerMode
+import com.intellij.xdebugger.XAlternativeSourceHandler
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointHandler
+import com.intellij.xdebugger.breakpoints.XBreakpointListener
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebuggerPerformanceCollector.logBreakpointReached
-import com.intellij.xdebugger.impl.XDebuggerSuspendScopeProvider.provideSuspendScope
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.reportBreakpointVerified
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
@@ -75,17 +101,38 @@ import com.intellij.xdebugger.impl.rpc.models.XDebugTabLayouterModel
 import com.intellij.xdebugger.impl.rpc.models.XSuspendContextModel
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
-import com.intellij.xdebugger.impl.ui.*
+import com.intellij.xdebugger.impl.ui.RunnerLayoutUiBridge
+import com.intellij.xdebugger.impl.ui.XDebugSessionData
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab
+import com.intellij.xdebugger.impl.ui.allowFramesViewCustomization
+import com.intellij.xdebugger.impl.ui.forceShowNewDebuggerUi
+import com.intellij.xdebugger.impl.ui.getDefaultFramesViewKey
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import com.intellij.xdebugger.ui.IXDebuggerSessionTab
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.Icon
@@ -896,12 +943,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   private fun clearPausedData() {
     val oldSuspendContextModel = suspendContextModel.getAndSet(null)
-    // If the scope is not provided by an XSuspendContent implementation,
-    // then a default scope, provided by XDebuggerSuspendScopeProvider is used,
-    // and it must be canceled manually
-    if (suspendContext?.coroutineScope != null) {
-      oldSuspendContextModel?.coroutineScope?.cancel()
-    }
+    oldSuspendContextModel?.cancel()
     this.currentExecutionStack = null
     currentStackFrame = null
     topStackFrame.value = null
@@ -926,12 +968,20 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
-    setCurrentStackFrame(executionStack, frame, isTopFrame, false)
+    val currentSuspendContext = suspendContext ?: return
+    setCurrentStackFrame(currentSuspendContext, executionStack, frame, isTopFrame, false)
   }
 
-  @ApiStatus.Experimental
-  fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean, changedByUser: Boolean) {
-    if (suspendContext == null) return
+  @ApiStatus.Internal
+  fun setCurrentStackFrame(
+    expectedSuspendContext: XSuspendContext,
+    executionStack: XExecutionStack,
+    frame: XStackFrame,
+    isTopFrame: Boolean,
+    changedByUser: Boolean,
+  ) {
+    val currentContext = suspendContext ?: return
+    if (expectedSuspendContext !== currentContext) return
 
     val frameChanged = currentStackFrame !== frame
     this.currentExecutionStack = executionStack
@@ -1153,9 +1203,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   @ApiStatus.Internal
   fun updateSuspendContext(newSuspendContext: XSuspendContext) {
-    val suspendContextScope = newSuspendContext.coroutineScope ?: provideSuspendScope(this)
-    // coroutine scope of the previous model will be canceled in [clearPausedData]
-    suspendContextModel.set(XSuspendContextModel(suspendContextScope, newSuspendContext, this))
+    val newModel = XSuspendContextModel(coroutineScope, newSuspendContext, this)
+    val oldModel = suspendContextModel.getAndSet(newModel)
+    oldModel?.cancel()
 
     this.currentExecutionStack = newSuspendContext.activeExecutionStack
     val newCurrentStackFrame = currentExecutionStack?.topFrame

@@ -6,8 +6,8 @@ import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpserverIcons
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
-import com.intellij.mcpserver.createStreamableServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
+import com.intellij.mcpserver.createStreamableServerJsonEntry
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.util.getHelpLink
@@ -22,7 +22,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.ui.layout.and

@@ -1,7 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.AutoCompletionContext
+import com.intellij.codeInsight.completion.AutoCompletionDecision
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.util.PsiTreeUtil
@@ -10,7 +16,11 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyNames.PREPARE
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.extensions.afterDefInFunction
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PySpecialMethodNamesCompletionContributor : CompletionContributor(), DumbAware {

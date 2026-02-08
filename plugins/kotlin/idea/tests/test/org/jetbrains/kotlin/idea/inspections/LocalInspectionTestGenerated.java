@@ -8220,24 +8220,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("notMain.kt")
-        public void testNotMain() throws Exception {
-            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/notMain.kt");
+        @TestMetadata("explicitReturnTypeBlockBody.kt")
+        public void testExplicitReturnTypeBlockBody() throws Exception {
+            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/explicitReturnTypeBlockBody.kt");
         }
 
-        @TestMetadata("notUnit1.kt")
-        public void testNotUnit1() throws Exception {
-            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/notUnit1.kt");
+        @TestMetadata("explicitReturnTypeExpressionBody.kt")
+        public void testExplicitReturnTypeExpressionBody() throws Exception {
+            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/explicitReturnTypeExpressionBody.kt");
         }
 
-        @TestMetadata("notUnit2.kt")
-        public void testNotUnit2() throws Exception {
-            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/notUnit2.kt");
+        @TestMetadata("implicitReturnTypeExpressionBody.kt")
+        public void testImplicitReturnTypeExpressionBody() throws Exception {
+            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/implicitReturnTypeExpressionBody.kt");
         }
 
-        @TestMetadata("notUnit3.kt")
-        public void testNotUnit3() throws Exception {
-            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/notUnit3.kt");
+        @TestMetadata("notMainFunName.kt")
+        public void testNotMainFunName() throws Exception {
+            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/notMainFunName.kt");
+        }
+
+        @TestMetadata("notMainReturnType.kt")
+        public void testNotMainReturnType() throws Exception {
+            runTest("testData/inspectionsLocal/mainFunctionReturnUnit/notMainReturnType.kt");
         }
 
         @TestMetadata("unit.kt")

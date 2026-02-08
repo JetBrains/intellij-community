@@ -11,3 +11,5 @@ fun bar(p: Collection<String>, b: Boolean) {
 // EXIST: length
 // EXIST: substring
 // ABSENT: isEmpty
+
+// IGNORE_K2

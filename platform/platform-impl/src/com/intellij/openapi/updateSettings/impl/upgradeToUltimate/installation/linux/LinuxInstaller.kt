@@ -6,7 +6,12 @@ import com.intellij.execution.util.ExecUtil.loadTemplate
 import com.intellij.ide.actions.CreateDesktopEntryAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.*
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.DownloadResult
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.InstallationResult
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationInfo
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstaller
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.isPycharmProfessional
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.runCommand
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties
 import com.intellij.util.asSafely

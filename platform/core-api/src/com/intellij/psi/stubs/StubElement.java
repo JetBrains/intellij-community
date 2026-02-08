@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -20,7 +19,6 @@ public interface StubElement<T extends PsiElement> extends Stub {
   @Override
   IStubElementType<?, ?> getStubType();
 
-  @ApiStatus.Experimental
   IElementType getElementType();
 
   @Override
@@ -40,7 +38,6 @@ public interface StubElement<T extends PsiElement> extends Stub {
   @Nullable
   <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(@NotNull IStubElementType<S, P> elementType);
 
-  @ApiStatus.Experimental
   default @Nullable StubElement<? extends PsiElement> findChildStubByElementType(@NotNull IElementType elementType) {
     if (elementType instanceof IStubElementType) {
       return findChildStubByType((IStubElementType<StubElement<PsiElement>, PsiElement>)elementType);

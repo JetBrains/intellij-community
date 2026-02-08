@@ -6,9 +6,11 @@ import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
+@K1Deprecation
 class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelProvider {
     init {
         // the only reason is to suppress unused i18n property inspection

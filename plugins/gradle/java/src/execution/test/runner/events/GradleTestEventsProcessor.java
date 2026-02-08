@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.task.event.*;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStartEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

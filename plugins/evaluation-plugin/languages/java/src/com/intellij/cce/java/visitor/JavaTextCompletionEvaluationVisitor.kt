@@ -5,7 +5,11 @@ import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.Language
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
 
 class JavaTextCompletionEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null

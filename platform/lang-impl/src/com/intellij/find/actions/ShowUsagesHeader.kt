@@ -7,7 +7,11 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.Gray
+import com.intellij.ui.RowIcon
+import com.intellij.ui.TextIcon
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
@@ -54,6 +58,7 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
         row {
           // Don't use Row.label method: it processes mnemonics and breaks symbol &
           val titleCell = cell(JLabel(XmlStringUtil.wrapInHtml("<body><nobr>$title</nobr></body>")))
+            .applyToComponent { minimumSize = JBUI.emptySize() } // Allow shrinking the title
             .resizableColumn()
             .gap(RightGap.SMALL)
           titleLabel = titleCell.component

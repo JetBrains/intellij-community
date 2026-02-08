@@ -17,7 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import org.intellij.lang.annotations.MagicConstant;
 
-import java.awt.*;
+import java.awt.Insets;
 
 public interface ActionButtonComponent {
 

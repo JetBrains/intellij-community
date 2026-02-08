@@ -2,7 +2,13 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceList;
 import org.jetbrains.annotations.NotNull;
 
 public class LightEmptyImplementsList extends LightElement implements PsiReferenceList {

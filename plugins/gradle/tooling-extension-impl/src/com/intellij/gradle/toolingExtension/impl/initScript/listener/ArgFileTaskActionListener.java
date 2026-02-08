@@ -3,7 +3,11 @@ package com.intellij.gradle.toolingExtension.impl.initScript.listener;
 
 import org.gradle.api.tasks.JavaExec;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;

@@ -4,7 +4,7 @@ package com.intellij.diff.util;
 import com.intellij.diff.FrameDiffTool;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface DiffNotificationProvider {
   @Nullable

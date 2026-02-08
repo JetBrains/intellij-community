@@ -13,17 +13,32 @@ import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
-import java.awt.*;
+import java.awt.Color;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.ui.SimpleTextAttributes.*;
+import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_STRIKEOUT;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
+import static com.intellij.ui.SimpleTextAttributes.merge;
 import static javax.swing.text.html.HTML.Attribute.STYLE;
-import static javax.swing.text.html.HTML.Tag.*;
+import static javax.swing.text.html.HTML.Tag.A;
+import static javax.swing.text.html.HTML.Tag.B;
+import static javax.swing.text.html.HTML.Tag.DIV;
+import static javax.swing.text.html.HTML.Tag.I;
+import static javax.swing.text.html.HTML.Tag.S;
+import static javax.swing.text.html.HTML.Tag.SPAN;
+import static javax.swing.text.html.HTML.Tag.U;
 
 /**
  * {@code HtmlToSimpleColoredComponentConverter} allows you to convert HTML-marked string to list of colored fragments and

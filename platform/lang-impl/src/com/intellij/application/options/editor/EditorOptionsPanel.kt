@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
-import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
+import com.intellij.application.options.editor.EditorCaretStopPolicyItem.LineBoundary
+import com.intellij.application.options.editor.EditorCaretStopPolicyItem.OsDefault
+import com.intellij.application.options.editor.EditorCaretStopPolicyItem.WordBoundary
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
@@ -44,7 +46,23 @@ import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.asRange
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.UIUtil

@@ -7,9 +7,12 @@ import com.intellij.vcs.log.impl.VcsLogIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 @ApiStatus.Internal
 public class TableWithProgress extends JBTable {

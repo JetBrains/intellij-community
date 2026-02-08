@@ -9,3 +9,5 @@ fun f2(i: Int){}
 
 // EXIST: ::f1
 // ABSENT: ::f2
+
+// IGNORE_K2

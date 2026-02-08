@@ -3,7 +3,10 @@ package org.jetbrains.jps.model.library.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.JpsNamedElementCollection;
 import org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray
 import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.INVALID_CHECKSUM
 import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.OpenMode
 import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.SECOND_INSTANCE_MARK
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.open
 import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArrayImpl.Companion.CompactLayoutBuilder
 import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArrayImpl.Companion.LayoutHandler
 import com.intellij.util.io.ResilientFileChannel
@@ -20,7 +21,7 @@ import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.READ
 import java.nio.file.StandardOpenOption.WRITE
-import java.util.*
+import java.util.EnumSet
 import java.util.zip.CRC32
 import kotlin.io.path.createFile
 import kotlin.io.path.exists

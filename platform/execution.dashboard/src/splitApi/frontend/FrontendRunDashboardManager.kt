@@ -18,9 +18,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
-import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardAdditionalServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardMainServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto
+import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardStatusFilter
+import com.intellij.platform.execution.dashboard.splitApi.toAdditionalServiceDto
 import com.intellij.platform.execution.serviceView.ServiceViewManagerImpl
 import com.intellij.platform.execution.serviceView.shouldEnableServicesViewInCurrentEnvironment
 import com.intellij.platform.project.projectId
@@ -73,9 +81,6 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
       frontendDtos.value = updatesFromBackend
 
       updateDashboard(true)
-      withContext(Dispatchers.EDT) {
-        RunDashboardUiManagerImpl.getInstance(project).syncContentsFromBackend()
-      }
     }
   }
 
@@ -123,9 +128,14 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
 
   internal suspend fun subscribeToBackendConfigurationTypesUpdates() {
     RunDashboardServiceRpc.getInstance().getConfigurationTypes(project.projectId()).collect { updateFromBackend ->
-      // Just update types set on the frontend,
-      // do not filter frontend DTOs since they are synced via subscribeToBackendServicesUpdates().
-      configurationTypes.value = types
+      configurationTypes.value = updateFromBackend
+
+      updateDashboard(true)
+      withContext(Dispatchers.EDT) {
+        if (RunDashboardUiManagerImpl.getInstance(project).syncContentsFromBackend()) {
+          updateDashboard(true)
+        }
+      }
     }
   }
 

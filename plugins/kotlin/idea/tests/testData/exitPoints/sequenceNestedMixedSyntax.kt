@@ -4,7 +4,7 @@ fun f() {
         yield(1)
 
         val inner = <info descr="null">sequence</info>({  // Parenthesized
-            <info descr="null">~yield(99)</info>
+            <info descr="null">~yield</info>(99)
         })
 
         yield(2)

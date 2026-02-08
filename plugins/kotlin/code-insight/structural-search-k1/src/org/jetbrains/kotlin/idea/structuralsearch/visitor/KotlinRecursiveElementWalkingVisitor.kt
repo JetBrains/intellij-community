@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.structuralsearch.visitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.PsiWalkingState
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 
+@K1Deprecation
 abstract class KotlinRecursiveElementWalkingVisitor : SSRKtVisitor(), PsiRecursiveVisitor {
     private val myWalkingState: PsiWalkingState = object : PsiWalkingState(this) {
         override fun elementFinished(element: PsiElement) {}

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.psi.KtCallExpression
 
+@K1Deprecation
 class MoveLambdaOutsideParenthesesInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(KtCallExpression::class.java) {
 
     override fun inspectionHighlightType(element: KtCallExpression): ProblemHighlightType =

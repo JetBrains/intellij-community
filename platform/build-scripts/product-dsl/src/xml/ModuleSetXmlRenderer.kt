@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.productLayout.xml
 
+import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.parser.impl.elements.xmlValue
 import org.jetbrains.intellij.build.productLayout.ContentBlock
@@ -12,9 +13,6 @@ import org.jetbrains.intellij.build.productLayout.MODULE_SET_PREFIX
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ModuleSetName
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
-import org.jetbrains.intellij.build.productLayout.containsOverriddenNestedSet
-import org.jetbrains.intellij.build.productLayout.findOverriddenNestedSetNames
-import org.jetbrains.intellij.build.productLayout.withEditorFold
 
 /**
  * Determines if a module set needs to be inlined (cannot use xi:include).
@@ -26,7 +24,7 @@ import org.jetbrains.intellij.build.productLayout.withEditorFold
  */
 internal fun shouldInlineModuleSet(
   moduleSet: ModuleSet,
-  overrides: Map<String, ModuleLoadingRuleValue>,
+  overrides: Map<ContentModuleName, ModuleLoadingRuleValue>,
   overriddenModuleSetNames: Set<ModuleSetName>
 ): Boolean {
   return overrides.isNotEmpty() || containsOverriddenNestedSet(moduleSet, overriddenModuleSetNames)
@@ -38,7 +36,7 @@ internal fun shouldInlineModuleSet(
  */
 internal fun StringBuilder.appendInlinedModuleSet(
   moduleSet: ModuleSet,
-  overrides: Map<String, ModuleLoadingRuleValue>,
+  overrides: Map<ContentModuleName, ModuleLoadingRuleValue>,
   contentBlocks: List<ContentBlock>,
   overriddenModuleSetNames: Set<ModuleSetName>
 ) {
@@ -54,8 +52,8 @@ internal fun StringBuilder.appendInlinedModuleSet(
       // Add explanatory comment
       if (hasOverrides) {
         val overriddenModules = overrides.entries
-          .sortedBy { it.key }
-          .joinToString(", ") { "${it.key}=${it.value.name.lowercase().replace('_', '-')}" }
+          .sortedBy { it.key.value }
+          .joinToString(", ") { "${it.key.value}=${it.value.name.lowercase().replace('_', '-')}" }
         append("    <!-- Module set '${moduleSet.name}' with ${overrides.size} loading override(s): $overriddenModules -->\n")
       }
       else {
@@ -66,8 +64,16 @@ internal fun StringBuilder.appendInlinedModuleSet(
 
       // Append modules with effective overrides
       for (module in directBlock.modules) {
-        val effectiveLoading = overrides[module.name] ?: module.loading
-        appendModuleLine(ContentModule(module.name, effectiveLoading, module.includeDependencies), "    ")
+        val effectiveLoading = overrides.get(module.name) ?: module.loading
+        appendModuleLine(
+          ContentModule(
+            module.name,
+            effectiveLoading,
+            module.includeDependencies,
+            module.allowedMissingPluginIds,
+          ),
+          "    ",
+        )
       }
 
       append("  </content>\n")
@@ -127,7 +133,7 @@ internal fun StringBuilder.appendModuleSetInclude(moduleSetName: String) {
  */
 internal fun StringBuilder.appendModuleSetXml(
   moduleSet: ModuleSet,
-  overrides: Map<String, ModuleLoadingRuleValue>,
+  overrides: Map<ContentModuleName, ModuleLoadingRuleValue>,
   contentBlocks: List<ContentBlock>,
   overriddenModuleSetNames: Set<ModuleSetName>
 ) {
@@ -142,9 +148,17 @@ internal fun StringBuilder.appendModuleSetXml(
 /**
  * Appends a single module XML element with optional loading attribute.
  */
-internal fun StringBuilder.appendModuleLine(module: ContentModule, indent: String = "    ") {
-  append("$indent<module name=\"${module.name}\"")
-  if (module.loading != null) {
+internal fun StringBuilder.appendModuleLine(
+  module: ContentModule,
+  indent: String = "    ",
+  comment: String? = null,
+) {
+  if (comment != null) {
+    append("$indent<!-- $comment -->\n")
+  }
+  append("$indent<module name=\"${module.name.value}\"")
+  // Only output loading attribute for non-default values (OPTIONAL is the default, omit it)
+  if (module.loading != ModuleLoadingRuleValue.OPTIONAL) {
     append(" loading=\"${module.loading.xmlValue}\"")
   }
   append("/>\n")
@@ -157,11 +171,13 @@ internal fun StringBuilder.appendContentBlock(
   blockSource: String,
   modules: List<ContentModule>,
   indent: String = "  ",
+  commentProvider: ((ContentModule) -> String?)? = null,
 ) {
   withEditorFold(sb = this, indent = indent, description = blockSource) {
     append("$indent<content namespace=\"$JETBRAINS_NAMESPACE\">\n")
     for (module in modules) {
-      appendModuleLine(module, "$indent  ")
+      val comment = commentProvider?.invoke(module)
+      appendModuleLine(module, "$indent  ", comment)
     }
     append("$indent</content>\n")
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -13,7 +14,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeListener;
@@ -97,7 +98,9 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
     }
 
     if (!old.equalsIgnoreCase(myString)) {
-      update();
+      WriteIntentReadAction.run(() -> {
+        update();
+      });
     }
   }
 

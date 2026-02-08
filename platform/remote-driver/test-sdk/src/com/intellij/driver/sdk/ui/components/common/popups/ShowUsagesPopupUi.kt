@@ -21,15 +21,20 @@ class ShowUsagesPopupUi(data: ComponentData) : PopupUiComponent(data) {
   val openInFindTWButton = actionButton { byAccessibleName("Open in Find Tool Window") }
   val settingsButton = actionButton { byAccessibleName("Settings…") }
   val showUsagesTable: ShowUsagesResultsTableUi = x(ShowUsagesResultsTableUi::class.java) { byClass("ShowUsagesTable") }
+  fun showUsagesScopeButton(name: String) = x { and(byClass("ActionButtonWithText"), byAccessibleName(name)) }
 
   class ShowUsagesResultsTableUi(data: ComponentData): JTableUiComponent(data) {
     val items: List<ShowUsagesItem> get() = content().map { (_, row) ->
       val rowValues = row.values.toList()
       check(rowValues.size == 4) { "failed to parse usages row values, ${rowValues}" }
-      val file = rowValues[1].removePrefix("File ").substringBefore(",")
-      val line = rowValues[2].substringBeforeLast(":").removePrefix("line ").removePrefix("(").toInt()
-      val usageText = rowValues[3].removePrefix("Usage text ")
-      ShowUsagesItem(file, line, usageText)
+      if (rowValues.distinct().singleOrNull()?.contains("out of scope") == true) {
+        ShowUsagesItem("", -1, rowValues[0])
+      } else {
+        val file = rowValues[1].removePrefix("File ").substringBefore(",")
+        val line = rowValues[2].substringBeforeLast(":").removePrefix("line ").removePrefix("(").toInt()
+        val usageText = rowValues[3].removePrefix("Usage text ")
+        ShowUsagesItem(file, line, usageText)
+      }
     }
 
     val selectedItem: ShowUsagesItem? get() = getSelectedRow().let { if (it != -1) items[it] else null }

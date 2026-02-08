@@ -15,7 +15,8 @@ import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 /**
  * @author Mikhail Golubev

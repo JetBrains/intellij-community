@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.productLayout.tooling.ProductUsageAnalysis
 import org.jetbrains.intellij.build.productLayout.tooling.UnificationSuggestion
 import org.jetbrains.intellij.build.productLayout.traversal.DependencyPathResult
 import org.jetbrains.intellij.build.productLayout.traversal.ModuleDependenciesResult
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleOwnersResult
 import org.jetbrains.intellij.build.productLayout.traversal.ModuleReachabilityResult
 
 /**
@@ -116,6 +117,17 @@ internal fun writeModulePathsResult(
 internal fun writeModuleDependenciesResult(
   gen: JsonGenerator,
   result: ModuleDependenciesResult
+) {
+  gen.writeRawValue(kotlinxJson.encodeToString(result))
+}
+
+/**
+ * Writes module owners result to JSON.
+ * Includes owning plugins (production/test depending on filter).
+ */
+internal fun writeModuleOwnersResult(
+  gen: JsonGenerator,
+  result: ModuleOwnersResult
 ) {
   gen.writeRawValue(kotlinxJson.encodeToString(result))
 }

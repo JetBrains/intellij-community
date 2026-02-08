@@ -6,10 +6,17 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.Icon;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 final class AbstractButtonLayout {
 

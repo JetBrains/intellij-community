@@ -21,7 +21,12 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.SingleAlarm
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XNamedValue
+import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.frame.XValueContainer
+import com.intellij.xdebugger.frame.XValueNode
+import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
@@ -38,7 +43,11 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParams
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.XDebugSessionListenerProvider
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.tree.TreePath

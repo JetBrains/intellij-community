@@ -4,7 +4,9 @@ package com.intellij.testFramework;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;

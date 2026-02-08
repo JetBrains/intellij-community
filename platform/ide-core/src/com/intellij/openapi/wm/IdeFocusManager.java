@@ -13,8 +13,10 @@ import com.intellij.openapi.util.ExpirableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Window;
 
 /**
  * This class receives focus requests, manages the, and delegates to the AWT focus subsystem.

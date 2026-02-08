@@ -6,12 +6,16 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
+
+private val LOG = Logger.getInstance(LanguageRef::class.java)
 
 data class LanguageRef(val id: String, @field:Nls val displayName: String, val icon: Icon?) {
   companion object {
@@ -36,7 +40,11 @@ data class LanguageRef(val id: String, @field:Nls val displayName: String, val i
       return Language.getRegisteredLanguages()
         .filter { it !== Language.ANY && it !is DependentLanguage }
         .sortedWith(LanguageUtil.LANGUAGE_COMPARATOR)
-        .map { forLanguage(it) }
+        .mapNotNull {
+          runCatching {
+            forLanguage(it)
+          }.getOrLogException(LOG)
+        }
     }
   }
 
@@ -63,7 +71,11 @@ data class FileTypeRef(val name: @NonNls String, val displayName: @Nls String, v
     fun forAllFileTypes(): List<FileTypeRef> {
       return FileTypeManager.getInstance().registeredFileTypes
         .sortedWith(FileTypeComparator.INSTANCE)
-        .map { forFileType(it) }
+        .mapNotNull{
+          runCatching {
+            forFileType(it)
+          }.getOrLogException(LOG)
+        }
     }
   }
 

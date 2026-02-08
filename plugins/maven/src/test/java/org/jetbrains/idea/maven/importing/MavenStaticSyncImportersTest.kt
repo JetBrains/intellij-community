@@ -14,10 +14,14 @@ import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.jetbrains.idea.maven.model.MavenArtifact
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
+import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.SupportedRequestType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.Test
-import java.util.*
+import java.util.Properties
 import java.util.stream.Stream
 
 class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {

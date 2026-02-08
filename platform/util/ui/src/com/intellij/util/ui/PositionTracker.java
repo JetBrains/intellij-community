@@ -6,8 +6,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.HierarchyBoundsListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 
 public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsListener, HierarchyListener, ComponentListener {
   private final Component myComponent;

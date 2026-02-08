@@ -16,11 +16,67 @@ import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.isPrivate
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping
+import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyCallable
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDocStringOwner
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyParameterList
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyReferenceOwner
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PySingleStarParameter
+import com.jetbrains.python.psi.PySlashParameter
+import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTupleParameter
+import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl
-import com.jetbrains.python.psi.resolve.*
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult
+import com.jetbrains.python.psi.resolve.RatedResolveResult
+import com.jetbrains.python.psi.types.PyCallableParameter
+import com.jetbrains.python.psi.types.PyCallableParameterImpl
+import com.jetbrains.python.psi.types.PyCallableType
+import com.jetbrains.python.psi.types.PyCallableTypeImpl
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassTypeImpl
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl
+import com.jetbrains.python.psi.types.PyConcatenateType
+import com.jetbrains.python.psi.types.PyFunctionType
+import com.jetbrains.python.psi.types.PyModuleType
+import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyParamSpecType
+import com.jetbrains.python.psi.types.PySelfType
+import com.jetbrains.python.psi.types.PyStructuralType
+import com.jetbrains.python.psi.types.PyTupleType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeMember
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.PyUnsafeUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.toolbox.Maybe
 import org.jetbrains.annotations.ApiStatus
@@ -1337,6 +1393,39 @@ private fun List<PyCallableParameter>.filterExplicitParameters(
     implicitOffset = 1
   }
   return subList(min(implicitOffset, size), size)
+}
+
+/**
+ * Returns the overload declaration of this function that best matches the given call expression,
+ * or null if no overload matches or overloads are unavailable in the current context.
+ */
+@ApiStatus.Internal
+fun PyFunction.selectMatchingOverload(
+  callExpression: PyCallExpression,
+  context: TypeEvalContext
+): PyFunction? {
+  val overloads = PyiUtil.getOverloads(this, context)
+  if (overloads.isEmpty()) return null
+
+  val arguments = callExpression.getArguments(this)
+  val matchingOverloads = overloads.filter { it.matchesByArgumentTypes(callExpression, context) }
+
+  if (matchingOverloads.isEmpty()) {
+    return null
+  }
+
+  if (matchingOverloads.size == 1) {
+    return matchingOverloads[0]
+  }
+
+  val someArgumentsHaveUnknownType = arguments.any { argument ->
+    context.getType(argument) == null
+  }
+  if (someArgumentsHaveUnknownType) {
+    return null
+  }
+
+  return matchingOverloads.firstOrNull()
 }
 
 fun PyExpression.canQualifyAnImplicitName(): Boolean {

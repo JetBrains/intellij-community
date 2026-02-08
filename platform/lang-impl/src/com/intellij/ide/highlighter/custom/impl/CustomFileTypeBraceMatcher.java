@@ -10,7 +10,17 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.CustomHighlighterTokenType.*;
+import static com.intellij.psi.CustomHighlighterTokenType.IDENTIFIER;
+import static com.intellij.psi.CustomHighlighterTokenType.L_ANGLE;
+import static com.intellij.psi.CustomHighlighterTokenType.L_BRACE;
+import static com.intellij.psi.CustomHighlighterTokenType.L_BRACKET;
+import static com.intellij.psi.CustomHighlighterTokenType.L_PARENTH;
+import static com.intellij.psi.CustomHighlighterTokenType.PUNCTUATION;
+import static com.intellij.psi.CustomHighlighterTokenType.R_ANGLE;
+import static com.intellij.psi.CustomHighlighterTokenType.R_BRACE;
+import static com.intellij.psi.CustomHighlighterTokenType.R_BRACKET;
+import static com.intellij.psi.CustomHighlighterTokenType.R_PARENTH;
+import static com.intellij.psi.CustomHighlighterTokenType.WHITESPACE;
 
 /**
  * @author Maxim.Mossienko

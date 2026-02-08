@@ -13,7 +13,7 @@ import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 class CoverageClassFilterEditor extends ClassFilterEditor {

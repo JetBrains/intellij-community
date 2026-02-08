@@ -1,3 +1,5 @@
+// IGNORE_K2
+// IGNORE_K2_K1
 // WITH_STDLIB
 
 //FILE: a/a.kt

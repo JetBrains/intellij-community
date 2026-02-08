@@ -4,9 +4,12 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.util.ui.JBValue;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
 public class DarculaMenuSeparatorUI extends DarculaSeparatorUI {
   private static final JBValue SEPARATOR_HEIGHT = new JBValue.UIInteger("PopupMenuSeparator.height", 3);

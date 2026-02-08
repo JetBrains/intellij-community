@@ -4,7 +4,14 @@ package com.intellij.testFramework.common
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.util.DebugAttachDetectorArgs
 import com.intellij.util.io.blockingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext

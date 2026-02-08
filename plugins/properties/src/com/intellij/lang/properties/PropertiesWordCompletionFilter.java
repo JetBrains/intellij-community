@@ -22,10 +22,11 @@ package com.intellij.lang.properties;
 import com.intellij.lang.DefaultWordCompletionFilter;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class PropertiesWordCompletionFilter extends DefaultWordCompletionFilter {
   @Override
-  public boolean isWordCompletionEnabledIn(final IElementType element) {
+  public boolean isWordCompletionEnabledIn(@NotNull IElementType element) {
     return super.isWordCompletionEnabledIn(element) || element == PropertiesElementTypes.PROPERTY_TYPE;
   }
 }

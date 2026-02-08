@@ -2,7 +2,12 @@
 package com.intellij.codeInspection.dataFlow.interpreter;
 
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
-import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlTransferInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.GotoInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;

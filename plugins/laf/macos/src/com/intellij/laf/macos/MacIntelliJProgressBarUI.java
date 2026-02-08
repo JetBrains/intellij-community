@@ -19,9 +19,9 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Konstantin Bulenkov

@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  packageA/A.class
+End of files
+Cleaning output files:
+  B.class
+End of files
+Compiling files:
+  java/imports/unusedClassImport/a/B.java
+End of files
+------------------------------------------
+Exit code: ERROR

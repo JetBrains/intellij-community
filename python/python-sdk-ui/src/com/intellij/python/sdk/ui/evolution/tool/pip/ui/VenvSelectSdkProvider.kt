@@ -12,19 +12,18 @@ import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
 import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.jetbrains.python.Result
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.nio.file.Path
-import kotlin.collections.plus
 
-internal class VenvSelectSdkProvider() : EvoSelectSdkProvider {
+internal class VenvSelectSdkProvider : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement("pip", PythonSdkUIIcons.Tools.Pip) {
     val environments = VenvEvoSdkManager.findEnvironments(evoModuleSdk.module).getOr {
       return@EvoTreeLazyNodeElement it
     }
     val envByFolders = environments.groupBy { it.pythonBinaryPath?.parent?.parent?.parent }.toMutableMap()
     envByFolders.putIfAbsent(
-      evoModuleSdk.module.basePath?.let { Path.of(it) },
+      evoModuleSdk.module.baseDir?.path?.let { Path.of(it) },
       listOf(EvoSdk(icon = PythonSdkUIIcons.Tools.Pip, name = VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME, pythonBinaryPath = null))
     )
 

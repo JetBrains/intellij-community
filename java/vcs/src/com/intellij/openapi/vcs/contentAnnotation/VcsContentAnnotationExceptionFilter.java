@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.contentAnnotation;
 
-import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.ExceptionInfoCache;
+import com.intellij.execution.filters.ExceptionLineParser;
+import com.intellij.execution.filters.ExceptionLineParserFactory;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.FilterMixin;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
@@ -36,7 +40,11 @@ import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 final class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   private final Project myProject;

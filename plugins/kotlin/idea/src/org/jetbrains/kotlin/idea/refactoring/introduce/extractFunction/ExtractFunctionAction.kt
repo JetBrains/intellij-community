@@ -4,14 +4,17 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.refactoring.RefactoringActionHandler
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractIntroduceAction
 
+@K1Deprecation
 class ExtractFunctionAction : AbstractIntroduceAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? =
         (provider as? KotlinRefactoringSupportProvider)?.getExtractFunctionHandler()
 }
 
+@K1Deprecation
 class ExtractFunctionToScopeAction : AbstractIntroduceAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? =
         (provider as? KotlinRefactoringSupportProvider)?.getExtractFunctionToScopeHandler()

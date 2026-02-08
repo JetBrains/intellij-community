@@ -12,7 +12,7 @@ import com.intellij.platform.lvcs.impl.ActivityFileChange
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 @ApiStatus.Internal
 open class PresentableDifference(private val scope: ActivityScope,

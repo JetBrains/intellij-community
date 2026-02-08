@@ -1,7 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.values
 
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UContinueExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UJumpExpression
+import org.jetbrains.uast.ULabeledExpression
+import org.jetbrains.uast.ULoopExpression
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UYieldExpression
 
 // Something that never can be reached / created
 internal open class UNothingValue private constructor(

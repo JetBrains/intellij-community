@@ -6,7 +6,14 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiLiteralExpression
-import com.intellij.slicer.*
+import com.intellij.slicer.DuplicateMap
+import com.intellij.slicer.JavaSlicerAnalysisUtil
+import com.intellij.slicer.LanguageSlicing
+import com.intellij.slicer.SliceAnalysisParams
+import com.intellij.slicer.SliceHandler
+import com.intellij.slicer.SlicePanel
+import com.intellij.slicer.SliceRootNode
+import com.intellij.slicer.SliceTreeStructure
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import junit.framework.TestCase

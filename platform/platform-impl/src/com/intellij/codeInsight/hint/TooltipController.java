@@ -15,8 +15,8 @@ import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JRootPane;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 @Service

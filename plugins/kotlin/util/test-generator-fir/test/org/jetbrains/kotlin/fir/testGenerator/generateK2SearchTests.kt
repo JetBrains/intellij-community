@@ -5,8 +5,12 @@ import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractDirectKotlinInherit
 import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractKotlinDefinitionsSearchTest
 import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractKotlinDefinitionsSearcherMultiplatformTest
 import org.jetbrains.kotlin.idea.k2.search.AbstractFirAnnotatedMembersSearchTest
-import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.FIND_USAGES
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
+import org.jetbrains.kotlin.testGenerator.model.Patterns
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2SearchTests() {
     testGroup("kotlin.searching/kotlin.searching.test.k2", testDataPath = "../testData", category = FIND_USAGES) {

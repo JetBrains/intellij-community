@@ -3,7 +3,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.awt.*;
+import java.awt.Window;
 
 public interface PopupComponent {
   Logger LOG = Logger.getInstance(PopupComponent.class);

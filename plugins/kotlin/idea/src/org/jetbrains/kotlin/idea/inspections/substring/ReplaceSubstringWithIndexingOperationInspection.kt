@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.substring
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 
+@K1Deprecation
 class ReplaceSubstringWithIndexingOperationInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
         KotlinBundle.message("inspection.replace.substring.with.indexing.operation.display.name")

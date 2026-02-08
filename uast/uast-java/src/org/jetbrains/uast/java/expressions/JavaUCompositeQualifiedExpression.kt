@@ -19,7 +19,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.UastQualifiedExpressionAccessType
+import org.jetbrains.uast.unwrapReferenceNameElement
 
 @ApiStatus.Internal
 class JavaUCompositeQualifiedExpression(

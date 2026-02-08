@@ -4,7 +4,7 @@ package com.intellij.facet.ui;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.NonExtendable
 public interface FacetValidatorsManager {

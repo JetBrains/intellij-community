@@ -18,24 +18,51 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.*
+import com.intellij.openapi.fileEditor.impl.EditorCompositePanel
+import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
+import com.intellij.openapi.fileEditor.impl.EditorTopPanel
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.fileEditor.impl.createTopBottomSideBorder
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.Divider
+import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.ui.getUserData
+import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.IdeGlassPaneEx
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.impl.InternalDecorator
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.toolWindow.InternalDecoratorImpl.Companion.preventRecursiveBackgroundUpdateOnToolwindow
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
-import com.intellij.ui.*
+import com.intellij.ui.AbstractBorderPainter
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.DefaultBorderPainter
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
@@ -47,8 +74,22 @@ import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
-import com.intellij.util.ui.*
-import java.awt.*
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBSwingUtilities
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import java.awt.AWTEvent
+import java.awt.BasicStroke
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.Toolkit
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
 import java.awt.event.WindowAdapter
@@ -151,6 +192,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override val isTabOccupiesWholeHeight: Boolean
     get() = !isManyIslandEnabled
 
+  override val isRoundedTabDuringDrag: Boolean
+    get() = isManyIslandEnabled
+
   override val toolWindowUIDecorator: ToolWindowUIDecorator = object : ToolWindowUIDecorator() {
     override fun decorateAndReturnHolder(
       divider: JComponent,
@@ -168,7 +212,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
         if (isManyIslandEnabled) {
           background = JBUI.CurrentTheme.ToolWindow.background()
           createToolWindowBorderPainter(toolWindow, this)
-          configureBackgroundPainting(child, recursive = false)
+          if (!isColorIslandGradient()) {
+            configureBackgroundPainting(child, recursive = false)
+          }
         }
         else {
           border = originalBorderBuilder()
@@ -430,8 +476,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
     createToolWindowBorderPainter(toolwindow, holder)
     clearParentNoBackground(holder)
 
-    for (child in holder.components) {
-      configureBackgroundPainting(child as JComponent, recursive = true)
+    if (!isColorIslandGradient()) {
+      for (child in holder.components) {
+        configureBackgroundPainting(child as JComponent, recursive = true)
+      }
     }
   }
 
@@ -487,7 +535,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           return@addVisibleToolbarsListener
         }
 
-        if (leftVisible && rightVisible || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+        if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
           if (toolWindowPaneParent.border != null) {
             toolWindowPaneParent.border = null
           }
@@ -503,7 +551,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
           else {
             val insets = border.getBorderInsets(toolWindowPaneParent)
             if (insets.left != left || insets.right != right) {
-              toolWindowPaneParent.border = JBUI.Borders.empty(0, left, 0, right)
+              val top = JBUI.unscale(insets.top)
+              val bottom = JBUI.unscale(insets.bottom)
+              toolWindowPaneParent.border = JBUI.Borders.empty(top, left, bottom, right)
             }
           }
         }
@@ -731,7 +781,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
               val index = parent.components.indexOf(c)
               val top = if (index == 0) 1 else 4
               val bottom = if (index == parent.componentCount - 1) 1 else 4
-              return JBInsets(top, 10, bottom, 10)
+              val leftRight = if (UISettings.getInstance().compactMode) 11 else 13
+              return JBInsets(top, leftRight, bottom, leftRight)
             }
             return super.getBorderInsets(c)
           }
@@ -746,24 +797,24 @@ internal class IslandsUICustomization : InternalUICustomization() {
       super.paintComponent(g)
 
       if (isManyIslandEnabled) {
-        val rect = Rectangle(size)
-        val w = JBUI.scale(6)
-        val h = JBUI.scale(1)
-        JBInsets.removeFrom(rect, Insets(insets.top - h, w, insets.bottom - h, w))
-
         g as Graphics2D
-
         g.color = component.background
 
-        val arc = JBUI.getInt("Banner.underlineArc", 12).toDouble()
+        val rect = Rectangle(size)
+        val w = JBUIScale.scale(IslandsTabPainter.getHOffsetUnscaled(UISettings.getInstance().compactMode, JBTabsPosition.top).toFloat()).toDouble() + IslandsTabPainter.firstTabOffset
+        val h = JBUI.scale(1).toDouble()
 
-        RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
-                                      arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+        val x = rect.x + w
+        val y = rect.y + insets.top - h
+        val width = rect.width - 2 * w
+        val height = rect.height - (insets.top - h) - (insets.bottom - h)
+        val arc = JBUI.CurrentTheme.Banner.arc().float.toDouble()
+
+        RectanglePainter2D.FILL.paint(g, x, y, width, height, arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
 
         g.color = borderColor
 
-        RectanglePainter2D.DRAW.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
-                                      arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+        RectanglePainter2D.DRAW.paint(g, x, y, width, height, arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
       }
     }
   }
@@ -1212,6 +1263,41 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
 
     return true
+  }
+
+  override fun calculateTabWidth(widthWithInsets: Int, insetsWidth: Int): Int {
+    val minWidth = JBUI.scale(JBUI.getInt("TabbedPane.tabContentMinWidth", 24))
+    val contentWidth = (widthWithInsets - insetsWidth).coerceAtLeast(minWidth)
+    return contentWidth + insetsWidth
+  }
+
+  override fun onStatusBarVisibilityChanged(centerComponent: JComponent, isStatusBarVisible: Boolean) {
+    if (!isManyIslandEnabled || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+      if (centerComponent.border != null) {
+        centerComponent.border = null
+      }
+    }
+    else {
+      val insets = centerComponent.border?.getBorderInsets(centerComponent) ?: JBUI.emptyInsets()
+
+      centerComponent.border = JBUI.Borders.empty(
+        JBUI.unscale(insets.top),
+        JBUI.unscale(insets.left),
+        if (isStatusBarVisible) {
+          0
+        }
+        else {
+          JBUI.getInt("Islands.emptyGap", 4)
+        },
+        JBUI.unscale(insets.right)
+      )
+    }
+    centerComponent.revalidate()
+    centerComponent.repaint()
+  }
+
+  override fun getTabHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
+    return IslandsTabPainter.getHOffsetUnscaled(compactMode, position)
   }
 }
 

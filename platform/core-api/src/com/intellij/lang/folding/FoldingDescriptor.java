@@ -240,9 +240,13 @@ public class FoldingDescriptor {
 
   String calcPlaceholderText() {
     PsiElement psiElement = myElement.getPsi();
-    if (psiElement == null) return null;
+    if (psiElement == null) {
+      return null;
+    }
     FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiElement.getLanguage());
-    if (foldingBuilder == null) return null;
+    if (foldingBuilder == null) {
+      return null;
+    }
     return foldingBuilder instanceof FoldingBuilderEx
            ? ((FoldingBuilderEx)foldingBuilder).getPlaceholderText(myElement, myRange)
            : foldingBuilder.getPlaceholderText(myElement);

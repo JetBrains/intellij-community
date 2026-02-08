@@ -6,12 +6,18 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.*
 import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addBlankLinesMapping
+import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addBracePositionsMapping
 import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addCommentsMapping
+import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addIndentationMapping
 import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addLineWrappingMapping
+import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addNewLinesMapping
+import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addOnOffTagsMapping
 import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addParenthesesPositionsMapping
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions.addWhitespaceMapping
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.MappingDefinitionBuilder
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingMapping
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.convert
 import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.ParenPositionConvertorFactory
 import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions
 

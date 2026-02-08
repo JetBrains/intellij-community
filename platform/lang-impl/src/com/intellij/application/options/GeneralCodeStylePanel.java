@@ -35,9 +35,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.event.AncestorEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;

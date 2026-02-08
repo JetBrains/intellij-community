@@ -29,7 +29,13 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBDimension

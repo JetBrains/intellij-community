@@ -3,7 +3,11 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.util.io.FileUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 final class IoTimings {

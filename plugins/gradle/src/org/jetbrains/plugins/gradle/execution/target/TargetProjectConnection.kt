@@ -5,7 +5,14 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.util.UserDataHolderBase
-import org.gradle.tooling.*
+import org.gradle.tooling.BuildAction
+import org.gradle.tooling.BuildActionExecuter
+import org.gradle.tooling.BuildLauncher
+import org.gradle.tooling.IntermediateResultHandler
+import org.gradle.tooling.ModelBuilder
+import org.gradle.tooling.ProjectConnection
+import org.gradle.tooling.ResultHandler
+import org.gradle.tooling.TestLauncher
 import org.gradle.tooling.internal.consumer.PhasedBuildAction.BuildActionWrapper
 import org.gradle.tooling.internal.consumer.ProjectConnectionCloseListener
 import org.jetbrains.annotations.ApiStatus

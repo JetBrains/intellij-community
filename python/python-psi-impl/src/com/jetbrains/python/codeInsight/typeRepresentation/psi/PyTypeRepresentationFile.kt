@@ -18,12 +18,7 @@ class PyTypeRepresentationFile : PyFileImpl, PyExpressionCodeFragment {
     PsiManagerEx.getInstanceEx(context.project)
       .fileManager
       .createFileViewProvider(
-        LightVirtualFile(
-          "foo.bar",
-          PyTypeRepresentationFileType,
-          // workaround for PY-86754: strip def types
-          text.replace(Regex("(?:^|[^\"'])def [\\w.]+"), "")
-        ),
+        LightVirtualFile("foo.bar", PyTypeRepresentationFileType, text),
         false)
   ) {
     myContext = context

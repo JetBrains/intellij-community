@@ -6,12 +6,19 @@ import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.util.*
+import java.util.Collections
+import java.util.WeakHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

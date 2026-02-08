@@ -13,3 +13,5 @@ val xTopLevelStringVal = "1"
 // EXIST: { lookupString:"xTopLevelIntVal", itemText:"xTopLevelIntVal", tailText: " (<root>)", typeText: "Int" }
 // EXIST: { lookupString:"xTopLevelIntVar", itemText:"xTopLevelIntVar", tailText: " (<root>)", typeText: "Int" }
 // NOTHING_ELSE
+
+// IGNORE_K2

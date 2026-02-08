@@ -7,7 +7,12 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocCommentBase
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.lexer.KtTokens

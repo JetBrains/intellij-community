@@ -13,7 +13,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.getCurrentArguments;
+import static org.easymock.EasyMock.replay;
 
 public class RefactoringUtilTest extends LightIdeaTestCase {
   public void testEmptyNameIsInvalid() {

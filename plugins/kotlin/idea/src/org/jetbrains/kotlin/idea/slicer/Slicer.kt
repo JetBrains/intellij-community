@@ -12,14 +12,24 @@ import com.intellij.slicer.JavaSliceUsage
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.PseudoValue
 import org.jetbrains.kotlin.cfg.pseudocode.Pseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.getContainingPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.KtElementInstruction
-import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.*
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.InstructionWithReceivers
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.MagicInstruction
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.MagicKind
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.ReadValueInstruction
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.accessedDescriptor
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.psi.hasInlineModifier
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
@@ -38,7 +48,19 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.expectedDescriptor
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -51,6 +73,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 abstract class Slicer(
     protected val element: KtElement,
     protected val processor: Processor<in SliceUsage>,
@@ -365,6 +388,7 @@ abstract class Slicer(
     }
 }
 
+@K1Deprecation
 fun CallableDescriptor.isImplicitInvokeFunction(): Boolean {
     if (this !is FunctionDescriptor) return false
     if (!isOperator) return false

@@ -52,7 +52,6 @@ import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
 import java.nio.file.Paths
-import java.util.HashSet
 import java.util.Locale
 
 abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), QuickFixTest {

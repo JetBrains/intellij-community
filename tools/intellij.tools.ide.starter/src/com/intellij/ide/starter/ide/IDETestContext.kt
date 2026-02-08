@@ -43,11 +43,25 @@ import org.w3c.dom.Element
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Base64
 import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyTo
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.notExists
+import kotlin.io.path.readBytes
+import kotlin.io.path.readText
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -68,6 +82,8 @@ open class IDETestContext(
     private val SEARCH_EVERYWHERE_REGISTRY_KEYS: List<String> get() = listOf(
       "search.everywhere.new.enabled",
       "search.everywhere.new.rider.enabled",
+      "search.everywhere.new.idea.enabled",
+      "search.everywhere.new.pycharm.enabled",
       "search.everywhere.new.cwm.client.enabled",
       "search.everywhere.new.allow.ab"
     )
@@ -258,6 +274,11 @@ open class IDETestContext(
   fun enableExternalSystemVerboseLogs(): IDETestContext = applyVMOptionsPatch {
     configureLoggers(LogLevel.TRACE, "com.intellij.openapi.externalSystem")
   }
+
+  fun disableGotItTooltips(): IDETestContext =
+    applyVMOptionsPatch {
+      disableGotItTooltips()
+    }
 
   fun wipeSystemDir(): IDETestContext = apply {
     if (!preserveSystemDir) {
@@ -806,6 +827,17 @@ open class IDETestContext(
     return this
   }
 
+  fun setThirdPartyPluginsAllowed(allowed: Boolean = true): IDETestContext {
+    writeConfigFile("options/updates.xml", """
+      <application>
+        <component name="UpdatesConfigurable">
+          <option name="THIRD_PARTY_PLUGINS_ALLOWED" value="$allowed" />
+        </component>
+      </application>
+    """)
+    return this
+  }
+
   fun enableDocRendering(): IDETestContext {
     writeConfigFile("options/editor.xml", """
       <application>
@@ -854,4 +886,6 @@ open class IDETestContext(
     """)
     return this
   }
+
+
 }

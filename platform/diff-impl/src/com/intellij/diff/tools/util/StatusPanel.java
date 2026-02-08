@@ -3,12 +3,21 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AnimatedIcon;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class StatusPanel extends JPanel {
   private final JLabel myTextLabel;

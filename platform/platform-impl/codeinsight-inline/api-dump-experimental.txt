@@ -52,6 +52,19 @@ Fa:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 - handlerUninstalled(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.inline.completion.InlineCompletionHandler):V
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionInstallListener$Companion
 - f:getTOPIC():com.intellij.util.messages.Topic
+*e:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
+- java.lang.Enum
+- sf:AI_ASSISTANT_CHAT_INPUT:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
+- sf:COMMIT_MESSAGES:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
+- *sf:Companion:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType$Companion
+- sf:MAIN_EDITOR:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
+- sf:TERMINAL:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
+- sf:UNKNOWN:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
+- sf:XDEBUGGER:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
+- s:values():com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType[]
+*f:com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType$Companion
 *:com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
 - *sf:Companion:com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator$Companion
 - a:isApplicable(com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement):Z

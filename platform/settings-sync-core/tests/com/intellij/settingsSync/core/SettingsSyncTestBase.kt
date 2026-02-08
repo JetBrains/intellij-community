@@ -12,7 +12,11 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.settingsSync.core.communicator.*
+import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
+import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorBean
+import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.core.communicator.getSyncProviderPoint
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -23,7 +27,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path

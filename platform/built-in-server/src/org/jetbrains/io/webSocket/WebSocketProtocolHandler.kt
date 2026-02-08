@@ -5,7 +5,13 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.FullHttpResponse
-import io.netty.handler.codec.http.websocketx.*
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker
+import io.netty.handler.codec.http.websocketx.WebSocketFrame
+import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator
 import io.netty.util.CharsetUtil
 import io.netty.util.ReferenceCountUtil
 import org.jetbrains.builtInWebServer.LOG

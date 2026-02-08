@@ -10,7 +10,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
@@ -19,10 +24,10 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
-import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 
 @ApiStatus.Experimental
 interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {

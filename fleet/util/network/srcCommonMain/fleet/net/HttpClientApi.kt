@@ -2,11 +2,19 @@ package fleet.net
 
 import fleet.reporting.shared.tracing.span
 import fleet.reporting.shared.tracing.spannedScope
-import fleet.util.async.*
+import fleet.util.async.Resource
+import fleet.util.async.async
+import fleet.util.async.map
+import fleet.util.async.onContext
+import fleet.util.async.resource
+import fleet.util.async.track
+import fleet.util.async.use
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlin.coroutines.CoroutineContext
 
 interface HttpClientApi {

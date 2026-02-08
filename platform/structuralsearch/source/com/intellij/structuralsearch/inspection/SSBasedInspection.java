@@ -4,8 +4,20 @@ package com.intellij.structuralsearch.inspection;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorBase;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.DynamicGroupTool;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.annotation.ProblemGroup;
@@ -31,7 +43,12 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.DefaultMatchResultSink;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.Matcher;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
@@ -51,9 +68,23 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Function;
@@ -72,6 +103,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   public static final @NonNls String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
+  private volatile List<LocalInspectionToolWrapper> myChildrenCached = null;
 
   private final Set<String> myProblemsReported = new HashSet<>(1);
   private InspectionProfileImpl mySessionProfile;
@@ -100,6 +132,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     myProblemsReported.clear();
     myConfigurations.clear();
+    myChildrenCached = null;
     ConfigurationManager.readConfigurations(node, myConfigurations);
     Configuration previous = null;
     boolean sorted = true;
@@ -153,7 +186,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, 
+                                                 @NotNull LocalInspectionToolSession session) {
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
     final PsiFile file = holder.getFile();
     final FileType fileType = file.getFileType();
@@ -208,10 +242,13 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   @Override
   public @NotNull List<LocalInspectionToolWrapper> getChildren() {
-    return getConfigurations().stream()
-      .filter(configuration -> configuration.getOrder() == 0)
-      .map(configuration -> new StructuralSearchInspectionToolWrapper(getConfigurationsWithUuid(configuration.getUuid())))
-      .collect(Collectors.toList());
+    if (myChildrenCached == null) {
+      myChildrenCached = myConfigurations.stream()
+        .filter(configuration -> configuration.getOrder() == 0)
+        .map(configuration -> new StructuralSearchInspectionToolWrapper(getConfigurationsWithUuid(configuration.getUuid())))
+        .collect(Collectors.toList());
+    }
+    return myChildrenCached;
   }
 
   private static LocalQuickFix createQuickFix(@NotNull Project project, @NotNull MatchResult matchResult, @NotNull Configuration configuration) {
@@ -241,6 +278,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       return false;
     }
     myConfigurations.add(configuration);
+    myChildrenCached = null;
     return true;
   }
 
@@ -253,11 +291,15 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   public boolean removeConfiguration(@NotNull Configuration configuration) {
-    return myConfigurations.remove(configuration);
+    boolean removed = myConfigurations.remove(configuration);
+    if (removed) myChildrenCached = null;
+    return removed;
   }
 
   public boolean removeConfigurationsWithUuid(@NotNull String uuid) {
-    return myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+    boolean removed = myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+    if (removed) myChildrenCached = null;
+    return removed;
   }
 
   public InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable Configuration configuration) {

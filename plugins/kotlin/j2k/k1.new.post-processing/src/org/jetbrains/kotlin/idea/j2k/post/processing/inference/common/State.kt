@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
+
+@K1Deprecation
 enum class State {
     // lower state in the terms of subtyping relation,
     // e.g., for nullability this is not null type as T <: T?

@@ -17,7 +17,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;

@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.sun.jdi.*
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 
 data class MirrorOfCoroutineContext(
     val name: String?,

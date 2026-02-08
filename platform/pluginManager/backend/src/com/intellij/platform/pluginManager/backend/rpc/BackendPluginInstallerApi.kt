@@ -1,9 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pluginManager.backend.rpc
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.DynamicPlugins
+import com.intellij.ide.plugins.InstallFromDiskAction
+import com.intellij.ide.plugins.InstalledPluginsTableModel
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.marketplace.*
+import com.intellij.ide.plugins.getMainDescriptor
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.PluginInstalledFromDiskResult
+import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.ide.plugins.newui.SessionStatePluginEnabler

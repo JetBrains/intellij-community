@@ -25,8 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.JToolTip;
+import javax.swing.ToolTipManager;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;

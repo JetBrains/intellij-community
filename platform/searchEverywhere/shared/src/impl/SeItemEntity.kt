@@ -8,9 +8,16 @@ import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.Item
 import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.ItemEntity
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.*
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.entities
+import com.jetbrains.rhizomedb.exists
+import fleet.kernel.DurableEntityType
+import fleet.kernel.DurableRef
+import fleet.kernel.change
 import fleet.kernel.rebase.shared
+import fleet.kernel.ref
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 

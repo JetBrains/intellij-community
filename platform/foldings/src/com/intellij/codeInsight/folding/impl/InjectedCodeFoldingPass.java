@@ -17,10 +17,10 @@ final class InjectedCodeFoldingPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
   private final PsiFile myFile;
 
-  InjectedCodeFoldingPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  InjectedCodeFoldingPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     super(project, editor.getDocument(), false);
     myEditor = editor;
-    myFile = file;
+    myFile = psiFile;
   }
 
   @Override

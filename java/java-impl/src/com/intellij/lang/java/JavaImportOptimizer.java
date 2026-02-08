@@ -17,6 +17,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
@@ -77,7 +78,7 @@ public final class JavaImportOptimizer implements ImportOptimizer {
 
   @Override
   public boolean supports(@NotNull PsiFile file) {
-    if (file instanceof PsiJavaFile && !TemplateLanguageUtil.isTemplateDataFile(file)) {
+    if (file instanceof PsiJavaFile && !(file instanceof JspFile) && !TemplateLanguageUtil.isTemplateDataFile(file)) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
       return virtualFile != null && (ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(virtualFile) ||
                                      virtualFile instanceof LightVirtualFile ||

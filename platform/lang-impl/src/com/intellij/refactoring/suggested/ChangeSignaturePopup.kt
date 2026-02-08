@@ -26,11 +26,27 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.FocusTraversalPolicy
+import java.awt.Font
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.Insets
+import java.awt.Rectangle
 import java.awt.font.FontRenderContext
 import java.awt.geom.AffineTransform
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
 import kotlin.math.roundToInt
 
 internal class ChangeSignaturePopup(

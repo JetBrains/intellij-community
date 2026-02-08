@@ -9,7 +9,12 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
 abstract class AbstractAutoImportTestBase : KotlinLightCodeInsightFixtureTestCase() {
@@ -76,7 +81,7 @@ abstract class AbstractAutoImportTestBase : KotlinLightCodeInsightFixtureTestCas
                         )
                     }
                     AppExecutorUtil.getAppExecutorService().submit {
-                        DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(myFixture.file, myFixture.editor)
+                        DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, myFixture.editor)
                     }.get()
 
                 } finally {

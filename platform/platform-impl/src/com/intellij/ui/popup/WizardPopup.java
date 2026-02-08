@@ -6,10 +6,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder;
+import com.intellij.openapi.ui.popup.PopupShowOptionsImpl;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.SpeedSearchFilter;
+import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PopupBorder;
@@ -23,6 +30,7 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -31,9 +39,29 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 
 public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
@@ -350,31 +378,38 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         return super.getPreferredSize();
       }
       final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      Point p = null;
-      if (focusOwner != null && focusOwner.isShowing()) {
-        p = focusOwner.getLocationOnScreen();
-      }
-
-      return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
+      return computeNotBiggerDimension(super.getPreferredSize().getSize(), focusOwner);
     }
 
-    private static Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
-      int resultHeight;
-      if (locationOnScreen == null) {
-        resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
-      }
-      else {
-        Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
-        resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
-      }
+    private static Dimension computeNotBiggerDimension(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
+      int defaultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
+      @Nullable Integer computedHeight = computeNotBiggerHeight(ofContent, focusOwner);
+      int resultHeight = computedHeight != null ? computedHeight : defaultHeight;
 
       int resultWidth = Math.min(ofContent.width, MAX_SIZE.width);
-
       if (ofContent.height > resultHeight) {
         resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
       }
 
       return new Dimension(resultWidth, resultHeight);
+    }
+
+    private static @Nullable Integer computeNotBiggerHeight(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
+      @Nullable Integer screenHeight = null;
+      if (ClientSystemInfo.isWaylandToolkit()) {
+        screenHeight = WaylandUtilKt.getFakeScreenHeight(focusOwner);
+      }
+      else {
+        Point locationOnScreen = null;
+        if (focusOwner != null && focusOwner.isShowing()) {
+          locationOnScreen = focusOwner.getLocationOnScreen();
+        }
+        if (locationOnScreen != null) {
+          Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
+          screenHeight = r.height;
+        }
+      }
+      return screenHeight == null ? null : Math.min(ofContent.height, screenHeight - (screenHeight / 4));
     }
   }
 

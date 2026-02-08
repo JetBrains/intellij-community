@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DaemonRespondToChangesPerfTest extends DaemonAnalyzerTestCase {
   private static final boolean DEBUG = false;
 
+  @PerformanceUnitTest
   public void testHugeAppendChainDoesNotCauseSOE_Stress() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
@@ -324,7 +325,7 @@ public class DaemonRespondToChangesPerfTest extends DaemonAnalyzerTestCase {
         codeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
       }
       catch (ProcessCanceledException ignored) {
-        codeAnalyzer.waitForTermination();
+        new TestDaemonCodeAnalyzerImpl(myProject).waitForTermination();
         continue;
       }
       fail("PCE must have been thrown");

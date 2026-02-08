@@ -2,10 +2,17 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculator
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBuilder
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.SuperFunctionsProvider
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.SuperTypesSubstitutor
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeVariable
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.psi.KtElement
@@ -16,6 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class FunctionConstraintsCollector(
     private val superFunctionsProvider: SuperFunctionsProvider
 ) : ConstraintsCollector() {

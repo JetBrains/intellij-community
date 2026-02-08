@@ -4,8 +4,8 @@ package com.intellij.application.options.codeStyle.excludedFiles;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Dimension;
 
 public final class ExcludedFilesScopeForm {
   private JPanel myTopPanel;

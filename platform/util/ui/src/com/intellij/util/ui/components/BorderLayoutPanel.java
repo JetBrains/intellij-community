@@ -8,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 
 /**
  * @author Konstantin Bulenkov

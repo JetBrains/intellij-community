@@ -13,14 +13,20 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XAlwaysEvaluatedWatch;
 import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.XWatchImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
-import com.intellij.xdebugger.impl.frame.*;
+import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XDebugView;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -29,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -145,17 +151,6 @@ public class WatchesRootNode extends XValueContainerNode.Root<XValueContainer> {
 
   public @NotNull List<? extends WatchNode> getWatchChildren() {
     return myChildren;
-  }
-
-  /**
-   * @deprecated Use {@link WatchesRootNode#getWatches()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public List<XExpression> getWatchExpressions() {
-    return StreamEx.of(getWatchChildren())
-      .filter(node -> !(node instanceof ResultNode))
-      .map(WatchNode::getExpression)
-      .toList();
   }
 
   public List<XWatch> getWatches() {

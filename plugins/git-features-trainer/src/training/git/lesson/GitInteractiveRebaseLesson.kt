@@ -25,9 +25,15 @@ import git4idea.rebase.interactive.dialog.GIT_INTERACTIVE_REBASE_DIALOG_DIMENSIO
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.data.TableCell
 import org.assertj.swing.fixture.JTableFixture
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.proceedLink
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog

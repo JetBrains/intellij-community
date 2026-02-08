@@ -3,13 +3,26 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailTypes;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -17,7 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.Set;
 

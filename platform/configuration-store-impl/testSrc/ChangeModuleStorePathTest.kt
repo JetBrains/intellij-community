@@ -16,7 +16,13 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ActiveStoreRule
+import com.intellij.testFramework.DisposeModulesRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.RunsInActiveStoreMode
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.Function

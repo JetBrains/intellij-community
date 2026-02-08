@@ -25,7 +25,7 @@
     <orderEntry type="module" module-name="intellij.python.community.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.venv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />

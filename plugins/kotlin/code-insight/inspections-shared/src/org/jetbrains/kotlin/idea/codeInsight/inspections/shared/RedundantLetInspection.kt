@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -19,8 +20,15 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.isLetCallRedundant
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantLetCall
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import com.intellij.psi.util.descendants
 
 internal sealed class RedundantLetInspection :
     KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
@@ -38,6 +46,7 @@ internal sealed class RedundantLetInspection :
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return null
         val parameterName = lambdaExpression.getParameterName() ?: return null
         val bodyExpression = lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return null
+        if (lambdaExpression.descendants().any { it is PsiComment }) return null
 
         return isApplicable(
             element,

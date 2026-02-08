@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.indentGuide;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**

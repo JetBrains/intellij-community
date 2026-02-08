@@ -19,7 +19,12 @@ import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.classstore.ClassStore
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.histogram.HistogramEntry
-import com.intellij.diagnostic.hprof.parser.*
+import com.intellij.diagnostic.hprof.parser.ConstantPoolEntry
+import com.intellij.diagnostic.hprof.parser.HProfVisitor
+import com.intellij.diagnostic.hprof.parser.HeapDumpRecordType
+import com.intellij.diagnostic.hprof.parser.InstanceFieldEntry
+import com.intellij.diagnostic.hprof.parser.StaticFieldEntry
+import com.intellij.diagnostic.hprof.parser.Type
 import java.nio.ByteBuffer
 
 internal class HistogramVisitor(private val classStore: ClassStore) : HProfVisitor() {

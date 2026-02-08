@@ -7,13 +7,17 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @TestOnly
 public final class EditorListenerTracker {

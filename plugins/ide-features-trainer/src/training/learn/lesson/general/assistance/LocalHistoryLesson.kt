@@ -31,9 +31,16 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.assertj.swing.fixture.JListFixture
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.isMainEditorComponent
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.dropMnemonic
+import training.dsl.parseLessonSample
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson

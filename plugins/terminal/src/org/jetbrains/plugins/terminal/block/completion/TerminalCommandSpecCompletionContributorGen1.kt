@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -73,9 +80,9 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
     val command = document.getText(TextRange.create(promptModel.commandStartOffset, caretOffset))
-    val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
+    val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command)
     val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
-      tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
+      tokens + ""  // user inserted space after the last token, so add an empty incomplete token as last
     }
     else {
       tokens
@@ -103,7 +110,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
     shellType: ShellType,
   ) {
     val prefixReplacementIndex = suggestions.firstOrNull()?.prefixReplacementIndex ?: 0
-    val prefix = allTokens.last().substring(prefixReplacementIndex)
+    val prefix = TerminalCompletionUtil.getTypedPrefix(allTokens).substring(prefixReplacementIndex)
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
     val elements = suggestions.map { it.toLookupElement(shellType) }
@@ -239,7 +246,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
       return tokens  // command is not changed, so return initial tokens
     }
     val expandedTokens = context.shellSupport.getCommandTokens(context.project, command.toString())
-    return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
+    return expandedTokens + tokens.last() // add an incomplete token to the end
   }
 
   private fun ShellCompletionSuggestion.toLookupElement(shellType: ShellType): LookupElement {

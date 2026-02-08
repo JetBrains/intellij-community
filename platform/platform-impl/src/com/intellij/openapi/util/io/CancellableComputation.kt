@@ -10,7 +10,12 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.CancellableComputation.Companion.computeCancellable
 import com.intellij.util.NotNullizer
 import com.intellij.util.io.blockingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap

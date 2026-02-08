@@ -10,6 +10,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.Printer
 
+@K1Deprecation
 @Suppress("HardCodedStringLiteral")
 class DebugTypeResolutionAction : AnAction("Debug Resolution of Type at Caret") {
     override fun actionPerformed(e: AnActionEvent) {

@@ -3,7 +3,15 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;

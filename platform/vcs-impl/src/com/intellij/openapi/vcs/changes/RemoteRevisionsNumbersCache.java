@@ -19,9 +19,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 
-import static com.intellij.vcsUtil.VcsUtil.*;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
+import static com.intellij.vcsUtil.VcsUtil.getVcsFor;
+import static com.intellij.vcsUtil.VcsUtil.getVcsRootFor;
 
 /**
  * for vcses where it is reasonable to ask revision of each item separately

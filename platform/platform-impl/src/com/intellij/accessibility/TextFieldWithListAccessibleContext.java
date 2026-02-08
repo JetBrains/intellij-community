@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.accessibility;
 
-import javax.accessibility.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleSelection;
+import javax.accessibility.AccessibleStateSet;
+import javax.accessibility.AccessibleTable;
 import javax.swing.text.JTextComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

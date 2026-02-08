@@ -2,7 +2,11 @@
 package com.jetbrains.python.namespacePackages
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyLanguageFacade

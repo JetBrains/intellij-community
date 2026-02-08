@@ -15,7 +15,11 @@ import com.intellij.openapi.roots.impl.DirectoryIndexImpl
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -30,7 +34,11 @@ import com.intellij.util.Query
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
-import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.TimeUnit.MINUTES
@@ -90,6 +98,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
                        includeContentNonIndexableSets = true,
                        includeExternalSets = true,
                        includeExternalSourceSets = true,
+                       includeExternalNonIndexableSets = true,
                        includeCustomKindSets = true) != null
   }
 
@@ -100,15 +109,16 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
                        includeContentNonIndexableSets = true,
                        includeExternalSets = false,
                        includeExternalSourceSets = false,
+                       includeExternalNonIndexableSets = false,
                        includeCustomKindSets = false) != null
   }
 
   override fun isIndexable(file: VirtualFile): Boolean {
-    return findFileSet(file, true, true, includeContentNonIndexableSets = false, true, true, true) != null
+    return findFileSet(file, true, true, includeContentNonIndexableSets = false, true, true, includeExternalNonIndexableSets = false, true) != null
   }
 
   override fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile? {
-    return findFileSet(file, honorExclusion, true, true, false, false, false)?.root
+    return findFileSet(file, honorExclusion, true, true, false, false, false, false)?.root
   }
 
   override fun isUrlInContent(url: String): ThreeState {
@@ -163,6 +173,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
                       includeContentNonIndexableSets = true,
                       includeExternalSets = false,
                       includeExternalSourceSets = false,
+                      includeExternalNonIndexableSets = false,
                       includeCustomKindSets = false)
         })
         if (file.isDirectory && fileInfo is NonWorkspace) {
@@ -229,6 +240,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
                     includeContentNonIndexableSets = true,
                     includeExternalSets = false,
                     includeExternalSourceSets = false,
+                    includeExternalNonIndexableSets = false,
                     includeCustomKindSets = false) != null
       }
       return@processChildrenRecursively if (isChildInContent) {
@@ -256,9 +268,10 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean,
   ): WorkspaceFileSet? {
-    return when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)) {
+    return when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeExternalNonIndexableSets, includeCustomKindSets)) {
       is WorkspaceFileSetImpl -> info
       is MultipleWorkspaceFileSets -> info.find(null)
       else -> null
@@ -272,6 +285,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean,
   ): List<WorkspaceFileSet> {
     val info = getFileInfo(
@@ -281,6 +295,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       includeContentNonIndexableSets = includeContentNonIndexableSets,
       includeExternalSets = includeExternalSets,
       includeExternalSourceSets = includeExternalSourceSets,
+      includeExternalNonIndexableSets = includeExternalNonIndexableSets,
       includeCustomKindSets = includeCustomKindSets
     )
     return when (info) {
@@ -321,11 +336,12 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean,
     customDataClass: Class<out D>,
   ): WorkspaceFileSetWithCustomData<D>? {
     val result = when (val info = getFileInfo(file, honorExclusion, includeContentSets,
-                                              includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)) {
+                                              includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeExternalNonIndexableSets, includeCustomKindSets)) {
       is WorkspaceFileSetWithCustomData<*> -> info.takeIf { customDataClass.isInstance(it.data) }
       is MultipleWorkspaceFileSets -> info.find(customDataClass)
       else -> null
@@ -341,10 +357,11 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean,
     customDataClass: Class<out D>,
   ): List<WorkspaceFileSetWithCustomData<D>> {
-    val info = getFileInfo(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)
+    val info = getFileInfo(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeExternalNonIndexableSets, includeCustomKindSets)
     val result = when (info) {
       is WorkspaceFileSetWithCustomData<*> -> listOfNotNull(info.takeIf { customDataClass.isInstance(it.data) })
       is MultipleWorkspaceFileSets -> info.fileSets.filter { customDataClass.isInstance(it.data) }
@@ -361,20 +378,21 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean,
   ): WorkspaceFileInternalInfo {
     val unwrappedFile = BackedVirtualFile.getOriginFileIfBacked((file as? VirtualFileWindow)?.delegate ?: file)
-    return getMainIndexData().getFileInfo(unwrappedFile, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)
+    return getMainIndexData().getFileInfo(unwrappedFile, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeExternalNonIndexableSets, includeCustomKindSets)
   }
 
-  override fun <E : WorkspaceEntity> findContainingEntities(file: VirtualFile, entityClass: Class<E>, honorExclusion: Boolean, includeContentSets: Boolean, includeContentNonIndexableSets: Boolean, includeExternalSets: Boolean, includeExternalSourceSets: Boolean, includeCustomKindSets: Boolean): Collection<E> {
-    val allEntities = findContainingEntities(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)
+  override fun <E : WorkspaceEntity> findContainingEntities(file: VirtualFile, entityClass: Class<E>, honorExclusion: Boolean, includeContentSets: Boolean, includeContentNonIndexableSets: Boolean, includeExternalSets: Boolean, includeExternalSourceSets: Boolean, includeExternalNonIndexableSets: Boolean, includeCustomKindSets: Boolean): Collection<E> {
+    val allEntities = findContainingEntities(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeExternalNonIndexableSets, includeCustomKindSets)
     @Suppress("UNCHECKED_CAST")
     return allEntities.filter { entity -> entity.getEntityInterface() == entityClass } as Collection<E>
   }
 
-  override fun findContainingEntities(file: VirtualFile, honorExclusion: Boolean, includeContentSets: Boolean, includeContentNonIndexableSets: Boolean, includeExternalSets: Boolean, includeExternalSourceSets: Boolean, includeCustomKindSets: Boolean): Collection<WorkspaceEntity> {
-    return when (val fileInfo = getFileInfo(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)) {
+  override fun findContainingEntities(file: VirtualFile, honorExclusion: Boolean, includeContentSets: Boolean, includeContentNonIndexableSets: Boolean, includeExternalSets: Boolean, includeExternalSourceSets: Boolean, includeExternalNonIndexableSets: Boolean, includeCustomKindSets: Boolean): Collection<WorkspaceEntity> {
+    return when (val fileInfo = getFileInfo(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeExternalNonIndexableSets, includeCustomKindSets)) {
       is WorkspaceFileSetImpl -> listOfNotNull(resolveEntity(fileInfo))
       is MultipleWorkspaceFileSets -> fileInfo.fileSets.mapNotNull { fileSet ->
         (fileSet as? StoredFileSet?)?.let { resolveEntity(it) }

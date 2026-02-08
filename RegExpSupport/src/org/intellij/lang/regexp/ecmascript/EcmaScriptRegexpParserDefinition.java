@@ -8,7 +8,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import org.intellij.lang.regexp.*;
+import org.intellij.lang.regexp.RegExpCapability;
+import org.intellij.lang.regexp.RegExpFile;
+import org.intellij.lang.regexp.RegExpLexer;
+import org.intellij.lang.regexp.RegExpParserDefinition;
+import org.intellij.lang.regexp.RegExpTT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

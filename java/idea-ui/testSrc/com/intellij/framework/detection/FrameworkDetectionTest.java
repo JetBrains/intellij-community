@@ -3,7 +3,11 @@ package com.intellij.framework.detection;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
-import com.intellij.facet.mock.*;
+import com.intellij.facet.mock.MockFacet;
+import com.intellij.facet.mock.MockFacetConfiguration;
+import com.intellij.facet.mock.MockFacetDetector;
+import com.intellij.facet.mock.MockFacetType;
+import com.intellij.facet.mock.MockSubFacetType;
 import com.intellij.framework.detection.impl.FacetBasedDetectedFrameworkDescription;
 import com.intellij.framework.detection.impl.FrameworkDetectionManager;
 import com.intellij.openapi.application.WriteAction;

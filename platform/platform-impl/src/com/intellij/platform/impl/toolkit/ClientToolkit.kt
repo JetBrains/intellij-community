@@ -3,7 +3,10 @@
 package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.components.service
-import java.awt.*
+import java.awt.Dialog
+import java.awt.Frame
+import java.awt.GraphicsDevice
+import java.awt.Window
 import java.awt.peer.DialogPeer
 import java.awt.peer.FramePeer
 import java.awt.peer.RobotPeer

@@ -3,12 +3,26 @@ package com.intellij.junit5.report;
 
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestIdentifier;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
-import static com.intellij.rt.execution.junit.MapSerializerUtil.*;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.SUITE_TREE_ENDED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.SUITE_TREE_STARTED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_FAILED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_FINISHED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_IGNORED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_STARTED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_SUITE_FINISHED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_SUITE_STARTED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.asString;
 
 public class SuiteReporter extends AbstractTestReporter {
   public SuiteReporter(TestIdentifier identifier, ExecutionState state) {
@@ -51,7 +65,7 @@ public class SuiteReporter extends AbstractTestReporter {
 
     if (status == TestExecutionResult.Status.FAILED) {
       // Report class-level failure as CLASS_CONFIGURATION test
-      TestReporter reporter = new TestReporter(identifier, state, CLASS_CONFIGURATION);
+      TestReporter reporter = new SyntheticTestReporter(this, CLASS_CONFIGURATION);
       out.add(asString(TEST_STARTED, reporter.attributes(ReportedField.ID, ReportedField.NAME,
                                                          ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID,
                                                          ReportedField.HINT, ReportedField.METAINFO)));
@@ -135,5 +149,29 @@ public class SuiteReporter extends AbstractTestReporter {
     }
 
     return out;
+  }
+
+  private static class SyntheticTestReporter extends TestReporter {
+    private final SuiteReporter myOriginal;
+    private final boolean isMethodSource;
+
+    SyntheticTestReporter(SuiteReporter original, String name) {
+      super(original.identifier, original.state, name);
+      myOriginal = original;
+      isMethodSource = identifier.getSource().map(s -> s instanceof MethodSource).orElse(false);
+    }
+
+    @Override
+    protected String id() {
+      if (isMethodSource) return super.id();
+      return super.id() + "/[synthetic:method:configuration()]";
+    }
+
+    @Override
+    protected Optional<SuiteReporter> getParent() {
+      // suite doesn't report for skipped classes
+      if (isMethodSource || myOriginal.isSkipped()) return super.getParent();
+      return Optional.of(myOriginal);
+    }
   }
 }

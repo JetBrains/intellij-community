@@ -6,7 +6,9 @@ import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
 import java.util.EnumSet;
 
 

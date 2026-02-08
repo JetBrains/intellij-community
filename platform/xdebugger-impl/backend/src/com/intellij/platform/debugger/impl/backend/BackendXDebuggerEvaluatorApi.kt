@@ -5,7 +5,14 @@ import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.rpc.document
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.readAction
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.platform.debugger.impl.rpc.XEvaluationResult
+import com.intellij.platform.debugger.impl.rpc.XExpressionDto
+import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
+import com.intellij.platform.debugger.impl.rpc.XValueGroupDto
+import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
@@ -17,10 +24,18 @@ import com.intellij.xdebugger.impl.evaluate.XInvalidExpressionException
 import com.intellij.xdebugger.impl.evaluate.evaluateSuspend
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.rpc.models.*
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueGroupModel
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
+import com.intellij.xdebugger.impl.rpc.models.XStackFrameModel
+import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.models.toXValueDtoWithPresentation
 import com.intellij.xdebugger.impl.rpc.sourcePosition
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.asDeferred
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {

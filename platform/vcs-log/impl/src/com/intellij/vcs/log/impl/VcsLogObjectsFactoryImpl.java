@@ -3,7 +3,15 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.VcsUserRegistry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

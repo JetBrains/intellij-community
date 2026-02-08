@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * [vova] This class should be inner but due to bugs in "beta" generics compiler

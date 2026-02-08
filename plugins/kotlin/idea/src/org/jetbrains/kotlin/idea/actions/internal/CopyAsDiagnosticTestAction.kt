@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
 import org.jetbrains.kotlin.checkers.utils.DiagnosticsRenderingConfiguration
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
+@K1Deprecation
 class CopyAsDiagnosticTestAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR)

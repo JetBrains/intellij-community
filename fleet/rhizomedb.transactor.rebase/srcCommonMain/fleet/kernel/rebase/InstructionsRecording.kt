@@ -1,12 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.CreateEntity
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Expansion
+import com.jetbrains.rhizomedb.Instruction
+import com.jetbrains.rhizomedb.InstructionEffect
+import com.jetbrains.rhizomedb.Mut
+import com.jetbrains.rhizomedb.Novelty
+import com.jetbrains.rhizomedb.Q
+import com.jetbrains.rhizomedb.collectingNovelty
+import com.jetbrains.rhizomedb.executingEffects
+import com.jetbrains.rhizomedb.getOne
 import com.jetbrains.rhizomedb.impl.EidGen
 import com.jetbrains.rhizomedb.impl.generateSeed
-import fleet.kernel.*
-import fleet.util.UID
+import com.jetbrains.rhizomedb.mutate
+import com.jetbrains.rhizomedb.partition
+import com.jetbrains.rhizomedb.toNovelty
+import com.jetbrains.rhizomedb.withDefaultPart
 import fleet.fastutil.ints.IntMap
+import fleet.kernel.SharedPart
+import fleet.kernel.uidAttribute
+import fleet.util.UID
 import kotlinx.collections.immutable.persistentListOf
 
 internal fun <T> ChangeScope.sharedImpl(

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.text.TextRangeUtil
-import java.util.*
 import java.util.function.Function
 
 

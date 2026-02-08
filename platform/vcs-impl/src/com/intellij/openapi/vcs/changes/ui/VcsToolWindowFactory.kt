@@ -26,6 +26,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.StatusText
+import com.intellij.vcs.commit.CommitModeManager
 import javax.swing.JPanel
 
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
@@ -50,6 +51,9 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       }
     })
     ChangesViewContentEP.EP_NAME.addExtensionPointListener(window.project, ExtensionListener(window), window.disposable)
+    CommitModeManager.subscribeOnCommitModeChange(connection) {
+      updateState(window)
+    }
 
     val vcsManager = ProjectLevelVcsManager.getInstance(window.project)
     if (vcsManager != null && vcsManager.areVcsesActivated()) {

@@ -11,7 +11,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty
 import com.intellij.vcs.log.util.GraphOptionsUtil.toGraphOptions
 import com.intellij.vcs.log.util.GraphOptionsUtil.toStringList
-import java.util.*
+import java.util.TreeMap
 
 /**
  * Stores UI configuration based on user activity and preferences.

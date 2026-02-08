@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionSorter;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.CachingComparingClassifier;
+import com.intellij.codeInsight.lookup.Classifier;
+import com.intellij.codeInsight.lookup.ClassifierFactory;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

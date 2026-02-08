@@ -15,7 +15,11 @@
  */
 package org.intellij.lang.xpath.validation.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CustomSuppressableInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;

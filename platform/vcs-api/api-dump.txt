@@ -503,7 +503,6 @@ a:com.intellij.openapi.vcs.VcsRootChecker
 - isVcsDir(java.lang.String):Z
 - suggestDependentRoots(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - validateRoot(com.intellij.openapi.vfs.VirtualFile):Z
-- validateRoot(java.lang.String):Z
 com.intellij.openapi.vcs.VcsRootError
 - a:getMapping():com.intellij.openapi.vcs.VcsDirectoryMapping
 - a:getType():com.intellij.openapi.vcs.VcsRootError$Type

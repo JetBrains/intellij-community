@@ -3,7 +3,9 @@ package com.intellij.util.ui;
 
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Collections;

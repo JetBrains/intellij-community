@@ -16,7 +16,7 @@ interface GitLabMergeRequestNotePositionMapping {
     private val LOG = logger<GitLabMergeRequestNotePositionMapping>()
 
     fun map(mrChanges: GitBranchComparisonResult, position: GitLabNotePosition): GitLabMergeRequestNotePositionMapping {
-      val textLocation = position.getLocation(Side.LEFT)
+      val textLocation = position.getLocation(Side.LEFT)?.second
 
       val changes = if (position.parentSha == mrChanges.mergeBaseSha) {
         // first commit

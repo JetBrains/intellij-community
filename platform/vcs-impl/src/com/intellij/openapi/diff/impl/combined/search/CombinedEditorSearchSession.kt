@@ -2,8 +2,21 @@
 package com.intellij.openapi.diff.impl.combined.search
 
 import com.intellij.execution.impl.ConsoleViewUtil
-import com.intellij.find.*
-import com.intellij.find.editorHeaderActions.*
+import com.intellij.find.EditorSearchSession
+import com.intellij.find.FindBundle
+import com.intellij.find.FindManager
+import com.intellij.find.FindModel
+import com.intellij.find.FindUtil
+import com.intellij.find.SearchReplaceComponent
+import com.intellij.find.SearchSession
+import com.intellij.find.editorHeaderActions.NextOccurrenceAction
+import com.intellij.find.editorHeaderActions.PrevOccurrenceAction
+import com.intellij.find.editorHeaderActions.RestorePreviousSettingsAction
+import com.intellij.find.editorHeaderActions.StatusTextAction
+import com.intellij.find.editorHeaderActions.ToggleMatchCase
+import com.intellij.find.editorHeaderActions.TogglePreserveCaseAction
+import com.intellij.find.editorHeaderActions.ToggleRegex
+import com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction
 import com.intellij.find.impl.livePreview.LivePreviewController
 import com.intellij.find.impl.livePreview.SearchResults
 import com.intellij.find.impl.livePreview.SearchResults.SearchResultsListener

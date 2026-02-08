@@ -5,15 +5,13 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Collection;
+import javax.swing.Icon;
 
 public final class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule<B, XBreakpointPackageGroup> {
 

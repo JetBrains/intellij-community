@@ -10,9 +10,13 @@ import git4idea.GitRemoteBranch
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellArgumentContext
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContext
+import org.jetbrains.plugins.terminal.block.completion.spec.project
 
 internal const val COLUMN_SPLIT_CHARACTER = '\t'
 

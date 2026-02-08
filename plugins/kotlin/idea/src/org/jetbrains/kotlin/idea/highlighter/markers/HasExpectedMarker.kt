@@ -3,16 +3,18 @@
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.buildNavigateToExpectedDeclarationsPopup
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.findMarkerBoundDeclarations
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.util.expectedDescriptors
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.util.expectedDescriptors
 import org.jetbrains.kotlin.psi.KtDeclaration
 
+@K1Deprecation
 fun getExpectedDeclarationTooltip(declaration: KtDeclaration): String? {
     val descriptor = declaration.toDescriptor() as? MemberDescriptor ?: return null
     val expectDescriptors = descriptor.expectedDescriptors()
@@ -25,8 +27,10 @@ fun getExpectedDeclarationTooltip(declaration: KtDeclaration): String? {
     )
 }
 
+@K1Deprecation
 fun KtDeclaration.allNavigatableExpectedDeclarations(): List<KtDeclaration> =
     listOfNotNull(expectedDeclarationIfAny()) + findMarkerBoundDeclarations().mapNotNull { it.expectedDeclarationIfAny() }
 
+@K1Deprecation
 fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?): NavigationPopupDescriptor? =
     buildNavigateToExpectedDeclarationsPopup(element, KtDeclaration::allNavigatableExpectedDeclarations)

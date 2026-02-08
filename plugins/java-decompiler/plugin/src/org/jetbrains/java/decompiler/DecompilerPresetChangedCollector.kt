@@ -7,18 +7,10 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object DecompilerPresetChangedCollector : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup(
-    id = "java.decompiler",
-    version = 1,
-    recorder = "FUS",
-    description = "This group contains events originating from the Java Bytecode Decompiler plugin.",
-  )
+  private val GROUP: EventLogGroup = EventLogGroup("java.decompiler", 1)
 
-  private val DECOMPILER_PRESET_CHANGED: EventId1<DecompilerPreset> = GROUP.registerEvent(
-    eventId = "decompiler.preset.changed",
-    eventField1 = EventFields.Enum("preset", DecompilerPreset::class.java),
-    description = "This event is collected whenever the user manually changes the decompiler preset while viewing decompiled bytecode.",
-  )
+  private val DECOMPILER_PRESET_CHANGED: EventId1<DecompilerPreset> =
+    GROUP.registerEvent("decompiler.preset.changed", EventFields.Enum("preset", DecompilerPreset::class.java))
 
   override fun getGroup(): EventLogGroup = GROUP
 

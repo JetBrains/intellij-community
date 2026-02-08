@@ -6,15 +6,19 @@ import java.io.FilenameFilter
 import java.nio.file.Path
 import kotlin.io.path.Path
 
+private const val DE_CHECKSUM = "7fae9b8e2b3fe002a95b7bfba174c1d2"
+private const val RU_CHECKSUM = "c15d1bcd3b03d6716248b55a77a7ab6d"
+private const val UK_CHECKSUM = "261b62cc655ff56c7b03538b75379826"
 
 enum class HunspellDescriptor(
   override val iso: LanguageISO,
   val isGplLicensed: Boolean,
   override val size: Int,
+  override val checksum: String
 ) : RemoteLangDescriptor {
-  RUSSIAN(LanguageISO.RU, isGplLicensed = false, 2),
-  GERMAN(LanguageISO.DE, isGplLicensed = true, 2),
-  UKRAINIAN(LanguageISO.UK, isGplLicensed = true, 2);
+  RUSSIAN(LanguageISO.RU, isGplLicensed = false, 2, RU_CHECKSUM),
+  GERMAN(LanguageISO.DE, isGplLicensed = true, 2, DE_CHECKSUM),
+  UKRAINIAN(LanguageISO.UK, isGplLicensed = true, 2, UK_CHECKSUM);
 
   override val storageDescriptor: String by lazy { "$storageName.jar" }
   override val storageName: String by lazy { "hunspell-$iso-${GraziePlugin.Hunspell.version}" }

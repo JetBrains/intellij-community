@@ -15,8 +15,12 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Insets;
 
 public class WrappedFlowLayout extends FlowLayout {
 

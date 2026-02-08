@@ -3,7 +3,10 @@ package com.intellij.projectView;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.*;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewImpl;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.WriteAction;
@@ -15,11 +18,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 

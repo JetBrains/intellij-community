@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 
 /**
  * A dependency from [plugins] in fact means a module dependency on the *implicit main module* of the plugin.

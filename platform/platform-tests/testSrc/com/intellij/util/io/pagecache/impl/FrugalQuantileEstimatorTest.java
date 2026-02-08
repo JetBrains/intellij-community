@@ -6,7 +6,7 @@ import org.junit.Test;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test is flaky: it is inherently probabilistic, so could fail sometimes just by

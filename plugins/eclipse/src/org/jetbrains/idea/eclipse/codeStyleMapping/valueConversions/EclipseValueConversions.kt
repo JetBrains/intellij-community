@@ -2,8 +2,29 @@
 package org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.*
-import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.Convertor
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingMapping
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.UnexpectedIncomingValue
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.convert
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.BRACES_ONE_LINE_IF_EMPTY
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.BRACES_ONE_LINE_IF_IN_WIDTH_LIMIT
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.BRACES_ONE_LINE_IF_SINGLE_ITEM
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.BRACES_ONE_LINE_NEVER
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.BRACES_ONE_LINE_PRESERVE_STATE
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_COMMON_LINES
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_PRESERVE_POSITIONS
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_SEPARATE_LINES
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_SEPARATE_LINES_IF_NOT_EMPTY
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_SEPARATE_LINES_IF_WRAPPED
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.TAB_CHAR_MIXED
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.TAB_CHAR_SPACE
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.TAB_CHAR_TAB
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_DO_NOT_INSERT
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_END_OF_LINE
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_INSERT
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_NEXT_LINE
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_NEXT_LINE_IF_WRAPPED
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_NEXT_LINE_SHIFTED
 
 internal object InsertConvertor : Convertor<String, Boolean> {
   override fun convertOutgoing(value: Boolean): String = if (value) VALUE_INSERT else VALUE_DO_NOT_INSERT

@@ -7,13 +7,18 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.FrontendEditorLinesBreakpointsInfoManager
 import com.intellij.platform.debugger.impl.frontend.getAvailableBreakpointTypesFromServer
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XSourcePositionImpl
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.swing.Icon
 
 internal class XDebuggerLineChangeHandler(

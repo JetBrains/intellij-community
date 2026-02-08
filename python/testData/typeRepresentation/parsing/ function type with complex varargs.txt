@@ -1,0 +1,43 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyFunctionTypeRepresentation
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: test
+      PsiElement(Py:IDENTIFIER)('test')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('f')
+    PyParameterListRepresentation
+      PsiElement(Py:LPAR)('(')
+      PyStarExpression
+        PsiElement(Py:MULT)('*')
+        PyNamedParameterTypeRepresentation
+          PsiElement(Py:IDENTIFIER)('args')
+          PsiElement(Py:COLON)(':')
+          PsiWhiteSpace(' ')
+          PyStarExpression
+            PsiElement(Py:MULT)('*')
+            PySubscriptionExpression
+              PyReferenceExpression: tuple
+                PsiElement(Py:IDENTIFIER)('tuple')
+              PsiElement(Py:LBRACKET)('[')
+              PyReferenceExpression: int
+                PsiElement(Py:IDENTIFIER)('int')
+              PsiElement(Py:RBRACKET)(']')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyDoubleStarExpression
+        PsiElement(Py:EXP)('**')
+        PyNamedParameterTypeRepresentation
+          PsiElement(Py:IDENTIFIER)('kwargs')
+          PsiElement(Py:COLON)(':')
+          PsiWhiteSpace(' ')
+          PyDoubleStarExpression
+            PsiElement(Py:EXP)('**')
+            PyReferenceExpression: Dict
+              PsiElement(Py:IDENTIFIER)('Dict')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyNoneLiteralExpression
+      PsiElement(Py:NONE_KEYWORD)('None')

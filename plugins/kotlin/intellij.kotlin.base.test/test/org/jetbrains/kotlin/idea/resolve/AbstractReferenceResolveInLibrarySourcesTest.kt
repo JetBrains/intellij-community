@@ -8,7 +8,11 @@ import com.intellij.testFramework.utils.vfs.getPsiFile
 import com.intellij.util.ThrowableRunnable
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.idea.test.runAll
 import kotlin.test.assertNotEquals
 
 abstract class AbstractReferenceResolveInLibrarySourcesTest : KotlinLightCodeInsightFixtureTestCase() {

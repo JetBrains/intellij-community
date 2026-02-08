@@ -1,6 +1,10 @@
 package com.intellij.tools.ide.metrics.collector.metrics
 
-import com.intellij.tools.ide.metrics.collector.meters.*
+import com.intellij.tools.ide.metrics.collector.meters.DoubleCounterMeterSelector
+import com.intellij.tools.ide.metrics.collector.meters.DoubleGaugeMeterSelector
+import com.intellij.tools.ide.metrics.collector.meters.DoubleHistogramMeterSelector
+import com.intellij.tools.ide.metrics.collector.meters.LongCounterMeterSelector
+import com.intellij.tools.ide.metrics.collector.meters.LongGaugeMeterSelector
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.metrics.data.LongPointData
 import io.opentelemetry.sdk.metrics.data.MetricData

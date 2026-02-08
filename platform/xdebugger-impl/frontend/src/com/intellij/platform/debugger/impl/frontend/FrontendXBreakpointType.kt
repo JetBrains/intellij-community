@@ -12,7 +12,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeDto
+import com.intellij.platform.debugger.impl.rpc.XLineBreakpointTypeInfo
+import com.intellij.platform.debugger.impl.rpc.standardPanel
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
@@ -25,7 +29,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType.StandardPanels
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.swing.Icon
@@ -146,28 +150,28 @@ private open class FrontendXBreakpointType(
   @Suppress("UNCHECKED_CAST")
   override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
     // TODO Custom panels are only supported in monolith
-    val monolithType = XDebugMonolithUtils.findBreakpointTypeById(id) ?: return null
+    val monolithType = XDebuggerEntityConverter.getBreakpointType(id) ?: return null
     return monolithType.createCustomPropertiesPanel(project) as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 
   @Suppress("UNCHECKED_CAST")
   override fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
     // TODO Custom panels are only supported in monolith
-    val monolithType = XDebugMonolithUtils.findBreakpointTypeById(id) ?: return null
+    val monolithType = XDebuggerEntityConverter.getBreakpointType(id) ?: return null
     return monolithType.createCustomConditionsPanel() as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 
   @Suppress("UNCHECKED_CAST")
   override fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
     // TODO Custom panels are only supported in monolith
-    val monolithType = XDebugMonolithUtils.findBreakpointTypeById(id) ?: return null
+    val monolithType = XDebuggerEntityConverter.getBreakpointType(id) ?: return null
     return monolithType.createCustomRightPropertiesPanel(project) as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 
   @Suppress("UNCHECKED_CAST")
   override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
     // TODO Custom panels are only supported in monolith
-    val monolithType = XDebugMonolithUtils.findBreakpointTypeById(id) ?: return null
+    val monolithType = XDebuggerEntityConverter.getBreakpointType(id) ?: return null
     return monolithType.createCustomTopPropertiesPanel(project) as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 

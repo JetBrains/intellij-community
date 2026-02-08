@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.zombie
 
-import java.io.DataInput
-import java.io.DataOutput
-
 
 /**
  * Base class for zombie consisting of limbs.
@@ -23,28 +20,23 @@ open class LimbedZombie<L>(private val limbs: List<L>) : Zombie {
  */
 abstract class LimbedNecromancy<Z : LimbedZombie<L>, L> (
   spellLevel: Int,
-  isDeepBury: Boolean = false,
-) : AbstractNecromancy<Z>(spellLevel, isDeepBury) {
+) : AbstractNecromancy<Z>(spellLevel) {
 
   abstract fun formZombie(limbs: List<L>): Z
 
-  protected abstract fun buryLimb(grave: DataOutput, limb: L)
+  protected abstract fun Out.writeLimb(limb: L)
 
-  protected abstract fun exhumeLimb(grave: DataInput): L
+  protected abstract fun In.readLimb(): L
 
-  final override fun buryZombie(grave: DataOutput, zombie: Z) {
-    writeInt(grave, zombie.limbs().size)
-    for (limb in zombie.limbs()) {
-      buryLimb(grave, limb)
+  final override fun Out.writeZombie(zombie: Z) {
+    writeList(zombie.limbs()) {
+      writeLimb(it)
     }
   }
 
-  final override fun exhumeZombie(grave: DataInput): Z {
-    val limbCount = readInt(grave)
-    val limbs = buildList {
-      repeat(limbCount) {
-        add(exhumeLimb(grave))
-      }
+  final override fun In.readZombie(): Z {
+    val limbs = readList {
+      readLimb()
     }
     return formZombie(limbs)
   }

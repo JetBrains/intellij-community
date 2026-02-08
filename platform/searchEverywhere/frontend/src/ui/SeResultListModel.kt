@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.DefaultListModel
 import javax.swing.ListSelectionModel
-import kotlin.text.toBoolean
 
 @Internal
 class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher,

@@ -8,12 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.*
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertNotNull
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.test.fail

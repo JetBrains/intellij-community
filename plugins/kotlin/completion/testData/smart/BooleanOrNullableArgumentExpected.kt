@@ -11,3 +11,5 @@ fun bar() {
 // EXIST: { lookupString: "s = null", itemText: "s = null", attributes: "" }
 // EXIST: { lookupString: "xx = true", itemText: "xx = true", attributes: "" }
 // EXIST: { lookupString: "xx = false", itemText: "xx = false", attributes: "" }
+
+// IGNORE_K2

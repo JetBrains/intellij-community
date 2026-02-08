@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  Service.class
+End of files
+Compiling files:
+  java/membersChange/renameSAMInterfaceMethod/a/Service.java
+End of files
+Cleaning output files:
+  DerivedService.class
+  DerivedServiceClient.class
+  ServiceClient.class
+End of files
+Compiling files:
+  java/membersChange/renameSAMInterfaceMethod/a/DerivedService.java
+  java/membersChange/renameSAMInterfaceMethod/a/DerivedServiceClient.java
+  java/membersChange/renameSAMInterfaceMethod/a/ServiceClient.java
+End of files
+------------------------------------------
+Exit code: OK

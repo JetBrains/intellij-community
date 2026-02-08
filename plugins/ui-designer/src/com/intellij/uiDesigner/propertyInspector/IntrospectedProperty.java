@@ -2,7 +2,11 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -16,7 +20,7 @@ import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

@@ -21,16 +21,28 @@ import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.Collection;
 import java.util.TreeSet;
 
 import static com.intellij.util.containers.ContainerUtil.addAll;
-import static org.jetbrains.idea.svn.SvnPropertyKeys.*;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_EOL_STYLE;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_EXECUTABLE;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_EXTERNALS;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_IGNORE;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_KEYWORDS;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_MIME_TYPE;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_NEEDS_LOCK;
 
 public class SetPropertyDialog extends DialogWrapper {
 

@@ -8,10 +8,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringTokenizer;
 
 public class ColorSampleLookupValue {
   private static final int NORMAL_PRIORITY = 0;

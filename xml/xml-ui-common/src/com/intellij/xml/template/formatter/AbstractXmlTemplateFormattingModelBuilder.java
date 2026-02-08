@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
@@ -15,7 +21,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
-import com.intellij.psi.formatter.xml.*;
+import com.intellij.psi.formatter.xml.AnotherLanguageBlockWrapper;
+import com.intellij.psi.formatter.xml.HtmlPolicy;
+import com.intellij.psi.formatter.xml.ReadOnlyBlock;
+import com.intellij.psi.formatter.xml.SyntheticBlock;
+import com.intellij.psi.formatter.xml.XmlBlock;
+import com.intellij.psi.formatter.xml.XmlFormattingPolicy;
+import com.intellij.psi.formatter.xml.XmlTagBlock;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.SimpleTemplateLanguageFormattingModelBuilder;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;

@@ -1,0 +1,25 @@
+================ Step #1 =================
+Cleaning output files:
+  com/ppp/A.class
+End of files
+Compiling files:
+  java/common/sameClassesInDifferentModules/a/com/ppp/A.java
+End of files
+Cleaning output files:
+  com/ppp/BA.class
+  com/ppp/C.class
+End of files
+Compiling files:
+  java/common/sameClassesInDifferentModules/a/com/ppp/BA.java
+  java/common/sameClassesInDifferentModules/a/com/ppp/C.java
+End of files
+Cleaning output files:
+  com/ppp/BB.class
+  com/ppp/C.class
+End of files
+Compiling files:
+  java/common/sameClassesInDifferentModules/b/com/ppp/BB.java
+  java/common/sameClassesInDifferentModules/b/com/ppp/C.java
+End of files
+------------------------------------------
+Exit code: OK

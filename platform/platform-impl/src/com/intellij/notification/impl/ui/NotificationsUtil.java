@@ -15,17 +15,23 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.CSSFontResolver;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.html.HTMLEditorKit;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.List;
 
 public final class NotificationsUtil {

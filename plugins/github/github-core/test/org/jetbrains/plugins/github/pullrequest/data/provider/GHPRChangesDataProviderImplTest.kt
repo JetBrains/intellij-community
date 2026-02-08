@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
 import org.junit.Assert.assertEquals
 import org.junit.ClassRule
 import org.junit.Test
-import java.util.*
+import java.util.Date
 import kotlin.time.Duration.Companion.seconds
 
 class GHPRChangesDataProviderImplTest {

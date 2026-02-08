@@ -15,8 +15,8 @@
  */
 package com.intellij.refactoring.move.moveInstanceMethod;
 
-import com.intellij.usageView.UsageInfo;
 import com.intellij.psi.PsiClass;
+import com.intellij.usageView.UsageInfo;
 
 public class InheritorUsageInfo extends UsageInfo {
   private final PsiClass myInheritor;

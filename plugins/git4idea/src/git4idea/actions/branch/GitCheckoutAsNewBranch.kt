@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project
 import git4idea.GitBranch
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchPopupActions.*
+import git4idea.ui.branch.GitBranchPopupActions.addTooltipText
+import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentation
+import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchTruncatedPresentation
 import git4idea.ui.branch.createOrCheckoutNewBranch
 
 class GitCheckoutAsNewBranch : GitSingleBranchAction(GitBundle.messagePointer("branches.new.branch.from.branch.current")) {

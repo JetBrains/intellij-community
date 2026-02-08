@@ -21,7 +21,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
-import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0
 import org.jetbrains.idea.maven.project.MavenProject
 
 class MavenPackagingConverter : MavenProjectConstantListConverter(false) {

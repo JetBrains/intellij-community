@@ -3,7 +3,11 @@ package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;

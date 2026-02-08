@@ -29,10 +29,14 @@ import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.tree.TreeNode;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

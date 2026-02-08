@@ -10,7 +10,33 @@ import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
 import com.intellij.platform.workspace.storage.impl.external.AbstractExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.NameId
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWithNullableParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.RightEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildWithOptionalParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyChildSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyOoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyXChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyXChildWithOptionalParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyXParentEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
@@ -18,8 +44,12 @@ import com.intellij.testFramework.assertErrorLogged
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
-import java.util.*
-import kotlin.test.*
+import java.util.Random
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class ApplyChangesFromTest {
   private lateinit var target: MutableEntityStorageImpl

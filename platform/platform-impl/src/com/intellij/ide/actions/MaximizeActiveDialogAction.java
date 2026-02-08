@@ -10,10 +10,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JDialog;
+import java.awt.Component;
+import java.awt.Window;
 
-import static com.intellij.ide.ui.MaximizeDialogKt.isMaximizable;
+import static com.intellij.ide.ui.MaximizeDialogKt.isMaximizeButtonShown;
 
 @ApiStatus.Internal
 public final class MaximizeActiveDialogAction extends WindowAction {
@@ -26,7 +28,7 @@ public final class MaximizeActiveDialogAction extends WindowAction {
   @Override
   protected boolean isVisibleFor(@Nullable Window window) {
     if (!(window instanceof JDialog dialog)) return false;
-    return isMaximizable(dialog);
+    return isMaximizeButtonShown(dialog);
   }
 
   @Override

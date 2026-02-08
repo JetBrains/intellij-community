@@ -13,14 +13,18 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExpandableSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.run.PyVirtualEnvReaderKt;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import java.awt.datatransfer.StringSelection;
 
 public class PyPackageInstallationErrorDialog extends DialogWrapper {

@@ -3,9 +3,9 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.PyCustomMember
+import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyOverridingModuleMembersProvider

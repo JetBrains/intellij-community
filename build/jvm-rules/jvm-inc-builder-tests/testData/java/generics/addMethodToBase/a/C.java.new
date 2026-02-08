@@ -1,0 +1,3 @@
+public class C {
+  Object id(Object x) {return null;}
+}

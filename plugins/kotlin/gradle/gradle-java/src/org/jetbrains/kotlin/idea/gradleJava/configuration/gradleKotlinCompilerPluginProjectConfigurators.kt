@@ -12,6 +12,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
+import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion.Companion.defaultKotlinVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -24,19 +25,15 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.PathUtil
 
 abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginProjectConfigurator {
-    override fun configureModule(module: Module): PsiFile? {
+    override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val project = module.project
-        val changedFiles = ChangedConfiguratorFiles()
-
-        val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return null
+        val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return
         val moduleFile = module.getBuildScriptPsiFile().takeIf { it != topLevelFile }
 
         project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", topLevelFile.name), null) {
-            topLevelFile.add(addVersion = true, sourceModule = module, changedFiles = changedFiles)
-            moduleFile?.add(addVersion = false, sourceModule = module, changedFiles = changedFiles)
+            topLevelFile.add(addVersion = true, sourceModule = module, changedFiles = configurationResultBuilder.changedFiles)
+            moduleFile?.add(addVersion = false, sourceModule = module, changedFiles = configurationResultBuilder.changedFiles)
         }
-
-        return moduleFile ?: topLevelFile
     }
 
     private fun PsiFile.add(addVersion: Boolean, sourceModule: Module, changedFiles: ChangedConfiguratorFiles) {

@@ -11,7 +11,11 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.html.*
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
+import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
+import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.psi.PsiElement

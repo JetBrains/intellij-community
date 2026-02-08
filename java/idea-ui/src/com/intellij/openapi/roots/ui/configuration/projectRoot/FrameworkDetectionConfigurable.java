@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class FrameworkDetectionConfigurable extends NamedConfigurable<DetectionExcludesConfiguration> {
   private final DetectionExcludesConfiguration myExcludesConfiguration;

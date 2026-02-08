@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.text.StringSearcher;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -39,6 +40,7 @@ public class LowLevelSearchUtilTest extends TestCase {
     return index[0];
   }
 
+  @PerformanceUnitTest
   public void testProcessTextOccurrencesNeverScansBeyondStartEndOffsetIfNeverAskedTo() {
     StringSearcher searcher = new StringSearcher("xxx", true, true);
     IntList found = new IntArrayList(new int[]{-1});

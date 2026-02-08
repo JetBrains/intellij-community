@@ -7,7 +7,6 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.module.ModuleManager.Companion.getInstanceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.graph.Graph
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
@@ -31,7 +30,6 @@ abstract class ModuleManager : SimpleModificationTracker() {
      * @return the module manager instance.
      */
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(project: Project): ModuleManager = project.service()
 
     suspend fun getInstanceAsync(project: Project): ModuleManager = project.serviceAsync()

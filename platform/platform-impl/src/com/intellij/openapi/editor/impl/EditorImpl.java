@@ -332,6 +332,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
   private boolean myForcePushHappened;
+  private boolean myMouseIsInDrag;
 
   private @Nullable VisualPosition mySuppressedByBreakpointsLastPressPosition;
 
@@ -2825,6 +2826,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                            || !myLastPressedOnGutter // Small drags aren't a problem in the editor, only on the gutter.
                            || Math.abs(myLastMousePressedPoint.x - point.x) >= sensitivity
                            || Math.abs(myLastMousePressedPoint.y - point.y) >= sensitivity;
+      myMouseIsInDrag = myMouseDragStarted;
       if (!myMouseDragStarted) {
         return;
       }
@@ -3180,6 +3182,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCurrentDragIsSubstantial = true;
   }
 
+  void restartCaretBlinking() {
+    synchronized (caretRepaintService) {
+      caretRepaintService.restart();
+    }
+  }
+
   void updateCaretCursor() {
     myUpdateCursor = true;
     if (myCaretCursor.myIsShown) {
@@ -3193,20 +3201,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  final ConcurrentHashMap<Caret, Point2D> lastPosMap = new ConcurrentHashMap<>();
+  final ConcurrentHashMap<Caret, kotlin.Pair<Point2D, @Nullable LogicalPosition>> lastPosMap = new ConcurrentHashMap<>();
 
   @ApiStatus.Internal
   @Nullable
   Job caretAnimationJob = null;
 
-  @ApiStatus.Internal
-  double caretAnimationElapsed;
-
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
+
+  private boolean shouldSetCursorPositionImmediately() {
+    return !getSettings().isAnimatedCaret() ||
+           gainedFocus.getAndSet(false) ||
+           myMouseIsInDrag ||
+           Registry.is("ui.simplified", false) ||
+           PowerSaveMode.isEnabled() ||
+           RemoteDesktopService.isRemoteSession();
+  }
 
   private void setCursorPosition() {
     synchronized (caretMoveService) {
-      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false)) {
+      if (shouldSetCursorPositionImmediately()) {
         caretMoveService.setCursorPositionImmediately(this);
       } else {
         caretMoveService.setCursorPosition(this);
@@ -3312,15 +3326,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public final @Nullable Caret myCaret;
     public final boolean myIsRtl;
 
-    @ApiStatus.Internal
-    public final float myOpacity;
-
-    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl, float opacity) {
+    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
       myPoint = point;
       myWidth = Math.max(width, 2);
       myCaret = caret;
       myIsRtl = isRtl;
-      myOpacity = opacity;
     }
 
     Point2D getPoint() {
@@ -3329,7 +3339,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   final class CaretCursor {
-    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false, 1.0f)};
+    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false)};
     private boolean myEnabled = true;
 
     private boolean myIsShown;
@@ -4396,6 +4406,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myMouseDragStarted = false;
       myDragStarted = false;
       myDragSelectionStarted = false;
+      myMouseIsInDrag = false;
       myForcePushHappened = false;
       clearDnDContext();
 
@@ -4454,6 +4465,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void runMouseReleasedCommand(@NotNull MouseEvent e) {
+      myMouseIsInDrag = false;
       myMultiSelectionInProgress = false;
       myDragOnGutterSelectionStartLine = -1;
       myScrollingTimer.stop();

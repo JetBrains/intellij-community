@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.java.generate.config.Config;
 import org.jetbrains.java.generate.view.ConfigUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 
 public class GenerateToStringConfigurable implements Configurable {

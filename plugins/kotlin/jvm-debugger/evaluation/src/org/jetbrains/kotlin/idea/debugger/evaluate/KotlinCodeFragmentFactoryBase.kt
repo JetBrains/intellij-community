@@ -7,7 +7,11 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaCodeFragment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.IncorrectOperationException

@@ -16,7 +16,7 @@ import com.intellij.psi.util.ParameterizedCachedValue
 import com.intellij.psi.util.ParameterizedCachedValueProvider
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
 import kotlin.contracts.ExperimentalContracts

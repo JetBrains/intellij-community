@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.logical
 
-import com.intellij.ide.structureView.*
+import com.intellij.ide.structureView.StructureView
+import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.ide.structureView.StructureViewModel
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewService.Companion.getInstance
 import com.intellij.idea.AppMode

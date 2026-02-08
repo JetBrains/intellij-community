@@ -9,7 +9,15 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.wizard.IdeWizard
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
-import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.DynamicComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.PanelWithStatusText
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.SmartTwoComponentPanel
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.SubStep
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.UIConstants
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.WizardStepComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.addBorder
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.borderPanel
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.customPanel
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor.ModulesEditorComponent
 import java.awt.BorderLayout
 

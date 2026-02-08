@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.j2k.ast
 
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiTypeParameterList
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.Converter
 import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.j2k.buildList
 
+@K1Deprecation
 class TypeParameter(val name: Identifier, private val extendsTypes: List<Type>) : Element() {
     fun hasWhere(): Boolean = extendsTypes.size > 1
 
@@ -26,6 +28,7 @@ class TypeParameter(val name: Identifier, private val extendsTypes: List<Type>) 
     }
 }
 
+@K1Deprecation
 class TypeParameterList(val parameters: List<TypeParameter>) : Element() {
     override fun generateCode(builder: CodeBuilder) {
         if (parameters.isNotEmpty()) builder.append(parameters, ", ", "<", ">")
@@ -56,6 +59,7 @@ private fun Converter.convertTypeParameter(typeParameter: PsiTypeParameter): Typ
                            typeParameter.extendsListTypes.map { typeConverter.convertType(it) }).assignPrototype(typeParameter)
 }
 
+@K1Deprecation
 fun Converter.convertTypeParameterList(typeParameterList: PsiTypeParameterList?): TypeParameterList {
     return if (typeParameterList != null)
         TypeParameterList(typeParameterList.typeParameters.toList().map { convertTypeParameter(it) }).assignPrototype(typeParameterList)

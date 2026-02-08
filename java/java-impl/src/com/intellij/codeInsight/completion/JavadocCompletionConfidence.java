@@ -1,8 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -19,7 +24,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public final class JavadocCompletionConfidence extends CompletionConfidence {
 
   @Override
-  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull Editor editor, @NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (psiElement().inside(PsiDocTag.class).accepts(contextElement)
       || psiElement().inside(PsiMarkdownReferenceLink.class).accepts(contextElement)) {
       if (hasKnownReference(psiFile, offset - 1)) {
@@ -39,7 +44,7 @@ public final class JavadocCompletionConfidence extends CompletionConfidence {
         return ThreeState.NO;
       }
     }
-    return super.shouldSkipAutopopup(contextElement, psiFile, offset);
+    return ThreeState.UNSURE;
   }
 
   private static boolean hasKnownReference(PsiFile file, int offset) {

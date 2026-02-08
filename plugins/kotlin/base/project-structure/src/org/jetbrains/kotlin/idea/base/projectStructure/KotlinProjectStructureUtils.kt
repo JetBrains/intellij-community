@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.FileIndex
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,10 +28,21 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.KotlinSourceRootType
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.ResourceKotlinRootType
+import org.jetbrains.kotlin.config.SourceKotlinRootType
+import org.jetbrains.kotlin.config.TestResourceKotlinRootType
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfoWithExpectedBy
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
@@ -144,22 +154,12 @@ fun ProjectFileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSo
     }
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("use ProjectFileIndex.getKotlinSourceRootType(VirtualFile)")
-fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRootType? {
-    // Ignore injected files
-    if (virtualFile is VirtualFileWindow) {
-        return null
+fun Module.getKotlinSourceRootType(): KotlinSourceRootType? =
+    when {
+        hasRootsOfType(sourceRootTypes) -> SourceKotlinRootType
+        hasRootsOfType(testRootTypes) -> TestSourceKotlinRootType
+        else -> null
     }
-
-    return runReadAction {
-        when {
-            isUnderSourceRootOfType(virtualFile, testRootTypes) -> TestSourceKotlinRootType
-            isInSourceContent(virtualFile) -> SourceKotlinRootType
-            else -> null
-        }
-    }
-}
 
 @RequiresReadLock
 fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {

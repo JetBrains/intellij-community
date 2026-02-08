@@ -336,7 +336,6 @@ f:com.intellij.coverage.view.ElementColumnInfo
 f:com.intellij.coverage.view.PercentageCoverageColumnInfo
 - com.intellij.util.ui.ColumnInfo
 - <init>(I,java.lang.String,com.intellij.coverage.CoverageSuitesBundle):V
-- <init>(I,java.lang.String,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 - getComparator():java.util.Comparator
 - valueOf(com.intellij.ide.util.treeView.NodeDescriptor):java.lang.String
 a:com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration

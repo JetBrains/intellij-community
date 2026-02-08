@@ -1,8 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.AlternativeSdkRootsProvider;
+import com.intellij.execution.EnvFilesOptions;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.InputRedirectAware;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.JavaRunConfigurationBase;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ShortenCommandLine;
+import com.intellij.execution.SingleClassConfiguration;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.statistics.FusAwareRunConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
@@ -43,7 +65,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.execution.util.EnvFilesUtilKt.checkEnvFiles;
 

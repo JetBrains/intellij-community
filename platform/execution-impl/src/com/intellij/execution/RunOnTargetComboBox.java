@@ -2,7 +2,12 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.target.*;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfigurationKt;
+import com.intellij.execution.target.TargetEnvironmentType;
+import com.intellij.execution.target.TargetEnvironmentWizard;
+import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.execution.target.local.LocalTargetType;
 import com.intellij.execution.ui.InvalidRunConfigurationIcon;
 import com.intellij.icons.AllIcons;
@@ -19,8 +24,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.JList;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

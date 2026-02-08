@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.isJavaDescriptor
 
+@K1Deprecation
 object NamedArgumentCompletion {
     fun isOnlyNamedArgumentExpected(nameExpression: KtSimpleNameExpression, resolutionFacade: ResolutionFacade): Boolean {
         val thisArgument = nameExpression.parent as? KtValueArgument ?: return false
@@ -67,6 +69,7 @@ object NamedArgumentCompletion {
 /**
  * Checks whether argument in the [resolvedCall] can be used without its name (as positional argument).
  */
+@K1Deprecation
 fun KtValueArgument.canBeUsedWithoutNameInCall(resolvedCall: ResolvedCall<out CallableDescriptor>): Boolean {
     if (resolvedCall.resultingDescriptor.valueParameters.isEmpty()) return true
 
@@ -88,6 +91,7 @@ fun KtValueArgument.canBeUsedWithoutNameInCall(resolvedCall: ResolvedCall<out Ca
     }
 }
 
+@K1Deprecation
 data class ArgumentThatCanBeUsedWithoutName(
     val argument: KtValueArgument,
     /**
@@ -98,6 +102,7 @@ data class ArgumentThatCanBeUsedWithoutName(
     val parameter: ValueParameterDescriptor?
 )
 
+@K1Deprecation
 fun collectAllArgumentsThatCanBeUsedWithoutName(
     resolvedCall: ResolvedCall<out CallableDescriptor>,
 ): List<ArgumentThatCanBeUsedWithoutName> {
@@ -145,6 +150,7 @@ fun collectAllArgumentsThatCanBeUsedWithoutName(
  * )
  * ```
  */
+@K1Deprecation
 fun ValueArgument.placedOnItsOwnPositionInCall(resolvedCall: ResolvedCall<out CallableDescriptor>): Boolean {
     return resolvedCall.getParameterForArgument(this)?.index == resolvedCall.call.valueArguments.indexOf(this)
 }

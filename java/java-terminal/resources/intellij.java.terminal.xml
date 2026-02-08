@@ -8,6 +8,7 @@
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <commandSpecsProvider implementation="com.intellij.java.terminal.JavaShellCommandSpecsProvider"/>
+    <commandSpecsProvider implementation="com.intellij.java.terminal.JavacShellCommandSpecsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.openapi.projectRoots">

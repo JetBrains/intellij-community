@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,17 +42,6 @@ public final class AnalysisActionUtils {
     if (scope != null) return scope;
     scope = getInspectionScopeImpl(dataContext, project, acceptNonProjectDirectories);
     return scope.getScopeType() != AnalysisScope.INVALID ? scope : null;
-  }
-
-  /**
-   * @deprecated Use {@link #getInspectionScope(DataContext, Project, boolean)} instead.
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public static @Nullable AnalysisScope getInspectionScope(@NotNull DataContext dataContext,
-                                                           @NotNull Project project,
-                                                           Boolean acceptNonProjectDirectories) {
-    return getInspectionScope(dataContext, project, acceptNonProjectDirectories == Boolean.TRUE);
   }
 
   private static @NotNull AnalysisScope getInspectionScopeImpl(@NotNull DataContext dataContext,

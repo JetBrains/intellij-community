@@ -4,3 +4,5 @@ fun foo(list: List<String>): Collection<Int> {
 
 // EXIST: { lookupString: "map", tailText: " {...} (transform: (String) -> Int) for Iterable<T> in kotlin.collections", typeText: "List<Int>" }
 // ABSENT: filter
+
+// IGNORE_K2

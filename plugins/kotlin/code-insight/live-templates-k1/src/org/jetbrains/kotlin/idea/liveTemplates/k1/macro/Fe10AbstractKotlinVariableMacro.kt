@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 
+@K1Deprecation
 abstract class Fe10AbstractKotlinVariableMacro<State> : KotlinMacro() {
     private fun getVariables(params: Array<Expression>, context: ExpressionContext): Collection<VariableDescriptor> {
         if (params.isNotEmpty()) {

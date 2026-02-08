@@ -4,7 +4,19 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.PsiUsesStatement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -23,7 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.*;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.DO_NOT_RESOLVE_BY_DEFAULT;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.WARN_DEPRECATED;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.WARN_DEPRECATED_FOR_REMOVAL;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.WARN_INCUBATING;
 import static com.intellij.util.BitUtil.isSet;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {

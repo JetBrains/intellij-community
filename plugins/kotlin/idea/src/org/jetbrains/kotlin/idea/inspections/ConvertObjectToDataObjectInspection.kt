@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -11,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.asSafely
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -21,19 +21,39 @@ import org.jetbrains.kotlin.idea.base.psi.singleExpressionBody
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.DeprecationCollectingInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Util.asKtClass
-import org.jetbrains.kotlin.idea.inspections.VirtualFunction.*
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.Function
-import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
+import org.jetbrains.kotlin.idea.inspections.VirtualFunction.NonTrivialSuper
+import org.jetbrains.kotlin.idea.inspections.VirtualFunction.TrivialSuper
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.EQUALS
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.HASH_CODE
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.KOTLIN_ANY_EQUALS_FQN
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.KOTLIN_ANY_HASH_CODE_FQN
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.KOTLIN_TO_STRING_FQN
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.TO_STRING
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyEquals
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyHashCode
+import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyToString
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
-import org.jetbrains.kotlin.idea.statistics.NewAndDeprecatedFeaturesInspectionData
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClassLiteralExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -48,18 +68,15 @@ private typealias CallChain = List<CallChainElement>
  * Tests:
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ConvertObjectToDataObject]
  */
-class ConvertObjectToDataObjectInspection : DeprecationCollectingInspection<NewAndDeprecatedFeaturesInspectionData>(
-    collector = KotlinLanguageFeaturesFUSCollector.dataObjectCollector,
-    defaultDeprecationData = NewAndDeprecatedFeaturesInspectionData()
-) {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-        if (holder.file.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)) ObjectVisitor(holder, session)
+@K1Deprecation
+class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+        if (holder.file.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)) ObjectVisitor(holder)
         else PsiElementVisitor.EMPTY_VISITOR
 
-    private inner class ObjectVisitor(private val holder: ProblemsHolder, private val session: LocalInspectionToolSession) : KtVisitorVoid() {
+    private class ObjectVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
         override fun visitObjectDeclaration(ktObject: KtObjectDeclaration) {
             if (ktObject.isData()) {
-                session.updateDeprecationData { it.withNewFeature() }
                 return
             }
             if (ktObject.isCompanion() || ktObject.isObjectLiteral()) return
@@ -68,7 +85,6 @@ class ConvertObjectToDataObjectInspection : DeprecationCollectingInspection<NewA
             val isSealedSubClassCase by lazy { toString == TrivialSuper && ktObject.isSubclassOfSealed() }
             val isToStringCase by lazy { toString is Function && isCompatibleToString(ktObject, fqName, toString.function) }
             if ((isSealedSubClassCase || isToStringCase) && isCompatibleHashCode(ktObject, fqName) && isCompatibleEquals(ktObject, fqName)) {
-                session.updateDeprecationData { it.withDeprecatedFeature() }
                 holder.registerProblem(
                     ktObject.getObjectKeyword() ?: return,
                     KotlinBundle.message(

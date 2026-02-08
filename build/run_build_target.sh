@@ -18,4 +18,8 @@ for arg in "$@"; do
 done
 
 cd "$root"
-exec /bin/bash "$root/bazel.cmd" run "$build_target_name" -- "${args[@]}"
+if [ ${#args[@]} -eq 0 ]; then
+  exec /bin/bash "$root/bazel.cmd" run "$build_target_name" --
+else
+  exec /bin/bash "$root/bazel.cmd" run "$build_target_name" -- "${args[@]}"
+fi

@@ -1,6 +1,12 @@
 package com.intellij.database.run.ui.treetable;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.SelectionModel;
+import com.intellij.database.datagrid.SelectionModelUtil;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.database.run.ui.ResultViewWithRows;
 import com.intellij.database.run.ui.grid.GridColorsScheme;
@@ -30,15 +36,27 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.util.Map;
 
-import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.*;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetBackground;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetGridColor;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetSelectionBackground;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetSelectionForeground;
 import static com.intellij.database.run.ui.grid.TableCellImageCache.MAX_ROWS;
-import static com.intellij.database.run.ui.grid.renderers.DefaultTextRendererFactory.TextRenderer.*;
+import static com.intellij.database.run.ui.grid.renderers.DefaultTextRendererFactory.TextRenderer.configureEditor;
+import static com.intellij.database.run.ui.grid.renderers.DefaultTextRendererFactory.TextRenderer.createComponent;
+import static com.intellij.database.run.ui.grid.renderers.DefaultTextRendererFactory.TextRenderer.getAttributes;
 import static com.intellij.ui.render.RenderingUtil.CUSTOM_SELECTION_BACKGROUND;
 
 /**

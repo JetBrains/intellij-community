@@ -7,7 +7,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.JewelComposePanel
-import javax.swing.*
+import javax.swing.JComponent
 
 /**
  * A [SearchableConfigurable] that uses Compose UI for rendering.

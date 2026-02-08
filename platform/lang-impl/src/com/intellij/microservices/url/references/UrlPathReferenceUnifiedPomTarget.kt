@@ -3,7 +3,12 @@ package com.intellij.microservices.url.references
 
 import com.intellij.ide.presentation.Presentation
 import com.intellij.microservices.MicroservicesBundle
-import com.intellij.microservices.url.*
+import com.intellij.microservices.url.UrlPath
+import com.intellij.microservices.url.UrlResolveRequest
+import com.intellij.microservices.url.UrlResolverManager
+import com.intellij.microservices.url.UrlTargetInfo
+import com.intellij.microservices.url.compatibleSchemes
+import com.intellij.microservices.url.filterBestUrlPathMatches
 import com.intellij.microservices.utils.lazySynchronousResolve
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger

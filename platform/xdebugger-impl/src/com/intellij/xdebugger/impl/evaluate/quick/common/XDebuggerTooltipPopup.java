@@ -22,8 +22,11 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
+import java.awt.Color;
+import java.awt.Point;
 
 class XDebuggerTooltipPopup {
   private final @NotNull Editor myEditor;

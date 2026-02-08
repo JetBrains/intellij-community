@@ -1,6 +1,9 @@
 package com.intellij.cce.java.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.DocumentationProperties
+import com.intellij.cce.core.Language
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.JavaRecursiveElementVisitor

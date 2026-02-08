@@ -15,7 +15,12 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

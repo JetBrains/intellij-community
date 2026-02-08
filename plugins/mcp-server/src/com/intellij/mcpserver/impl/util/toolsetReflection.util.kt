@@ -47,7 +47,7 @@ import kotlin.reflect.jvm.kotlinFunction
  * val tools = myToolset.asTools()
  * ```
  */
-fun McpToolset.asTools(json: Json = Json): List<ReflectionCallableMcpTool> {
+fun McpToolset.asTools(json: Json = McpServerJson): List<ReflectionCallableMcpTool> {
     return this::class.asTools(json = json, thisRef = this)
 }
 
@@ -84,7 +84,7 @@ fun McpToolset.asTools(json: Json = Json): List<ReflectionCallableMcpTool> {
  * val tools = myToolset.asToolsByInterface<MyToolsetInterface>() // only interface methods will be added
  * ```
  */
-inline fun <reified T : McpToolset> T.asToolsByInterface(json: Json = Json): List<ReflectionCallableMcpTool> {
+inline fun <reified T : McpToolset> T.asToolsByInterface(json: Json = McpServerJson): List<ReflectionCallableMcpTool> {
     return T::class.asTools(json = json, thisRef = this)
 }
 
@@ -96,7 +96,7 @@ inline fun <reified T : McpToolset> T.asToolsByInterface(json: Json = Json): Lis
 
  * @see [asTool]
  */
-fun <T : McpToolset> KClass<out T>.asTools(json: Json = Json, thisRef: T? = null): List<ReflectionCallableMcpTool> {
+fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: T? = null): List<ReflectionCallableMcpTool> {
     return this.functions.filter { m ->
         m.getPreferredToolAnnotation() != null
     }.map {
@@ -157,7 +157,7 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = Json, thisRef: T? = null
  * val tool = MyTools::my_best_tool.asTool(json = Json, thisRef = myTools)
  * ```
  */
-fun KFunction<*>.asTool(json: Json = Json, thisRef: Any? = null, name: String? = null, description: String? = null, vararg additionalImplicitParameters: KParameter): ReflectionCallableMcpTool {
+fun KFunction<*>.asTool(json: Json = McpServerJson, thisRef: Any? = null, name: String? = null, description: String? = null, vararg additionalImplicitParameters: KParameter): ReflectionCallableMcpTool {
   val toolDescriptor = this.asToolDescriptor(name = name, description = description, *additionalImplicitParameters)
   if (instanceParameter != null && thisRef == null) error("Instance parameter is not null, but no 'this' object is provided")
   val callableBridge = CallableBridge(callable = this, thisRef = thisRef, json = json)

@@ -1,13 +1,15 @@
  package com.intellij.database.run.ui.table
 
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.ViewIndex
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.ResultViewWithRows
 import com.intellij.openapi.util.text.StringUtil
 import kotlin.math.max
 import kotlin.math.min
 
-object SingleRowModeHelper {
+ object SingleRowModeHelper {
   @JvmStatic
   private fun linesCount(grid: DataGrid): Int? {
     if (grid.resultView !is TableResultView) {

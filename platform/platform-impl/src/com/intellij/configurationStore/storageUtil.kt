@@ -5,7 +5,11 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT

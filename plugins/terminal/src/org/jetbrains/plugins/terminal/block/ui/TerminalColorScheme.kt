@@ -2,14 +2,19 @@
 package org.jetbrains.plugins.terminal.block.ui
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.colors.*
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.colors.FontPreferences
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import org.jdom.Element
 import java.awt.Color
 import java.awt.Font
-import java.util.*
+import java.util.Properties
 import kotlin.math.roundToInt
 
 /**

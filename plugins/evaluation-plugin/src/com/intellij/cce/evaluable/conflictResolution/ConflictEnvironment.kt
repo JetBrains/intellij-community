@@ -1,7 +1,12 @@
 package com.intellij.cce.evaluable.conflictResolution
 
-import com.intellij.cce.actions.*
-import com.intellij.cce.core.*
+import com.intellij.cce.actions.DatasetContext
+import com.intellij.cce.actions.DatasetRef
+import com.intellij.cce.core.Lookup
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.Suggestion
+import com.intellij.cce.core.SuggestionSource
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluable.AIA_CONTEXT
 import com.intellij.cce.evaluation.EvaluationChunk
 import com.intellij.cce.evaluation.SimpleFileEnvironment

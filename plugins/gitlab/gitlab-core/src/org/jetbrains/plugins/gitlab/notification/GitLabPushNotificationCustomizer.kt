@@ -8,7 +8,11 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import git4idea.GitRemoteBranch
-import git4idea.push.*
+import git4idea.push.GitPushNotificationCustomizer
+import git4idea.push.GitPushNotificationUtil
+import git4idea.push.GitPushRepoResult
+import git4idea.push.findRemoteBranch
+import git4idea.push.isSuccessful
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CancellationException

@@ -26,20 +26,20 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.DataViewsConfigurableUi;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ExecutionPointHighlighter {
@@ -53,14 +53,6 @@ public class ExecutionPointHighlighter {
   public static final Key<Boolean> EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY = Key.create("EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY");
 
   private final AtomicBoolean updateRequested = new AtomicBoolean();
-
-  /**
-   * @deprecated This constructor doesn't subscribe to events for updating itself. Use the overload taking a {@link Disposable}.
-   */
-  @Deprecated(forRemoval = true)
-  public ExecutionPointHighlighter(@NotNull Project project) {
-    myProject = project;
-  }
 
   public ExecutionPointHighlighter(@NotNull Project project, @NotNull Disposable parentDisposable) {
     this(project, project.getMessageBus().connect(parentDisposable));
@@ -92,7 +84,7 @@ public class ExecutionPointHighlighter {
         clearDescriptor();
         myOpenFileDescriptor = createOpenFileDescriptor(myProject, position);
         myOpenFileDescriptor.setUsePreviewTab(true);
-        if (!XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isScrollToCenter()) {
+        if (!XDebuggerSettingsManager.getInstance().getGeneralSettings().isScrollToCenter()) {
           myOpenFileDescriptor.setScrollType(notTopFrame ? ScrollType.CENTER : ScrollType.MAKE_VISIBLE);
         }
         //see IDEA-125645 and IDEA-63459
@@ -249,7 +241,7 @@ public class ExecutionPointHighlighter {
       return (OpenFileDescriptor)navigatable;
     }
     else {
-      return XDebuggerUtilImpl.createOpenFileDescriptor(project, position);
+      return XDebuggerUtilImplShared.createOpenFileDescriptor(project, position);
     }
   }
 

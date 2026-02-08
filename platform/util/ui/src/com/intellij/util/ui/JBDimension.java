@@ -7,7 +7,7 @@ import com.intellij.ui.scale.Scaler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Dimension;
 
 import static java.lang.Math.ceil;
 

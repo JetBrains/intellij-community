@@ -3,7 +3,16 @@ package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassObjectReference;
+import com.sun.jdi.Field;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
+import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

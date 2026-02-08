@@ -24,7 +24,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 import static com.intellij.execution.ui.RunContentDescriptorParentCoroutineScopeKt.createRunContentDescriptorCoroutineScope;
 import static kotlinx.coroutines.CoroutineScopeKt.cancel;

@@ -7,7 +7,9 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
 
 /**
  * When enabled the checkbox behaves like the ordinary checkbox

@@ -17,7 +17,15 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;

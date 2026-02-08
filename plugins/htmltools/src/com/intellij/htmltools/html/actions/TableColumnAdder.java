@@ -17,7 +17,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.htmltools.html.actions.TableUtil.*;
+import static com.intellij.htmltools.html.actions.TableUtil.COLSPAN;
+import static com.intellij.htmltools.html.actions.TableUtil.TD;
+import static com.intellij.htmltools.html.actions.TableUtil.TH;
+import static com.intellij.htmltools.html.actions.TableUtil.TableCell;
+import static com.intellij.htmltools.html.actions.TableUtil.TableRow;
+import static com.intellij.htmltools.html.actions.TableUtil.getColumnsNumber;
+import static com.intellij.htmltools.html.actions.TableUtil.getCurrentPsiElement;
+import static com.intellij.htmltools.html.actions.TableUtil.getParentWithName;
+import static com.intellij.htmltools.html.actions.TableUtil.getTableAndPosition;
+import static com.intellij.htmltools.html.actions.TableUtil.getTablePsiElement;
+import static com.intellij.htmltools.html.actions.TableUtil.isInsideTag;
+import static com.intellij.htmltools.html.actions.TableUtil.moveCaretTo;
 
 public final class TableColumnAdder {
   public static boolean isActionAvailable(final Editor editor, final PsiFile file) {

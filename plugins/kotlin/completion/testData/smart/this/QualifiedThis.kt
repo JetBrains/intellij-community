@@ -11,3 +11,5 @@ class Outer {
 // EXIST: { lookupString: "this@Inner", itemText: "this", tailText: "@Inner", typeText: "Outer.Inner", attributes: "bold" }
 // EXIST: { lookupString: "this@Outer", itemText: "this", tailText: "@Outer", typeText: "Outer", attributes: "bold" }
 // NOTHING_ELSE
+
+// IGNORE_K2

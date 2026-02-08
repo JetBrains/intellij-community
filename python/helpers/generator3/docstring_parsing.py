@@ -9,7 +9,7 @@ if PY2:
     from generator3._vendor.pyparsing_py2 import *
 else:
     # noinspection PyUnresolvedReferences
-    from generator3._vendor.pyparsing_py3 import *
+    from generator3._vendor.pyparsing import *
 
 # grammar to parse parameter lists
 

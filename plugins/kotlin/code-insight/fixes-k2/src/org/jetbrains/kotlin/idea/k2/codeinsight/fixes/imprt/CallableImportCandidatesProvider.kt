@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.ProgressManagerScope
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession

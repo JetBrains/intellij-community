@@ -13,10 +13,25 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ResolveResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.encodeReferences
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.unmarkReferencesInside
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnonymousInitializer
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 

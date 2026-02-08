@@ -24,7 +24,7 @@ public final class DisableGC implements ModifiableEvaluator {
   }
 
   @Override
-  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
+  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
     if (myDelegate instanceof ModifiableEvaluator modifiableEvaluator) {
       ModifiableValue result = modifiableEvaluator.evaluateModifiable(context);
       Object value = result.getValue();
@@ -42,11 +42,6 @@ public final class DisableGC implements ModifiableEvaluator {
     if (value instanceof ObjectReference reference) {
       context.keep(reference);
     }
-  }
-
-  @Override
-  public Modifier getModifier() {
-    return myDelegate.getModifier();
   }
 
   @Override

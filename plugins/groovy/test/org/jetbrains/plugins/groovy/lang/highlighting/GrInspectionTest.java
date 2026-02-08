@@ -3,8 +3,16 @@ package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.*;
-import org.jetbrains.plugins.groovy.codeInspection.confusing.*;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyDocCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyInArgumentCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
+import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection;
+import org.jetbrains.plugins.groovy.codeInspection.confusing.DelegatesToInspection;
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GrDeprecatedAPIUsageInspection;
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GrPackageInspection;
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOctalIntegerInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryContinueInspection;

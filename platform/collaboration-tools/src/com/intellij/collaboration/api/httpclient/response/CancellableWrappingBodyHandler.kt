@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.api.httpclient.response
 
-import java.net.http.HttpResponse.*
+import java.net.http.HttpResponse.BodyHandler
+import java.net.http.HttpResponse.BodySubscriber
+import java.net.http.HttpResponse.ResponseInfo
 import java.util.concurrent.Flow
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock

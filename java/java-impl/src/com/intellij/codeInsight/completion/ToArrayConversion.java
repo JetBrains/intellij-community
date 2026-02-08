@@ -5,7 +5,17 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.Consumer;
@@ -15,7 +25,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.createExpression;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getQualifierText;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 
 public final class ToArrayConversion {
   static void addConversions(final @NotNull PsiFile file,

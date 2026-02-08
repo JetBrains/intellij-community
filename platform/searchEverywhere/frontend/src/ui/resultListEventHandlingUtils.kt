@@ -3,8 +3,14 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeResultAddedEvent
+import com.intellij.platform.searchEverywhere.SeResultEndEvent
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
+import com.intellij.platform.searchEverywhere.isCommand
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import org.jetbrains.annotations.ApiStatus

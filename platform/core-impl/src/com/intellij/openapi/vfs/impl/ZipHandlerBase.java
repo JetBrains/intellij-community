@@ -1,8 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.FileTooBigException;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.impl.GenericZipFile.GenericZipEntry;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.io.ResourceHandle;
@@ -83,7 +86,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       GenericZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
         long length = entry.getSize();
-        if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
+        if (FileSizeLimit.isTooLargeForContentLoading(length, FileUtilRt.getExtension(entry.getName()))) {
           throw new FileTooBigException(getPath() + "!/" + relativePath);
         }
         try (InputStream stream = entry.getInputStream()) {
@@ -109,7 +112,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
         InputStream stream = entry.getInputStream();
         if (stream != null) {
           long length = entry.getSize();
-          if (!FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
+          if (!FileSizeLimit.isTooLargeForContentLoading(length, FileUtilRt.getExtension(entry.getName()))) {
             try {
               return new BufferExposingByteArrayInputStream(StreamUtil.readBytes(stream, (int)length));
             }

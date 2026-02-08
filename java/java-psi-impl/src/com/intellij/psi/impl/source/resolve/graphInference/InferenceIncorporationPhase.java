@@ -18,7 +18,16 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
@@ -28,7 +37,14 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class InferenceIncorporationPhase {
   private static final Logger LOG = Logger.getInstance(InferenceIncorporationPhase.class);

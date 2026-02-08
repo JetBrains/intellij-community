@@ -4,7 +4,18 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
+import com.intellij.configurationStore.LOG
+import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.OLD_NAME_CONVERTER
+import com.intellij.configurationStore.SchemeExtensionProvider
+import com.intellij.configurationStore.SchemeNameToFileName
+import com.intellij.configurationStore.SerializableScheme
+import com.intellij.configurationStore.StorageManagerFileWriteRequestor
+import com.intellij.configurationStore.StreamProvider
+import com.intellij.configurationStore.creationEvent
+import com.intellij.configurationStore.hashElement
+import com.intellij.configurationStore.updatingEvent
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo
@@ -31,10 +42,15 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.*
+import com.intellij.util.PathUtilRt
+import com.intellij.util.ResourceUtil
+import com.intellij.util.SmartList
+import com.intellij.util.addSuppressed
+import com.intellij.util.application
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.toBufferExposingByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jdom.Document
@@ -45,7 +61,7 @@ import java.io.File
 import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate

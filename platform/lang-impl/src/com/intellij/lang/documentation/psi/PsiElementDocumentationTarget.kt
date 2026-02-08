@@ -15,7 +15,11 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.documentation.*
+import com.intellij.platform.backend.documentation.DocumentationContentData
+import com.intellij.platform.backend.documentation.DocumentationData
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.LinkData
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement

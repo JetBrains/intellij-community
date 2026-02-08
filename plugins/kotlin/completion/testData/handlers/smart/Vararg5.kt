@@ -5,3 +5,5 @@ fun bar(list: List<String>){
 }
 
 // ELEMENT: toTypedArray
+
+// IGNORE_K2

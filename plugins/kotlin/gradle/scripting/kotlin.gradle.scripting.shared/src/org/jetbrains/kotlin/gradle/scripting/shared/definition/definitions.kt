@@ -3,7 +3,17 @@ package org.jetbrains.kotlin.gradle.scripting.shared.definition
 
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.KotlinType
+import kotlin.script.experimental.api.ScriptAcceptedLocation
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.acceptedLocations
+import kotlin.script.experimental.api.baseClass
+import kotlin.script.experimental.api.displayName
+import kotlin.script.experimental.api.fileExtension
+import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.ide
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs

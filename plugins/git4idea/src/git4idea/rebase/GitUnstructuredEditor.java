@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * The dialog used as a genera purpose editor requested by Git via the GIT_EDITOR environment variable.

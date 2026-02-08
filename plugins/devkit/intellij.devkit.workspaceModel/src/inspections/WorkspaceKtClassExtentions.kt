@@ -13,9 +13,15 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import java.util.*
+import java.util.LinkedList
 import java.util.function.Predicate
 
 private val workspaceModelClasses: List<String> = listOfNotNull(

@@ -1,21 +1,50 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.productLayout.traversal
 
+import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.ContentModuleNode
+import com.intellij.platform.pluginGraph.ContentSourceKind
+import com.intellij.platform.pluginGraph.EDGE_CONTAINS_MODULE
+import com.intellij.platform.pluginGraph.GraphScope
+import com.intellij.platform.pluginGraph.PluginGraph
+import com.intellij.platform.pluginGraph.TargetDependencyScope
+import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.pluginGraph.TargetNode
+import com.intellij.platform.pluginGraph.containsEdge
 import kotlinx.serialization.Serializable
-import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.productLayout.buildModuleSetIndex
-import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 
 /**
- * Result of getting module dependencies from JPS model.
+ * Result of getting module dependencies from the plugin graph.
  */
 @Serializable
 internal data class ModuleDependenciesResult(
-  val moduleName: String,
-  val dependencies: List<String>,
-  val transitiveDependencies: List<String>? = null,
-  val error: String? = null
+  val moduleName: TargetName,
+  @JvmField val dependencies: List<TargetName>,
+  @JvmField val dependencyDetails: List<TargetDependencyInfo> = emptyList(),
+  @JvmField val transitiveDependencies: List<TargetName>? = null,
+  @JvmField val error: String? = null
+)
+
+/**
+ * Direct dependency entry with optional scope.
+ */
+@Serializable
+internal data class TargetDependencyInfo(
+  val name: TargetName,
+  @JvmField val scope: TargetDependencyScope? = null,
+)
+
+/**
+ * Result of resolving owning plugins for a module.
+ */
+@Serializable
+internal data class ModuleOwnersResult(
+  val moduleName: ContentModuleName,
+  @JvmField val owners: List<OwningPlugin>,
+  @JvmField val includeTestSources: Boolean,
+  @JvmField val error: String? = null,
 )
 
 /**
@@ -23,11 +52,11 @@ internal data class ModuleDependenciesResult(
  */
 @Serializable
 internal data class ModuleReachabilityResult(
-  val moduleName: String,
-  val moduleSetName: String,
-  val satisfied: List<String>,
-  val missing: List<MissingDependency>,
-  val error: String? = null
+  val moduleName: ContentModuleName,
+  @JvmField val moduleSetName: String,
+  @JvmField val satisfied: List<TargetName>,
+  @JvmField val missing: List<MissingDependency>,
+  @JvmField val error: String? = null
 )
 
 /**
@@ -35,9 +64,9 @@ internal data class ModuleReachabilityResult(
  */
 @Serializable
 internal data class MissingDependency(
-  val dependencyName: String,
-  val existsGlobally: Boolean,
-  val foundInModuleSets: List<String>
+  val dependencyName: TargetName,
+  @JvmField val existsGlobally: Boolean,
+  @JvmField val foundInModuleSets: List<String>
 )
 
 /**
@@ -45,194 +74,171 @@ internal data class MissingDependency(
  */
 @Serializable
 internal data class DependencyPathResult(
-  val fromModule: String,
-  val toModule: String,
-  val path: List<String>?,
-  val pathExists: Boolean,
-  val error: String? = null
+  val fromModule: TargetName,
+  val toModule: TargetName,
+  @JvmField val path: List<TargetName>?,
+  @JvmField val pathWithScopes: List<DependencyPathEntry>? = null,
+  @JvmField val pathExists: Boolean,
+  @JvmField val error: String? = null
 )
 
 /**
- * Gets direct JPS module dependencies for a given module.
- * This queries the JPS model to find production runtime dependencies.
- *
- * @param moduleName The module name to query
- * @param outputProvider Provider for accessing JPS modules
- * @param includeTransitive If true, collects ALL transitive dependencies (BFS traversal)
- * @return Module dependencies result with direct deps, and optionally transitive deps
+ * Entry in dependency path with optional edge scope from the previous node.
  */
+@Serializable
+internal data class DependencyPathEntry(
+  val module: TargetName,
+  @JvmField val scope: TargetDependencyScope? = null,
+)
+
 internal fun getModuleDependencies(
-  moduleName: String,
-  outputProvider: ModuleOutputProvider,
-  includeTransitive: Boolean = false
+  moduleName: TargetName,
+  graph: PluginGraph,
+  includeTransitive: Boolean = false,
+  includeTestDependencies: Boolean = false,
 ): ModuleDependenciesResult {
-  try {
-    val jpsModule = outputProvider.findModule(moduleName)
-    if (jpsModule == null) {
-      return ModuleDependenciesResult(
+  return try {
+    graph.query {
+      val targetId = resolveTargetId(moduleName)
+      if (targetId == null) {
+        return@query ModuleDependenciesResult(
+          moduleName = moduleName,
+          dependencies = emptyList(),
+          dependencyDetails = emptyList(),
+          transitiveDependencies = null,
+          error = "Module '${moduleName.value}' not found in graph"
+        )
+      }
+
+      val dependencyDetails = collectDirectTargetDependencies(targetId, includeTestDependencies)
+      val dependencies = dependencyDetails.map { it.name }
+      val transitiveDeps = if (includeTransitive) {
+        collectTransitiveTargetDependencies(targetId, includeTestDependencies)
+      }
+      else {
+        null
+      }
+
+      ModuleDependenciesResult(
         moduleName = moduleName,
-        dependencies = emptyList(),
-        transitiveDependencies = null,
-        error = "Module '$moduleName' not found in JPS model"
+        dependencies = dependencies,
+        dependencyDetails = dependencyDetails,
+        transitiveDependencies = transitiveDeps
       )
     }
-
-    val dependencies = jpsModule.getProductionModuleDependencies()
-      .map { it.moduleReference.moduleName }
-      .toList()
-
-    val transitiveDeps = if (includeTransitive) {
-      collectTransitiveDependencies(moduleName, outputProvider)
-    } else null
-
-    return ModuleDependenciesResult(
-      moduleName = moduleName,
-      dependencies = dependencies,
-      transitiveDependencies = transitiveDeps
-    )
   }
   catch (e: Exception) {
     return ModuleDependenciesResult(
       moduleName = moduleName,
       dependencies = emptyList(),
+      dependencyDetails = emptyList(),
       transitiveDependencies = null,
       error = "Failed to get dependencies: ${e.message}"
     )
   }
 }
 
-/**
- * Collects ALL transitive dependencies of a module using BFS traversal.
- * Returns a sorted list of all reachable modules (excluding the start module itself).
- *
- * @param moduleName Starting module
- * @param outputProvider Provider for accessing JPS modules
- * @return Sorted list of all transitive dependencies
- */
-private fun collectTransitiveDependencies(
-  moduleName: String,
-  outputProvider: ModuleOutputProvider
-): List<String> {
-  val queue = ArrayDeque<String>()
-  val visited = mutableSetOf<String>()
-  val allDeps = mutableSetOf<String>()
-
-  queue.add(moduleName)
-  visited.add(moduleName)
-
-  while (queue.isNotEmpty()) {
-    val current = queue.removeFirst()
-
-    // Get dependencies of current module
-    val jpsModule = outputProvider.findModule(current) ?: continue
-    val dependencies = jpsModule.getProductionModuleDependencies()
-      .map { it.moduleReference.moduleName }
-      .toList()
-
-    for (dependency in dependencies) {
-      // Add to result (exclude the starting module)
-      if (dependency != moduleName) {
-        allDeps.add(dependency)
-      }
-
-      // Continue BFS if not visited
-      if (dependency !in visited) {
-        visited.add(dependency)
-        queue.add(dependency)
-      }
-    }
+internal fun getModuleOwners(
+  moduleName: ContentModuleName,
+  graph: PluginGraph,
+  includeTestSources: Boolean = false,
+): ModuleOwnersResult {
+  return try {
+    val owners = collectOwningPlugins(graph, moduleName, includeTestSources)
+      .sortedWith(compareBy({ it.pluginId.value }, { it.name.value }, { it.isTest }))
+    ModuleOwnersResult(
+      moduleName = moduleName,
+      owners = owners,
+      includeTestSources = includeTestSources,
+      error = null,
+    )
   }
-
-  return allDeps.sorted()
+  catch (e: Exception) {
+    ModuleOwnersResult(
+      moduleName = moduleName,
+      owners = emptyList(),
+      includeTestSources = includeTestSources,
+      error = "Failed to resolve module owners: ${e.message}",
+    )
+  }
 }
 
-/**
- * Checks which dependencies of a module are reachable within a module set hierarchy.
- * Uses the same reachability logic as the dependency validator to show which dependencies
- * are satisfied and which are missing.
- *
- * @param moduleName The module to check
- * @param moduleSetName The module set context
- * @param allModuleSets All available module sets
- * @param outputProvider Provider for accessing JPS modules
- * @return Module reachability result
- */
 internal fun checkModuleReachability(
-  moduleName: String,
+  moduleName: ContentModuleName,
   moduleSetName: String,
-  allModuleSets: List<ModuleSetMetadata>,
-  outputProvider: ModuleOutputProvider
+  graph: PluginGraph,
 ): ModuleReachabilityResult {
-  try {
-    // Get JPS dependencies
-    val dependenciesResult = getModuleDependencies(moduleName, outputProvider)
-    if (dependenciesResult.error != null) {
-      return ModuleReachabilityResult(
-        moduleName = moduleName,
-        moduleSetName = moduleSetName,
-        satisfied = emptyList(),
-        missing = emptyList(),
-        error = dependenciesResult.error
-      )
-    }
-
-    // Find the module set (O(1) lookup via map)
-    val moduleSetsByName = allModuleSets.associateBy { it.moduleSet.name }
-    val moduleSetEntry = moduleSetsByName.get(moduleSetName)
-    if (moduleSetEntry == null) {
-      return ModuleReachabilityResult(
-        moduleName = moduleName,
-        moduleSetName = moduleSetName,
-        satisfied = emptyList(),
-        missing = emptyList(),
-        error = "Module set '$moduleSetName' not found"
-      )
-    }
-
-    // Build reachability index
-    val index = buildModuleSetIndex(allModuleSets.map { it.moduleSet })
-    
-    // Check if module is in this module set
-    val moduleDirectSets = index.moduleToDirectSets[moduleName] ?: emptySet()
-    if (moduleSetName !in moduleDirectSets) {
-      return ModuleReachabilityResult(
-        moduleName = moduleName,
-        moduleSetName = moduleSetName,
-        satisfied = emptyList(),
-        missing = emptyList(),
-        error = "Module '$moduleName' is not directly in module set '$moduleSetName'"
-      )
-    }
-
-    // Get reachable modules for this module
-    val reachableModules = index.moduleToReachableModules[moduleName] ?: emptySet()
-
-    // Classify dependencies
-    val satisfied = mutableListOf<String>()
-    val missing = mutableListOf<MissingDependency>()
-
-    for (dependency in dependenciesResult.dependencies) {
-      if (dependency in reachableModules) {
-        satisfied.add(dependency)
+  return try {
+    graph.query {
+      val moduleSetNode = moduleSet(moduleSetName)
+      if (moduleSetNode == null) {
+        return@query ModuleReachabilityResult(
+          moduleName = moduleName,
+          moduleSetName = moduleSetName,
+          satisfied = emptyList(),
+          missing = emptyList(),
+          error = "Module set '$moduleSetName' not found"
+        )
       }
-      else {
-        // Find which module sets contain this dependency
-        val containingModuleSets = index.moduleToDirectSets[dependency] ?: emptySet()
-        
-        missing.add(MissingDependency(
-          dependencyName = dependency,
-          existsGlobally = dependency in index.allModules,
-          foundInModuleSets = containingModuleSets.toList()
-        ))
-      }
-    }
 
-    return ModuleReachabilityResult(
-      moduleName = moduleName,
-      moduleSetName = moduleSetName,
-      satisfied = satisfied,
-      missing = missing
-    )
+      val moduleNode = contentModule(moduleName)
+      if (moduleNode == null) {
+        return@query ModuleReachabilityResult(
+          moduleName = moduleName,
+          moduleSetName = moduleSetName,
+          satisfied = emptyList(),
+          missing = emptyList(),
+          error = "Module '${moduleName.value}' not found in graph"
+        )
+      }
+
+      if (!containsEdge(EDGE_CONTAINS_MODULE, moduleSetNode.id, moduleNode.id)) {
+        return@query ModuleReachabilityResult(
+          moduleName = moduleName,
+          moduleSetName = moduleSetName,
+          satisfied = emptyList(),
+          missing = emptyList(),
+          error = "Module '${moduleName.value}' is not directly in module set '$moduleSetName'"
+        )
+      }
+
+      val targetId = resolveTargetId(TargetName(moduleName.value))
+      if (targetId == null) {
+        return@query ModuleReachabilityResult(
+          moduleName = moduleName,
+          moduleSetName = moduleSetName,
+          satisfied = emptyList(),
+          missing = emptyList(),
+          error = "Module '${moduleName.value}' has no backing target in graph"
+        )
+      }
+
+      val dependencies = collectDirectTargetDependencies(targetId, includeTestDependencies = false).map { it.name }
+      val satisfied = mutableListOf<TargetName>()
+      val missing = mutableListOf<MissingDependency>()
+
+      for (dependency in dependencies) {
+        val depModule = contentModule(ContentModuleName(dependency.value))
+        if (depModule != null && moduleSetNode.containsModuleRecursive(depModule)) {
+          satisfied.add(dependency)
+        }
+        else {
+          val containingSets = if (depModule != null) collectDirectModuleSets(depModule) else emptyList()
+          missing.add(MissingDependency(
+            dependencyName = dependency,
+            existsGlobally = containingSets.isNotEmpty(),
+            foundInModuleSets = containingSets
+          ))
+        }
+      }
+
+      ModuleReachabilityResult(
+        moduleName = moduleName,
+        moduleSetName = moduleSetName,
+        satisfied = satisfied,
+        missing = missing
+      )
+    }
   }
   catch (e: Exception) {
     return ModuleReachabilityResult(
@@ -245,115 +251,194 @@ internal fun checkModuleReachability(
   }
 }
 
-/**
- * Finds a transitive dependency path from one module to another.
- * Uses BFS to find the shortest path through JPS module dependencies.
- *
- * OPTIMIZED: Uses parent pointers instead of copying paths at each node,
- * reducing memory allocations from O(depth * nodes) to O(nodes).
- *
- * @param fromModule Starting module
- * @param toModule Target module
- * @param outputProvider Provider for accessing JPS modules
- * @return Dependency path result
- */
 internal fun findDependencyPath(
-  fromModule: String,
-  toModule: String,
-  outputProvider: ModuleOutputProvider
+  fromModule: TargetName,
+  toModule: TargetName,
+  graph: PluginGraph,
+  includeTestDependencies: Boolean = false,
+  includeScopes: Boolean = false,
 ): DependencyPathResult {
-  try {
-    // Check if both modules exist
-    if (outputProvider.findModule(fromModule) == null) {
-      return DependencyPathResult(
-        fromModule = fromModule,
-        toModule = toModule,
-        path = null,
-        pathExists = false,
-        error = "Module '$fromModule' not found in JPS model"
-      )
-    }
-
-    if (outputProvider.findModule(toModule) == null) {
-      return DependencyPathResult(
-        fromModule = fromModule,
-        toModule = toModule,
-        path = null,
-        pathExists = false,
-        error = "Module '$toModule' not found in JPS model"
-      )
-    }
-
-    // BFS using parent pointers (memory-efficient)
-    val queue = ArrayDeque<String>()
-    val parent = mutableMapOf<String, String?>()
-
-    queue.add(fromModule)
-    parent[fromModule] = null  // Root has no parent
-
-    while (queue.isNotEmpty()) {
-      val current = queue.removeFirst()
-
-      // Found target - reconstruct path
-      if (current == toModule) {
-        val path = reconstructPath(parent, fromModule, toModule)
-        return DependencyPathResult(
+  return try {
+    graph.query {
+      val fromTargetId = resolveTargetId(fromModule)
+      if (fromTargetId == null) {
+        return@query DependencyPathResult(
           fromModule = fromModule,
           toModule = toModule,
-          path = path,
-          pathExists = true
+          path = null,
+          pathExists = false,
+          error = "Module '${fromModule.value}' not found in graph"
         )
       }
 
-      // Get dependencies of current module
-      val jpsModule = outputProvider.findModule(current) ?: continue
-      val dependencies = jpsModule.getProductionModuleDependencies()
-        .map { it.moduleReference.moduleName }
-        .toList()
+      val toTargetId = resolveTargetId(toModule)
+      if (toTargetId == null) {
+        return@query DependencyPathResult(
+          fromModule = fromModule,
+          toModule = toModule,
+          path = null,
+          pathExists = false,
+          error = "Module '${toModule.value}' not found in graph"
+        )
+      }
 
-      for (dependency in dependencies) {
-        if (dependency !in parent) {  // Not visited
-          parent[dependency] = current
-          queue.add(dependency)
+      val queue = ArrayDeque<Int>()
+      val parent = HashMap<Int, Int>()
+      val parentScope = if (includeScopes) HashMap<Int, TargetDependencyScope?>() else null
+
+      queue.add(fromTargetId)
+      parent.put(fromTargetId, -1)
+
+      while (queue.isNotEmpty()) {
+        val currentId = queue.removeFirst()
+
+        if (currentId == toTargetId) {
+          val path = reconstructTargetPath(parent, toTargetId)
+          val pathWithScopes = if (includeScopes) {
+            reconstructTargetPathWithScopes(parent, parentScope ?: emptyMap(), toTargetId)
+          }
+          else {
+            null
+          }
+          return@query DependencyPathResult(
+            fromModule = fromModule,
+            toModule = toModule,
+            path = path,
+            pathWithScopes = pathWithScopes,
+            pathExists = true
+          )
+        }
+
+        TargetNode(currentId).dependsOn { dep ->
+          val scope = dep.scope()
+          if (!shouldIncludeDependency(scope, includeTestDependencies)) return@dependsOn
+          val depId = dep.targetId
+          if (!parent.containsKey(depId)) {
+            parent.put(depId, currentId)
+            if (parentScope != null) {
+              parentScope.put(depId, scope)
+            }
+            queue.add(depId)
+          }
         }
       }
-    }
 
-    // No path found
-    return DependencyPathResult(
-      fromModule = fromModule,
-      toModule = toModule,
-      path = null,
-      pathExists = false
-    )
+      DependencyPathResult(
+        fromModule = fromModule,
+        toModule = toModule,
+        path = null,
+        pathWithScopes = null,
+        pathExists = false
+      )
+    }
   }
   catch (e: Exception) {
     return DependencyPathResult(
       fromModule = fromModule,
       toModule = toModule,
       path = null,
+      pathWithScopes = null,
       pathExists = false,
       error = "Failed to find path: ${e.message}"
     )
   }
 }
 
-/**
- * Reconstructs path from parent pointers.
- * Only called once when target is found, avoiding repeated list allocations.
- */
-private fun reconstructPath(
-  parent: Map<String, String?>,
-  fromModule: String,
-  toModule: String
-): List<String> {
-  val path = mutableListOf<String>()
-  var current: String? = toModule
-  while (current != null) {
-    path.add(current)
-    current = parent.get(current)
+private fun GraphScope.resolveTargetId(moduleName: TargetName): Int? {
+  val moduleNode = contentModule(ContentModuleName(moduleName.value))
+  if (moduleNode != null) {
+    var targetId: Int? = null
+    moduleNode.backedBy { target -> targetId = target.id }
+    if (targetId != null) return targetId
   }
-  return path.reversed()
+  return target(moduleName.value)?.id
 }
 
+private fun GraphScope.collectDirectTargetDependencies(
+  targetId: Int,
+  includeTestDependencies: Boolean,
+): List<TargetDependencyInfo> {
+  val result = ArrayList<TargetDependencyInfo>()
+  TargetNode(targetId).dependsOn { dep ->
+    val scope = dep.scope()
+    if (!shouldIncludeDependency(scope, includeTestDependencies)) return@dependsOn
+    result.add(TargetDependencyInfo(TargetName(dep.target().name()), scope))
+  }
+  return result
+}
 
+private fun GraphScope.collectTransitiveTargetDependencies(
+  startTargetId: Int,
+  includeTestDependencies: Boolean,
+): List<TargetName> {
+  val visited = HashSet<Int>()
+  val queue = ArrayDeque<Int>()
+  val allDeps = HashSet<TargetName>()
+
+  queue.add(startTargetId)
+  visited.add(startTargetId)
+
+  while (queue.isNotEmpty()) {
+    val currentId = queue.removeFirst()
+    TargetNode(currentId).dependsOn { dep ->
+      val scope = dep.scope()
+      if (!shouldIncludeDependency(scope, includeTestDependencies)) return@dependsOn
+      val depId = dep.targetId
+      if (depId != startTargetId) {
+        allDeps.add(TargetName(dep.target().name()))
+      }
+      if (visited.add(depId)) {
+        queue.add(depId)
+      }
+    }
+  }
+
+  return allDeps.sortedBy { it.value }
+}
+
+private fun shouldIncludeDependency(scope: TargetDependencyScope?, includeTestDependencies: Boolean): Boolean {
+  return when (scope) {
+    TargetDependencyScope.TEST -> includeTestDependencies
+    TargetDependencyScope.PROVIDED -> false
+    else -> true
+  }
+}
+
+private fun GraphScope.collectDirectModuleSets(module: ContentModuleNode): List<String> {
+  val result = ArrayList<String>()
+  module.contentProductionSources { source ->
+    if (source.kind == ContentSourceKind.MODULE_SET) {
+      result.add(source.name())
+    }
+  }
+  return result
+}
+
+private fun GraphScope.reconstructTargetPath(parent: Map<Int, Int>, toTargetId: Int): List<TargetName> {
+  val pathIds = mutableListOf<Int>()
+  var current = toTargetId
+  while (current >= 0) {
+    pathIds.add(current)
+    current = parent.get(current) ?: -1
+  }
+  pathIds.reverse()
+  return pathIds.map { TargetName(TargetNode(it).name()) }
+}
+
+private fun GraphScope.reconstructTargetPathWithScopes(
+  parent: Map<Int, Int>,
+  parentScope: Map<Int, TargetDependencyScope?>,
+  toTargetId: Int,
+): List<DependencyPathEntry> {
+  val pathIds = mutableListOf<Int>()
+  var current = toTargetId
+  while (current >= 0) {
+    pathIds.add(current)
+    current = parent.get(current) ?: -1
+  }
+  pathIds.reverse()
+  return pathIds.mapIndexed { index, id ->
+    val scope = if (index == 0) null else parentScope.get(id)
+    DependencyPathEntry(TargetName(TargetNode(id).name()), scope)
+  }
+}

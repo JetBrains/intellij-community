@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.utils
 
-import com.intellij.execution.ui.*
+import com.intellij.execution.ui.FragmentedSettings
+import com.intellij.execution.ui.NestedGroupFragment
+import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.execution.ui.TagButton
+import com.intellij.execution.ui.VariantTagFragment
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager

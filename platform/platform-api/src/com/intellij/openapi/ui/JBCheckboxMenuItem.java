@@ -17,8 +17,10 @@ package com.intellij.openapi.ui;
 
 import com.intellij.util.ui.GraphicsUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JCheckBoxMenuItem;
+import java.awt.Graphics;
 
 public class JBCheckboxMenuItem extends JCheckBoxMenuItem {
   public JBCheckboxMenuItem() {

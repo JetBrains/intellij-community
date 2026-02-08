@@ -2,7 +2,11 @@
 package org.jetbrains.ide
 
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.testFramework.*
+import com.intellij.testFramework.DisposeModulesRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.runInEdtAndWait
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat

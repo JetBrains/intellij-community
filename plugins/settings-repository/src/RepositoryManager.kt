@@ -4,7 +4,7 @@ package org.jetbrains.settingsRepository
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.CollectionFactory
 import java.io.InputStream
-import java.util.*
+import java.util.Collections
 
 interface RepositoryManager {
   fun createRepositoryIfNeeded(): Boolean

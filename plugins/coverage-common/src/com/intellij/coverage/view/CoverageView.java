@@ -2,7 +2,11 @@
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
-import com.intellij.coverage.*;
+import com.intellij.coverage.CoverageAnnotator;
+import com.intellij.coverage.CoverageBundle;
+import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageLogger;
+import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
@@ -15,11 +19,24 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -39,7 +56,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AutoScrollFromSourceHandler;
+import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.GotItTooltip;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBTreeTable;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.TreeVisitor;
@@ -54,13 +77,26 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.AbstractAction;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FontMetrics;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -148,7 +184,9 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        enterSelected(false);
+        WriteIntentReadAction.run(() -> {
+          enterSelected(false);
+        });
         return true;
       }
     }.installOn(myTable.getTree());

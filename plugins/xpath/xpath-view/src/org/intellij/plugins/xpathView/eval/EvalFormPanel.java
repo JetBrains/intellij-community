@@ -18,7 +18,11 @@ package org.intellij.plugins.xpathView.eval;
 import org.intellij.plugins.xpathView.ui.InputForm;
 import org.intellij.plugins.xpathView.ui.InputFormPanel;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public class EvalFormPanel extends JPanel implements InputForm {
     @SuppressWarnings({ "UNUSED_SYMBOL"})

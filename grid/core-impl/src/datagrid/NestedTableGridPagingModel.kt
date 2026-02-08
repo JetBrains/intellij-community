@@ -3,7 +3,6 @@ package com.intellij.database.datagrid
 import com.intellij.database.datagrid.NestedTablesDataGridModel.NestedTableCellCoordinate
 import com.intellij.database.datagrid.nested.NestedTablesAware
 import com.intellij.database.datagrid.nested.NestedTablesAware.NonEmptyStack
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * The NestedTableGridPagingModel class is an implementation of the MultiPageModel interface designed to work with
@@ -28,47 +27,15 @@ class NestedTableGridPagingModel<Row, Column>(
   }
 
   override suspend fun enterNestedTable(coordinate: NestedTableCellCoordinate, nestedTable: NestedTable): Void? {
-    navigateIntoNestedTable(nestedTable)
+    myCurrentPagingModel = createPageModel(nestedTable)
+    myNestedTablePageModels.push(myCurrentPagingModel)
     return null
   }
 
   override suspend fun exitNestedTable(steps: Int): Void? {
-    navigateBackFromNestedTable(steps)
-    return null
-  }
-
-  /**
-   * Navigates into a nested table in the grid paging model.
-   *
-   * @param newSelectedNestedTable The nested table to navigate into.
-   *
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(
-    "This method is deprecated and marked for removal. Use the {@link #enterNestedTable(NestedTableCellCoordinate, NestedTable)} method instead.")
-  fun navigateIntoNestedTable(newSelectedNestedTable: NestedTable) {
-    myCurrentPagingModel = createPageModel(newSelectedNestedTable)
-    myNestedTablePageModels.push(myCurrentPagingModel)
-  }
-
-  /**
-   * Navigates back from a nested table in the grid paging model.
-   *
-   *
-   * If the given `steps` parameter is negative or equals to or greater than
-   * the depth of stack of nested tables, an exception is thrown.
-   *
-   * @param steps The number of steps to navigate back. This parameter
-   * must be a non-negative integer less than the current depth
-   * of [.myNestedTablePageModels] stack, i.e., it should be within
-   * the range [0, size).
-   *
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("This method is deprecated and marked for removal. Use the {@link #exitNestedTable(int)}} method instead.")
-  fun navigateBackFromNestedTable(steps: Int) {
     myNestedTablePageModels.pop(steps)
     myCurrentPagingModel = myNestedTablePageModels.last()
+    return null
   }
 
   fun reset() {

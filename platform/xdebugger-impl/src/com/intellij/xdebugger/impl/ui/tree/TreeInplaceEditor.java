@@ -4,9 +4,10 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.xdebugger.impl.ui.InplaceEditor;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 
 public abstract class TreeInplaceEditor extends InplaceEditor {
 

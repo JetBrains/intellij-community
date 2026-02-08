@@ -1,9 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PageContainer
+import com.intellij.ide.plugins.PluginManagementPolicy
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledCpuArchRequirement
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
+import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.ModuleDependency
 import com.intellij.ide.plugins.marketplace.PluginContentModule

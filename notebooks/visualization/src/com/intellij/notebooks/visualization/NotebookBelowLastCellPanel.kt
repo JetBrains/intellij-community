@@ -5,13 +5,16 @@ import com.intellij.notebooks.ui.visualization.NotebookUtil.isOrdinaryNotebookEd
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightable
 import com.intellij.notebooks.visualization.ui.jupyterToolbars.JupyterAddNewCellToolbar
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Cursor
+import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.JPanel
 
 /**
@@ -30,7 +33,7 @@ class NotebookBelowLastCellPanel(
       isOpaque = false
       border = HighlightableTopBorder(editor.notebookAppearance.cellBorderHeight)
 
-      val actionGroup = ActionManager.getInstance().getAction("Jupyter.CreateNewCellsPanel") as ActionGroup
+      val actionGroup = ActionUtil.getActionGroup("Jupyter.CreateNewCellsPanel")!!
 
       add(panel {
         row {

@@ -21,10 +21,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.ParameterizedCachedValue
+import com.intellij.python.pyproject.model.api.ModuleCreateInfo
+import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
@@ -34,7 +40,6 @@ import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CompletableDeferred
@@ -181,8 +186,17 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
     module
   )
 
+  private suspend fun detectBestToolForModule(module: Module): CreateSdkInfoWithTool? =
+    when (val i = module.getModuleInfo()) {
+      is ModuleCreateInfo.CreateSdkInfoWrapper -> CreateSdkInfoWithTool(i.createSdkInfo, i.toolId)
+      is ModuleCreateInfo.SameAs -> detectBestToolForModule(i.parentModule)
+      null -> null
+    }
+
   private fun detectBestToolAsync(module: Module): CachedValueProvider.Result<Deferred<CreateSdkInfoWithTool?>> {
-    val result = coroutineScope.async { PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull() }
+    val result = coroutineScope.async {
+      detectBestToolForModule(module)
+    }
     result.invokeOnCompletion { getOrCreateModificationTracker(module).incModificationCount() }
     return CachedValueProvider.Result.create(result, getOrCreateModificationTracker(module))
   }

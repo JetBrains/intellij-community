@@ -2,8 +2,12 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
-import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction
+import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo

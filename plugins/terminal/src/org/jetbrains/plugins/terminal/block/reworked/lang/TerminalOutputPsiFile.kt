@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.lang
 
-import com.intellij.lang.*
+import com.intellij.lang.ASTNode
+import com.intellij.lang.FileASTNode
+import com.intellij.lang.Language
+import com.intellij.lang.LighterAST
+import com.intellij.lang.TreeBackedLighterAST
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileType
@@ -10,7 +14,16 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.AbstractFileViewProvider
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiReference
+import com.intellij.psi.ResolveState
 import com.intellij.psi.impl.source.CharTableImpl
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope

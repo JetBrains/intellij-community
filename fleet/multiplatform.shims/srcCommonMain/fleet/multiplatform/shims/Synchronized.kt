@@ -2,7 +2,9 @@
 package fleet.multiplatform.shims
 
 import fleet.util.multiplatform.linkToActual
-import kotlin.contracts.*
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.jvm.JvmInline
 
 @OptIn(ExperimentalContracts::class)

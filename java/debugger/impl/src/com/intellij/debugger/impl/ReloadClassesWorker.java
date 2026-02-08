@@ -31,10 +31,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 class ReloadClassesWorker {
@@ -127,7 +129,7 @@ class ReloadClassesWorker {
     }
 
     final DebugProcessImpl debugProcess = myDebuggerSession.getProcess();
-    final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    final VirtualMachineProxyImpl virtualMachineProxy = VirtualMachineProxyImpl.getCurrent();
 
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();

@@ -1,0 +1,14 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.gradle.completion"/>
+    <plugin id="com.intellij.properties"/>
+    <module name="intellij.properties.backend.psi"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij.properties">
+    <implicitPropertyUsageProvider
+      implementation="com.intellij.gradle.properties.GradleWrapperImplicitPropertyUsageProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <executionChecker implementation="com.intellij.gradle.properties.OutdatedGradleVersionChecker"/>
+  </extensions>
+</idea-plugin>

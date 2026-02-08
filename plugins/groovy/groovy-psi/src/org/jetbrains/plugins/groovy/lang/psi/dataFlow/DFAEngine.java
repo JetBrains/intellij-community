@@ -10,7 +10,12 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.List;
+import java.util.Optional;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.postOrder;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;

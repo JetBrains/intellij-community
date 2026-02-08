@@ -42,7 +42,9 @@ public final class ProgressSuspender implements AutoCloseable {
   private final Map<ProgressIndicator, Integer> myProgressesInNonSuspendableSections = new ConcurrentHashMap<>();
   private boolean myClosed;
 
-  private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull @NlsContexts.ProgressText String suspendedText) {
+  private static final Map<ProgressIndicator, ProgressSuspender> ourProgressToSuspenderMap = new ConcurrentHashMap<>();
+
+  private ProgressSuspender(@NotNull ProgressIndicator progress, @NotNull @NlsContexts.ProgressText String suspendedText) {
     mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;
@@ -50,12 +52,14 @@ public final class ProgressSuspender implements AutoCloseable {
 
     attachToProgress(progress);
 
-    new ProgressIndicatorListener() {
-      @Override
-      public void cancelled() {
-        resumeProcess();
-      }
-    }.installToProgress(progress);
+    if (progress instanceof ProgressIndicatorEx indicatorEx) {
+      new ProgressIndicatorListener() {
+        @Override
+        public void cancelled() {
+          resumeProcess();
+        }
+      }.installToProgress(indicatorEx);
+    }
 
     myPublisher.suspendableProgressAppeared(this);
   }
@@ -68,21 +72,13 @@ public final class ProgressSuspender implements AutoCloseable {
       ((ProgressManagerImpl)ProgressManager.getInstance()).removeCheckCanceledHook(myHook);
     }
     for (ProgressIndicator progress : myProgresses) {
-      ((UserDataHolder) progress).putUserData(PROGRESS_SUSPENDER, null);
+      ourProgressToSuspenderMap.remove(progress);
       myPublisher.suspendableProgressRemoved(this, progress);
     }
   }
 
-  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicatorEx indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
     return new ProgressSuspender(indicator, suspendedText);
-  }
-
-  public static @Nullable("When progress indicator cannot be made suspendable (e.g. EmptyProgressIndicator)") ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
-    if (indicator instanceof ProgressIndicatorEx indicatorEx) {
-      return markSuspendable(indicatorEx, suspendedText);
-    } else {
-      return null;
-    }
   }
 
   public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {
@@ -96,15 +92,15 @@ public final class ProgressSuspender implements AutoCloseable {
   }
 
   public static ProgressSuspender getSuspender(@NotNull ProgressIndicator indicator) {
-    return indicator instanceof UserDataHolder ? ((UserDataHolder)indicator).getUserData(PROGRESS_SUSPENDER) : null;
+    return ourProgressToSuspenderMap.get(indicator);
   }
 
   /**
    * Associates an additional progress indicator with this suspender, so that its {@code #checkCanceled} can later block the calling thread.
    */
-  public void attachToProgress(@NotNull ProgressIndicatorEx progress) {
+  public void attachToProgress(@NotNull ProgressIndicator progress) {
     myProgresses.add(progress);
-    ((UserDataHolder) progress).putUserData(PROGRESS_SUSPENDER, this);
+    ourProgressToSuspenderMap.put(progress, this);
     myPublisher.suspendableProgressAppeared(this, progress);
   }
 

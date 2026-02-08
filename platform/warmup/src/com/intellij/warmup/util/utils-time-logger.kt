@@ -7,11 +7,18 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.application
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.delay
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.Duration
-import java.util.*
+import java.util.ArrayDeque
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 

@@ -10,7 +10,7 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueContainer
 import com.intellij.xdebugger.frame.XValuePlace
 import org.jetbrains.org.objectweb.asm.Type
-import java.util.*
+import java.util.LinkedList
 
 abstract class ValueContainerIterator(container: XValueContainer) : Iterator<XValueContainer> {
     private companion object {

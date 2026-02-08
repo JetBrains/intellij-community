@@ -56,6 +56,8 @@ internal data class CustomModuleDescription(
   val bazelPackage: String,
   val bazelTargetName: String,
   val outputDirectory: String,
+  val resources: List<String>,
+  val sources: List<String>,
   val additionalProductionTargets: List<String> = emptyList(),
   val additionalProductionJars: List<String> = emptyList(),
 ) {
@@ -68,12 +70,24 @@ internal data class CustomModuleDescription(
 }
 
 internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = listOf(
-  CustomModuleDescription(moduleName = "intellij.idea.community.build.zip", bazelPackage = "@community//build", bazelTargetName = "zip",
-                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
-  CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@community//build", bazelTargetName = "dependency-graph",
-                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
-  CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt", bazelPackage = "@community//build", bazelTargetName = "build-javac-rt",
-                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
+  CustomModuleDescription(moduleName = "intellij.idea.community.build.zip",
+                          bazelPackage = "@community//build",
+                          bazelTargetName = "zip",
+                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build",
+                          resources = listOf(),
+                          sources = listOf("@rules_jvm//zip:zip_sources")),
+  CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph",
+                          bazelPackage = "@community//build",
+                          bazelTargetName = "dependency-graph",
+                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build",
+                          resources = listOf("@rules_jvm//dependency-graph:dependency-graph_resources"),
+                          sources = listOf("@rules_jvm//dependency-graph:dependency-graph_sources")),
+  CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt",
+                          bazelPackage = "@community//build",
+                          bazelTargetName = "build-javac-rt",
+                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build",
+                          resources = listOf("@rules_jvm//jps-builders-6:build-javac-rt_resources"),
+                          sources = listOf("@rules_jvm//jps-builders-6:build-javac-rt_sources")),
 ).associateBy { it.moduleName }
 
 @Suppress("ReplaceGetOrSet")
@@ -81,6 +95,7 @@ internal class BazelBuildFileGenerator(
   val ultimateRoot: Path?,
   val communityRoot: Path,
   private val project: JpsProject,
+  private val projectDir: Path,
   val urlCache: UrlCache,
   val customModules: Map<String, CustomModuleDescription>,
 ) {
@@ -109,6 +124,14 @@ internal class BazelBuildFileGenerator(
                         "Unable to find parent for all content roots above $imlDir for module ${module.name}.\n" +
                         "content roots: ${contentRoots.joinToString(" ")}"
                       )
+    }
+
+    val customModule = customModules[module.name]
+    if (customModule != null) {
+      bazelBuildDir = when {
+        customModule.bazelPackage.startsWith("@community") -> communityRoot.resolve(customModule.bazelPackage.removePrefix("@community//"))
+        else -> ultimateRoot?.resolve(customModule.bazelPackage.removePrefix("//")) ?: error("Custom module ${module.name} is not under community directory")
+      }
     }
 
     val isCommunity = imlDir.startsWith(communityRoot)
@@ -144,7 +167,10 @@ internal class BazelBuildFileGenerator(
     for (element in module.dependenciesList.dependencies) {
       if (element is JpsModuleDependency) {
         val ref = element.moduleReference
-        getModuleDescriptor(requireNotNull(ref.resolve()) { "Cannot resolve module ${ref.moduleName}" })
+        val resolved = requireNotNull(ref.resolve()) {
+          "Cannot resolve module ${ref.moduleName} (dependency of '${module.name}') in $projectDir/.idea/modules.xml"
+        }
+        getModuleDescriptor(resolved)
       }
     }
 
@@ -529,6 +555,7 @@ internal class BazelBuildFileGenerator(
 
   private fun BuildFile.generateBuildTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList): ModuleTargets {
     val module = moduleDescriptor.module
+    val customModule = customModules[moduleDescriptor.module.name]
     val jvmTarget = getLanguageLevel(module)
     val kotlincOptionsLabel = computeKotlincOptions(buildFile = this, module = moduleDescriptor, jvmTarget = jvmTarget)
                               ?: (if (jvmTarget == "21") null else "@community//:k$jvmTarget")
@@ -541,13 +568,15 @@ internal class BazelBuildFileGenerator(
     val testCompileTargets = mutableListOf<BazelLabel>()
 
     val sources = moduleDescriptor.sources
-    if (moduleDescriptor.resources.isNotEmpty()) {
-      val result = generateResources(module = moduleDescriptor, forTests = false)
-      resourceTargets.addAll(result.resourceTargets)
-    }
-    if (moduleDescriptor.testResources.isNotEmpty()) {
-      val result = generateResources(module = moduleDescriptor, forTests = true)
-      testResourceTargets.addAll(result.resourceTargets)
+    if (customModule == null) {
+      if (moduleDescriptor.resources.isNotEmpty()) {
+        val result = generateResources(module = moduleDescriptor, forTests = false)
+        resourceTargets.addAll(result.resourceTargets)
+      }
+      if (moduleDescriptor.testResources.isNotEmpty()) {
+        val result = generateResources(module = moduleDescriptor, forTests = true)
+        testResourceTargets.addAll(result.resourceTargets)
+      }
     }
 
     // reuse production generated provided libraries in test
@@ -565,9 +594,19 @@ internal class BazelBuildFileGenerator(
       }
 
       visibility(arrayOf("//visibility:public"))
-      option("srcs", sourcesToGlob(sources, moduleDescriptor))
-      if (resourceTargets.isNotEmpty()) {
-        option("resources", resourceTargets.map { ":${it.label}" })
+      if (customModule == null) {
+        option("srcs", sourcesToGlob(sources, moduleDescriptor))
+      }
+      else if (customModule.sources.isNotEmpty()) {
+        option("srcs", customModule.sources)
+      }
+      if (customModule == null) {
+        if (resourceTargets.isNotEmpty()) {
+          option("resources", resourceTargets.map { ":${it.label}" })
+        }
+      }
+      else if (customModule.resources.isNotEmpty()) {
+        option("resources", customModule.resources)
       }
       if (javacOptionsLabel != null && sources.isNotEmpty()) {
         option("javac_opts", javacOptionsLabel)
@@ -649,8 +688,6 @@ internal class BazelBuildFileGenerator(
     else {
       relativePathFromRoot
     }
-
-    val customModule = customModules[moduleDescriptor.module.name]
 
     val packagePrefix = when {
       customModule != null -> customModule.bazelPackage
@@ -1128,6 +1165,18 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   handleArgument(K2JVMCompilerArguments::noParamAssertions) {
     if (it) {
       options.put("x_no_param_assertions", true)
+    }
+  }
+  //x_render_internal_diagnostic_names
+  handleArgument(K2JVMCompilerArguments::renderInternalDiagnosticNames) {
+    if (it) {
+      options.put("x_render_internal_diagnostic_names", true)
+    }
+  }
+  //x_report_all_warnings
+  handleArgument(K2JVMCompilerArguments::reportAllWarnings) {
+    if (it) {
+      options.put("x_report_all_warnings", true)
     }
   }
   //x_sam_conversions

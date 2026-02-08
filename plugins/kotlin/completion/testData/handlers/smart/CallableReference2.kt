@@ -7,3 +7,4 @@ fun bar() {
 fun f(){}
 
 // ELEMENT: ::f
+// IGNORE_K2

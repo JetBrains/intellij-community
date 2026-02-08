@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.config
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalRootProjectPath
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project

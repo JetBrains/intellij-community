@@ -7,7 +7,7 @@ import com.intellij.util.ReflectionUtil
 import org.apache.commons.lang3.ClassUtils
 import java.lang.reflect.Array
 import java.lang.reflect.Field
-import java.util.*
+import java.util.IdentityHashMap
 import java.util.function.Consumer
 
 class GradleObjectTraverser(

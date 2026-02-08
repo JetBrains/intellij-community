@@ -3,8 +3,12 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.BreakpointStepMethodFilter
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.RequestHint
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -18,8 +22,14 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
+import org.jetbrains.kotlin.idea.debugger.core.hasUserCodeOnFirstLine
+import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
+import org.jetbrains.kotlin.idea.debugger.core.isInSuspendMethod
+import org.jetbrains.kotlin.idea.debugger.core.isInvokeSuspendMethod
+import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
+import org.jetbrains.kotlin.idea.debugger.core.isOnSuspendReturnOrReenter
+import org.jetbrains.kotlin.idea.debugger.core.isOnSuspensionPoint
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.isSyntheticDefaultMethodPossiblyConvertedToStatic
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.matchesDefaultMethodSignature
 import org.jetbrains.kotlin.load.java.JvmAbi

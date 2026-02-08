@@ -27,7 +27,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.KeyStroke
+import javax.swing.ScrollPaneConstants
 import javax.swing.border.CompoundBorder
 
 class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settingsCache.preferences, SettingsPreferencesKind.Keymap, AllIcons.TransferSettings.Keymap) {

@@ -1,0 +1,35 @@
+Index: platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml b/platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml
+--- a/platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml	(revision 37976ff1a51e226063f8165c4d1b3ac439282428)
++++ b/platform/platform-resources/src/META-INF/SearchEverywhereCodeInsightContributors.xml	(date 1747817991598)
+@@ -1,7 +1,7 @@
+ <!--Indexes-dependent SE contributors-->
+ <idea-plugin>
+   <extensions defaultExtensionNs="com.intellij">
+-    <advancedSetting id="se.text.search" default="true" groupKey="group.advanced.settings.se"/>
++    <advancedSetting id="se.text.search" default="false" groupKey="group.advanced.settings.se"/>
+     <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
+     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Factory"/>
+     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Factory"/>
+Index: platform/platform-resources/src/META-INF/PlatformExtensions.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-resources/src/META-INF/PlatformExtensions.xml b/platform/platform-resources/src/META-INF/PlatformExtensions.xml
+--- a/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(revision 205cd88fa199b3443866419f84bbd203c5be7cf9)
++++ b/platform/platform-resources/src/META-INF/PlatformExtensions.xml	(date 1758021161733)
+@@ -1793,8 +1793,6 @@
+     <actionPromoter implementation="com.intellij.ide.actions.speedSearch.SpeedSearchActionPromoter"/>
+ 
+     <fileEditorProvider id="learnIde" implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.editorTab.LearnIdeFileEditorProvider"/>
+-    <interactiveCourseFactory implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyInteractiveCourse"/>
+-
+     <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>
+ 
+     <cachesInvalidator implementation="com.intellij.openapi.editor.impl.zombie.NecropolisDestroyer$InvalidationRequest"/>
+ 

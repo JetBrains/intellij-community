@@ -8,10 +8,19 @@ import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabEdition
+import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
+import org.jetbrains.plugins.gitlab.api.GitLabGidData
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.gitLabQuery
+import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.withErrorStats
+import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBranchDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestMetricsDTO
@@ -170,11 +179,13 @@ suspend fun GitLabApi.Rest.mergeRequestSetReviewers(
   mrIid: String,
   reviewers: List<GitLabUserDTO>
 ): HttpResponse<out Unit> {
-  val uri = URI(project.restApiUri
-                  .resolveRelative("merge_requests")
-                  .resolveRelative(mrIid).toString()
-                // Dumb hack: IDs are of course URLs rather than numbers, but this endpoint requires a number.
-                + "?reviewer_ids=${reviewers.joinToString(",") { it.id.substringAfterLast('/') }}")
+  val reviewerIds = reviewers.map { GitLabGidData(it.id).guessRestId() }
+  val uri = project.restApiUri
+    .resolveRelative("merge_requests")
+    .resolveRelative(mrIid)
+    .withQuery {
+      "reviewer_ids" eq reviewerIds
+    }
   val request = request(uri)
     .PUT(HttpRequest.BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_PUT_MERGE_REQUEST_REVIEWERS) {

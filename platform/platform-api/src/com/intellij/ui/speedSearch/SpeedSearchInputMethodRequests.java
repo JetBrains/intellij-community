@@ -3,7 +3,7 @@ package com.intellij.ui.speedSearch;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
 import java.text.AttributedCharacterIterator;

@@ -28,7 +28,12 @@ import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Paint
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -90,6 +95,8 @@ open class InternalUICustomization {
   open val isMainMenuBottomBorder: Boolean = true
 
   open val isTabOccupiesWholeHeight: Boolean = true
+
+  open val isRoundedTabDuringDrag: Boolean = false
 
   internal open fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {}
 
@@ -207,4 +214,10 @@ open class InternalUICustomization {
   open fun getTabLayoutStart(layout: ContentLayout): Int = 0
 
   open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
+
+  open fun calculateTabWidth(widthWithInsets: Int, insetsWidth: Int): Int = widthWithInsets
+
+  open fun onStatusBarVisibilityChanged(centerComponent: JComponent, isStatusBarVisible: Boolean) {}
+
+  open fun getTabHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int = 0
 }

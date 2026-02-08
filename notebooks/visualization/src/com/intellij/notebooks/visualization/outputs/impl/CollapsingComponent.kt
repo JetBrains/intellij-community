@@ -5,6 +5,7 @@ import com.intellij.notebooks.visualization.outputs.NotebookLazyOutputComponent
 import com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseSingleInCellAction
 import com.intellij.notebooks.visualization.r.inlays.ResizeController
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -159,9 +160,8 @@ open class CollapsingComponent(
     private fun onClick(e: MouseEvent) {
       if (e.isConsumed) return
       val parent = parent as? CollapsingComponent ?: return
-      val actionManager = ActionManager.getInstance()
-      val action = actionManager.getAction(NotebookOutputCollapseSingleInCellAction::class.java.simpleName)!!
-      if (actionManager.tryToExecute(action, e, parent, null, true).isProcessed) {
+      val action = ActionUtil.getAction(NotebookOutputCollapseSingleInCellAction::class.java.simpleName)!!
+      if (ActionManager.getInstance().tryToExecute(action, e, parent, null, true).isProcessed) {
         e.consume()
       }
     }

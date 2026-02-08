@@ -3,7 +3,11 @@ package com.intellij.ide.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.ide.trustedProjects.TrustedProjectsStateStorage
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.util.containers.prefixTree.map.PrefixTreeMap
 import com.intellij.util.containers.prefixTree.map.toPrefixTreeMap

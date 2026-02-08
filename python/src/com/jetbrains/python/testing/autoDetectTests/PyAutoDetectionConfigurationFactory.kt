@@ -19,13 +19,11 @@ class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurat
         PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().filterNot { it is PyAutoDetectionConfigurationFactory }
   }
 
-
   @Deprecated("Use getFactory(sdk, project)", ReplaceWith("getFactory(sdk, project)"), DeprecationLevel.ERROR)
   fun getFactory(sdk: Sdk): PyAbstractTestFactory<*> {
     val project = ProjectManager.getInstance().openProjects.firstOrNull { sdk == it.pythonSdk }!!
     return factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(project, sdk) } ?: PyUnitTestFactory(type)
   }
-
 
   fun getFactory(sdk: Sdk, project: Project): PyAbstractTestFactory<*> =
     factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(project, sdk) } ?: PyUnitTestFactory(type)

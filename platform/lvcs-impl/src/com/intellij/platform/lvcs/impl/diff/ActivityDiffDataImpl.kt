@@ -7,7 +7,13 @@ import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.ActivityDiffData
+import com.intellij.platform.lvcs.impl.ActivityScope
+import com.intellij.platform.lvcs.impl.ChangeSetSelection
+import com.intellij.platform.lvcs.impl.DirectoryDiffMode
+import com.intellij.platform.lvcs.impl.filePath
+import com.intellij.platform.lvcs.impl.getRootEntry
+import com.intellij.platform.lvcs.impl.getSelectionCalculator
 import com.intellij.util.containers.JBIterable
 
 internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,

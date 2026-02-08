@@ -4,7 +4,9 @@ package com.intellij.util.indexing.hints
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.IndexedFile
-import com.intellij.util.indexing.hints.BinaryFileTypePolicy.*
+import com.intellij.util.indexing.hints.BinaryFileTypePolicy.BINARY
+import com.intellij.util.indexing.hints.BinaryFileTypePolicy.BINARY_OR_NON_BINARY
+import com.intellij.util.indexing.hints.BinaryFileTypePolicy.NON_BINARY
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal

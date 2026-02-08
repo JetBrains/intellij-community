@@ -2,7 +2,7 @@
   <dependencies>
     <module name="intellij.spellchecker"/>
     <module name="intellij.xml.impl"/>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

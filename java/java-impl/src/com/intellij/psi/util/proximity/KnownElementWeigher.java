@@ -7,7 +7,11 @@ import com.intellij.openapi.roots.JdkUtils;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,7 +20,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_EXCEPTION;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_RUNNABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_THROWABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAY_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_HASH_MAP;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_HASH_SET;
 
 public final class KnownElementWeigher extends ProximityWeigher {
   private static final Set<String> POPULAR_JDK_CLASSES = ContainerUtil.newHashSet(

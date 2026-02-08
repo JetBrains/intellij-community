@@ -244,6 +244,43 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
+  fun `test mass apply is available around problems`() {
+    // Action is available because there is a typo intersecting with selection
+    myFixture.configureByText("a.java", """
+      class A {
+        void foo() {
+          // <TYPO descr="Typo: In word 'tagret'">t<caret><selection>a</selection>gret</TYPO>
+        }
+      }
+    """)
+    myFixture.checkHighlighting()
+    assertNotNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+
+    // Action is available because there is caret near typo
+    myFixture.configureByText("b.java", """
+      class B {
+        void foo() {
+          // <TYPO descr="Typo: In word 'tagret'">tagret</TYPO>
+          // <caret>target
+        }
+      }
+    """)
+    myFixture.checkHighlighting()
+    assertNotNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+
+    // Action is not available because there is no grammar / style / spelling issues in selection
+    myFixture.configureByText("c.java", """
+      class C {
+        void foo() {
+          // <TYPO descr="Typo: In word 'tagret'">tagret</TYPO>
+          // <selection>tar</selection>get
+        }
+      }
+    """)
+    myFixture.checkHighlighting()
+    assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+  }
+
   fun `test asian-english mixed texts`() {
     runHighlightTestForFile("ide/language/java/Mixed.java")
 

@@ -12,11 +12,20 @@ import com.intellij.ui.layout.SpacingConfiguration
 import com.intellij.ui.layout.migLayout.patched.MigLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.CollectionFactory
-import net.miginfocom.layout.*
+import net.miginfocom.layout.AC
+import net.miginfocom.layout.BoundSize
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPasswordField
+import javax.swing.JTextField
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")

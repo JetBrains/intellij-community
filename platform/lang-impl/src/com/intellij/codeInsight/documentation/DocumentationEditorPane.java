@@ -4,7 +4,11 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.lang.documentation.DocumentationImageResolver;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
@@ -22,19 +26,24 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Highlighter;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocPopupPreferredMaxWidth;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocPopupPreferredMinWidth;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocumentationPaneAdditionalCssRules;
 import static com.intellij.lang.documentation.QuickDocHighlightingHelper.getDefaultDocStyleOptions;
 
 @Internal

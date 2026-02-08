@@ -7,8 +7,8 @@ import com.intellij.ui.BalloonLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Rectangle;
 
 public interface IdeFrame {
   DataKey<IdeFrame> KEY = DataKey.create("IdeFrame");

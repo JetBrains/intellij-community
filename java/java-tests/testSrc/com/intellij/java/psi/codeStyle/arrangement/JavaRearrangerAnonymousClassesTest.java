@@ -5,7 +5,12 @@ import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
 
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CONSTRUCTOR;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.ENUM;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.INTERFACE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
 
 public class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTest {
   public void test_rearrangement_doesn_t_brake_anon_classes_alignment() {

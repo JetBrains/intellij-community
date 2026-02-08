@@ -3,13 +3,13 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ListUtil;
-import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.util.ArrayList;

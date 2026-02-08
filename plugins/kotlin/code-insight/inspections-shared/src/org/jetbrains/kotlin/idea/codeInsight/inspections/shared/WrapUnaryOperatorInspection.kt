@@ -16,7 +16,12 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.replaceFirstReceiver
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.prefixExpressionVisitor
 
 internal class WrapUnaryOperatorInspection : AbstractKotlinInspection() {
 

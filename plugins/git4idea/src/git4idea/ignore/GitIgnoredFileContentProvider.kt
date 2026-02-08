@@ -11,7 +11,9 @@ import com.intellij.openapi.vcs.NotIgnored
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.actions.VcsContextFactory
-import com.intellij.openapi.vcs.changes.IgnoreSettingsType.*
+import com.intellij.openapi.vcs.changes.IgnoreSettingsType.FILE
+import com.intellij.openapi.vcs.changes.IgnoreSettingsType.MASK
+import com.intellij.openapi.vcs.changes.IgnoreSettingsType.UNDER_DIR
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider

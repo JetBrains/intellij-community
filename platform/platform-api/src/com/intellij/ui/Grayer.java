@@ -4,7 +4,9 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.text.AttributedCharacterIterator;
 
 /**

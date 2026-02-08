@@ -5,7 +5,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
+import java.awt.KeyboardFocusManager;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;

@@ -7,7 +7,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.IndexableSetContributor
-import com.intellij.util.indexing.roots.kind.*
+import com.intellij.util.indexing.roots.kind.IndexableSetContributorOrigin
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
+import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
+import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
+import com.intellij.util.indexing.roots.kind.SdkOrigin
+import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import kotlin.math.min

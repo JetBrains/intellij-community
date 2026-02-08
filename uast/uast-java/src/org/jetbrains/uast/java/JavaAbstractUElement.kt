@@ -4,10 +4,27 @@ package org.jetbrains.uast.java
 
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiResourceExpression
+import com.intellij.psi.PsiSwitchBlock
+import com.intellij.psi.PsiSwitchLabelStatementBase
+import com.intellij.psi.PsiSwitchLabeledRuleStatement
+import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnonymousClass
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.USwitchExpression
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
+import org.jetbrains.uast.toUElement
 
 @ApiStatus.Internal
 abstract class JavaAbstractUElement(var givenParent: UElement?) : JavaUElementWithComments, UElement {

@@ -2,12 +2,24 @@ package com.intellij.database.run.actions
 
 import com.intellij.database.DataGridBundle
 import com.intellij.database.DatabaseDataKeys
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.DocumentDataHookUp
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridHelper
+import com.intellij.database.datagrid.GridPagingModel
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.GridUtilCore
+import com.intellij.database.datagrid.NestedTableGridPagingModel
 import com.intellij.database.run.ui.FloatingPagingManager
 import com.intellij.database.run.ui.FloatingPagingManager.Companion.adjustAction
 import com.intellij.database.settings.DataGridSettings
 import com.intellij.database.util.DataGridUIUtil
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -19,7 +31,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import java.awt.Component
-import java.util.*
+import java.util.Objects
 import javax.swing.JComponent
 
 private val DEFAULT_PAGE_SIZES = mutableListOf(10, 100, 500, 1000)

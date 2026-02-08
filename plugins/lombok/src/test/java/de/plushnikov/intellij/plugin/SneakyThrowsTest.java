@@ -1,7 +1,11 @@
 package de.plushnikov.intellij.plugin;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;

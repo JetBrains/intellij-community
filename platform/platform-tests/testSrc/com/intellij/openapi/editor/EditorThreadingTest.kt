@@ -3,13 +3,14 @@ package com.intellij.openapi.editor
 
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.editorFixture
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.psiFileFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import kotlinx.coroutines.Dispatchers
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows

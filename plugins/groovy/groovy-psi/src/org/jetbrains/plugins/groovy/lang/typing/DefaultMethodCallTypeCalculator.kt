@@ -3,7 +3,18 @@ package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeVisitor
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiWildcardType
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult

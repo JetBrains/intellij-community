@@ -1,9 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.java.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.JvmProperties
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TokenProperties
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.visitor.RenameVisitorBase
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiParameter
 
 class JavaRenameVisitor : RenameVisitorBase(Language.JAVA) {
   override fun createPsiVisitor(codeFragment: CodeFragment): PsiElementVisitor {

@@ -23,7 +23,12 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.util.function.Consumer
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.Icon
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JPanel
 import kotlin.coroutines.cancellation.CancellationException
 
 /**

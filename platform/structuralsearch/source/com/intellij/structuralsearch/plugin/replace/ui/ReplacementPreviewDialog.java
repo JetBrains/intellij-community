@@ -27,8 +27,11 @@ import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 public final class ReplacementPreviewDialog extends DialogWrapper {
   private final LanguageFileType myFileType;

@@ -1,7 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.generation.surroundWith.*;
+import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithBlockSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithCastSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithDoWhileSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithForSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfElseExpressionSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfElseSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithNotSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithNullCheckSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithParenthesesSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithRunnableSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithSynchronizedSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchFinallySurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithTryFinallySurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithWhileSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.fileTemplates.FileTemplate;

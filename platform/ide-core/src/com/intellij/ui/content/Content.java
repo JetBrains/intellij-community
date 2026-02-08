@@ -5,14 +5,20 @@ import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.ComponentOrientation;
 import java.beans.PropertyChangeListener;
 
 /**

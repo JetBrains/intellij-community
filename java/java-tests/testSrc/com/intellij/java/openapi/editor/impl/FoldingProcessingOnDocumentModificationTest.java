@@ -81,8 +81,8 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
                    System.out.println();
                }
            }""", JavaFileType.INSTANCE);
-    
-    buildInitialFoldRegions();
+
+    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     runFoldingPass(true);
     assertEquals(1, getEditor().getFoldingModel().getAllFoldRegions().length);
@@ -198,7 +198,6 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
 
   private void openEditor(String text, FileType fileType) {
     init(text, fileType);
-    buildInitialFoldRegions();
     runFoldingPass(true);
     runFoldingPass();
   }
@@ -208,11 +207,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     runFoldingPass();
     assertEquals(expectedState, Arrays.toString(getEditor().getFoldingModel().getAllFoldRegions()));
   }
-  
-  private void buildInitialFoldRegions() {
-    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
-  }
-  
+
   private void updateFoldRegions() {
     CodeFoldingManager.getInstance(getProject()).updateFoldRegions(getEditor());
   }

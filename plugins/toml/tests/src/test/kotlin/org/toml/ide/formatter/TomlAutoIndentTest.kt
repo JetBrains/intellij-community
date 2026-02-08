@@ -30,4 +30,27 @@ class TomlAutoIndentTest : TomlTypingTestBase() {
             <caret>
         ]
     """)
+
+    fun `test new table element`() = doTestByText("""
+        [key]
+        foo = {
+            text = "text",<caret>
+        }
+    """, """
+        [key]
+        foo = {
+            text = "text",
+            <caret>
+        }
+    """)
+
+    fun `test table brackets`() = doTestByText("""
+        [key]
+        foo = {<caret>}
+    """, """
+        [key]
+        foo = {
+            <caret>
+        }
+    """)
 }

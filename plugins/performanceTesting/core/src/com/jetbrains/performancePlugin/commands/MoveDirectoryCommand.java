@@ -13,7 +13,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import org.jetbrains.annotations.NotNull;

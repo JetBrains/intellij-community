@@ -3,10 +3,10 @@ package org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.idea.eclipse.codeStyleMapping.EclipseJavaCodeStyleMappingDefinitionBuilder
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.const
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.ignored
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.convertBoolean
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.doNotImport
 import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.convertBracedCodeOnOneLine

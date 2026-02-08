@@ -4,7 +4,7 @@ package com.intellij.uiDesigner.propertyInspector.renderers;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 
 public final class InsetsPropertyRenderer extends LabelPropertyRenderer<Insets> {
   private final StringBuffer myBuffer;

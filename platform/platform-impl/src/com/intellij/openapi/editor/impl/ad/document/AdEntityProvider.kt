@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.pasta.common.DocumentEntity
 import fleet.util.UID
-import java.util.*
+import java.util.UUID
 
 
 interface AdEntityProvider {

@@ -8,7 +8,11 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -38,7 +42,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance(ExceptionBreakpoint.class);

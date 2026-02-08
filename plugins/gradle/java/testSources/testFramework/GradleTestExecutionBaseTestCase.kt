@@ -5,11 +5,11 @@ import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
 import org.assertj.core.api.Assertions
-import org.jetbrains.plugins.gradle.testFramework.util.testConsole
 import org.jetbrains.plugins.gradle.testFramework.assertions.TestProxyAssertions
 import org.jetbrains.plugins.gradle.testFramework.fixtures.SMTestRunnerOutputTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.SMTestRunnerOutputTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.util.consoleText
+import org.jetbrains.plugins.gradle.testFramework.util.testConsole
 import org.jetbrains.plugins.gradle.testFramework.util.testProxyTree
 
 abstract class GradleTestExecutionBaseTestCase : GradleExecutionTestCase() {

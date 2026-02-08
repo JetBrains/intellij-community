@@ -18,7 +18,11 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryTagsHolderImpl
 import git4idea.test.GitPlatformTest
 import git4idea.test.registerRepo
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import org.junit.Ignore
 import java.nio.file.Path
 

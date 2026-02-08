@@ -14,7 +14,7 @@ import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
 import java.util.concurrent.TimeUnit;
 
 public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
@@ -101,6 +101,11 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
   @Override
   public boolean altSendsEscape() {
     return !SystemInfo.isMac || TerminalOptionsProvider.getInstance().getUseOptionAsMetaKey();
+  }
+
+  @Override
+  public boolean shiftEnterSendsEscCR() {
+    return AdvancedSettings.getBoolean("terminal.shift.enter.sends.esc.cr");
   }
 
   @Override

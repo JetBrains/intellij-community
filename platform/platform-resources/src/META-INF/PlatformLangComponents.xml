@@ -31,7 +31,7 @@
     <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerStatusBarUpdater"/>
     <backgroundPostStartupActivity implementation="com.intellij.codeInsight.daemon.impl.ResetAutoReparseSettingsActivity"/>
 
-    <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
+    <vfs.asyncListenerBackgroundable order="first" implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager" open="true"
       serviceImplementation="com.intellij.openapi.module.EmptyModuleManager"/>
@@ -99,7 +99,7 @@
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.ClientCurrentEditorProvider"
                         client="remote"/>
-    <applicationService serviceInterface="com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator" open="true"
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator" open="false"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.CompositeTabIconHolderCreatorImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager" open="true"
@@ -125,6 +125,18 @@
       key="build.toolwindow.split"
       description="Use split implementation (frontend/backend) of Build tool window"
       defaultValue="false"
+    />
+
+    <editorSkeletonPolicy implementation="com.intellij.openapi.fileEditor.DefaultEditorSkeletonPolicy"/>
+    <registryKey
+      key="editor.skeleton.enabled"
+      defaultValue="true"
+      description="Enable editor skeleton when the editor is not shown for a long period"
+    />
+    <registryKey
+      key="editor.skeleton.delay.ms"
+      defaultValue="50"
+      description="Delay before the editor skeleton is shown if the editor is not shown (in milliseconds)"
     />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager" open="true"
@@ -160,6 +172,7 @@
     <textEditorNecromancerAwaker implementation="com.intellij.openapi.fileEditor.impl.text.FocusZoneNecromancerAwaker"/>
     <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuideNecromancerAwaker"/>
     <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.daemon.impl.TrafficLightNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.formatting.visualLayer.VisualFormattingNecromancerAwaker"/>
 
     <postStartupActivity implementation="com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"/>
 
@@ -199,6 +212,10 @@
 
     <projectService serviceInterface="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager"
                         serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenTabService"
+                    serviceImplementation="com.intellij.openapi.wm.ex.NoWelcomeScreenTabService"
+                    open="true"/>
 
     <!--XNext-->
     <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"

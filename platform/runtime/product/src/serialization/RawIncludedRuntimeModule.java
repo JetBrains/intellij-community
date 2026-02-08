@@ -3,8 +3,10 @@ package com.intellij.platform.runtime.product.serialization;
 
 import com.intellij.platform.runtime.product.IncludedRuntimeModule;
 import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
-import com.intellij.platform.runtime.repository.*;
 import com.intellij.platform.runtime.product.impl.IncludedRuntimeModuleImpl;
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

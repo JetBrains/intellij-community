@@ -6,7 +6,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.IOException
-import java.net.*
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
 import java.nio.file.Path
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals

@@ -35,7 +35,11 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ClassListCellRenderer
-import org.jetbrains.kotlin.idea.core.overrideImplement.*
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMemberInfo
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtGenerateMembersHandler
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch

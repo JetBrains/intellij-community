@@ -3,7 +3,11 @@ package com.intellij.credentialStore
 
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.nullize
-import com.sun.jna.*
+import com.sun.jna.Library
+import com.sun.jna.Memory
+import com.sun.jna.Native
+import com.sun.jna.Pointer
+import com.sun.jna.Structure
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException

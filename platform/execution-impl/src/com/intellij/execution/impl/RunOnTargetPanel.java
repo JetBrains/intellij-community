@@ -5,7 +5,13 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunOnTargetComboBox;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.target.*;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.RunTargetsEnabled;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfigurationKt;
+import com.intellij.execution.target.TargetEnvironmentsConfigurable;
+import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -19,8 +25,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
 import java.util.List;
 import java.util.Objects;
 

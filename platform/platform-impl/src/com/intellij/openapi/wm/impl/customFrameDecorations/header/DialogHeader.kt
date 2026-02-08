@@ -12,7 +12,11 @@ import com.intellij.util.system.OS
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Dialog
+import java.awt.Graphics
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.Window
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener

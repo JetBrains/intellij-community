@@ -7,9 +7,21 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyClassPattern;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyKeywordPattern;
+import com.jetbrains.python.psi.PyPattern;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeMember;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +70,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     if (classQName != null && SPECIAL_BUILTINS.contains(classQName)) {
       if (arguments.isEmpty()) return true;
       if (arguments.size() > 1) return false;
-      return arguments.getFirst().canExcludePatternType(context);
+      return isExhaustive(arguments.getFirst(), context);
     }
 
     List<String> matchArgs = getMatchArgs(classType, context);
@@ -69,14 +81,14 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
           return false;
         }
         final var valuePattern = keywordPattern.getValuePattern();
-        if (valuePattern != null && !canExcludeArgumentPatternType(valuePattern, context)) {
+        if (valuePattern != null && !isExhaustive(valuePattern, context)) {
           return false;
         }
       }
       else {
         if (matchArgs == null) return false;
         if (i >= matchArgs.size()) return false;
-        if (!canExcludeArgumentPatternType(member, context)) {
+        if (!isExhaustive(member, context)) {
           return false;
         }
       }
@@ -88,7 +100,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
 
   @Override
   public @Nullable PyType getCaptureTypeForChild(@NotNull PyPattern pattern, @NotNull TypeEvalContext context) {
-    pattern = as(PsiTreeUtil.findFirstParent(pattern, el -> this.getArgumentList() == el.getParent()), PyPattern.class);
+    pattern = as(PsiTreeUtil.findFirstParent(pattern, el -> getArgumentList() == el.getParent()), PyPattern.class);
     if (pattern == null) return null;
 
     if (pattern instanceof PyKeywordPattern keywordPattern) {
@@ -125,15 +137,16 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     }).collect(PyTypeUtil.toUnion());
   }
 
-  static boolean canExcludeArgumentPatternType(@NotNull PyPattern pattern, @NotNull TypeEvalContext context) {
+  /**
+   * Checks if the pattern covers its entire capture type and is itself exhaustive (e.g., not a non-literal value pattern).
+   */
+  public static boolean isExhaustive(@NotNull PyPattern pattern, @NotNull TypeEvalContext context) {
+    if (!pattern.canExcludePatternType(context)) return false;
+
     final var captureType = PyCaptureContext.getCaptureType(pattern, context);
     final var patternType = context.getType(pattern);
-    // For class pattern arguments, we need to ensure that the argument pattern covers its capture type fully
-    if (Ref.deref(PyTypeAssertionEvaluator.createAssertionType(captureType, patternType, false, true, context)) instanceof PyNeverType) {
-      // in case the argument pattern is also class pattern with arguments
-      return pattern.canExcludePatternType(context);
-    }
-    return false;
+    // For composite pattern components, we need to ensure that the component pattern covers its capture type fully
+    return Ref.deref(PyTypeAssertionEvaluator.createAssertionType(captureType, patternType, false, true, context)) instanceof PyNeverType;
   }
 
   public static @Nullable List<@NotNull String> getMatchArgs(@NotNull PyClassType type, @NotNull TypeEvalContext context) {

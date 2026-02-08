@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * This is a color producer that allows to dynamically mix two colors.

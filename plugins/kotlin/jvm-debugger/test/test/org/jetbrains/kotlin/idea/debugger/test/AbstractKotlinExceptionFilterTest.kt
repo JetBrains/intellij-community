@@ -14,7 +14,10 @@ import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.core.util.toVirtualFile
 import org.jetbrains.kotlin.idea.debugger.core.InlineFunctionHyperLinkInfo
 import org.jetbrains.kotlin.idea.debugger.core.KotlinExceptionFilterFactory
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.net.URLClassLoader

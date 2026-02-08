@@ -2,7 +2,12 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.paths.PathReference;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.ConverterManager;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomResolveConverter;
+import com.intellij.util.xml.EnumConverter;
+import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xml.converters.PathReferenceConverter;
 import com.intellij.util.xml.converters.values.NumberValueConverter;
 import org.jetbrains.annotations.NotNull;

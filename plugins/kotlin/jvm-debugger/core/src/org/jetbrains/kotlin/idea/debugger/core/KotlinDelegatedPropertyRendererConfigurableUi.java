@@ -7,7 +7,9 @@ import com.intellij.openapi.options.ConfigurableUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class KotlinDelegatedPropertyRendererConfigurableUi implements ConfigurableUi<KotlinDebuggerSettings> {
     private JCheckBox disableCoroutineAgent;

@@ -22,7 +22,13 @@ interface CodeReviewInlayModel : EditorMappedViewModel {
     val range: StateFlow<LineRange?>
 
     interface Adjustable : Ranged {
+      val adjustmentDisabledReason: StateFlow<AdjustmentDisabledReason?>
       fun adjustRange(newStart: Int? = null, newEnd: Int? = null)
+
+      enum class AdjustmentDisabledReason {
+        SUGGESTED_CHANGE,
+        SINGLE_COMMIT_REVIEW,
+      }
     }
   }
 }

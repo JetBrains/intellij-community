@@ -17,7 +17,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class TableCsvFormatPreview implements CsvFormatPreview {
   private final DataGrid myGrid;

@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.OffsetMap;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.template.TemplateLookupSelectionHandler;

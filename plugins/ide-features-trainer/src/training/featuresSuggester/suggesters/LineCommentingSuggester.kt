@@ -10,7 +10,7 @@ import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorTextInsertedAction
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.Queue
 import kotlin.math.abs
 
 class LineCommentingSuggester : AbstractFeatureSuggester() {

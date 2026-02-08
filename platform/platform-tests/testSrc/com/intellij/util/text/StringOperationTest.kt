@@ -2,7 +2,10 @@
 @file:Suppress("SpellCheckingInspection")
 package com.intellij.util.text
 
-import com.intellij.util.text.StringOperation.*
+import com.intellij.util.text.StringOperation.applyOperations
+import com.intellij.util.text.StringOperation.insert
+import com.intellij.util.text.StringOperation.remove
+import com.intellij.util.text.StringOperation.replace
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

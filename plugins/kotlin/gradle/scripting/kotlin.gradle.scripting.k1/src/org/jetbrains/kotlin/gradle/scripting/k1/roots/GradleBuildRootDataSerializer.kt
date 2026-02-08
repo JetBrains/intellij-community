@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.scripting.k1.roots
 
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.io.DataExternalizer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.StringsPool
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.idea.core.script.v1.writeString
 import java.io.DataInput
 import java.io.DataOutput
 
+@K1Deprecation
 class GradleBuildRootDataSerializer : AbstractGradleBuildRootDataSerializer() {
     override fun getExternalizer(): DataExternalizer<GradleBuildRootData> = object : DataExternalizer<GradleBuildRootData> {
         override fun save(out: DataOutput, value: GradleBuildRootData) = writeKotlinDslScriptModels(out, value)

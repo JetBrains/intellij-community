@@ -6,6 +6,7 @@ import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleReposi
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
+import com.intellij.devkit.runtimeModuleRepository.generator.isProjectLevel
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
@@ -183,7 +184,7 @@ private suspend fun generateRepositoryForDistribution(
   val distDescriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptors(
     includedProduction = moduleProductionPaths.keySet(),
     includedTests = moduleTestPaths.keySet(),
-    includedLibraries = libraryPaths.keySet(),
+    includedProjectLibraries = libraryPaths.keySet().filter { it.isProjectLevel },
     resourcePathsSchema = DistributionResourcePathsSchema(moduleProductionPaths, moduleTestPaths, libraryPaths), 
   ).map { descriptor ->
     //this is a temporary workaround to skip optional dependencies which aren't included in the distribution

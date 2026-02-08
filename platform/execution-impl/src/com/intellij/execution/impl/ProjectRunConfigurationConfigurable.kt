@@ -5,7 +5,10 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
-import com.intellij.ui.*
+import com.intellij.ui.JBColor
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.JBDimension

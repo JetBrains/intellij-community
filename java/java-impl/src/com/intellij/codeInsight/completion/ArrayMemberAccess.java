@@ -6,13 +6,21 @@ import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.createExpression;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getQualifierText;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 
 final class ArrayMemberAccess {
   static void addMemberAccessors(final PsiElement element, final String prefix, final PsiType itemType,

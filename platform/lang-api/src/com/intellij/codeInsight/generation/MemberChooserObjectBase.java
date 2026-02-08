@@ -12,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
 
 public class MemberChooserObjectBase implements MemberChooserObject {
   private final @NlsContexts.Label String myText;

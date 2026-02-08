@@ -5,7 +5,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 
 public final class MockConfirmation extends ListPopupImpl {
   String myOnYesText;

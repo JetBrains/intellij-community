@@ -35,7 +35,7 @@ import git4idea.i18n.GitBundleExtensions.html
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.UUID
 import java.util.function.Consumer
 import javax.swing.JComponent
 

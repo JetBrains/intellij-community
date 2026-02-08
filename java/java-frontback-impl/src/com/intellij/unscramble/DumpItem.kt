@@ -10,7 +10,7 @@ import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.util.*
+import java.util.Objects
 import javax.swing.Icon
 
 @ApiStatus.Internal

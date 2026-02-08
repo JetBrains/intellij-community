@@ -1,7 +1,13 @@
 package com.intellij.grazie.ide.language
 
 import ai.grazie.nlp.langs.Language
-import com.intellij.grazie.text.*
+import com.intellij.grazie.text.CheckerRunner
+import com.intellij.grazie.text.ExternalTextChecker
+import com.intellij.grazie.text.Rule
+import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextProblem
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -15,7 +21,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

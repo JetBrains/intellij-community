@@ -7,10 +7,14 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 import java.util.Map;
 
 /**

@@ -1,18 +1,43 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.*
+import com.jetbrains.rhizomedb.ChangeScopeKey
+import com.jetbrains.rhizomedb.IndexQuery
+import com.jetbrains.rhizomedb.InstructionEffect
+import com.jetbrains.rhizomedb.MutableNovelty
+import com.jetbrains.rhizomedb.MutableNoveltyKey
+import com.jetbrains.rhizomedb.asOf
+import com.jetbrains.rhizomedb.collectingNovelty
+import com.jetbrains.rhizomedb.delayingEffects
+import com.jetbrains.rhizomedb.displayDatom
+import com.jetbrains.rhizomedb.getOne
+import com.jetbrains.rhizomedb.mutate
+import com.jetbrains.rhizomedb.queryIndex
+import fleet.fastutil.ints.IntList
+import fleet.kernel.SharedPart
+import fleet.kernel.SubscriptionEvent
+import fleet.kernel.Transactor
+import fleet.kernel.buildDurableSnapshot
+import fleet.kernel.uidAttribute
 import fleet.rpc.core.AssumptionsViolatedException
 import fleet.rpc.core.toRpc
 import fleet.util.UID
 import fleet.util.async.takeUntilInclusive
 import fleet.util.logging.KLoggers
-import fleet.fastutil.ints.IntList
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consume
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 
 object TransactionResultKey : ChangeScopeKey<TransactionResult>
 

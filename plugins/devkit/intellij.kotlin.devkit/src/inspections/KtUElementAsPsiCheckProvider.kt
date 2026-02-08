@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.idea.devkit.inspections.UElementAsPsiCheckProvider
 import org.jetbrains.uast.UElement

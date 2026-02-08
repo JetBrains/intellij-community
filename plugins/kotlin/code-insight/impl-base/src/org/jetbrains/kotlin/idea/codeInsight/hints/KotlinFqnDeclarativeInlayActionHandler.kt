@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 import com.intellij.codeInsight.hints.declarative.InlayActionHandler
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
@@ -27,10 +27,10 @@ class KotlinFqnDeclarativeInlayActionHandler : InlayActionHandler {
             val scope = module.getModuleWithDependenciesAndLibrariesScope(includeTests)
             return project.resolveClass(fqName, scope)?.navigationElement
         }
-
     }
 
-    override fun handleClick(editor: Editor, payload: InlayActionPayload) {
+    override fun handleClick(e: EditorMouseEvent, payload: InlayActionPayload) {
+        val editor = e.editor
         val project = editor.project ?: return
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
         val navigatable = getNavigationElement(psiFile, payload) as? Navigatable

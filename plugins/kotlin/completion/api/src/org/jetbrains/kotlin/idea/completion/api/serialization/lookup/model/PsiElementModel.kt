@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.completion.api.serialization.lookup.model
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnchor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import com.intellij.psi.impl.source.StubbedSpine
 import com.intellij.psi.util.endOffset

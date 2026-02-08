@@ -1913,14 +1913,6 @@ object MavenUtil {
     return !shouldResetDependenciesAndFolders(readingProblems)
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use MavenUtil.resolveSuperPomFile")
-  fun getEffectiveSuperPom(project: Project, workingDir: String): VirtualFile? {
-    val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDir)
-    return resolveSuperPomFile(distribution.mavenHome, MavenConstants.SUPER_POM_4_0_XML)
-  }
-
-
   @JvmStatic
   @Deprecated("use MavenUtil.resolveSuperPomFile")
   fun getEffectiveSuperPomWithNoRespectToWrapper(project: Project): VirtualFile? {

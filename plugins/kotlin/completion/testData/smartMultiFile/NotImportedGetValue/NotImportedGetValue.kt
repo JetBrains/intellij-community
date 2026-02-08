@@ -24,3 +24,5 @@ class C {
 // EXIST: createY1
 // ABSENT: createY2
 // EXIST: createY3
+
+// IGNORE_K2

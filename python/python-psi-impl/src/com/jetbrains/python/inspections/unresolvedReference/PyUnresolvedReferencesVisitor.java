@@ -13,7 +13,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -33,8 +38,49 @@ import com.jetbrains.python.documentation.docstrings.DocStringParameterReference
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
-import com.jetbrains.python.inspections.quickfix.*;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
+import com.jetbrains.python.inspections.quickfix.AddFunctionQuickFix;
+import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
+import com.jetbrains.python.inspections.quickfix.CreateClassQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRenameUnresolvedRefQuickFix;
+import com.jetbrains.python.inspections.quickfix.UnresolvedRefCreateFunctionQuickFix;
+import com.jetbrains.python.inspections.quickfix.UnresolvedRefTrueFalseQuickFix;
+import com.jetbrains.python.inspections.quickfix.UnresolvedReferenceAddParameterQuickFix;
+import com.jetbrains.python.inspections.quickfix.UnresolvedReferenceAddSelfQuickFix;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PsiReferenceEx;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyClassPattern;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyKeywordPattern;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyReferenceOwner;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTryExceptStatement;
+import com.jetbrains.python.psi.PyTryPart;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -45,14 +91,36 @@ import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassMembersProvider;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyFunctionType;
+import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
+import com.jetbrains.python.psi.types.PyImportedModuleType;
+import com.jetbrains.python.psi.types.PyIntersectionType;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PySelfType;
+import com.jetbrains.python.psi.types.PyStructuralType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyTypeVarType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnsafeUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.jetbrains.python.PyNames.END_WILDCARD;
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -430,6 +498,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
     if (type instanceof PyUnsafeUnionType weakUnionType) {
       return ContainerUtil.exists(weakUnionType.getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
+    }
+    if (type instanceof PyIntersectionType intersectionType) {
+      return ContainerUtil.exists(intersectionType.getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
     }
     if (PyTypeChecker.isUnknown(type, myTypeEvalContext)) {
       // this almost always means that we don't know the type, so don't show an error in this case

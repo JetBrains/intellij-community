@@ -4,7 +4,11 @@
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.ui.icons.*
+import com.intellij.ui.icons.HiDPIImage
+import com.intellij.ui.icons.doScaleImage
+import com.intellij.ui.icons.loadCustomIcon
+import com.intellij.ui.icons.loadImage
+import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.ImageUtil

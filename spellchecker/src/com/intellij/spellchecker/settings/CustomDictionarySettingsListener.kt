@@ -2,7 +2,7 @@
 package com.intellij.spellchecker.settings
 
 import com.intellij.util.messages.Topic
-import java.util.*
+import java.util.EventListener
 
 /**
  * Provides notifications when custom dictionaries are changed in Settings.

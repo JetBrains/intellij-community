@@ -5,7 +5,18 @@
 
 package org.jetbrains.uast
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiJvmModifiersOwner
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiVariable
 
 /*
  * Mocks of the UAST declarations interfaces.

@@ -4,7 +4,14 @@ package com.intellij.codeInsight.completion.commands.impl
 import com.intellij.codeInsight.completion.command.commands.AbstractTypeInfoCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.java.syntax.parser.JavaKeywords
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 
 internal class JavaTypeInfoCompletionCommandProvider : AbstractTypeInfoCompletionCommandProvider() {

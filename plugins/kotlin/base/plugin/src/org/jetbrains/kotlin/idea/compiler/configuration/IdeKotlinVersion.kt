@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_COMPILER_VERSION
+import org.jetbrains.kotlin.library.KlibConstants.KLIB_MANIFEST_FILE_NAME
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.io.IOException
 import java.util.Properties

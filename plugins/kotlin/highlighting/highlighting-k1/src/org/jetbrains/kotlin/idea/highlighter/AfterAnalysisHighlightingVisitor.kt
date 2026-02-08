@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 
+@K1Deprecation
 abstract class AfterAnalysisHighlightingVisitor protected constructor(
     holder: HighlightInfoHolder,
     protected var bindingContext: BindingContext

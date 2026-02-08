@@ -17,7 +17,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.debug;
+import static com.intellij.openapi.vcs.Executor.pwd;
+import static com.intellij.openapi.vcs.Executor.splitCommandInParameters;
 
 public final class HgExecutor {
 

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * @param typeParameter the type parameter to update
  * @param kind the required modification of the upper bound
  */
+@K1Deprecation
 open class MakeUpperBoundNonNullableFix(
     typeParameter: KtTypeParameter,
     private val kind: Kind
@@ -246,6 +248,7 @@ open class MakeUpperBoundNonNullableFix(
  * The latter fix is more general and does not depend on the language version settings
  * of the module, so it should be proposed first.
  */
+@K1Deprecation
 class HighPriorityMakeUpperBoundNonNullableFix(
     typeParameter: KtTypeParameter,
     kind: Kind

@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.java
 
+import com.intellij.platform.uast.testFramework.common.ValuesTestBase
 import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.PerformanceUnitTest
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.evaluation.SimpleEvaluatorExtension
-import com.intellij.platform.uast.testFramework.common.ValuesTestBase
-import com.intellij.testFramework.PerformanceUnitTest
 import org.jetbrains.uast.values.UBooleanConstant
 import org.jetbrains.uast.values.UValue
 import org.junit.Test

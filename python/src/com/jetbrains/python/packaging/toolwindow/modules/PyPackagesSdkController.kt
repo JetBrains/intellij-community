@@ -19,7 +19,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.util.asDisposable
-import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService

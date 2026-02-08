@@ -7,7 +7,15 @@ import com.intellij.ide.actions.HelpTopicsAction
 import com.intellij.ide.actions.JetBrainsTvAction
 import com.intellij.ide.actions.OnlineDocAction
 import com.intellij.ide.actions.WhatsNewAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -18,7 +26,11 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextPane
 import javax.swing.plaf.ComponentUI
 
 @ApiStatus.Internal

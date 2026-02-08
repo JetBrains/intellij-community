@@ -36,8 +36,8 @@ data class FileEntry(
   @JvmField val files: List<ModuleLibraryFile> = emptyList(),
   @JvmField val reason: String? = null,
 
-  @JvmField val bundled: List<String> = emptyList(),
-  @JvmField val nonBundled: List<String> = emptyList(),
+  @JvmField val bundled: List<PluginContentReport> = emptyList(),
+  @JvmField val nonBundled: List<PluginContentReport> = emptyList(),
 ) {
   fun compareImportantFields(o: FileEntry): Boolean {
     if (name == o.name && projectLibraries.size == o.projectLibraries.size && modules == o.modules) {
@@ -129,5 +129,6 @@ data class ModuleLibraryFile(
 data class PluginContentReport(
   @JvmField val mainModule: String,
   @JvmField val os: String? = null,
+  @JvmField val arch: String? = null,
   @JvmField val content: List<FileEntry> = emptyList(),
 )

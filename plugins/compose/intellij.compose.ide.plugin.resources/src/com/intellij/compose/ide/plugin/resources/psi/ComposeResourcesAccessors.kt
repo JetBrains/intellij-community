@@ -7,7 +7,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeMap
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString

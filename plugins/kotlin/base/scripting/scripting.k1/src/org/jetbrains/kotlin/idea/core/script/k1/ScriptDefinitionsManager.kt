@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
@@ -53,6 +54,7 @@ import kotlin.script.experimental.api.SourceCode
  * **Note** that the class is `open` for inheritance only for the testing purpose. Its dependencies are cut via a set of `protected open`
  * methods.
  */
+@K1Deprecation
 open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
 
     companion object {

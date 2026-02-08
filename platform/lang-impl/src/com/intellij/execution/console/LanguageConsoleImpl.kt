@@ -56,7 +56,8 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Adjustable
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.util.*
+import java.util.Arrays
+import java.util.Objects
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollBar

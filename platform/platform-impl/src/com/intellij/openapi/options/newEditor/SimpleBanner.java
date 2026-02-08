@@ -7,8 +7,13 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 
 /**
  * @author Alexander Lobas

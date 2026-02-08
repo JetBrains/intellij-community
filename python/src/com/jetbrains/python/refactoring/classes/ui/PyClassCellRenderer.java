@@ -6,8 +6,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import java.awt.Component;
 
 /**
  * @author Dennis.Ushakov

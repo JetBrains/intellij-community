@@ -13,9 +13,11 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.Processors
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) : ModificationTracker {
     private val kotlinOutOfCodeBlockTracker = KotlinCodeBlockModificationListener.getInstance(module.project).kotlinOutOfCodeBlockTracker
 

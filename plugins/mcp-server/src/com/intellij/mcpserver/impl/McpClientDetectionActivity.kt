@@ -13,7 +13,13 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.InitialConfigImportState
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -21,7 +27,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.application
-import kotlin.collections.isNotEmpty
 
 private const val MODEL_CONTEXT_INTRO_URL = "https://modelcontextprotocol.io/introduction"
 

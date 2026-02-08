@@ -28,3 +28,5 @@ class X3 {
 // EXIST: X1
 // ABSENT: X2
 // EXIST: X3
+
+// IGNORE_K2

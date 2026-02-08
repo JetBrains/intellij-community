@@ -14,7 +14,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.LongStream;
 
 import static com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap.NO_VALUE;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap> {
 

@@ -12,7 +12,11 @@ import com.intellij.task.ProjectTaskRunner
 import com.intellij.task.TaskRunnerResults
 import com.intellij.task.impl.ModuleBuildTaskImpl
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Assertions

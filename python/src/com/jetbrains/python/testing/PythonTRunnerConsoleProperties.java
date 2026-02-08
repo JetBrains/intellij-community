@@ -3,7 +3,12 @@ package com.jetbrains.python.testing;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
-import com.intellij.execution.testframework.sm.runner.*;
+import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;

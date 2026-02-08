@@ -19,8 +19,8 @@ import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTree;
+import java.awt.Component;
 
 /**
  * @author Vladislav.Soroka

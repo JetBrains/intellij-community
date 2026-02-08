@@ -27,8 +27,16 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.move
 import com.intellij.util.messages.Topic
 import com.intellij.util.text.VersionComparatorUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.util.concurrent.CancellationException

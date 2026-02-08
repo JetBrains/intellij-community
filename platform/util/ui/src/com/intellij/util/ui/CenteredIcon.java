@@ -2,8 +2,10 @@
 
 package com.intellij.util.ui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
 public final class CenteredIcon implements Icon {
   private final Icon myIcon;

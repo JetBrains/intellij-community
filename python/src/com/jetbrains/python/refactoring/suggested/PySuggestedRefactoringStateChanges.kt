@@ -15,7 +15,11 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PySingleStarParameter
+import com.jetbrains.python.psi.PySlashParameter
 import com.jetbrains.python.psi.impl.ParamHelper
 
 internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactoringSupport) : SuggestedRefactoringStateChanges(support) {

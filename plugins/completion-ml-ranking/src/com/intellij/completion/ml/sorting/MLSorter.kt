@@ -24,7 +24,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.textMatching.PrefixMatchingUtil
-import java.util.*
+import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
 
 class MLSorterFactory : CompletionFinalSorter.Factory {

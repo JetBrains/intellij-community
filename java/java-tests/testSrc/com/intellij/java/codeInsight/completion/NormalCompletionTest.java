@@ -19,7 +19,12 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -28,9 +33,9 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -1924,7 +1929,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.configureByText("a.java", "class Foo {int i; ge<caret>}");
     myFixture.enableInspections(new UnqualifiedFieldAccessInspection());
     myFixture.complete(CompletionType.BASIC);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     myFixture.checkResult("""
                             class Foo {int i;
                             

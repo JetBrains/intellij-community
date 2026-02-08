@@ -5,11 +5,11 @@ import com.intellij.JavaTestUtil;
 import com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.java.JShellLanguage;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.syntax.psi.ElementTypeConverters;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.pom.java.LanguageLevel;
@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.JavaASTFactory;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.ParsingTestCase;
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaParsingTestCase extends ParsingTestCase {

@@ -11,7 +11,6 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
 import com.intellij.util.PlatformUtils.isIdeaUltimate
@@ -61,7 +60,7 @@ fun installAndEnable(
   modalityState: ModalityState? = null,
   onSuccess: Runnable,
 ) {
-  ProgressManager.getInstance().run(getInstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess))
+  getInstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess).runBlocking()
 }
 
 @JvmOverloads

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.Variance
 
+@K1Deprecation
 object CreateConstructorFromDelegationCallActionFactory : CreateCallableMemberFromUsageFactory<KtConstructorDelegationCall>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtConstructorDelegationCall? {
         return diagnostic.psiElement.getStrictParentOfType<KtConstructorDelegationCall>()

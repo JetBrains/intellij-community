@@ -5,7 +5,15 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiImportStatementBase
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMirrorElement
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.SyntheticElement
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
@@ -36,9 +44,20 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinMethodReferencesSea
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.DataClassResolver
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.ImportPath
 
 abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {

@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ui.tree;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 

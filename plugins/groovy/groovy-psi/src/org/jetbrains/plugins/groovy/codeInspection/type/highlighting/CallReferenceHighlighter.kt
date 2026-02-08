@@ -14,8 +14,15 @@ import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.applicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.canBeApplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.inapplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.totalApplicability
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
 
 abstract class CallReferenceHighlighter(protected val reference: GroovyCallReference, protected val sink: HighlightSink) {

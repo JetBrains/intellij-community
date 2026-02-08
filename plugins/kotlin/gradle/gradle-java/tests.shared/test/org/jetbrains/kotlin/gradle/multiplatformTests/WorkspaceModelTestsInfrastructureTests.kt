@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelTestReportParser
-import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.render
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.applyCommentsFrom
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.render
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

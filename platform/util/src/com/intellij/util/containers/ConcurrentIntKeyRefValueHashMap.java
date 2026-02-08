@@ -5,7 +5,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;

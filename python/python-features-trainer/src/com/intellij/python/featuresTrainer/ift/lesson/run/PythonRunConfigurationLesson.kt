@@ -1,9 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.python.featuresTrainer.ift.lesson.run
 
-import com.jetbrains.python.run.PythonRunConfiguration
 import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
-import training.dsl.*
+import com.jetbrains.python.run.PythonRunConfiguration
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
+import training.dsl.addNewRunConfigurationFromContext
+import training.dsl.checkToolWindowState
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import training.ui.LearningUiHighlightingManager
 

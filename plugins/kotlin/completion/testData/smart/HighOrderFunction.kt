@@ -16,3 +16,5 @@ fun v: C = fo<caret>
 // EXIST: { lookupString:"foo", itemText: "foo", tailText: "(handler1) (<root>)", typeText:"C" }
 // EXIST: { allLookupStrings: "C, foo", itemText: "C.foo", tailText: " {...} (p: (Int) -> Unit) (<root>)", typeText:"C" }
 // EXIST: { allLookupStrings: "C, foo", itemText: "C.foo", tailText: "(handler2) (<root>)", typeText:"C" }
+
+// IGNORE_K2

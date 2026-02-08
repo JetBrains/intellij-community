@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleValueActionListener<T> {
   protected final @NlsContexts.DialogTitle String myTitle;

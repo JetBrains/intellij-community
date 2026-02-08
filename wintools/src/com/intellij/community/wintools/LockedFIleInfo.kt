@@ -1,12 +1,19 @@
 package com.intellij.community.wintools
 
 
-import com.intellij.community.wintools.ntdll.*
+import com.intellij.community.wintools.ntdll.FILE_PROCESS_IDS_USING_FILE_INFORMATION
+import com.intellij.community.wintools.ntdll.FileProcessIdsUsingFileInformation
+import com.intellij.community.wintools.ntdll.IO_STATUS_BLOCK
+import com.intellij.community.wintools.ntdll.NtDllExt
+import com.intellij.community.wintools.ntdll.STATUS_INFO_LENGTH_MISMATCH
 import com.intellij.openapi.util.SystemInfoRt
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE
 import com.sun.jna.platform.win32.WinDef
-import com.sun.jna.platform.win32.WinNT.*
+import com.sun.jna.platform.win32.WinNT.FILE_FLAG_BACKUP_SEMANTICS
+import com.sun.jna.platform.win32.WinNT.FILE_READ_ATTRIBUTES
+import com.sun.jna.platform.win32.WinNT.FILE_SHARE_READ
+import com.sun.jna.platform.win32.WinNT.OPEN_EXISTING
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString

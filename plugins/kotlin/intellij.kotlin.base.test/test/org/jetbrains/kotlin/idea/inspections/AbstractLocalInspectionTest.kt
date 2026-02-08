@@ -39,8 +39,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.collections.forEach
-import kotlin.io.nameWithoutExtension
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 

@@ -2,8 +2,8 @@
 package com.intellij.debugger.artifacts;
 
 import com.intellij.debugger.testFramework.TestDebuggerAgentArtifactsProvider;
-import org.jetbrains.intellij.bazelEnvironment.BazelLabel;
 import com.intellij.testFramework.common.BazelTestUtil;
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel;
 
 import java.nio.file.Path;
 

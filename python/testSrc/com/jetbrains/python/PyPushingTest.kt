@@ -10,10 +10,16 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.writeChild
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.sdk.pythonSdk

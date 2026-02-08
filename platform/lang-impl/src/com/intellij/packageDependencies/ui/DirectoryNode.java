@@ -22,7 +22,7 @@ import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 import java.util.Set;
 

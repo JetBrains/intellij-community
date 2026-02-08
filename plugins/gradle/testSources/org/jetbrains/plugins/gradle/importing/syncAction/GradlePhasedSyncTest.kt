@@ -5,7 +5,9 @@ import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.WorkspaceAssertions
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.platform.workspace.storage.toBuilder
@@ -14,6 +16,7 @@ import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
 import org.jetbrains.plugins.gradle.util.entity.GradleTestBridgeEntitySource
@@ -208,6 +211,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
                   true -> allDynamicPhases
                   else -> completedDynamicPhases
                 }
+                is GradleSyncPhase.DataServices -> error("Should not execute")
               }
               WorkspaceAssertions.assertEntities(myProject, expectedEntities.map { GradleTestEntityId(it) }) {
                 "Entities should be created for completed phases.\n" +
@@ -271,6 +275,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
               is GradleSyncPhase.Static -> completedStaticPhases
               is GradleSyncPhase.BaseScript -> completedBaseScriptPhases
               is GradleSyncPhase.Dynamic -> completedDynamicPhases
+              is GradleSyncPhase.DataServices -> error("Should not execute")
             }
             WorkspaceAssertions.assertEntities(myProject, expectedEntities.map { GradleTestEntityId(it) }) {
               "Bridge entities should be created for completed phases.\n" +
@@ -298,8 +303,100 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         "Requested phases = $allPhases"
         "Completed phases = $completedPhases"
       }
+      val dataServicesEntities =  myProject.workspaceModel.currentSnapshot.entitiesBySource {
+        it is GradleEntitySource && it.phase == GradleSyncPhase.DATA_SERVICES_PHASE
+      }
+      Assertions.assertTrue(dataServicesEntities.toList().isEmpty()) {
+        "There should be no entities with phase ${GradleSyncPhase.DATA_SERVICES_PHASE}"
+      }
     }
   }
+
+  @Test
+  fun `test bridge entity contribution on Gradle sync phase with bridge disabled`() {
+    repeat(2) { index ->
+      Disposer.newDisposable().use { disposable ->
+        Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, disposable)
+        val isSecondarySync = index == 1
+
+        val syncContributorAssertions = ListenerAssertion()
+        val syncPhaseCompletionAssertions = ListenerAssertion()
+
+        val allPhases = DEFAULT_SYNC_PHASES
+        val allStaticPhases = allPhases.filterIsInstance<GradleSyncPhase.Static>()
+        val allDynamicPhases = allPhases.filterIsInstance<GradleSyncPhase.Dynamic>()
+        val completedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
+
+        for (phase in allPhases) {
+          addSyncContributor(phase, disposable) { context, storage ->
+            val builder = storage.toBuilder()
+            syncContributorAssertions.trace {
+              val entitySource = GradleTestEntitySource(context.projectPath, phase)
+              builder addEntity GradleTestEntity(phase, entitySource)
+              Assertions.assertTrue(completedPhases.add(phase)) {
+                "The $phase should be completed only once."
+              }
+            }
+            return@addSyncContributor builder.toSnapshot()
+          }
+          whenSyncPhaseCompleted(phase, disposable) { _ ->
+            syncPhaseCompletionAssertions.trace {
+              val completedStaticPhases = completedPhases.filterIsInstance<GradleSyncPhase.Static>()
+              val completedBaseScriptPhases = completedPhases.filterIsInstance<GradleSyncPhase.BaseScript>()
+              val completedDynamicPhases = completedPhases.filterIsInstance<GradleSyncPhase.Dynamic>()
+              val expectedEntities = when (phase) {
+                is GradleSyncPhase.Static -> when (isSecondarySync) {
+                  true -> completedStaticPhases + allDynamicPhases
+                  else -> completedStaticPhases
+                }
+                is GradleSyncPhase.BaseScript -> when (isSecondarySync) {
+                  true -> allStaticPhases + completedBaseScriptPhases + allDynamicPhases
+                  else -> completedBaseScriptPhases
+                }
+                is GradleSyncPhase.Dynamic -> when (isSecondarySync) {
+                  true -> allDynamicPhases
+                  else -> completedDynamicPhases
+                }
+                is GradleSyncPhase.DataServices -> error("Should not execute")
+              }
+              WorkspaceAssertions.assertEntities(myProject, expectedEntities.map { GradleTestEntityId(it) }) {
+                "Entities should be created for completed phases.\n" +
+                "Completed phases = $completedPhases\n"
+                "isSecondarySync = $isSecondarySync"
+              }
+            }
+          }
+        }
+
+        initMultiModuleProject()
+        importProject()
+        assertMultiModuleProjectStructure()
+
+        syncContributorAssertions.assertListenerFailures()
+        syncContributorAssertions.assertListenerState(allPhases.size) {
+          "All requested sync phases should be handled."
+        }
+        syncPhaseCompletionAssertions.assertListenerFailures()
+        syncPhaseCompletionAssertions.assertListenerState(allPhases.size) {
+          "All requested sync phases should be completed."
+        }
+
+        WorkspaceAssertions.assertEntities(myProject, allDynamicPhases.map { GradleTestEntityId(it) }) {
+          "Entities should be created for completed phases.\n" +
+          "Requested phases = $allPhases"
+          "Completed phases = $completedPhases"
+        }
+
+        val dataServicesEntities =  myProject.workspaceModel.currentSnapshot.entitiesBySource {
+          it is GradleEntitySource && it.phase == GradleSyncPhase.DATA_SERVICES_PHASE
+        }
+        Assertions.assertTrue(dataServicesEntities.toList().isNotEmpty()) {
+          "There should be at least one entity with phase ${GradleSyncPhase.DATA_SERVICES_PHASE}"
+        }
+      }
+    }
+  }
+
 
   @Test
   fun `test phased Gradle sync for custom static phase without model provider`() {

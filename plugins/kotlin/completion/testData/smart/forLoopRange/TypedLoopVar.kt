@@ -11,3 +11,5 @@ fun foo(p1: Collection<X>, p2: Collection<Y>, p3: Collection<Z>, p4: Collection<
 // ABSENT: p3
 // ABSENT: p4
 // EXIST: { lookupString:"listOf", itemText: "listOf", tailText: "(vararg elements: T) (kotlin.collections)", typeText:"List<T>" }
+
+// IGNORE_K2

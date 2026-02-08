@@ -7,7 +7,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 /**
  * A custom visual element displayed in the editor.

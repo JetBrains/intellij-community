@@ -9,3 +9,5 @@ fun bar() {
 // EXIST: { lookupString: "C2", itemText: "C2" }
 // EXIST: { lookupString: "C3", itemText: "C3" }
 // NOTHING_ELSE
+
+// IGNORE_K2

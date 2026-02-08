@@ -8,8 +8,17 @@ import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPostfixExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UPostfixExpression
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.UastPostfixOperator
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
+import org.jetbrains.uast.tryResolve
 
 @ApiStatus.Internal
 class KotlinUPostfixExpression(

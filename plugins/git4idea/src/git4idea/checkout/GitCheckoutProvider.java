@@ -28,7 +28,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.VcsCloneColl
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.GitShallowCloneOptions;
+import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitCloneDialogComponent;
 import org.jetbrains.annotations.NonNls;

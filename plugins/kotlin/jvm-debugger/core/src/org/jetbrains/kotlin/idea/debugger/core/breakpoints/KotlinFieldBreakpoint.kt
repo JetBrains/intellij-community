@@ -23,7 +23,11 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.Method
 import com.sun.jdi.ReferenceType
-import com.sun.jdi.event.*
+import com.sun.jdi.event.AccessWatchpointEvent
+import com.sun.jdi.event.LocatableEvent
+import com.sun.jdi.event.MethodEntryEvent
+import com.sun.jdi.event.MethodExitEvent
+import com.sun.jdi.event.ModificationWatchpointEvent
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
 import org.jetbrains.annotations.TestOnly
@@ -33,7 +37,11 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.runSmartAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import javax.swing.Icon
 
 class KotlinFieldBreakpoint(

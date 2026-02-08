@@ -12,7 +12,14 @@ import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.EventQueue
+import java.awt.FocusTraversalPolicy
+import java.awt.KeyEventDispatcher
+import java.awt.KeyEventPostProcessor
+import java.awt.KeyboardFocusManager
+import java.awt.Window
 import java.awt.event.FocusEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED

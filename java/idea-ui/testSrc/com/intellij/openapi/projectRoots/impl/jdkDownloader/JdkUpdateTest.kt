@@ -28,7 +28,7 @@ import org.junit.Test
 import java.awt.event.KeyEvent
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Collections
 import javax.swing.JPanel
 
 @RunsInEdt

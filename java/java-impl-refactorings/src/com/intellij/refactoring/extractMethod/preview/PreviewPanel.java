@@ -17,7 +17,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usages.impl.UsageModelTracker;
@@ -28,9 +32,11 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.FlowLayout;
 import java.util.List;
 import java.util.Optional;
 

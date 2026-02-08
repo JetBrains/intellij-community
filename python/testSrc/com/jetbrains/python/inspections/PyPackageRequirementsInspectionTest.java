@@ -11,8 +11,8 @@ import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.RequirementsProviderType;
 import com.jetbrains.python.packaging.management.TestPythonPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.SdksKt;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipEnvParser;
 import org.jetbrains.annotations.NotNull;
 

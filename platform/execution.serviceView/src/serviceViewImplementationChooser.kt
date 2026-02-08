@@ -8,7 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.platform.ide.productMode.IdeProductMode
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.MissingResourceException
 
 private val LOG  by lazy {
   fileLogger()

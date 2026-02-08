@@ -3,18 +3,30 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.AbstractJavaErrorFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameUnderscoreFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInspection.streamMigration.SimplifyForEachInspection;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
-
-import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.UNDERSCORE_IDENTIFIER_UNNAMED;
 
 /**
  * Some quick-fixes not accessible from the java.analysis module are registered here.
@@ -25,9 +37,18 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     fix(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA, error -> new VariableAccessFromInnerClassJava10Fix(error.psi()));
     fix(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD, error -> new VariableAccessFromInnerClassJava10Fix(error.psi()));
     fixes(JavaErrorKinds.SYNTAX_ERROR, (error, info) -> registerErrorElementFixes(info, error.psi()));
-    fix(UNDERSCORE_IDENTIFIER_UNNAMED, error -> error.psi().getParent() instanceof PsiReferenceExpression ref &&
+    fix(JavaErrorKinds.UNDERSCORE_IDENTIFIER_UNNAMED, error -> error.psi().getParent() instanceof PsiReferenceExpression ref &&
                                                 "_".equals(ref.getReferenceName()) ?
                                                 new RenameUnderscoreFix(ref) : null);
+    fix(JavaErrorKinds.UNSUPPORTED_FEATURE, error -> {
+      if (error.context() != JavaFeature.IMPLICIT_CLASSES) return null;
+      return ImplicitToExplicitClassBackwardMigrationInspection.createFix(error.psi());
+    });
+    fix(JavaErrorKinds.REFERENCE_UNRESOLVED, error -> {
+      PsiJavaCodeReferenceElement psi = error.psi();
+      if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, psi)) return null;
+      return MigrateFromJavaLangIoInspection.createCanBeIOFix(error.psi());
+    });
   }
 
   private static void registerErrorElementFixes(@NotNull Consumer<? super CommonIntentionAction> info,

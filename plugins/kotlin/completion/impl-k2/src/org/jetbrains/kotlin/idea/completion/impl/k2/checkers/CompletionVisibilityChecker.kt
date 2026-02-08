@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion.checkers
+package org.jetbrains.kotlin.idea.completion.impl.k2.checkers
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -16,8 +17,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
@@ -67,6 +68,8 @@ internal class CompletionVisibilityChecker(
             } else {
                 return true
             }
+        } else if (declaration is PsiClass) {
+            return declaration.hasModifier(JvmModifier.PUBLIC) && declaration.containingClass?.hasModifier(JvmModifier.PUBLIC) != false
         } else if (declaration is PsiMember) {
             return declaration.hasModifier(JvmModifier.PUBLIC) && declaration.containingClass?.hasModifier(JvmModifier.PUBLIC) == true
         } else {

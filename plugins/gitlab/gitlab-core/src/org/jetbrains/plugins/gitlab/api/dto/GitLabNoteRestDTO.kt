@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabRestId
 import org.jetbrains.plugins.gitlab.api.GitLabRestIdData
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.LineRangeDTO
-import java.util.*
+import java.util.Date
 
 data class GitLabNoteRestDTO(
   @JsonProperty("id")

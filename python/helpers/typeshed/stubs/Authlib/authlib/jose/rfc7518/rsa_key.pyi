@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import ClassVar
 from typing_extensions import Self
 
@@ -21,4 +22,4 @@ class RSAKey(AsymmetricKey):
     @classmethod
     def import_dict_key(cls, raw, options=None) -> Self: ...
 
-def has_all_prime_factors(obj) -> bool: ...
+def has_all_prime_factors(obj: Iterable[str]) -> bool: ...

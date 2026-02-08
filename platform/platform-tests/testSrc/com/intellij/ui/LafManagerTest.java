@@ -8,8 +8,8 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.junit5.TestApplication;
 import org.junit.jupiter.api.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.UIManager;
+import java.awt.Font;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

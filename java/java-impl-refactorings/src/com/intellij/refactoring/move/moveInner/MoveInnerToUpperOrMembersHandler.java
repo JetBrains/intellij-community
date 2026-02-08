@@ -23,8 +23,13 @@ import com.intellij.ui.components.JBBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import java.awt.BorderLayout;
 
 public final class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
   @Override

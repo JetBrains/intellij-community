@@ -2,10 +2,8 @@
 package com.jetbrains.python.run.features
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls

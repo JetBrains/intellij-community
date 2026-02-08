@@ -3,7 +3,11 @@ package git4idea.repo
 
 import com.intellij.openapi.vcs.Executor.cd
 import git4idea.branch.GitBranchUtil
-import git4idea.test.*
+import git4idea.test.cd
+import git4idea.test.git
+import git4idea.test.initRepo
+import git4idea.test.last
+import git4idea.test.tac
 import java.nio.file.Files
 import java.nio.file.Path
 

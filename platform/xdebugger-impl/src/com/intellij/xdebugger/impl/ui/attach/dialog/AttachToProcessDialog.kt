@@ -3,7 +3,17 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.diagnostic.Logger
@@ -45,8 +55,18 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
-import java.awt.event.*
-import javax.swing.*
+import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
+import java.awt.event.MouseEvent
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.KeyStroke
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.event.DocumentEvent
 
 @ApiStatus.Internal

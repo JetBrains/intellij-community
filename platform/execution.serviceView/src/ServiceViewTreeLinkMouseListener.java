@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 @ApiStatus.Internal

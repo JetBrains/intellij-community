@@ -9,7 +9,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class ProjectStartupTasksTableModel extends AbstractTableModel implements EditableModel {

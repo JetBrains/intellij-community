@@ -3,8 +3,8 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.dsl.checkTrue
-import com.intellij.ui.dsl.listCellRenderer.LcrSwitchInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
+import com.intellij.ui.dsl.listCellRenderer.LcrSwitchInitParams
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent

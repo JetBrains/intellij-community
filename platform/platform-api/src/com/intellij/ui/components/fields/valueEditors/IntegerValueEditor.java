@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 
 public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
   private int myMinValue;

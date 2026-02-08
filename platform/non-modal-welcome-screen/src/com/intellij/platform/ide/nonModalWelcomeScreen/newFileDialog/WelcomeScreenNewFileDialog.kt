@@ -6,7 +6,11 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.psi.PsiDirectory

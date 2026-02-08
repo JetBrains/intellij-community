@@ -20,7 +20,14 @@ import com.intellij.util.containers.FactoryMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public abstract class SliceNullnessAnalyzerBase {
   private final @NotNull SliceLeafEquality myLeafEquality;

@@ -4,7 +4,14 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.BareTestFixture;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.ModuleFixture;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

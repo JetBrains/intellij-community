@@ -6,14 +6,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
-import com.intellij.openapi.externalSystem.model.project.*
+import com.intellij.openapi.externalSystem.model.project.ContentRootData
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
+import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import org.gradle.api.artifacts.Dependency
 import org.apache.commons.lang3.RandomUtils
+import org.gradle.api.artifacts.Dependency
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -26,7 +30,10 @@ import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradleJava.internLargeArguments
 import org.jetbrains.kotlin.idea.gradleJava.interner
-import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.AndroidAwareGradleModelProvider
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleModel
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleModelBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinTaskPropertiesBySourceSet
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
@@ -41,7 +48,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
-import java.util.*
+import java.util.ArrayDeque
 
 val DataNode<out ModuleData>.kotlinGradleProjectDataNodeOrNull: DataNode<KotlinGradleProjectData>?
     get() = when (this.data) {

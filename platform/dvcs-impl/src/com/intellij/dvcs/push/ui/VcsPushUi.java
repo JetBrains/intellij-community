@@ -1,7 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.PrePushHandler;
+import com.intellij.dvcs.push.PushInfo;
+import com.intellij.dvcs.push.PushSource;
+import com.intellij.dvcs.push.PushSupport;
+import com.intellij.dvcs.push.PushTarget;
+import com.intellij.dvcs.push.VcsPushOptionValue;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.progress.Task;

@@ -11,14 +11,24 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Ignore
+import org.junit.Rule
+import org.junit.Test
 
 class ProjectLibraryBridgeTest {
   companion object {

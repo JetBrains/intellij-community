@@ -188,6 +188,16 @@ public final class SLRUFileNameCache implements FileNameCache {
     if (StringUtil.containsAnyChar(name, FS_SEPARATORS, start, end)) {
       // TODO AZ: Relax this check for remote EEL paths (IJPL-199502).
       //          This may not be the best solution; this whole function should probably be rewritten or removed (see comment above).
+      // Remote EEL paths (Docker/Devcontainer) should be accepted:
+      //   Standard format:
+      //     Unix:    /$docker.ij/abc123def456@u~var~run~docker.sock/home/user
+      //     Windows: //docker.ij/abc123def456@tcp~host~2375/workspace
+      //   Devcontainer format:
+      //     Unix:    /$devcontainer.ij/abc123def456@u~socket/project
+      //     Windows: //devcontainer.ij/abc123def456@tcp~host~2375/workspace
+      //   Obsolete format:
+      //     Unix:    /docker-abc123def456/home
+      //     Windows: //docker/abc123def456/workspace
       if (getEelDescriptor(Path.of(name)) == LocalEelDescriptor.INSTANCE) {
         throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
       }

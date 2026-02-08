@@ -4,8 +4,13 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.CollectionBean
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XMap
 import org.junit.Test
 
 class StoredPropertyStateTest {

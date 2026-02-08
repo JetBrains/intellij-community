@@ -10,7 +10,12 @@ import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadDescriptorInTest
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.testFramework.plugins.ContentModuleSpec
+import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -29,7 +34,9 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Collections
+import java.util.Enumeration
+import java.util.Locale
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.test.assertEquals

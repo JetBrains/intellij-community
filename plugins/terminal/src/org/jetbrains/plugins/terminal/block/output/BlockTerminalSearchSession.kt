@@ -2,9 +2,21 @@
 package org.jetbrains.plugins.terminal.block.output
 
 import com.intellij.BundleBase
-import com.intellij.find.*
+import com.intellij.find.EditorSearchSession
+import com.intellij.find.FindBundle
+import com.intellij.find.FindManager
+import com.intellij.find.FindModel
 import com.intellij.find.FindModel.FindModelObserver
-import com.intellij.find.editorHeaderActions.*
+import com.intellij.find.FindResult
+import com.intellij.find.SearchReplaceComponent
+import com.intellij.find.SearchSession
+import com.intellij.find.editorHeaderActions.EditorHeaderToggleAction
+import com.intellij.find.editorHeaderActions.Embeddable
+import com.intellij.find.editorHeaderActions.NextOccurrenceAction
+import com.intellij.find.editorHeaderActions.PrevOccurrenceAction
+import com.intellij.find.editorHeaderActions.StatusTextAction
+import com.intellij.find.editorHeaderActions.ToggleMatchCase
+import com.intellij.find.editorHeaderActions.ToggleRegex
 import com.intellij.find.impl.livePreview.LivePreview
 import com.intellij.find.impl.livePreview.LivePreviewController
 import com.intellij.find.impl.livePreview.LivePreviewPresentation

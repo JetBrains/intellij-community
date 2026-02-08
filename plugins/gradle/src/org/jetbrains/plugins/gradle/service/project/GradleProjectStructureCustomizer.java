@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
 /**

@@ -6,7 +6,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class PomHashMap implements Serializable {
   private final @NotNull Map<@NotNull File, @NotNull PomHashValue> pomMap = new HashMap<>();

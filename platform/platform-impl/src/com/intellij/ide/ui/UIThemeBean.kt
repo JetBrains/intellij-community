@@ -14,8 +14,19 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Color
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Deque
+import java.util.LinkedHashMap
 import java.util.function.BiFunction
+import kotlin.collections.HashMap
+import kotlin.collections.Map
+import kotlin.collections.MutableMap
+import kotlin.collections.contains
+import kotlin.collections.emptyMap
+import kotlin.collections.hashMapOf
+import kotlin.collections.isNotEmpty
+import kotlin.collections.joinTo
+import kotlin.collections.set
 
 internal class UIThemeBean {
   @JvmField

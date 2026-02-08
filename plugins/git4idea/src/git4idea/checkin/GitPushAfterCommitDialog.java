@@ -14,7 +14,8 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

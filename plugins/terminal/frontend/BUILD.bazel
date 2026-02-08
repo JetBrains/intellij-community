@@ -50,6 +50,7 @@ jvm_library(
     "//libraries/pty4j",
     "//platform/util/jdom",
     "//platform/lang-api:lang",
+    "//platform/remote-topics/shared:rpc-topics",
   ]
 )
 ### auto-generated section `build intellij.terminal.frontend` end

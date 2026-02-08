@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.ArrayUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
@@ -13,7 +14,15 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassInfo
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -23,11 +32,13 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import java.util.*
+import java.util.Collections
+import java.util.EmptyStackException
 
 /**
  * Represents a concrete type or a set of types yet to be inferred from an expression.
  */
+@K1Deprecation
 abstract class TypeInfo(val variance: Variance) {
     object Empty : TypeInfo(Variance.INVARIANT) {
         override fun getPossibleTypes(builder: CallableBuilder): List<KotlinType> = Collections.emptyList()
@@ -144,12 +155,17 @@ abstract class TypeInfo(val variance: Variance) {
     }
 }
 
+@K1Deprecation
 fun TypeInfo(expressionOfType: KtExpression, variance: Variance): TypeInfo = TypeInfo.ByExpression(expressionOfType, variance)
+@K1Deprecation
 fun TypeInfo(typeReference: KtTypeReference, variance: Variance): TypeInfo = TypeInfo.ByTypeReference(typeReference, variance)
+@K1Deprecation
 fun TypeInfo(theType: KotlinType, variance: Variance): TypeInfo = TypeInfo.ByType(theType, variance)
 
+@K1Deprecation
 fun TypeInfo.noSubstitutions(): TypeInfo = (this as? TypeInfo.NoSubstitutions) ?: TypeInfo.NoSubstitutions(this)
 
+@K1Deprecation
 fun TypeInfo.forceNotNull(): TypeInfo {
     class ForcedNotNull(delegate: TypeInfo) : TypeInfo.DelegatingTypeInfo(delegate) {
         override fun getPossibleTypes(builder: CallableBuilder): List<KotlinType> =
@@ -159,11 +175,13 @@ fun TypeInfo.forceNotNull(): TypeInfo {
     return (this as? ForcedNotNull) ?: ForcedNotNull(this)
 }
 
+@K1Deprecation
 fun TypeInfo.ofThis() = TypeInfo.OfThis(this)
 
 /**
  * Encapsulates information about a function parameter that is going to be created.
  */
+@K1Deprecation
 class ParameterInfo(
     val typeInfo: TypeInfo,
     val nameSuggestions: List<String>
@@ -171,6 +189,7 @@ class ParameterInfo(
     constructor(typeInfo: TypeInfo, preferredName: String? = null) : this(typeInfo, listOfNotNull(preferredName))
 }
 
+@K1Deprecation
 enum class CallableKind {
     FUNCTION,
     CLASS_WITH_PRIMARY_CONSTRUCTOR,
@@ -178,6 +197,7 @@ enum class CallableKind {
     PROPERTY
 }
 
+@K1Deprecation
 abstract class CallableInfo(
     val name: String,
     val receiverTypeInfo: TypeInfo,
@@ -200,6 +220,7 @@ abstract class CallableInfo(
     ): CallableInfo
 }
 
+@K1Deprecation
 class FunctionInfo(
     name: String,
     receiverTypeInfo: TypeInfo,
@@ -232,6 +253,7 @@ class FunctionInfo(
     )
 }
 
+@K1Deprecation
 class ClassWithPrimaryConstructorInfo(
     val classInfo: ClassInfo,
     expectedTypeInfo: TypeInfo,
@@ -256,6 +278,7 @@ class ClassWithPrimaryConstructorInfo(
     ) = throw UnsupportedOperationException()
 }
 
+@K1Deprecation
 class ConstructorInfo(
     override val parameterInfos: List<ParameterInfo>,
     val targetClass: PsiElement,
@@ -275,6 +298,7 @@ class ConstructorInfo(
     ) = throw UnsupportedOperationException()
 }
 
+@K1Deprecation
 class PropertyInfo(
     name: String,
     receiverTypeInfo: TypeInfo,

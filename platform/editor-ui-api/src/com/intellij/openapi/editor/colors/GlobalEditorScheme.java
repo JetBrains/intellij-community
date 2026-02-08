@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.colors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Konstantin Bulenkov

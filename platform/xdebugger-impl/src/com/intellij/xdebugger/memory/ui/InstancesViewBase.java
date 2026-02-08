@@ -12,7 +12,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.LayoutManager;
 
 public abstract class InstancesViewBase extends JBPanel implements Disposable {
   private final InstancesProvider myInstancesProvider;

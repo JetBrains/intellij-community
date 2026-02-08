@@ -19,7 +19,11 @@ import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import java.awt.BorderLayout
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.ScrollPaneConstants
 
 internal class PyPackagesListController(val project: Project, val controller: PyPackagingToolWindowPanel) : Disposable {
   private val packageListPanel = JPanel().apply {

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCodeFragment
 
 private class KotlinCodeFragmentPatcher(val codeFragment: KtCodeFragment) {
     private val expressionWrappers = mutableListOf<KotlinCodeFragmentWrapper>()

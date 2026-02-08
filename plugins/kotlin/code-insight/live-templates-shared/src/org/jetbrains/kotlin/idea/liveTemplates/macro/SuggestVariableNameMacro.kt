@@ -9,7 +9,8 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractSuggestVariableNameMacro : KotlinMacro() {
     override fun getName() = "kotlinSuggestVariableName"

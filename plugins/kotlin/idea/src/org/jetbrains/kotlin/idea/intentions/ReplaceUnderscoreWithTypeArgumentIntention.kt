@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -12,12 +13,16 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsU
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.replaceTypeProjection
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.types.error.ErrorType
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.isNullableAny
+import org.jetbrains.kotlin.types.error.ErrorType
 
+@K1Deprecation
 class ReplaceUnderscoreWithTypeArgumentIntention : SelfTargetingRangeIntention<KtTypeProjection>(
     KtTypeProjection::class.java,
     KotlinBundle.messagePointer("replace.with.explicit.type")

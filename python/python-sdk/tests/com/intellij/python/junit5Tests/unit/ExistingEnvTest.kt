@@ -24,7 +24,7 @@ internal class ExistingEnvTest {
   @Test
   fun testContext(): Unit = runBlocking {
     val title = "some project"
-    val result = ExistingEnv(expectedTitle = title).getSdkCreator(title).createSdk(needsConfirmation = false)
+    val result = ExistingEnv(expectedTitle = title).getSdkCreator(title).createSdk()
     Assertions.assertTrue(result.isFailure)
   }
 }

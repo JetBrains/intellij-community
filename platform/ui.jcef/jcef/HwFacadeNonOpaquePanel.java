@@ -3,7 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.ui.components.panels.NonOpaquePanel;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 /**
  * A heavyweight facade for {@link NonOpaquePanel}.

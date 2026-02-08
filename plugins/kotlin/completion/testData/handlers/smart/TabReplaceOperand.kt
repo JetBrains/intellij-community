@@ -9,3 +9,5 @@ fun bar() {
 
 //ELEMENT: b3
 //CHAR: \t
+
+// IGNORE_K2

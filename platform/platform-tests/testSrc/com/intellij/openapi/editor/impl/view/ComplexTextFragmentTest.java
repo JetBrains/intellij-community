@@ -8,14 +8,20 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.editor.impl.AbstractEditorTest.*;
+import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_CHAR_WIDTH;
+import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_DESCENT;
+import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_LINE_HEIGHT;
+import static com.intellij.openapi.editor.impl.AbstractEditorTest.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
 
 public class ComplexTextFragmentTest {

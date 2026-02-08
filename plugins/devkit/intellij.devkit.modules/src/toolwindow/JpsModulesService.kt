@@ -3,7 +3,6 @@ package com.intellij.devkit.modules.toolwindow
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import java.io.File
 
 /**

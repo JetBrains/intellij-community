@@ -5,20 +5,13 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.future
-import kotlinx.coroutines.job
-import kotlinx.coroutines.joinAll
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeDeleted
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeReviewed
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinCopyPasteCoroutineScopeService
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -27,8 +20,6 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import java.io.File
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
     private val CLEAR_FILE_DIRECTIVE = "// CLEAR_FILE"

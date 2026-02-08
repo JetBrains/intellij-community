@@ -5,9 +5,11 @@ import com.intellij.codeInsight.daemon.ChangeLocalityDetector
 import com.intellij.codeInsight.daemon.impl.HighlightingPsiUtil
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener
 
+@K1Deprecation
 @ApiStatus.Internal
 class KotlinChangeLocalityDetector : ChangeLocalityDetector {
     override fun getChangeHighlightingDirtyScopeFor(element: PsiElement): PsiElement? {

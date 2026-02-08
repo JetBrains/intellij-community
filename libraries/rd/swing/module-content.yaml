@@ -3,4 +3,4 @@
   - name: intellij.libraries.rd.swing
     libraries:
       rd-swing:
-      - name: $MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2025/rd-swing-2025.jar
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026/rd-swing-2026.jar

@@ -35,7 +35,9 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.event.AncestorEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;

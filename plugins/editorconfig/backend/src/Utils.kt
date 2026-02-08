@@ -27,7 +27,11 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.LineSeparator
 import org.ec4j.core.ResourceProperties
-import org.editorconfig.configmanagement.*
+import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil
+import org.editorconfig.configmanagement.StandardEditorConfigProperties
+import org.editorconfig.configmanagement.indentSizeKey
+import org.editorconfig.configmanagement.indentStyleKey
+import org.editorconfig.configmanagement.tabWidthKey
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.TestOnly

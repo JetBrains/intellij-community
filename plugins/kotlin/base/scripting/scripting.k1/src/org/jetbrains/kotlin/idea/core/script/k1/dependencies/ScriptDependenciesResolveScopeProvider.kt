@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 /**
  * @see KotlinScriptResolveScopeProvider
  */
+@K1Deprecation
 class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
 
     /**

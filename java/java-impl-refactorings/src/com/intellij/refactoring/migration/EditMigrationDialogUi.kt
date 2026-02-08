@@ -3,7 +3,12 @@ package com.intellij.refactoring.migration
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.rows
 import com.intellij.util.containers.mapSmart
 import javax.swing.JPanel
 import javax.swing.JTextArea

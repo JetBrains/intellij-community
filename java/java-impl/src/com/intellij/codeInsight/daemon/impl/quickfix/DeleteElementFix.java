@@ -2,7 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.containers.ContainerUtil;

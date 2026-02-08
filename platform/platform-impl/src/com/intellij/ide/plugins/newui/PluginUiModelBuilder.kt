@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.marketplace.PluginContentModule
 import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 /**

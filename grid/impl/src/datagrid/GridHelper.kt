@@ -4,7 +4,13 @@ import com.intellij.database.connection.throwable.info.ErrorInfo
 import com.intellij.database.data.types.DataTypeConversion
 import com.intellij.database.dump.DumpHandler
 import com.intellij.database.dump.ExtractionHelper
-import com.intellij.database.extractors.*
+import com.intellij.database.extractors.DataExtractor
+import com.intellij.database.extractors.DataExtractorFactories
+import com.intellij.database.extractors.DataExtractorFactory
+import com.intellij.database.extractors.ExtractionConfig
+import com.intellij.database.extractors.GridExtractorsUtilCore
+import com.intellij.database.extractors.ObjectFormatterMode
+import com.intellij.database.extractors.builder
 import com.intellij.database.run.actions.DumpSource
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.grid.DefaultGridColumnLayout

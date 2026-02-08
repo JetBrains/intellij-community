@@ -4,7 +4,6 @@ package com.intellij.platform.testFramework.junit5.eel.fixture
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.testFramework.junit5.eel.impl.currentOs
 import com.intellij.platform.testFramework.junit5.eel.impl.eelInitializer
 import com.intellij.platform.testFramework.junit5.eel.impl.eelTempDirectoryFixture

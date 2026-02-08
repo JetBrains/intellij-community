@@ -8,7 +8,7 @@ import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Dmitry Avdeev

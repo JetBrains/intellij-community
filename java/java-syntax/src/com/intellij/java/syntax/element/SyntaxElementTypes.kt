@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax.element
 
 import com.intellij.java.syntax.element.JavaSyntaxTokenType
@@ -42,11 +42,6 @@ object SyntaxElementTypes {
     JToken.FINAL_KEYWORD, JToken.NATIVE_KEYWORD, JToken.SYNCHRONIZED_KEYWORD, JToken.STRICTFP_KEYWORD, JToken.TRANSIENT_KEYWORD,
     JToken.VOLATILE_KEYWORD, JToken.DEFAULT_KEYWORD, JToken.SEALED_KEYWORD, JToken.NON_SEALED_KEYWORD, JToken.VALUE_KEYWORD
   )
-
-  // While only 'final' modifier is acceptable in the (method or lambda) parameter modifier list, we still parse any modifier,
-  // except the soft ones, as they should be parsed as variable name in lambda parameter list.
-  val PARAMETER_MODIFIER_BIT_SET: SyntaxElementTypeSet =
-    MODIFIER_BIT_SET - setOf(JToken.SEALED_KEYWORD, JToken.NON_SEALED_KEYWORD, JToken.VALUE_KEYWORD)
 
   val PRIMITIVE_TYPE_BIT_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(
     JToken.BOOLEAN_KEYWORD, JToken.BYTE_KEYWORD, JToken.SHORT_KEYWORD, JToken.INT_KEYWORD, JToken.LONG_KEYWORD, JToken.CHAR_KEYWORD,

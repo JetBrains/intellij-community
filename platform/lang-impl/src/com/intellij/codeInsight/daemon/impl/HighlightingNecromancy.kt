@@ -6,32 +6,30 @@ import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.DataInput
-import java.io.DataOutput
 import javax.swing.Icon
 
 
 @Internal
-object HighlightingNecromancy : LimbedNecromancy<HighlightingZombie, HighlightingLimb>(spellLevel=0, isDeepBury=true) {
+object HighlightingNecromancy : LimbedNecromancy<HighlightingZombie, HighlightingLimb>(spellLevel=1) {
 
-  override fun buryLimb(grave: DataOutput, limb: HighlightingLimb) {
-    writeInt(grave, limb.startOffset)
-    writeInt(grave, limb.endOffset)
-    writeInt(grave, limb.layer)
-    writeInt(grave, limb.targetArea.ordinal)
-    writeTextAttributesKey(grave, limb.textAttributesKey)
-    writeTextAttributes(grave, limb.textAttributes)
-    writeGutterIcon(grave, limb.gutterIcon)
+  override fun Out.writeLimb(limb: HighlightingLimb) {
+    writeInt(limb.startOffset)
+    writeInt(limb.endOffset)
+    writeInt(limb.layer)
+    writeInt(limb.targetArea.ordinal)
+    writeTextAttributesKey(limb.textAttributesKey)
+    writeTextAttributes(limb.textAttributes)
+    writeIconOrNull(limb.gutterIcon)
   }
 
-  override fun exhumeLimb(grave: DataInput): HighlightingLimb {
-    val startOffset: Int              = readInt(grave)
-    val endOffset: Int                = readInt(grave)
-    val layer: Int                    = readInt(grave)
-    val target: HighlighterTargetArea = readTargetArea(grave)
-    val key: TextAttributesKey?       = readTextAttributesKey(grave)
-    val attributes: TextAttributes?   = readTextAttributes(grave)
-    val icon: Icon?                   = readGutterIcon(grave)
+  override fun In.readLimb(): HighlightingLimb {
+    val startOffset: Int              = readInt()
+    val endOffset: Int                = readInt()
+    val layer: Int                    = readInt()
+    val target: HighlighterTargetArea = readTargetArea()
+    val key: TextAttributesKey?       = readTextAttributesKey()
+    val attributes: TextAttributes?   = readTextAttributes()
+    val icon: Icon?                   = readIconOrNull()
     return HighlightingLimb(
       startOffset,
       endOffset,
@@ -47,30 +45,30 @@ object HighlightingNecromancy : LimbedNecromancy<HighlightingZombie, Highlightin
     return HighlightingZombie(limbs)
   }
 
-  private fun writeTextAttributesKey(grave: DataOutput, textAttributesKey: TextAttributesKey?) {
-    writeStringNullable(grave, textAttributesKey?.externalName)
+  private fun Out.writeTextAttributesKey(textAttributesKey: TextAttributesKey?) {
+    writeStringOrNull(textAttributesKey?.externalName)
   }
 
-  private fun writeTextAttributes(grave: DataOutput, textAttributes: TextAttributes?) {
-    writeNullable(grave, textAttributes) { textAttributes ->
-      textAttributes.writeExternal(grave)
+  private fun Out.writeTextAttributes(textAttributes: TextAttributes?) {
+    writeNullable(textAttributes) { textAttributes ->
+      textAttributes.writeExternal(output)
     }
   }
 
-  private fun readTargetArea(grave: DataInput): HighlighterTargetArea {
-    val index = readInt(grave)
+  private fun In.readTargetArea(): HighlighterTargetArea {
+    val index = readInt()
     return HighlighterTargetArea.entries[index]
   }
 
-  private fun readTextAttributesKey(grave: DataInput): TextAttributesKey? {
-    return readStringNullable(grave)?.let {
+  private fun In.readTextAttributesKey(): TextAttributesKey? {
+    return readStringOrNull()?.let {
       TextAttributesKey.find(it)
     }
   }
 
-  private fun readTextAttributes(grave: DataInput): TextAttributes? {
-    return readNullable(grave) {
-      TextAttributes(grave)
+  private fun In.readTextAttributes(): TextAttributes? {
+    return readNullable {
+      TextAttributes(input)
     }
   }
 }

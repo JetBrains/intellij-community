@@ -2,8 +2,8 @@
 
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 
 
 public abstract class RelatedUsageInfo extends MoveRenameUsageInfo {

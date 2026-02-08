@@ -3,7 +3,12 @@
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebugProcessListener;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
@@ -41,7 +46,7 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
@@ -121,7 +126,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         DebuggerManagerThreadImpl.assertIsManagerThread();
         debugProcess.removeDebugProcessListener(this);
         boolean activated = myIsTrackersActivated.get();
-        VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+        VirtualMachineProxyImpl proxy = VirtualMachineProxyImpl.getCurrent();
         if (!proxy.canBeModified()) {
           return;
         }
@@ -186,7 +191,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
                           @NotNull TrackingType type,
                           boolean isTrackerEnabled) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!debugProcess.getVirtualMachineProxy().canBeModified()) {
+    if (!VirtualMachineProxyImpl.getCurrent().canBeModified()) {
       return;
     }
     if (type == TrackingType.CREATION) {

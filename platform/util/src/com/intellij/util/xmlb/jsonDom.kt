@@ -5,7 +5,13 @@
 package com.intellij.util.xmlb
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jdom.Namespace

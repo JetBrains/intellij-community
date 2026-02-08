@@ -3,7 +3,15 @@ package com.intellij.devkit.workspaceModel.metaModel.impl
 
 import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithPsi
 import com.intellij.psi.PsiElement
-import com.intellij.workspaceModel.codegen.deft.meta.*
+import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
+import com.intellij.workspaceModel.codegen.deft.meta.Obj
+import com.intellij.workspaceModel.codegen.deft.meta.ObjAnnotation
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ObjType
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 
 private val fieldObjType = ObjTypeImpl<ObjProperty<*, *>>()
 

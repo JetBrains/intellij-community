@@ -9,7 +9,6 @@ import fleet.kernel.rete.ContextMatches
 import fleet.kernel.rete.ReteEntity
 import fleet.kernel.rete.UnsatisfiedMatchException
 import fleet.kernel.rete.impl.ObservableMatch
-import fleet.util.logging.KLoggers
 import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow

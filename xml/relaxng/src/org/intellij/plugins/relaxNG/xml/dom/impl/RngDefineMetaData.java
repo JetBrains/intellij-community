@@ -26,7 +26,7 @@ import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class RngDefineMetaData extends DomMetaData<RngDefine> {
   @Override

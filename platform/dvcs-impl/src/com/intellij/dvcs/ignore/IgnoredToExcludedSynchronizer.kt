@@ -51,11 +51,16 @@ import com.intellij.util.Alarm
 import com.intellij.util.messages.impl.subscribeAsFlow
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 import java.util.function.Function
 import javax.swing.JComponent
 

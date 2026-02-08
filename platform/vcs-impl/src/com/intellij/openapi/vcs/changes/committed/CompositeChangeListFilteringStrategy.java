@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import java.util.ArrayList;
 import java.util.List;

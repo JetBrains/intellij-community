@@ -15,7 +15,11 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
-import org.junit.*
+import org.junit.Assert
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 

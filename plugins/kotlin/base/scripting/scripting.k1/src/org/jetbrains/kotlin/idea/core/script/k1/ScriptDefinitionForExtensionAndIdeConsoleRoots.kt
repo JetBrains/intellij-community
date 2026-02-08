@@ -5,12 +5,22 @@ package org.jetbrains.kotlin.idea.core.script.k1
 import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.script.IdeConsoleRootType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.shared.definition.scriptClassPath
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.KotlinType
+import kotlin.script.experimental.api.ScriptAcceptedLocation
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.acceptedLocations
+import kotlin.script.experimental.api.baseClass
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.displayName
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
@@ -33,6 +43,7 @@ private object ScriptDefinitionForExtensionAndIdeConsoleRoots : ScriptDefinition
 
 private const val SCRIPT_DEFINITION_NAME = "Script definition for extension scripts and IDE console"
 
+@K1Deprecation
 class ScriptDefinitionForExtensionAndIdeConsoleRootsSource : ScriptDefinitionsSource {
     override val definitions: Sequence<ScriptDefinition>
         get() = sequenceOf(ScriptDefinitionForExtensionAndIdeConsoleRoots)

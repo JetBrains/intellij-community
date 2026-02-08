@@ -10,7 +10,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryDescription;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager;
-import com.intellij.util.download.*;
+import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileService;
+import com.intellij.util.download.DownloadableFileSetDescription;
+import com.intellij.util.download.DownloadableFileSetVersions;
+import com.intellij.util.download.FileDownloader;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -20,7 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author michael.golubev

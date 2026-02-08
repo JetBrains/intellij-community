@@ -17,9 +17,13 @@
 package com.intellij.stats.completion.logger
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.completion.*
+import com.intellij.stats.completion.DeserializedLogEvent
+import com.intellij.stats.completion.LogEventSerializer
+import com.intellij.stats.completion.LookupState
+import com.intellij.stats.completion.ValidationStatus
 import com.intellij.stats.completion.events.DownPressedEvent
 import com.intellij.stats.completion.events.LogEvent
+import com.intellij.stats.completion.withSelected
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
 import java.util.concurrent.LinkedBlockingQueue

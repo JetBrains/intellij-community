@@ -41,7 +41,7 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 #if (${INHERIT_MAVEN_KOTLIN_PLUGIN_VERSION} == false)
-                <version>${KOTLIN_PLUGIN_WIZARD_VERSION}</version>
+                <version>$${kotlin.version}</version>
                 #end
                 <executions>
                     <execution>

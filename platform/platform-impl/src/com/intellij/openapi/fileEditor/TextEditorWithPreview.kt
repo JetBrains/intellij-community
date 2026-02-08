@@ -11,7 +11,15 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
@@ -47,7 +55,11 @@ import java.awt.event.KeyEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLayeredPane
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 private val PARENT_SPLIT_EDITOR_KEY = Key.create<TextEditorWithPreview>("parentSplit")
 

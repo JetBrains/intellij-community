@@ -3,7 +3,11 @@ package com.intellij.openapi.vcs.roots;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class VcsRootConfiguration {
   private @NotNull Collection<String> myVcsRoots;

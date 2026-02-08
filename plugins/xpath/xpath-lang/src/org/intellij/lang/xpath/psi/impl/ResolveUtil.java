@@ -17,7 +17,13 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
@@ -31,7 +37,11 @@ import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class ResolveUtil {
   private final Set<PsiElement> myHistory = new ReferenceOpenHashSet<>();

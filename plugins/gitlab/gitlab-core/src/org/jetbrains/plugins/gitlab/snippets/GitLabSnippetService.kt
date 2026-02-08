@@ -21,7 +21,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.asSafely
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.data.GitLabSnippetBlobActionEnum
@@ -37,7 +43,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErr
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.snippets.GitLabSnippetService.Companion.GL_SNIPPET_FILES_LIMIT
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
-import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.*
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_CANCEL
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_CREATED
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_ERRORED
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_OK
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecuted
 import java.awt.datatransfer.StringSelection
 

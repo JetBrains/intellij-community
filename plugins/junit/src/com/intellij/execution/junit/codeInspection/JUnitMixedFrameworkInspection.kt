@@ -22,18 +22,35 @@ import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.inspection.JvmLocalInspection
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import com.siyeh.ig.junit.JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_AFTER
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_AFTER_CLASS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_BEFORE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_BEFORE_CLASS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_IGNORE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_AFTER_ALL
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_AFTER_EACH
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_BEFORE_ALL
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_BEFORE_EACH
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_DISABLED
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_TEST
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.toUElementOfType
-import java.util.*
+import java.util.Locale
 
 class JUnitMixedFrameworkInspection : JvmLocalInspection() {
   private fun shouldInspect(file: PsiFile): Boolean {

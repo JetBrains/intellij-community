@@ -2,7 +2,21 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiPackageStatement
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiRecursiveVisitor
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -10,10 +24,46 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.nj2k.symbols.*
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKFieldSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseFieldSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseFunctionSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseKtClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseKtEnumEntrySymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseKtTypeParameterSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiversePackageSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiversePropertySymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseTypeParameterSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKPackageSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKTypeAliasKtClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUniverseFieldSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUniverseMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUniversePackageSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUniverseSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUniverseTypeParameterSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
+import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedMethod
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKPackageDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKTypeParameter
+import org.jetbrains.kotlin.nj2k.tree.JKVariable
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeParameter
 
 class JKSymbolProvider(private val resolver: JKResolver) {
     lateinit var typeFactory: JKTypeFactory

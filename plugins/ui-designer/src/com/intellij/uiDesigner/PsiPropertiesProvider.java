@@ -4,18 +4,27 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.LwIntroComponentProperty;
+import com.intellij.uiDesigner.lw.LwIntroEnumProperty;
+import com.intellij.uiDesigner.lw.LwIntroListModelProperty;
+import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
+import com.intellij.uiDesigner.lw.PropertiesProvider;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ListModel;
+import java.awt.Component;
 import java.util.HashMap;
 
 public final class PsiPropertiesProvider implements PropertiesProvider {

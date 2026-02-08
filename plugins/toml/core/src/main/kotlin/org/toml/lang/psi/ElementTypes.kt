@@ -14,7 +14,14 @@ import com.intellij.psi.tree.TokenSet
 import org.toml.TomlBundle
 import org.toml.TomlIcons
 import org.toml.lang.TomlLanguage
-import org.toml.lang.psi.TomlElementTypes.*
+import org.toml.lang.psi.TomlElementTypes.BASIC_STRING
+import org.toml.lang.psi.TomlElementTypes.BOOLEAN
+import org.toml.lang.psi.TomlElementTypes.COMMENT
+import org.toml.lang.psi.TomlElementTypes.DATE_TIME
+import org.toml.lang.psi.TomlElementTypes.LITERAL_STRING
+import org.toml.lang.psi.TomlElementTypes.MULTILINE_BASIC_STRING
+import org.toml.lang.psi.TomlElementTypes.MULTILINE_LITERAL_STRING
+import org.toml.lang.psi.TomlElementTypes.NUMBER
 import javax.swing.Icon
 
 class TomlTokenType(debugName: String) : IElementType(debugName, TomlLanguage)

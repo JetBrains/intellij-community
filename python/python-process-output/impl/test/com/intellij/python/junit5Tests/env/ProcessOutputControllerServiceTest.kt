@@ -20,7 +20,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.io.awaitExit
-import com.intellij.util.progress.sleepCancellable
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
@@ -196,7 +195,6 @@ class ProcessOutputControllerServiceTest {
         watcher.cancelAndJoin()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `exit info collector coroutines get properly cleaned up`(
         @TempDir cwd: Path,
@@ -213,32 +211,45 @@ class ProcessOutputControllerServiceTest {
                     import sys 
                     
                     print("test " + sys.argv[1])
+                    sys.stdin.read(1)
                 """.trimIndent(),
             )
         }
 
         // no exit info collector coroutines should exist
-        assertEquals(
-            0,
-            DebugProbes.dumpCoroutinesInfo()
-                .filter { it.context[CoroutineName.Key]?.name == CoroutineNames.EXIT_INFO_COLLECTOR }
-                .size,
-        )
+        assertEquals(0, exitInfoCollectorCoroutinesCount())
 
-        // spawn 1024 processes
-        repeat(1024) {
-            runBin(binOnEel, Args(MAIN_PY, it.toString()))
+        // spawn 10 processes
+        val processes = mutableListOf<Process>()
+        repeat(10) {
+            processes += runBinWithInput(binOnEel, Args(MAIN_PY, it.toString()))
         }
 
-        sleepCancellable(1000)
+        // 10 collector coroutines should be active
+        waitUntil {
+            exitInfoCollectorCoroutinesCount() == 10
+        }
 
-        // the count of active exit info collector coroutines should match MAX_PROCESSES
-        assertEquals(
-            ProcessOutputControllerServiceLimits.MAX_PROCESSES,
-            DebugProbes.dumpCoroutinesInfo()
-                .filter { it.context[CoroutineName.Key]?.name == CoroutineNames.EXIT_INFO_COLLECTOR }
-                .size,
-        )
+        // spawn 1024 processes, instantly terminate them
+        repeat(1024) {
+            val process = runBinWithInput(binOnEel, Args(MAIN_PY, (it + 10).toString()))
+            inputAndAwaitExit(process)
+        }
+
+        // 10 collection coroutines should be active
+        waitUntil {
+            exitInfoCollectorCoroutinesCount() == 10
+        }
+
+        // terminating all the processes
+        for (process in processes) {
+            inputAndAwaitExit(process)
+        }
+
+        // no collection coroutines should be active
+        waitUntil {
+            exitInfoCollectorCoroutinesCount() == 0
+        }
     }
 
     @Test
@@ -403,6 +414,31 @@ class ProcessOutputControllerServiceTest {
     companion object {
         const val MAIN_PY = "main.py"
 
+        suspend fun runBinWithInput(binOnEel: BinOnEel, args: Args): Process =
+            ExecService().executeGetProcess(
+                binOnEel,
+                args,
+                CoroutineScope(NON_INTERACTIVE_ROOT_TRACE_CONTEXT),
+            ).getOrThrow()
+
+        suspend fun inputAndAwaitExit(process: Process) {
+            process.outputStream.write(0)
+            process.outputStream.flush()
+
+            coroutineScope {
+                listOf(
+                    async(Dispatchers.IO) {
+                        process.errorStream.readAllBytes()
+                    },
+                    async(Dispatchers.IO) {
+                        process.inputStream.readAllBytes()
+                    },
+                ).awaitAll()
+
+                process.awaitExit()
+            }
+        }
+
         suspend fun runBin(binOnEel: BinOnEel, args: Args) {
             withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
                 val process = ExecService().executeGetProcess(
@@ -425,5 +461,11 @@ class ProcessOutputControllerServiceTest {
                 }
             }
         }
+
+        @OptIn(ExperimentalCoroutinesApi::class)
+        private fun exitInfoCollectorCoroutinesCount(): Int =
+            DebugProbes.dumpCoroutinesInfo()
+                .filter { it.context[CoroutineName.Key]?.name == CoroutineNames.EXIT_INFO_COLLECTOR }
+                .size
     }
 }

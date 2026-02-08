@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements.inspections.tools
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElementVisitor
@@ -17,7 +21,11 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.requirements.RequirementsFile
 import com.jetbrains.python.requirements.RequirementsInspectionVisitor
 import com.jetbrains.python.requirements.getPythonSdk
-import com.jetbrains.python.requirements.inspections.quickfixes.*
+import com.jetbrains.python.requirements.inspections.quickfixes.InstallAllRequirementsInTomlQuickFix
+import com.jetbrains.python.requirements.inspections.quickfixes.InstallAllRequirementsQuickFix
+import com.jetbrains.python.requirements.inspections.quickfixes.InstallRequirementInTomlQuickFix
+import com.jetbrains.python.requirements.inspections.quickfixes.InstallRequirementQuickFix
+import com.jetbrains.python.requirements.inspections.quickfixes.PyGenerateRequirementsFileQuickFix
 import com.jetbrains.python.requirements.psi.Requirement
 import com.jetbrains.python.sdk.isReadOnly
 import org.toml.lang.psi.TomlTable

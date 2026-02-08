@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.util.Alarm;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public final class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase<SMTestProxy> {
   private final JTree myTree;

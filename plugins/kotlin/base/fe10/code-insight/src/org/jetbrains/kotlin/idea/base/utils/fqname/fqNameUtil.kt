@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiPackage
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.types.KotlinType
 /**
  * Returns FqName for given declaration (either Java or Kotlin)
  */
+@K1Deprecation
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.kotlinFqName' instead",
     ReplaceWith("this.kotlinFqName", imports = ["org.jetbrains.kotlin.idea.base.psi.kotlinFqName"])
@@ -30,6 +32,7 @@ fun PsiElement.getKotlinFqName(): FqName? = when (val element = namedUnwrappedEl
     else -> null
 }
 
+@K1Deprecation
 val KotlinType.fqName: FqName?
     get() = when (this) {
         is AbbreviatedType -> abbreviation.fqName

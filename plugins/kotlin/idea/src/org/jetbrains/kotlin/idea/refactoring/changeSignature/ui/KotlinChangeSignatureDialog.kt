@@ -13,13 +13,20 @@ import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.caches.resolve.CodeFragmentAnalyzer
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureProcessor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor.Kind
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinTypeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.render
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.returnTypeInfo
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
@@ -27,6 +34,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
 
+@K1Deprecation
 class KotlinChangeSignatureDialog (
     project: Project,
     editor: Editor?,

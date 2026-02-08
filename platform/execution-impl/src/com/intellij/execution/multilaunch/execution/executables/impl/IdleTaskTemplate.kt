@@ -1,16 +1,16 @@
 package com.intellij.execution.multilaunch.execution.executables.impl
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.util.ui.EmptyIcon
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate
 import com.intellij.execution.multilaunch.state.ExecutableSnapshot
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.project.Project
+import com.intellij.util.ui.EmptyIcon
+import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

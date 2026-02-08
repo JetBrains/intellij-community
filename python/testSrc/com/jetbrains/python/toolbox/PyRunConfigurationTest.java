@@ -47,7 +47,7 @@ public class PyRunConfigurationTest extends CodeInsightFixtureTestCase {
 
   @NotNull
   private Collection<String> collectProjectPythonPathEntries(@NotNull PythonRunConfiguration configuration) {
-    final Collection<String> roots = PythonCommandLineState.collectPythonPath(myFixture.getProject(), configuration, false);
+    final Collection<String> roots = PythonCommandLineState.collectPythonPath(myFixture.getProject(), configuration);
     return ContainerUtil.map(roots, PathUtil::toSystemIndependentName);
   }
 

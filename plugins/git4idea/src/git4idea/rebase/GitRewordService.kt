@@ -29,7 +29,11 @@ import git4idea.rebase.log.GitNewCommitMessageActionDialog
 import git4idea.rebase.log.executeInMemoryWithFallback
 import git4idea.rebase.log.notifySuccess
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
@@ -86,7 +90,7 @@ private suspend fun executeRewordOperation(
     executeInMemoryWithFallback(
       inMemoryOperation = {
         val objectRepo = GitObjectRepository(repository)
-        val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
+        val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.debug.notify.errors")
         GitInMemoryRewordOperation(objectRepo, commit, newMessage).execute(showFailureNotification)
       },
       fallbackOperation = {

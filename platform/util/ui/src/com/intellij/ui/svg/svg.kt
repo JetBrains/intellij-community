@@ -15,7 +15,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.IconManager
-import com.intellij.ui.icons.*
+import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.EMPTY_ICON
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.ReplaceableIcon
+import com.intellij.ui.icons.checkIconSize
+import com.intellij.ui.icons.registerIconCacheCleaner
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.ArrayUtilRt

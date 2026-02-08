@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -6,7 +6,17 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
+import com.intellij.internal.statistic.eventLog.events.ClassEventField;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.StringListEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -29,7 +39,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 76);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 77);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -67,8 +77,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventId1<Long> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.DurationMs);
 
-  private static final EventId FREEZE_POPUP_SHOWN =
-    LIFECYCLE.registerEvent("freeze.popup.shown", "Happens when the IDE shows a popup that indicates UI freeze");
+  private static final EventId FREEZE_POPUP_SHOWN = LIFECYCLE.registerEvent("freeze.popup.shown");
 
   private static final EventId3<PluginInfo, Long, Boolean> IDE_FREEZE_DETECTED_PLUGIN =
     LIFECYCLE.registerEvent("ide.freeze.detected.plugin", EventFields.PluginInfo, EventFields.DurationMs, EventFields.Boolean("reported_to_user"));
@@ -97,6 +106,11 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventId IDE_DEADLOCK_DETECTED = LIFECYCLE.registerEvent("ide.deadlock.detected");
 
+  private static final EventField<Integer> numberOfExceptionsField = EventFields.Int("number_of_exceptions");
+  private static final EventId1<Integer> IDE_HUNDRED_EXCEPTIONS_HAPPENED =
+    LIFECYCLE.registerEvent("ide.hundred.exceptions.happened", numberOfExceptionsField);
+  private static final EventId2<Integer, PluginInfo> IDE_HUNDRED_EXCEPTIONS_HAPPENED_IN_PLUGIN =
+    LIFECYCLE.registerEvent("ide.hundred.exceptions.happened.in.plugin", numberOfExceptionsField, EventFields.PluginInfo);
 
   private enum ProjectOpenMode {New, Same, Attach}
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, mode -> Strings.toLowerCase(mode.name()));
@@ -255,5 +269,18 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void pluginFreezeIgnored(@NotNull PluginId id) {
     IDE_FREEZE_PLUGIN_IGNORED.log(getPluginInfoById(id));
+  }
+
+  public static void onExceptionHappened(int numberOfExceptions) {
+    if (numberOfExceptions % 100 == 0) {
+      IDE_HUNDRED_EXCEPTIONS_HAPPENED.log(numberOfExceptions);
+    }
+  }
+
+  public static void onExceptionInPluginHappened(int numberOfExceptions, @Nullable PluginId pluginId) {
+    if (numberOfExceptions % 100 == 0) {
+      PluginInfo pluginInfo = (pluginId != null) ? getPluginInfoById(pluginId) : getPlatformPlugin();
+      IDE_HUNDRED_EXCEPTIONS_HAPPENED_IN_PLUGIN.log(numberOfExceptions, pluginInfo);
+    }
   }
 }

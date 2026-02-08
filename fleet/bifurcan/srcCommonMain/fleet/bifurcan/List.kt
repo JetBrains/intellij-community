@@ -1,14 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.bifurcan
 
-import fleet.bifurcan.nodes.ListNodes.Node
-import fleet.bifurcan.utils.Bits.log2Ceil
 import fleet.bifurcan.nodes.ListNodes
+import fleet.bifurcan.nodes.ListNodes.Node
 import fleet.bifurcan.serialization.BifurcanListSerializer
-
-import kotlin.math.min
+import fleet.bifurcan.utils.Bits.log2Ceil
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.serialization.Serializable
+import kotlin.math.min
 
 /**
  * An implementation of an immutable list which allows for elements to be added and removed from both ends of the

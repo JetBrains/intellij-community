@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.changes
 
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.Change
@@ -15,7 +13,6 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandler
-import git4idea.config.GitVcsSettings
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.getRebaseUpstreamFor
@@ -23,8 +20,8 @@ import git4idea.rebase.log.GitCommitEditingOperation
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.squash.GitSquashOperation
 import git4idea.repo.GitRepository
-import git4idea.stash.GitChangesSaver
 import git4idea.util.GitFileUtils
+import git4idea.util.GitPreservingProcess
 import org.jetbrains.annotations.NonNls
 
 internal class GitDropSelectedChangesOperation(
@@ -42,31 +39,25 @@ internal class GitDropSelectedChangesOperation(
   suspend fun execute(): GitCommitEditingOperationResult {
     repository.update()
     initialHeadPosition = repository.currentRevision!!
-    val changesSaver = createGitChangesSaver()
-    if (!changesSaver.trySaveLocalChanges(listOf(repository.root))) {
-      return GitCommitEditingOperationResult.Incomplete
+
+    val logManager = VcsProjectLog.getInstance(project).logManager
+    return if (canDropViaAmend() || logManager == null) {
+      dropSelectedChanges()
     }
-    var result: GitCommitEditingOperationResult = GitCommitEditingOperationResult.Incomplete
-    try {
-      if (canDropViaAmend()) {
-        result = dropViaAmend()
-      }
-      else {
-        val logManager = VcsProjectLog.getInstance(project).logManager
-        result = logManager?.runWithFreezing { dropViaRebase() } ?: dropViaRebase()
-      }
-      return result
+    else {
+      logManager.runWithFreezing { dropSelectedChanges() }
     }
-    finally {
-      when (result) {
-        is GitCommitEditingOperationResult.Complete -> {
-          changesSaver.load()
-        }
-        is GitCommitEditingOperationResult.Incomplete -> {
-          changesSaver.notifyLocalChangesAreNotRestored(GitBundle.message("rebase.log.changes.action.operation.drop.name"))
-        }
-      }
-    }
+  }
+
+  private suspend fun dropSelectedChanges(): GitCommitEditingOperationResult {
+    val destinationName = repository.currentBranchName ?: GitBundle.message("rebase.log.changes.drop.action.detached.head.destination")
+    return GitPreservingProcess.runWithPreservedLocalChanges(
+      repository,
+      GitBundle.message("rebase.log.changes.action.operation.drop.name"),
+      destinationName
+    ) {
+      if (canDropViaAmend()) dropViaAmend() else dropViaRebase()
+    } ?: GitCommitEditingOperationResult.Incomplete
   }
 
   private fun canDropViaAmend() = commit.id.asString() == initialHeadPosition
@@ -164,19 +155,5 @@ internal class GitDropSelectedChangesOperation(
       GitBundle.message("rebase.log.changes.drop.failed.title"),
       exception.message
     )
-  }
-
-  private suspend fun createGitChangesSaver(): GitChangesSaver {
-    val gitSettings = GitVcsSettings.getInstance(project)
-    val savePolicy = gitSettings.saveChangesPolicy
-    return coroutineToIndicator { indicator ->
-      GitChangesSaver.getSaver(
-        project,
-        Git.getInstance(),
-        indicator,
-        VcsBundle.message("stash.changes.message", GitBundle.message("rebase.log.changes.action.operation.drop.name")),
-        savePolicy
-      )
-    }
   }
 }

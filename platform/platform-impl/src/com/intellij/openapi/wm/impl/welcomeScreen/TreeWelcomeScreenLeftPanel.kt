@@ -20,7 +20,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.Component
 import java.awt.Graphics
-import java.util.*
+import java.util.Objects
 import java.util.function.Consumer
 import javax.accessibility.Accessible
 import javax.swing.JComponent
@@ -28,8 +28,11 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.event.TreeSelectionListener
-import javax.swing.tree.*
-import kotlin.collections.ArrayDeque
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeCellRenderer
+import javax.swing.tree.TreeNode
+import javax.swing.tree.TreeSelectionModel
 
 internal class TreeWelcomeScreenLeftPanel : WelcomeScreenLeftPanel {
   private val root = DefaultMutableTreeNode()

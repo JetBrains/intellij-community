@@ -5,7 +5,13 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.lang.Language
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.FileViewProviderFactory
+import com.intellij.psi.PlainTextTokenTypes
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement
 import com.intellij.psi.tree.IElementType

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * - Best effort for file that is out of source root scope: NoDescriptorForDeclarationException could be swallowed
  * - Do not swallow NoDescriptorForDeclarationException during analysis for in source scope files
  */
+@K1Deprecation
 inline fun <T> PsiElement.actionUnderSafeAnalyzeBlock(
     crossinline action: () -> T,
     crossinline fallback: () -> T
@@ -32,9 +34,11 @@ inline fun <T> PsiElement.actionUnderSafeAnalyzeBlock(
     }) { fallback() }
 }
 
+@K1Deprecation
 val Exception.isItNoDescriptorForDeclarationException: Boolean
     get() = this is NoDescriptorForDeclarationException || cause?.safeAs<Exception>()?.isItNoDescriptorForDeclarationException == true
 
+@K1Deprecation
 inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(
     crossinline condition: (Boolean) -> Boolean = { v -> v },
     crossinline computable: () -> T
@@ -45,6 +49,7 @@ inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(
         throw this
     }
 
+@K1Deprecation
 val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
 

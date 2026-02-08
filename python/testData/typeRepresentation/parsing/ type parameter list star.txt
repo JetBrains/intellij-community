@@ -1,0 +1,24 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyFunctionTypeRepresentation
+    PyTypeParameterList
+      PsiElement(Py:LBRACKET)('[')
+      PyTypeParameter
+        PsiElement(Py:MULT)('*')
+        PsiElement(Py:IDENTIFIER)('Ts')
+      PsiElement(Py:RBRACKET)(']')
+    PyParameterListRepresentation
+      PsiElement(Py:LPAR)('(')
+      PyNamedParameterTypeRepresentation
+        PsiElement(Py:IDENTIFIER)('x')
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace(' ')
+        PyStarExpression
+          PsiElement(Py:MULT)('*')
+          PyReferenceExpression: Ts
+            PsiElement(Py:IDENTIFIER)('Ts')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyNoneLiteralExpression
+      PsiElement(Py:NONE_KEYWORD)('None')

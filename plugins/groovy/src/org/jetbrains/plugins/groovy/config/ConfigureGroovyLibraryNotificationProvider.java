@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.function.Function;
 
 /**

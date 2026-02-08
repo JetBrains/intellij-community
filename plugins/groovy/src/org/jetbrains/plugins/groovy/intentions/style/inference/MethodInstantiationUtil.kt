@@ -2,13 +2,29 @@
 
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterList
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
-import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.ENDPOINT_TYPE_PARAMETER
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.EXTENDS_WILDCARD
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.NEW_TYPE_PARAMETER
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.REIFIED_AS_PROPER_TYPE
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.REIFIED_AS_TYPE_PARAMETER
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll

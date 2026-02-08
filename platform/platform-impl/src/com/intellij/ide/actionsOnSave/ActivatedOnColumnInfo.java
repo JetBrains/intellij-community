@@ -6,9 +6,12 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 final class ActivatedOnColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSaveInfo> {
   ActivatedOnColumnInfo() {

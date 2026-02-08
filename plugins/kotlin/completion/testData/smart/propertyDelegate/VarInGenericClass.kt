@@ -10,3 +10,5 @@ class C<T> {
 }
 
 // EXIST: { itemText: "X", tailText: "(t: T) (<root>)" }
+
+// IGNORE_K2

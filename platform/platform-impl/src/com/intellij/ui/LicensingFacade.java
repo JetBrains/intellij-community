@@ -11,7 +11,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EventListener;
+import java.util.List;
+import java.util.Map;
 
 public final class LicensingFacade {
   public String platformProductCode;

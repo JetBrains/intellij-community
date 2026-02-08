@@ -3,7 +3,6 @@ package com.intellij.modcommand;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @param <E> type of the starting element
  */
-@ApiStatus.Experimental
 public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends PsiBasedModCommandAction<E> {
   /**
    * Constructs an instance, which is bound to a specified element

@@ -14,7 +14,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
+import com.intellij.openapi.util.io.FileUtil.getRelativePath
+import com.intellij.openapi.util.io.FileUtil.isAncestor
+import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor

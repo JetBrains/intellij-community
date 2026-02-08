@@ -6,7 +6,14 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import org.intellij.lang.annotations.MagicConstant
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Paint
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Consumer

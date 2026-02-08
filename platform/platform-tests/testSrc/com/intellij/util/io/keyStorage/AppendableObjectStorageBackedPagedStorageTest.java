@@ -2,10 +2,10 @@
 package com.intellij.util.io.keyStorage;
 
 
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.StorageLockContext;
-import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 

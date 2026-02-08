@@ -9,8 +9,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTree;
+import java.awt.Component;
 
 
 @ApiStatus.Internal

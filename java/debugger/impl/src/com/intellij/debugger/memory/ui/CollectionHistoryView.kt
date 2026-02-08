@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui
 
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.CollectionBreakpointUtils
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
@@ -54,7 +58,7 @@ class CollectionHistoryView(private val myClsName: String,
   private val myDebugProcess = (debugProcess as JavaDebugProcess).debuggerSession.process
   private val myDebugSession = debugProcess.session
   private val mySuspendContext = myDebugProcess.suspendManager.pausedContext
-  private val myStackFrameList = StackFrameList(myDebugProcess)
+  private val myStackFrameList = StackFrameList(myDebugProcess.project)
   private val mySplitter = JBSplitter(false, DEFAULT_SPLITTER_PROPORTION)
   private val myNodeManager = MyNodeManager(myDebugSession.project)
   private val myHistoryInstancesTree: InstancesTree = InstancesTree(myDebugProcess.project, myDebugSession.debugProcess.editorsProvider,
@@ -108,7 +112,7 @@ class CollectionHistoryView(private val myClsName: String,
   private fun setupHistoryTreeSelectionListener() {
     myHistoryTree.addChildren(createChildren(listOf(), CollectionHistoryRenderer()), true)
     myHistoryTree.addTreeSelectionListener(TreeSelectionListener {
-      myStackFrameList.setFrameItems(listOf())
+      myStackFrameList.clearFrameItems()
       val selectedNode = getSelectedNode(myHistoryTree) ?: return@TreeSelectionListener
       val parentNode = getParentNode(myHistoryTree)
 
@@ -139,7 +143,7 @@ class CollectionHistoryView(private val myClsName: String,
           CollectionBreakpointUtils.getCollectionModificationStack(mySuspendContext, collectionInstance, modificationIndex)
         }
 
-        invokeLater { myStackFrameList.setFrameItems(items) }
+        invokeLater { myStackFrameList.setFrameItems(items, myDebugProcess) }
       }
     })
   }

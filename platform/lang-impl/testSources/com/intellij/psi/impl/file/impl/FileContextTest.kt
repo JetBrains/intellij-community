@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.codeInsight.multiverse.*
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
+import com.intellij.codeInsight.multiverse.ModuleContext
+import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
+import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
@@ -14,7 +19,12 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals

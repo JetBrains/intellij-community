@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 /**
  * Implements missing functions from [org.jetbrains.kotlin.psi.KtVisitorVoid].
  */
+@K1Deprecation
 open class SSRKtVisitor : KtVisitorVoid() {
     override fun visitElement(element: PsiElement) {
         super.visitElement(element)

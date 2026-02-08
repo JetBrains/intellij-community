@@ -2,7 +2,10 @@
 package com.intellij.openapi.editor.impl.zombie
 
 import org.junit.jupiter.api.Test
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import kotlin.test.assertEquals
 
 internal class LimbedNecromancyTest {
@@ -24,8 +27,8 @@ internal class LimbedNecromancyTest {
   private class TestLimbedZombie(limbs: List<Int>) : LimbedZombie<Int>(limbs)
 
   private object TestLimbedNecromancy : LimbedNecromancy<TestLimbedZombie, Int>(0) {
-    override fun buryLimb(grave: DataOutput, limb: Int) = writeInt(grave, limb)
-    override fun exhumeLimb(grave: DataInput): Int = readInt(grave)
     override fun formZombie(limbs: List<Int>): TestLimbedZombie = TestLimbedZombie(limbs)
+    override fun Out.writeLimb(limb: Int) = writeInt(limb)
+    override fun In.readLimb(): Int = readInt()
   }
 }

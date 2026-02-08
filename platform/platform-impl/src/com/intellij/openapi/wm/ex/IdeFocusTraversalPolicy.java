@@ -8,9 +8,20 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.LayoutFocusTraversalPolicy;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.DefaultFocusTraversalPolicy;
+import java.awt.FocusTraversalPolicy;
 import java.lang.reflect.Field;
 
 import static com.intellij.util.ui.FocusUtil.findFocusableComponentIn;

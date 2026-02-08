@@ -15,9 +15,9 @@
  */
 package com.intellij.ui.components.panels;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.FlowLayout;
 
 /**
  * @author kir

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.CompoundBorder;
 
 public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
@@ -54,7 +54,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
                                       boolean showEditor,
                                       @Nullable PsiElement psiContext) {
     super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition,
-          psiContext);
+          psiContext, null);
     myExpression = XExpressionImpl.changeMode(text, getMode());
     myEditorTextField = new EditorTextField(
       createDocument(myExpression), project, debuggerEditorsProvider.getFileType(), false, !multiline) {

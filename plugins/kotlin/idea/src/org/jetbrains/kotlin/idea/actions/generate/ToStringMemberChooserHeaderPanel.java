@@ -8,8 +8,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class ToStringMemberChooserHeaderPanel extends JPanel {
     private final JComboBox comboBox;

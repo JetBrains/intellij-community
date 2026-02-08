@@ -1,8 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.apiDump.lang.psi.impl
 
-import com.intellij.lang.jvm.*
-import com.intellij.lang.jvm.types.*
+import com.intellij.lang.jvm.DefaultJvmElementVisitor
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmElement
+import com.intellij.lang.jvm.JvmParameter
+import com.intellij.lang.jvm.JvmTypeParameter
+import com.intellij.lang.jvm.types.JvmArrayType
+import com.intellij.lang.jvm.types.JvmPrimitiveType
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
+import com.intellij.lang.jvm.types.JvmReferenceType
+import com.intellij.lang.jvm.types.JvmType
+import com.intellij.lang.jvm.types.JvmTypeVisitor
+import com.intellij.lang.jvm.types.JvmWildcardType
 
 internal fun parametersMatch(jvmParameters: Array<JvmParameter>, parameters: List<String>): Boolean {
   val methodParameters = jvmParameters

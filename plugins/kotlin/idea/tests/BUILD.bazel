@@ -14,6 +14,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
   ]
 )
 
@@ -217,6 +218,7 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/j2k/k1.old.post-processing",
     "//java/ide-customization",
+    "//java/ide-customization:ide-customization_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:hamcrest",

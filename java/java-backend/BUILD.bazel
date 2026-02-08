@@ -53,6 +53,7 @@ jvm_library(
     "//java/debugger/backend",
     "//java/debugger/memory-agent:java-debugger-memory-agent",
     "//uast/uast-java-ide:java-uast-ide",
+    "@community//build:dependency-graph",
   ],
   runtime_deps = [
     "//java/java-syntax:syntax",
@@ -92,6 +93,7 @@ jvm_library(
     "//java/debugger/backend",
     "//java/debugger/memory-agent:java-debugger-memory-agent",
     "//uast/uast-java-ide:java-uast-ide",
+    "@community//build:dependency-graph",
     "//platform/backend",
   ]
 )

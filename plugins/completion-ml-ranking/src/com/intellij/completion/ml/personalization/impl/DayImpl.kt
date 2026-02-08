@@ -16,11 +16,13 @@
 
 package com.intellij.completion.ml.personalization.impl
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.completion.ml.personalization.Day
+import com.intellij.openapi.diagnostic.Logger
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Objects
 
 /**
  * @author Vitaliy.Bibaev

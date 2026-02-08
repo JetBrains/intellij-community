@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 

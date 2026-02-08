@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.fus
 
-import com.intellij.ide.startup.importSettings.*
+import com.intellij.ide.startup.importSettings.TransferableIdeId
+import com.intellij.ide.startup.importSettings.TransferableIdeVersionId
+import com.intellij.ide.startup.importSettings.TransferableKeymapId
+import com.intellij.ide.startup.importSettings.TransferableLafId
+import com.intellij.ide.startup.importSettings.TransferableSections
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
 import com.intellij.ide.startup.importSettings.models.Settings

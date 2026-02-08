@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
-import javax.swing.*;
+import javax.swing.JList;
 
 public class LookupTest extends LightPlatformCodeInsightTestCase {
   public void testLookupSize() {

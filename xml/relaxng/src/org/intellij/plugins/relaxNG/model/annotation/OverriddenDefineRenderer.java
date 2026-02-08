@@ -32,7 +32,7 @@ import org.intellij.plugins.relaxNG.model.resolve.GrammarFactory;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.List;
 

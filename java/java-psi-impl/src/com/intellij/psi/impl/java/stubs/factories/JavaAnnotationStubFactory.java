@@ -3,7 +3,6 @@ package com.intellij.psi.impl.java.stubs.factories;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;

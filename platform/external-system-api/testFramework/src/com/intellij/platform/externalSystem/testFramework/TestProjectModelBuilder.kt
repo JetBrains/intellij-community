@@ -4,11 +4,20 @@ package com.intellij.platform.externalSystem.testFramework
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.model.project.*
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
+import com.intellij.openapi.externalSystem.model.project.ContentRootData
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
+import com.intellij.openapi.externalSystem.model.project.LibraryData
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
+import com.intellij.openapi.externalSystem.model.project.LibraryLevel
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
+import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 
 fun project(name: String = "project",
             projectPath: String,

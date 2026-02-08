@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInliner.CallableUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
+@K1Deprecation
 class KotlinInlineFunctionProcessor(
     declaration: KtNamedFunction,
     reference: PsiReference?,
@@ -36,6 +38,7 @@ class KotlinInlineFunctionProcessor(
     }
 }
 
+@K1Deprecation
 fun createUsageReplacementStrategyForFunction(
     function: KtNamedFunction,
     editor: Editor?,
@@ -45,6 +48,7 @@ fun createUsageReplacementStrategyForFunction(
     return CallableUsageReplacementStrategy(codeToInline, inlineSetter = false)
 }
 
+@K1Deprecation
 fun createCodeToInlineForFunction(
     function: KtNamedFunction,
     editor: Editor?,

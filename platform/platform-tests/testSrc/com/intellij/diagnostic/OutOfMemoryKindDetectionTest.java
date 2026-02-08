@@ -3,7 +3,10 @@ package com.intellij.diagnostic;
 
 import org.junit.Test;
 
-import static com.intellij.diagnostic.VMOptions.MemoryKind.*;
+import static com.intellij.diagnostic.VMOptions.MemoryKind.CODE_CACHE;
+import static com.intellij.diagnostic.VMOptions.MemoryKind.DIRECT_BUFFERS;
+import static com.intellij.diagnostic.VMOptions.MemoryKind.HEAP;
+import static com.intellij.diagnostic.VMOptions.MemoryKind.METASPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 

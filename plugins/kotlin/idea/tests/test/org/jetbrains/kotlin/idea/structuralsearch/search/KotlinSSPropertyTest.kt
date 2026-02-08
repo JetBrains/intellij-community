@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchValModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchVarModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter

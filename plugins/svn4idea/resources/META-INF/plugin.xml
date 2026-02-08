@@ -14,7 +14,11 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.javax.activation"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <!-- endregion -->
   </dependencies>
   <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
@@ -128,6 +132,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport kind="vcs" coordinate="svn" displayName="Subversion"/>
+
     <registryKey key="svn.use.incoming.optimization" defaultValue="false"
                  description="Use remotely (in svn repository) changed files list to optimize incoming revisions processing"/>
     <registryKey key="svn.lowest.supported.format.for.command.line" defaultValue="1.7.0"

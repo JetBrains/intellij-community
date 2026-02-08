@@ -5,8 +5,13 @@ import com.intellij.CommonBundle
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodHelper
 import com.intellij.ui.UIBundle
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.dropMnemonic
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import javax.swing.JDialog

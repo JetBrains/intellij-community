@@ -7,7 +7,8 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 /**
  * A base scheme for new schemes (not based on Default/Darcula), imported ones.

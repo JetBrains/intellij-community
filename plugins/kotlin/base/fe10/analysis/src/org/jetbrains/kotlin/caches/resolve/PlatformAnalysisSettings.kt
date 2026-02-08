@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.caches.resolve
 
+import org.jetbrains.kotlin.K1Deprecation
+
 /**
  * Regulates which sources should be analyzed together.
  *
@@ -19,4 +21,5 @@ package org.jetbrains.kotlin.caches.resolve
  *   This mode is new and experimental, and works only together with TypeRefinement facilities in the compiler's frontend.
  *   This mode is currently enabled only for HMPP projects
  */
+@K1Deprecation
 interface PlatformAnalysisSettings

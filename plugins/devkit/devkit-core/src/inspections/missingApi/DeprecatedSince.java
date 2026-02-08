@@ -3,7 +3,11 @@ package org.jetbrains.idea.devkit.inspections.missingApi;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Do not use!

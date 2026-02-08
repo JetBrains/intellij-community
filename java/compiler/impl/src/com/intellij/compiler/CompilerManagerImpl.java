@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.*;
+import com.intellij.compiler.impl.CompileDriver;
+import com.intellij.compiler.impl.CompositeScope;
+import com.intellij.compiler.impl.FileProcessingCompilerAdapterTask;
+import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.impl.OneProjectItemCompileScope;
+import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -10,7 +15,23 @@ import com.intellij.ide.IdleTracker;
 import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.ClassObject;
+import com.intellij.openapi.compiler.CompilableFileTypesProvider;
+import com.intellij.openapi.compiler.CompilationException;
+import com.intellij.openapi.compiler.CompilationStatusListener;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompileTask;
+import com.intellij.openapi.compiler.Compiler;
+import com.intellij.openapi.compiler.CompilerFactory;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.CompilerTopics;
+import com.intellij.openapi.compiler.FileProcessingCompiler;
+import com.intellij.openapi.compiler.SourceInstrumentingCompiler;
+import com.intellij.openapi.compiler.Validator;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +45,11 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -41,20 +66,36 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.EDT;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.incremental.BinaryContent;
-import org.jetbrains.jps.javac.*;
+import org.jetbrains.jps.javac.CompilationPaths;
+import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
+import org.jetbrains.jps.javac.ExternalJavacManager;
+import org.jetbrains.jps.javac.ModulePath;
+import org.jetbrains.jps.javac.OutputFileConsumer;
+import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -540,12 +581,13 @@ public class CompilerManagerImpl extends CompilerManager {
     return projectBuildDir;
   }
 
-  private static final class CompiledClass implements ClassObject {
+  @ApiStatus.Internal
+  public static final class CompiledClass implements ClassObject {
     private final String myPath;
     private final String myClassName;
     private final byte[] myBytes;
 
-    CompiledClass(String path, String className, byte[] bytes) {
+    public CompiledClass(String path, String className, byte[] bytes) {
       myPath = path;
       myClassName = className;
       myBytes = bytes;

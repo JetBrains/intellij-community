@@ -1,7 +1,7 @@
 package com.intellij.ide.starter.report
 
 import com.intellij.ide.starter.utils.generifyErrorMessage
-import java.util.*
+import java.util.Objects
 
 data class Error(val messageText: String, val stackTraceContent: String, val threadDump: String, val type: ErrorType, val testName: String? = null) {
   private val generifiedStackTraceContent: String = generifyErrorMessage(stackTraceContent)

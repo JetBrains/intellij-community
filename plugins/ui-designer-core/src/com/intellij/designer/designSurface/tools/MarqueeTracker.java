@@ -24,8 +24,11 @@ import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.utils.Cursors;
 import com.intellij.openapi.application.ApplicationManager;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;

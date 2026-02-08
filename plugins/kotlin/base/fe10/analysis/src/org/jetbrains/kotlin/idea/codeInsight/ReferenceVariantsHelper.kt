@@ -5,14 +5,29 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.CallType
+import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
+import org.jetbrains.kotlin.idea.util.ShadowedDeclarationsFilter
+import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstance
+import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.getSmartCastVariantsWithLessSpecificExcluded
+import org.jetbrains.kotlin.idea.util.receiverTypes
+import org.jetbrains.kotlin.idea.util.substituteExtensionIfCallable
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
@@ -20,7 +35,12 @@ import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -28,7 +48,19 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.smartcasts.SmartCastManager
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
-import org.jetbrains.kotlin.resolve.scopes.*
+import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
+import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
+import org.jetbrains.kotlin.resolve.scopes.LexicalScope
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
+import org.jetbrains.kotlin.resolve.scopes.ResolutionScope
+import org.jetbrains.kotlin.resolve.scopes.SyntheticScope
+import org.jetbrains.kotlin.resolve.scopes.SyntheticScopes
+import org.jetbrains.kotlin.resolve.scopes.collectSyntheticConstructors
+import org.jetbrains.kotlin.resolve.scopes.collectSyntheticExtensionProperties
+import org.jetbrains.kotlin.resolve.scopes.collectSyntheticMemberFunctions
+import org.jetbrains.kotlin.resolve.scopes.collectSyntheticStaticFunctions
+import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
 import org.jetbrains.kotlin.resolve.scopes.receivers.ThisClassReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.collectAllFromMeAndParent
@@ -44,6 +76,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.suppressedByNotPropertyList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
 @ApiStatus.ScheduledForRemoval
 @OptIn(FrontendInternals::class)
@@ -521,6 +554,7 @@ private fun MemberScope.collectStaticMembers(
     )
 }
 
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 fun ResolutionScope.collectSyntheticStaticMembersAndConstructors(
     resolutionFacade: ResolutionFacade,
@@ -551,6 +585,7 @@ fun ResolutionScope.collectSyntheticStaticMembersAndConstructors(
 // - to show both option (with SAM-conversion signature, and without) in completion
 // - for various intentions and checks (see RedundantSamConstructorInspection, ConflictingExtensionPropertyIntention and other)
 // TODO(dsavvinov): review clients, rewrite them to not rely on synthetic adapetrs
+@K1Deprecation
 fun SyntheticScopes.forceEnableSamAdapters(): SyntheticScopes {
     return if (this !is JavaSyntheticScopes)
         this

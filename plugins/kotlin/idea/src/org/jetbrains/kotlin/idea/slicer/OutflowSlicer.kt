@@ -11,11 +11,19 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.cfg.pseudocode.PseudoValue
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.Instruction
-import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.*
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.AccessTarget
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.CallInstruction
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.InstructionWithReceivers
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.MagicInstruction
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.MagicKind
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.ReadValueInstruction
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.WriteValueInstruction
+import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.accessedDescriptor
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.jumps.ReturnValueInstruction
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
@@ -28,11 +36,25 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingElem
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class OutflowSlicer(
     element: KtElement,
     processor: Processor<in SliceUsage>,

@@ -4,7 +4,12 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UNINITIALIZED_UAST_PART
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UastBinaryOperator
 import org.jetbrains.uast.expressions.UInjectionHost
 
 @ApiStatus.Internal

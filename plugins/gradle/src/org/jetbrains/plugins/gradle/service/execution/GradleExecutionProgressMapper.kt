@@ -17,7 +17,7 @@ import org.gradle.tooling.events.task.TaskProgressEvent
 import org.gradle.tooling.events.test.TestProgressEvent
 import org.gradle.tooling.events.work.WorkItemProgressEvent
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import java.util.*
+import java.util.LinkedList
 
 class GradleExecutionProgressMapper {
 

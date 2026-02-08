@@ -5,7 +5,11 @@ import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * This test-case should be extended in every IDE.

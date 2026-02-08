@@ -8,7 +8,9 @@ import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.core.trace.dsl.impl.VariableImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.ArrayType
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinArrayVariable(override val type: ArrayType, override val name: String) : VariableImpl(type, name), ArrayVariable {
     override fun get(index: Expression): Expression = TextExpression("$name[${index.toCode()}]!!")
 

@@ -6,7 +6,11 @@ import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.terminal.block.completion.spec.dsl.*
+import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContext
+import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContextImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandSpecDsl
+import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCompletionSuggestionContext
+import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCompletionSuggestionContextImpl
 
 /**
  * The single true way of creating [ShellCommandSpec].

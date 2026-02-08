@@ -9,7 +9,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 

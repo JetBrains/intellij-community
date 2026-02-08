@@ -15,7 +15,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * A collection of utility methods for working with PATH environment variable.

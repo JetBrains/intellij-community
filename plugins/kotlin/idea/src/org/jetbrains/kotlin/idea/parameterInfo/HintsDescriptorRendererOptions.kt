@@ -1,7 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.parameterInfo
 
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.ClassifierNamePolicyEx
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -9,6 +14,7 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isDefinitelyNotNullType
 
+@K1Deprecation
 interface HintsClassifierNamePolicy {
     fun renderClassifier(classifier: ClassifierDescriptor, renderer: HintsTypeRenderer): String
 }
@@ -18,6 +24,7 @@ interface HintsClassifierNamePolicy {
  *
  * for local declarations qualified up to function scope
  */
+@K1Deprecation
 object SOURCE_CODE_QUALIFIED : HintsClassifierNamePolicy {
     override fun renderClassifier(classifier: ClassifierDescriptor, renderer: HintsTypeRenderer): String =
         qualifiedNameForSourceCode(classifier)
@@ -38,6 +45,7 @@ object SOURCE_CODE_QUALIFIED : HintsClassifierNamePolicy {
     }
 }
 
+@K1Deprecation
 class HintsDescriptorRendererOptions : KotlinIdeDescriptorOptions() {
     var hintsClassifierNamePolicy: HintsClassifierNamePolicy by property(SOURCE_CODE_QUALIFIED)
 }
@@ -47,6 +55,7 @@ class HintsDescriptorRendererOptions : KotlinIdeDescriptorOptions() {
  *
  * for local declarations qualified up to function scope
  */
+@K1Deprecation
 object SourceCodeQualified: ClassifierNamePolicyEx {
 
     override fun renderClassifierWithType(classifier: ClassifierDescriptor, renderer: DescriptorRenderer, type: KotlinType): String =

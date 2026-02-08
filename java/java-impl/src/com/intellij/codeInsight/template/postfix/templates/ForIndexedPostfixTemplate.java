@@ -22,7 +22,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.*;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.isArray;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.isIterable;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.isNumber;
 
 public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,

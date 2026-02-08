@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.FlowLayout;
 
 
 public final class FlowLayoutSourceGenerator extends LayoutSourceGenerator {

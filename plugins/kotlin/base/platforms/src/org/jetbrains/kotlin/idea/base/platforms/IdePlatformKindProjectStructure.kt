@@ -14,7 +14,13 @@ import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumen
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.IdePlatformKind
-import org.jetbrains.kotlin.platform.impl.*
+import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmJsIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms

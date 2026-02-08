@@ -18,9 +18,9 @@ package com.intellij.compiler.options;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public class ModuleTableCellRenderer extends DefaultTableCellRenderer {
   @Override

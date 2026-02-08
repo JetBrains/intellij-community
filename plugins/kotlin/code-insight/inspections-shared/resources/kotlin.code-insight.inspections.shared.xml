@@ -268,7 +268,7 @@
             key="big.decimal.equals" bundle="messages.KotlinBundle"/>
 
     <localInspection
-            implementationClass="org.jetbrains.kotlin.idea.inspections.EnumValuesSoftDeprecateInJavaInspection"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.EnumValuesSoftDeprecateInJavaInspection"
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
             enabledByDefault="true"

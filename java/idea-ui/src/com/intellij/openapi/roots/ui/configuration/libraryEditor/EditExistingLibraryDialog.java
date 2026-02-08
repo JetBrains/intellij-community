@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Objects;
 
 public final class EditExistingLibraryDialog extends LibraryEditorDialogBase {

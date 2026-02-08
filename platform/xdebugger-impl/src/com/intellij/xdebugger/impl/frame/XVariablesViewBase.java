@@ -30,7 +30,11 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
-import com.intellij.xdebugger.impl.ui.tree.*;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
@@ -38,10 +42,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JComponent;
+import java.awt.Point;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class XVariablesViewBase extends XDebugView {

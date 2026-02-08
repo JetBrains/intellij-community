@@ -1,39 +1,58 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.net.internal.ProxyMigrationService;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.spec.SecretKeySpec;
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.IOException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -289,31 +308,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public PasswordAuthentication getPromptedAuthentication(final String host, final @Nls String prompt) {
     Credentials credentials = ProxyAuthentication.getInstance().getPromptedAuthentication(prompt, host, PROXY_PORT);
     return credentialsToPasswordAuth(credentials);
-  }
-
-  /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated(forRemoval = true)
-  public void readExternal(Element element) throws InvalidDataException {
-    loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
-  }
-
-  /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated(forRemoval = true)
-  public void writeExternal(Element element) throws WriteExternalException {
-    com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
-    if (USE_PROXY_PAC && USE_HTTP_PROXY && !ApplicationManager.getApplication().isDisposed()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-        if (frame != null) {
-          USE_PROXY_PAC = false;
-          Messages.showMessageDialog(
-            frame.getComponent(), IdeBundle.message("message.text.proxy.both.use.proxy.and.autodetect.proxy.set"),
-            IdeBundle.message("dialog.title.proxy.setup"), Messages.getWarningIcon()
-          );
-          editConfigurable(frame.getComponent());
-        }
-      }, ModalityState.nonModal());
-    }
   }
 
   /**

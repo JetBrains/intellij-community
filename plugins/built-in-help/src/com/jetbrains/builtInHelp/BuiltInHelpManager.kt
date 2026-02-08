@@ -15,7 +15,11 @@ import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import java.io.IOException
 import java.lang.String.valueOf
-import java.net.*
+import java.net.HttpURLConnection
+import java.net.URI
+import java.net.URISyntaxException
+import java.net.URL
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 val LOG: Logger = Logger.getInstance(BuiltInHelpManager::class.java)

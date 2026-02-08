@@ -18,7 +18,11 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class MockCodeStyleManager extends CodeStyleManager {
   private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<>();

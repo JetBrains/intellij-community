@@ -14,7 +14,13 @@ import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.destructured
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil

@@ -15,7 +15,13 @@ import org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils.isAsKeyword
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils.isOnJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtProjectionKind
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes3
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 

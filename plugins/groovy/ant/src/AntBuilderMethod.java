@@ -3,7 +3,14 @@ package com.intellij.groovy.ant;
 
 import com.intellij.lang.ant.AntIntrospector;
 import com.intellij.lang.ant.dom.AntDomExtender;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import icons.AntIcons;

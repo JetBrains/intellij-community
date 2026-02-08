@@ -6,8 +6,8 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import java.io.Serializable
 import org.jetbrains.annotations.NonNls
+import java.io.Serializable
 
 interface SdkEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: SdkId
@@ -53,4 +53,11 @@ fun MutableEntityStorage.modifySdkEntity(
 
 data class SdkRoot(val url: VirtualFileUrl, val type: SdkRootTypeId) : Serializable
 
-data class SdkRootTypeId(val name: @NonNls String) : Serializable
+data class SdkRootTypeId(val name: @NonNls String) : Serializable {
+  companion object {
+    @JvmField
+    val CLASSES: SdkRootTypeId = SdkRootTypeId("classPath")
+    @JvmField
+    val SOURCES: SdkRootTypeId = SdkRootTypeId("sourcePath")
+  }
+}

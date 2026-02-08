@@ -3,7 +3,12 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
-import com.intellij.facet.mock.*
+import com.intellij.facet.mock.AnotherMockFacet
+import com.intellij.facet.mock.AnotherMockFacetType
+import com.intellij.facet.mock.MockFacet
+import com.intellij.facet.mock.MockFacetConfiguration
+import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModuleManager
@@ -13,7 +18,12 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyFacetEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities

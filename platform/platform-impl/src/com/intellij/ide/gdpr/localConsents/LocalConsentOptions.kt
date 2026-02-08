@@ -2,7 +2,12 @@
 package com.intellij.ide.gdpr.localConsents
 
 import com.intellij.diagnostic.LoadingState
-import com.intellij.ide.gdpr.*
+import com.intellij.ide.gdpr.ConfirmedConsent
+import com.intellij.ide.gdpr.Consent
+import com.intellij.ide.gdpr.ConsentAttributes
+import com.intellij.ide.gdpr.ConsentOptions
+import com.intellij.ide.gdpr.DataSharingLocalSettingsChangeListener
+import com.intellij.ide.gdpr.Version
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -12,7 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
+import java.util.StringTokenizer
 import java.util.function.Predicate
 
 private const val LOCAL_CONSENT_JSON = "localConsents.json"

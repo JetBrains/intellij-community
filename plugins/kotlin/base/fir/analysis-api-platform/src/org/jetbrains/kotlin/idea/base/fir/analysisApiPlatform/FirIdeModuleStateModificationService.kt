@@ -26,8 +26,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -115,8 +119,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
      *  1. Move: The file may be moved outside the project's content root. The listener cannot react to such files.
      *  2. Deletion: Getting a PSI file (and in turn the PSI file's [KaModule]) for a virtual file which has been deleted is not feasible.
      *
-     * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` when a Kotlin file is
-     * moved, but we still need this listener to publish a module state modification event specifically.
+     * A global out-of-block modification event will be published by `FirIdeOutOfBlockModificationService` when a Kotlin file is moved, but
+     * we still need this listener to publish a module state modification event specifically.
      */
     internal class SingleFileModuleModificationListener(project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
         override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileMoveEvent || event is VFileDeleteEvent

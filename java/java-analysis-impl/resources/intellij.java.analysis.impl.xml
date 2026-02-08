@@ -1,26 +1,24 @@
 <idea-plugin  visibility="public">
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
-    <!--todo temporary disabled until it will be a backend module-->
-
-    <!--<module name="intellij.java.indexing"/>-->
+    <module name="intellij.java.indexing"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
-    <!--<module name="intellij.java.indexing.impl"/>-->
-    <!--<module name="intellij.java.psi.impl"/>-->
+    <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
-    <!--<module name="intellij.java.analysis"/>-->
-    <!--<module name="intellij.java.resources.en"/>-->
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.java.resources.en"/>
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.psi.impl"/>
     <module name="intellij.platform.ide"/>
-    <!--<module name="intellij.java"/>-->
+    <module name="intellij.java"/>
     <module name="intellij.platform.util.ui"/>
-    <!--<module name="intellij.java.frontback.impl"/>-->
-    <!--<module name="intellij.java.codeserver.highlighting"/>-->
-    <!--<module name="intellij.java.codeserver.core"/>-->
+    <module name="intellij.java.frontback.impl"/>
+    <module name="intellij.java.codeserver.highlighting"/>
+    <module name="intellij.java.codeserver.core"/>
     <module name="intellij.xml.analysis"/>
 
     <module name="intellij.platform.backend"/>

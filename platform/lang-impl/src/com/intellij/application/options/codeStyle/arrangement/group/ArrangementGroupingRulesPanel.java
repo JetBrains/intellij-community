@@ -13,8 +13,8 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.GridBagLayout;
 import java.util.List;
 
 public final class ArrangementGroupingRulesPanel extends JPanel implements UiDataProvider {

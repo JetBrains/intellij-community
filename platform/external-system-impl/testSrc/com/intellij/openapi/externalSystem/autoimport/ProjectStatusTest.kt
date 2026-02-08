@@ -1,10 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.UNKNOWN
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Broken
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Dirty
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Modified
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Reverted
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Synchronized
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProjectStatusTest {

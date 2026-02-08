@@ -4,13 +4,13 @@
   <vendor>JetBrains</vendor>
   <category>IDE Settings</category>
   <description>
-    Provides customization for IDEs which main language is Java (e.g., IntelliJ IDEA).
+    Provides customization for IDEs which main language is Java (e.g., IntelliJ IDEA, Android Studio).
   </description>
 
   <incompatible-with>com.intellij.modules.appcode.ide</incompatible-with>
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 
   <content namespace="jetbrains">
@@ -20,6 +20,10 @@
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
+
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
                         serviceImplementation="com.intellij.ide.customization.java.JavaIdeLanguageCustomization"
                         overrides="true"/>

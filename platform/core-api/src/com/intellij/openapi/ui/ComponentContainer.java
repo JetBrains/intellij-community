@@ -4,7 +4,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface ComponentContainer extends Disposable {
   @NotNull

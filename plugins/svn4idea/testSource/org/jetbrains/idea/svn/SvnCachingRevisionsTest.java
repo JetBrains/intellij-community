@@ -9,9 +9,22 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.history.*;
+import org.jetbrains.idea.svn.history.BunchFactory;
+import org.jetbrains.idea.svn.history.CachedProvider;
+import org.jetbrains.idea.svn.history.Fragment;
+import org.jetbrains.idea.svn.history.LiveProvider;
+import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
+import org.jetbrains.idea.svn.history.LogEntry;
+import org.jetbrains.idea.svn.history.Origin;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnLogLoader;
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.reverse;

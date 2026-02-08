@@ -1,0 +1,14 @@
+<component xmlns="http://jetbrains.org/intellij/schema/application-info"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
+  <version suffix="" major="2026" minor="1" eap="true"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE" copyrightStart="2009"/>
+  <build number="IC-__BUILD__" date="__BUILD_DATE__"/>
+  <logo  url="/idea_community_logo.png"/>
+  <icon svg="/mps.svg" svg-small="/mps_16.svg"/>
+  <names product="MPS" fullname="JetBrains MPS" script="mps"/>
+  <essential-plugin>com.intellij.java</essential-plugin>
+  <essential-plugin>com.intellij.java.ide</essential-plugin>
+
+  <plugins url="https://plugins.jetbrains.com/" builtin-url="__BUILTIN_PLUGINS_URL__"/>
+</component>

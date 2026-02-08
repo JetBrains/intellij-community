@@ -3,7 +3,7 @@ import sys
 import unittest
 
 _tests_dir = os.path.dirname(os.path.abspath(__file__))
-_helpers_dir = os.path.dirname(_tests_dir)
+_helpers_dir = os.path.dirname(_tests_dir) + '/helpers'
 
 
 def run_specified_tests():

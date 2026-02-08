@@ -6,8 +6,11 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTree;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
 public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree {
   @Override

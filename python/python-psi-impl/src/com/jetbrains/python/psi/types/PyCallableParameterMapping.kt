@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.isPrivate
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.ArrayDeque
 
 /**
  * Matches signatures of callables according to the Callable compatibility rules

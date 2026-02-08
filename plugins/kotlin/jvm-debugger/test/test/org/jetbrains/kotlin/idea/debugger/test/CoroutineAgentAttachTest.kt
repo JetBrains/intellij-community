@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.DebuggerConnection
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addRoot
 import java.nio.file.Path
-import kotlin.collections.forEach
 import kotlin.io.path.Path
 
 abstract class AbstractCoroutineAgentAttachTest : JavaModuleTestCase() {

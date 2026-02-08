@@ -39,9 +39,8 @@ internal class GitInMemoryInteractiveRebaseProcess(
   private val rebaseData: GitInMemoryRebaseData,
 ) : GitInMemoryCommitEditingOperation(objectRepo, rebaseData.baseCommit) {
 
-  @NonNls
-  override val reflogMessage: String = "interactive in-memory rebase"
-  override val failureTitle: String = GitBundle.message("in.memory.rebase.log.interactive.failed.title")
+  override val operationName: @Nls String = GitBundle.message("action.Git.Interactive.Rebase.operation.name")
+  override val failureTitle: @NonNls String = GitBundle.message("in.memory.rebase.log.interactive.failed.title")
 
   override suspend fun editCommits(): CommitEditingResult {
     if (initialHeadPosition != rebaseData.initialHead.asString()) {
@@ -170,7 +169,7 @@ internal suspend fun performInMemoryRebase(
   if (!isInMemoryRebaseSupported(repository)) {
     return GitCommitEditingOperationResult.Incomplete
   }
-  val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
+  val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.debug.notify.errors")
 
   val rebaseData = createRebaseData(model, entries, repository, showFailureNotification)
                    ?: return GitCommitEditingOperationResult.Incomplete

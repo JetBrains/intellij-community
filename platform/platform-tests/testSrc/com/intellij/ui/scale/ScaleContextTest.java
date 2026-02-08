@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.function.Consumer;
 
-import static com.intellij.ui.scale.ScaleType.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests {@link com.intellij.ui.scale.ScaleContext}.

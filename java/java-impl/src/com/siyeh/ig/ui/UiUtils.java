@@ -18,15 +18,25 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.FontMetrics;
+import java.awt.Rectangle;
 import java.util.Collection;
 
 public final class UiUtils {

@@ -6,7 +6,8 @@ import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.util.ui.ThreeStateCheckBox;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public final class MultipleInvalidFacetEditor extends MultipleFacetSettingsEditor {
   private final MultipleFacetEditorHelperImpl myHelper;

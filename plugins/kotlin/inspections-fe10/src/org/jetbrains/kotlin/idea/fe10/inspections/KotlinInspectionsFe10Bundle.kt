@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.fe10.inspections
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.util.AbstractKotlinBundle
 
 @NonNls
 private const val BUNDLE = "messages.KotlinInspectionsFe10Bundle"
 
+@K1Deprecation
 object KotlinInspectionsFe10Bundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic

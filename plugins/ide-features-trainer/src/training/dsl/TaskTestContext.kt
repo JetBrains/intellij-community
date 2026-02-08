@@ -17,7 +17,11 @@ import org.assertj.swing.driver.BasicJListCellReader
 import org.assertj.swing.driver.ComponentDriver
 import org.assertj.swing.exception.ComponentLookupException
 import org.assertj.swing.exception.WaitTimedOutError
-import org.assertj.swing.fixture.*
+import org.assertj.swing.fixture.AbstractComponentFixture
+import org.assertj.swing.fixture.JButtonFixture
+import org.assertj.swing.fixture.JListFixture
+import org.assertj.swing.fixture.JMenuItemFixture
+import org.assertj.swing.fixture.JTreeFixture
 import org.assertj.swing.timing.Condition
 import org.assertj.swing.timing.Pause
 import org.assertj.swing.timing.Timeout
@@ -32,9 +36,17 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.Point
 import java.awt.Rectangle
-import java.util.*
+import java.util.LinkedList
+import java.util.Locale
+import java.util.Queue
 import java.util.concurrent.TimeUnit
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JMenuItem
+import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 @LearningDsl

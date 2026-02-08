@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.ui.TextAccessor
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 interface CommitWorkflowUi : UiCompatibleDataProvider, Disposable {
   val commitMessageUi: CommitMessageUi

@@ -7,7 +7,11 @@ import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.computeM
 import org.jetbrains.kotlin.tools.projectWizard.core.safe
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.notExists
+import kotlin.io.path.writeText
 
 interface FileSystemWizardService : WizardService {
     fun createFile(path: Path, text: String): TaskResult<Unit>

@@ -12,7 +12,7 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.TreeMap
 
 class KotlinXmlSerializerTest {
   @Test

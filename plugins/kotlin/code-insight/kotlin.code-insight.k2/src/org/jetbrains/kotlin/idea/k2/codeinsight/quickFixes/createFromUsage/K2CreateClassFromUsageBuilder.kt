@@ -10,16 +10,26 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.text.UniqueNameGenerator
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.containsStarProjections
+import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
+import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfParameterTypes
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -31,11 +41,39 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.isQual
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassLiteralExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeList
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeConstraint
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.ifEmpty
 
 object K2CreateClassFromUsageBuilder {
+    @OptIn(KaExperimentalApi::class)
     fun generateCreateClassActions(element: KtElement): List<IntentionAction> {
         val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return listOf()
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return listOf()
@@ -45,8 +83,8 @@ object K2CreateClassFromUsageBuilder {
             val superClass: KtClass? = expectedType?.kaType?.convertToClass()
 
             val superClassSymbol = superClass?.classSymbol ?: (expectedType?.kaType as? KaClassType)?.symbol as? KaClassSymbol
-            val superClassName:String? = superClass?.name
-            val isAny = superClassName == StandardClassIds.Any.shortClassName.asString()
+            val superClassName: String? = expectedType?.kaType?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.OUT_VARIANCE)
+            val isAny = superClassSymbol?.classId == StandardClassIds.Any
             val returnTypeString: String = if (superClass == null || superClassName == null || isAny) ""
                 else if (superClass.isInterface()) ": $superClassName" else ": $superClassName()"
 
@@ -70,6 +108,7 @@ object K2CreateClassFromUsageBuilder {
                         }
                         .map { it.createSmartPointer() }
                     val isAnnotation = kind == ClassKind.ANNOTATION_CLASS
+                    val isObject = kind == ClassKind.OBJECT
                     val paramListRendered = renderParamList(isAnnotation, refExpr)
                     val open = isInsideExtendsList(refExpr)
                     val name = refExpr.getReferencedName()
@@ -82,7 +121,7 @@ object K2CreateClassFromUsageBuilder {
                             open,
                             name,
                             superClassName,
-                            paramListRendered.renderedParamList,
+                            if (isObject) "" else paramListRendered.renderedParamList,
                             paramListRendered.candidateList,
                             returnTypeString,
                             paramListRendered.primaryConstructorVisibilityModifier

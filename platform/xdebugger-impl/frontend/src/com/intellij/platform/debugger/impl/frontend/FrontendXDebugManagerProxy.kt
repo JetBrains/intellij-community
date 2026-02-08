@@ -8,16 +8,17 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValu
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManagerImpl
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.xdebugger.impl.proxy.withTemporaryXValueId
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import kotlinx.coroutines.flow.Flow
 
 internal class FrontendXDebugManagerProxy : XDebugManagerProxy {
@@ -39,7 +40,8 @@ internal class FrontendXDebugManagerProxy : XDebugManagerProxy {
     }
     else {
       // Otherwise try to fall back to monolith implementation if possible
-      val monolithSession = XDebugMonolithUtils.findSessionById(session.id) ?: error("XValue is not a FrontendXValue: $value")
+      val monolithSession = XDebuggerEntityConverter.getSession(session) ?: error("XValue is not a FrontendXValue: $value")
+      monolithSession as XDebugSessionImpl
       return withTemporaryXValueId(value, monolithSession, block)
     }
   }

@@ -6,7 +6,11 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImplementAbstractMemberIntentionBase.ImplementableMember.JavaImplementableMember
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImplementAbstractMemberIntentionBase.ImplementableMember.KtImplementableMember
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 
 internal class ImplementAbstractMemberIntention : ImplementAbstractMemberIntentionBase() {
 

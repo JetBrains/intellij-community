@@ -27,10 +27,12 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;

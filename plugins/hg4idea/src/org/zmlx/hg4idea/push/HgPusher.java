@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.NOTHING_TO_PUSH;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.PUSH_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.PUSH_SUCCESS;
 
 public final class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
   private static final Logger LOG = Logger.getInstance(HgPusher.class);

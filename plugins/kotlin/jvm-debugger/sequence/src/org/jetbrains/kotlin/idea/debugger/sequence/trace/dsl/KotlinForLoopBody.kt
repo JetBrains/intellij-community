@@ -7,7 +7,9 @@ import com.intellij.debugger.streams.core.trace.dsl.ForLoopBody
 import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.core.trace.dsl.Variable
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinForLoopBody(
     override val loopVariable: Variable,
     statementFactory: StatementFactory

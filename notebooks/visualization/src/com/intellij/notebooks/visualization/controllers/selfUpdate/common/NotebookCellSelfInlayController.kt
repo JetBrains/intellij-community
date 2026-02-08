@@ -6,7 +6,7 @@ import com.intellij.notebooks.visualization.context.EditorCellDataContext
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.addComponentInlay
-import com.intellij.notebooks.visualization.ui.updateManager
+import com.intellij.notebooks.visualization.ui.notebookViewUpdater
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.Disposer
@@ -43,7 +43,7 @@ abstract class NotebookCellSelfInlayController(
   abstract fun createLineMarkerRender(createdHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer?
 
   override fun checkAndRebuildInlays() {
-    editor.updateManager.update { updater ->
+    editor.notebookViewUpdater.update { updater ->
       updater.addInlayOperation {
         editorCell.intervalOrNull ?: return@addInlayOperation
         if (isInlayCorrect()) {

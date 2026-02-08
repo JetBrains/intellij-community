@@ -3,7 +3,14 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
-import com.intellij.ide.util.projectWizard.*;
+import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleNameLocationSettings;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.NamePathComponent;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts;
@@ -18,8 +25,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
 
 /**
  * @author Dmitry Avdeev

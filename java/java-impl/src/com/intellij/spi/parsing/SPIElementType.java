@@ -15,8 +15,8 @@
  */
 package com.intellij.spi.parsing;
 
-import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.spi.SPILanguage;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

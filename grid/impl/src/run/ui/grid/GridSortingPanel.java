@@ -1,7 +1,12 @@
 package com.intellij.database.run.ui.grid;
 
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridEditorPanel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridSortingModel;
+import com.intellij.database.datagrid.GridUtil;
 import com.intellij.grid.core.impl.icons.GridCoreImplIcons;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +20,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 /**
  * @author Liudmila Kornilova

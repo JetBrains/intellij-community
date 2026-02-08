@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildView
 
-import com.intellij.build.*
+import com.intellij.build.BackendMultipleBuildsView
+import com.intellij.build.BuildContentId
+import com.intellij.build.BuildId
+import com.intellij.build.BuildViewEvent
+import com.intellij.build.BuildViewViewModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.ProjectId

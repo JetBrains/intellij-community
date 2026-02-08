@@ -6,9 +6,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ui.AATextInfo;
 import com.intellij.util.ui.GraphicsUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.RenderingHints;
 import java.awt.font.FontRenderContext;
 import java.util.function.Supplier;
 

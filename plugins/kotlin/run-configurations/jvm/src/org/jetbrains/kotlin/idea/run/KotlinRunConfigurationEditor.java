@@ -5,7 +5,12 @@ import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configurations.ConfigurationUtil;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.ClassBrowser;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
+import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.execution.ui.ShortenCommandLineModeCombo;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
@@ -27,7 +32,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

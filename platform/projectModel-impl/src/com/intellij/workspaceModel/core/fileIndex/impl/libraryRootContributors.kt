@@ -10,14 +10,21 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.*
+import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
+import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY
+import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.ROOT_ITSELF
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.asSafely
 import com.intellij.util.io.URLUtil
-import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 
 class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java

@@ -20,7 +20,19 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformatio
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.introduceValueForCondition
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.isPure
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtThrowExpression
+import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.collections
 
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
+@K1Deprecation
 abstract open class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
     protected abstract val uselessFqNames: Map<String, Conversion>

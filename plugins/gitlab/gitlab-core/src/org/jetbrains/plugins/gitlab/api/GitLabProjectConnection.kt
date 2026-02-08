@@ -16,7 +16,7 @@ import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
-import java.util.*
+import java.util.UUID
 
 /**
  * A low-level helper representing a GitLab project, to which the app was authorized to connect

@@ -4,7 +4,7 @@ package com.intellij.vcs.log;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Allows to add some highlighting to the Vcs Log table entries.

@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -16,7 +15,6 @@ interface LightEditService {
     val windowName: String
       get() = "LightEdit"
 
-    @RequiresBlockingContext
     @JvmStatic
     fun getInstance(): LightEditService = service()
   }

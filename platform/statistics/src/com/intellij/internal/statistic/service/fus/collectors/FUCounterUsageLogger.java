@@ -3,7 +3,12 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogger;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;

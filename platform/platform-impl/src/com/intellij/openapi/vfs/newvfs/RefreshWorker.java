@@ -9,15 +9,26 @@ import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.DiskQueryRelay;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -32,6 +43,9 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
@@ -40,10 +54,27 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -596,13 +627,12 @@ final class RefreshWorker {
   private static boolean shouldScanDirectory(VirtualFile parent, Path child, String childName) {
     if (FileTypeManager.getInstance().isFileIgnored(childName)) return false;
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
-      if (ReadAction.compute(() -> ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent))) {
-        return false;
-      }
-      String projectRootPath = openProject.getBasePath();
-      if (projectRootPath != null) {
-        Path path = Path.of(projectRootPath);
-        if (child.startsWith(path)) return true;
+      if (ReadAction.compute(() -> {
+        List<WorkspaceFileSet> indexableFileSet = WorkspaceFileIndex.getInstance(openProject)
+          .findFileSets(parent, true, true, /*includeContentNonIndexableSets*/ false, true, true, /*includeExternalNonIndexableSets*/ false, true);
+        return ContainerUtil.exists(indexableFileSet, set -> set instanceof WorkspaceFileSetWithCustomData && ((WorkspaceFileSetWithCustomData<?>)set).getRecursive());
+      })) {
+        return true;
       }
     }
     return false;

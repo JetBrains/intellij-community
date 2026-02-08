@@ -11,7 +11,11 @@ import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator
 import com.jetbrains.performancePlugin.remotedriver.xpath.convertToHtml
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpUtil
+import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 

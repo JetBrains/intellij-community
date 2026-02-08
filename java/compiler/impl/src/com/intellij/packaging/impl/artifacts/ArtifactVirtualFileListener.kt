@@ -24,7 +24,11 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.EntityPointer
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ExternalEntityMapping
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
 import com.intellij.platform.workspace.storage.query.groupBy

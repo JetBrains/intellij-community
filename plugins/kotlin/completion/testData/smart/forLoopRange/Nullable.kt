@@ -10,3 +10,5 @@ fun f(): Collection<Int>? {}
 // ABSENT: { lookupString:"f", itemText: "f" }
 // EXIST: { lookupString:"f", itemText: "!! f", typeText:"Collection<Int>?" }
 // EXIST: { lookupString:"f", itemText: "?: f", typeText:"Collection<Int>?" }
+
+// IGNORE_K2

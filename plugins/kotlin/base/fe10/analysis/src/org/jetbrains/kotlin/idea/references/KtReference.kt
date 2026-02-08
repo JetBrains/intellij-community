@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.PsiMember
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -14,8 +15,10 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.Slices
 
+@K1Deprecation
 val FE10_BINDING_RESOLVE_TO_DESCRIPTORS: ReadOnlySlice<KtReference, Collection<DeclarationDescriptor>> = Slices.createSimpleSlice()
 
+@K1Deprecation
 @OptIn(KaImplementationDetail::class)
 fun KtReference.resolveToDescriptors(bindingContext: BindingContext): Collection<DeclarationDescriptor> {
     return when (this) {

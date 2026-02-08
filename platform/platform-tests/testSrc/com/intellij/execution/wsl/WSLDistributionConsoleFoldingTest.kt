@@ -3,7 +3,10 @@ package com.intellij.execution.wsl
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.wsl.WSLDistribution.*
+import com.intellij.execution.wsl.WSLDistribution.DISTRIBUTION_PARAMETER
+import com.intellij.execution.wsl.WSLDistribution.EXEC_PARAMETER
+import com.intellij.execution.wsl.WSLDistribution.WSL_EXE
+import com.intellij.execution.wsl.WSLDistribution.neverRunTTYFix
 import com.intellij.testFramework.fixtures.TestFixtureRule
 import junit.framework.TestCase.assertEquals
 import org.junit.Assume

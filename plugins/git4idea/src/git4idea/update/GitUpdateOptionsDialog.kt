@@ -14,7 +14,6 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions
 import java.awt.event.ActionEvent
-import java.util.*
 import javax.swing.Action
 
 internal class GitUpdateOptionsDialog(

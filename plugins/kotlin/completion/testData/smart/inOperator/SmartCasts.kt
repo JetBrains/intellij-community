@@ -4,3 +4,5 @@ fun foo(s: String, o1: Any, o2: Any) {
 
 // EXIST: o1
 // ABSENT: o2
+
+// IGNORE_K2

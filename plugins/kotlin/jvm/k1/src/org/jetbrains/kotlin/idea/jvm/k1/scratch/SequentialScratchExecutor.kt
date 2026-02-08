@@ -9,11 +9,13 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
+@K1Deprecation
 abstract class SequentialScratchExecutor(override val scratchFile: K1KotlinScratchFile) : ScratchExecutor(scratchFile) {
     abstract fun executeStatement(expression: ScratchExpression)
 

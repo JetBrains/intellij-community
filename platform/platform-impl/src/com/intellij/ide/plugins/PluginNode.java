@@ -15,7 +15,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public final class PluginNode implements IdeaPluginDescriptor {
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
@@ -114,22 +120,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setIsPaid(boolean isPaid) {
     this.isPaid = isPaid;
-  }
-
-  /**
-   * @deprecated Use {@link #getDefaultTrialPeriod()}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable Integer getTrialPeriod() {
-    return defaultTrialPeriod;
-  }
-
-  /**
-   * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}}
-   */
-  @Deprecated(forRemoval = true)
-  public void setTrialPeriod(@Nullable Integer trialPeriod) {
-    this.defaultTrialPeriod = trialPeriod;
   }
 
   public @Nullable Integer getDefaultTrialPeriod() {

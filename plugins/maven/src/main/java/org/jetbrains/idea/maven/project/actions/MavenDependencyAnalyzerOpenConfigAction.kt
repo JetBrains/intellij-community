@@ -2,7 +2,8 @@
 package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.externalSystem.dependency.analyzer.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerOpenConfigAction
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.utils.MavenUtil
 

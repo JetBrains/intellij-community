@@ -2,17 +2,32 @@
 package com.intellij.vcs.changes
 
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListAdapter
+import com.intellij.openapi.vcs.changes.ChangeListAvailabilityListener
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.ChangesListManagerStateProvider
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.changes.ChangeListManagerState
-import com.intellij.platform.vcs.impl.shared.rpc.*
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeDto
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
+import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.util.asDisposable
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 internal class ChangeListsApiImpl : ChangeListsApi {

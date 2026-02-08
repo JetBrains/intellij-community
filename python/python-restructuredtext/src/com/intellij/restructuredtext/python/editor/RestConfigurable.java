@@ -11,8 +11,9 @@ import com.intellij.ui.jcef.JBCefApp;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class RestConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final String ID = "restructured.text.topic";

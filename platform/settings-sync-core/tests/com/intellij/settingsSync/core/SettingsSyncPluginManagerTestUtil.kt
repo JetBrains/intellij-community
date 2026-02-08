@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginInstallerImpl
 import java.nio.file.Path
-import java.util.*
+import java.util.Date
 
 internal class TestPluginInstaller(private val afterInstallPluginCallback: (PluginId) -> Unit) : SettingsSyncPluginInstallerImpl(true) {
   val installedPluginIds = HashSet<PluginId>()

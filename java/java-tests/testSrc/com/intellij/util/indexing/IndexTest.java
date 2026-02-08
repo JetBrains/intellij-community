@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.find.ngrams.TrigramIndex;
@@ -32,33 +32,83 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.FilePropertyKey;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex;
-import com.intellij.psi.impl.source.*;
-import com.intellij.psi.search.*;
+import com.intellij.psi.impl.source.JavaFileElementType;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.impl.source.PsiJavaFileImpl;
+import com.intellij.psi.search.EverythingGlobalScope;
+import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.ObjectStubTree;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexImpl;
+import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.*;
-import com.intellij.util.indexing.dependencies.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.indexing.dependencies.FileIndexingStamp;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IsFileChangedResult;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
+import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import com.intellij.util.indexing.events.IndexedFilesListener;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.MapIndexStorage;
@@ -83,7 +133,12 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -592,7 +647,9 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   public void test_no_index_stamp_update_when_no_change_2() throws IOException {
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    @Language("JAVA") String text0 = """
+    @SuppressWarnings({"InfiniteRecursion", "NonFinalUtilityClass"})
+    @Language("JAVA")
+    String text0 = """
                   class Main111 {
                       static void staticMethod(Object o) {
                         staticMethod(null);
@@ -607,7 +664,9 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(1, files.size());
     assertEquals(files.iterator().next(), vFile);
 
-    @Language("JAVA") String text = """
+    @SuppressWarnings({"InfiniteRecursion", "NonFinalUtilityClass"})
+    @Language("JAVA")
+    String text = """
                   class Main {
                       static void staticMethod(Object o) {
                         staticMethod(null);
@@ -1014,8 +1073,13 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertFalse(foundClassStub.get(0));// do not allow access stub index processing other index
   }
 
+  private static String generateSequenceOfCharacterConstants(int fileSizeLimit) {
+    String item = "'c',";
+    return item.repeat(Integer.highestOneBit(fileSizeLimit) / item.length());
+  }
+
   public void test_document_increases_beyond_too_large_limit() {
-    String item = createLongSequenceOfCharacterConstants();
+    String item = generateSequenceOfCharacterConstants(FileSizeLimit.getDefaultIntellisenseLimit());
     String fileText = "class Bar { char[] item = { " + item + "};\n }";
     VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileText).getVirtualFile();
     assertNotNull(findClass("Bar"));
@@ -1025,36 +1089,44 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     for (int i = 0; i < 2; ++i) {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, document.getTextLength(), item + item));
       PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-      assertNull(findClass("Bar"));
+      assertNull("File size > limit, file should NOT be indexed",
+                 findClass("Bar"));
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, document.getTextLength(), fileText));
       PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-      assertNotNull(findClass("Bar"));
+      assertNotNull("File size < limit, file should be indexed",
+                    findClass("Bar"));
     }
-  }
-
-  private static String createLongSequenceOfCharacterConstants() {
-    String item = "'c',";
-    return item.repeat(Integer.highestOneBit(FileUtilRt.getUserFileSizeLimit()) / item.length());
   }
 
   public void test_file_increases_beyond_too_large_limit() throws IOException {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    String item = createLongSequenceOfCharacterConstants();
-    String fileText = "class Bar { char[] item = { " + item + "};\n }";
-    VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileText).getVirtualFile();
+    //length(item) should be slightly below contentLoadingLimit:
+    String item = generateSequenceOfCharacterConstants(FileSizeLimit.getDefaultIntellisenseLimit());
+    String fileTextBelowContentLoadingSizeLimit = "class Bar { char[] item = { " + item + "};\n }";
+    VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileTextBelowContentLoadingSizeLimit).getVirtualFile();
     int fileId = ((VirtualFileWithId)file).getId();
-    assertNotNull(findClass("Bar"));
-    assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+    //TODO RC: seems like there is more than one check for file size, and the one I've fixed
+    //         is not the key one?
 
-    for (int i = 0; i < 2; ++i) {
+    assertNotNull("File size("+file.getLength()+") < limit, file should be indexed",
+                  findClass("Bar"));
+    assertNotNull("File size("+file.getLength()+") < limit, file should be indexed",
+                  fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+
+    for (int i = 0; i < 2; i++) {
       WriteAction.run(() -> VfsUtil.saveText(file, "class Bar { char[] item = { " + item + item + "};\n }"));
-      assertNull(findClass("Bar"));
-      assertNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+      assertNull("File size("+file.getLength()+") > limit, file should NOT be indexed",
+                 findClass("Bar"));
+      assertNull("File size("+file.getLength()+") > limit, file should NOT be indexed",
+                 fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
 
-      WriteAction.run(() -> VfsUtil.saveText(file, fileText));
-      assertNotNull(findClass("Bar"));
-      assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+      WriteAction.run(() -> VfsUtil.saveText(file, fileTextBelowContentLoadingSizeLimit));
+
+      assertNotNull("File size("+file.getLength()+") < limit, file should be indexed",
+                    findClass("Bar"));
+      assertNotNull("File size("+file.getLength()+") < limit, file should be indexed",
+                    fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
     }
   }
 

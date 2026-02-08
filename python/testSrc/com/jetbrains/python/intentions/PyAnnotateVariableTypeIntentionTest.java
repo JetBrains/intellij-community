@@ -336,6 +336,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  // PY-76922
+  public void testIntersectionTypeIsNotDenotable() {
+    doAnnotationTest();
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.getLatest());
   }

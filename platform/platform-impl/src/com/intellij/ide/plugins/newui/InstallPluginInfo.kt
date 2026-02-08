@@ -4,15 +4,12 @@ package com.intellij.ide.plugins.newui
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.MyPluginModel.Companion.finishInstallation
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.StatusBarEx
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -23,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class InstallPluginInfo(
-  val indicator: BgProgressIndicator,
+  val indicator: PluginDownloadBgProgressIndicator,
   val descriptor: PluginUiModel,
   pluginModel: MyPluginModel,
   val install: Boolean,

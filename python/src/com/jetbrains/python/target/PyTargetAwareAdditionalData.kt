@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.target
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.ContributedConfigurationsList
+import com.intellij.execution.target.TargetBasedSdkAdditionalData
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.target.hasTargetConfiguration
+import com.intellij.execution.target.loadTargetConfiguration
+import com.intellij.execution.target.saveTargetBasedSdkAdditionalData
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile

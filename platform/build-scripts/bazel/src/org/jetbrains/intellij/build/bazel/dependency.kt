@@ -149,7 +149,7 @@ internal fun generateDeps(
             targetName = targetName,
             container = libraryContainer,
             jpsName = jpsLibrary.name,
-            moduleLibraryModuleName = null,
+            moduleLibraryModuleName = moduleLibraryModuleName,
           )
           context.addLocalLibrary(
             lib = LocalLibrary(

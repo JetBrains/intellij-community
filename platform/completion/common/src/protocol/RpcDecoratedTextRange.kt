@@ -3,14 +3,14 @@ package com.intellij.platform.completion.common.protocol
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementPresentation.DecoratedTextRange
-import com.intellij.ide.rpc.util.TextRangeId
+import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.rpc.util.toRpc
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class RpcDecoratedTextRange(
-  val textRange: TextRangeId,
-  val decoration: LookupElementPresentation.LookupItemDecoration,
+    val textRange: TextRangeDto,
+    val decoration: LookupElementPresentation.LookupItemDecoration,
 ) {
   override fun toString(): String = buildToString("RpcDecoratedTextRange") {
     field("textRange", textRange)

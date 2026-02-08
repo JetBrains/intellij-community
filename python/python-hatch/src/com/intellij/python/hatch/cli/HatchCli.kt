@@ -15,6 +15,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.VersionFormatException
 import java.io.IOException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 /**
@@ -189,7 +190,7 @@ class HatchCli(private val runtime: HatchRuntime) {
       try {
         Result.success(HatchStatus(project, Path.of(location), Path.of(config)))
       }
-      catch (e: Exception) {
+      catch (e: InvalidPathException) {
         Result.failure(e.localizedMessage)
       }
     }
@@ -224,7 +225,7 @@ class HatchCli(private val runtime: HatchRuntime) {
    * @return OldVersion to NewVersion as Pair
    */
   suspend fun setVersion(desiredVersion: String): PyResult<Pair<Version, Version>> {
-    val expectedOutput = """^Old: (.*)\nNew: (.*)\n$""".toRegex()
+    val expectedOutput = """^(?:.*\n)*Old: (.*)\nNew: (.*)\n?$""".toRegex()
 
     return runtime.executeAndMatch("version", desiredVersion, expectedOutput = expectedOutput, outputContentSupplier = { it.stderrString }) { matchResult ->
       val (oldVersion, newVersion) = matchResult.destructured

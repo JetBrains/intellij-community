@@ -3,7 +3,12 @@ package com.intellij.terminal.completion.engine
 
 import com.intellij.terminal.completion.ShellArgumentSuggestion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellAliasSuggestion
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
 
 internal class ShellCommandTreeSuggestionsProvider(
   private val context: ShellRuntimeContext,
@@ -14,6 +19,7 @@ internal class ShellCommandTreeSuggestionsProvider(
       is ShellCommandNode -> getSuggestionsForSubcommand(node)
       is ShellOptionNode -> getSuggestionsForOption(node)
       is ShellArgumentNode -> node.parent?.let { getSuggestionsOfNext(it) } ?: emptyList()
+      is ShellUnknownNode -> node.parent?.let { getSuggestionsOfNext(it) } ?: emptyList()
       else -> emptyList()
     }
     return filterSuggestionsByPrefix(suggestions.distinctBy { it.name })

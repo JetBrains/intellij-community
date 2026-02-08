@@ -14,7 +14,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
@@ -47,16 +51,6 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     myAwaitingRequests = new LinkedList<>();
 
     Disposer.register(parent, this);
-  }
-
-  /**
-   * @deprecated use {@link SingleTaskController#SingleTaskController(String, Disposable, Consumer)} constructor.
-   */
-  @Deprecated(forRemoval = true)
-  public SingleTaskController(@NotNull @NonNls String name,
-                              @NotNull com.intellij.util.Consumer<? super Result> handler,
-                              @NotNull Disposable parent) {
-    this(name, parent, result -> handler.consume(result));
   }
 
   /**

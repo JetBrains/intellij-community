@@ -39,7 +39,10 @@ import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
 import static com.jetbrains.env.debug.tasks.PyBaseDebuggerTask.findCompletionVariantByName;
 import static com.jetbrains.env.debug.tasks.PyBaseDebuggerTask.findDebugValueByName;
 import static com.jetbrains.python.PyParameterInfoTest.checkParameters;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class PythonConsoleTest extends PyEnvTestCase {
   private static @Nullable List<String> getStaticCompletion(CodeInsightTestFixture fixture, PythonConsoleView consoleView) {

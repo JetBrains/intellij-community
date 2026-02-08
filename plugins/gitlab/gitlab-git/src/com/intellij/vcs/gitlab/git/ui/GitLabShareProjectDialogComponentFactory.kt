@@ -4,7 +4,13 @@ package com.intellij.vcs.gitlab.git.ui
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.asObservableIn
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.DialogWrapperAsync
+import com.intellij.collaboration.ui.util.bindSelectedIn
+import com.intellij.collaboration.ui.util.bindSelectedItemIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindValidationOnApplyIn
+import com.intellij.collaboration.ui.util.iconAction
+import com.intellij.collaboration.ui.util.toComboBoxModelIn
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
@@ -13,7 +19,11 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComboboxSpeedSearch
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.actionButton
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import git4idea.DialogManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

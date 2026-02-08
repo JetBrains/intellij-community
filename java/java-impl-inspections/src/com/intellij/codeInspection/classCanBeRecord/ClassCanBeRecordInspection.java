@@ -31,9 +31,13 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
-import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy.*;
+import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy.DO_NOT_SUGGEST;
+import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy.SHOW_AFFECTED_MEMBERS;
+import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy.SILENTLY;
 import static com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.tryCreateRecordCandidate;
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 @NotNullByDefault
 public final class ClassCanBeRecordInspection extends BaseInspection implements CleanupLocalInspectionTool {

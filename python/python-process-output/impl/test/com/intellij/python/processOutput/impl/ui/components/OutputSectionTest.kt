@@ -117,7 +117,7 @@ internal class OutputSectionTest : ProcessOutputTest() {
             // 3..6 - stderr
             // 7..9 - stdout
             val process = selectTestProcess(
-                listOf(
+                lines = listOf(
                     outLine("out1"),
                     outLine("out2"),
                     outLine("out3"),
@@ -206,6 +206,45 @@ internal class OutputSectionTest : ProcessOutputTest() {
             // copyOutputExitInfoToClipboard should have been called exactly once
             verify(exactly = 1) { controllerSpy.copyOutputExitInfoToClipboard(process) }
         }
+
+    @Test
+    fun `tags are displayed or hidden depending on show tags filter`() = processOutputTest {
+        // selecting a process with 3 tags:
+        // 0..2 - stdout
+        // 3..5 - stderr
+        // 6    - exit
+        selectTestProcess(
+            lines = listOf(
+                outLine("out1"),
+                outLine("out2"),
+                outLine("out3"),
+
+                errLine("err4"),
+                errLine("err5"),
+                errLine("err6"),
+            ),
+            exitInfo =
+                LoggedProcessExitInfo(
+                    exitedAt = Clock.System.now(),
+                    exitValue = 0,
+                ),
+        )
+
+        // total displayed tags should be 3
+        onAllNodesWithTag(
+            OutputSectionTestTags.OUTPUT_SECTION_TAG,
+            useUnmergedTree = true,
+        ).assertCountEquals(3)
+
+        // remove show tags filter
+        processOutputFilters.remove(OutputFilter.ShowTags)
+
+        // total displayed tags should be 0
+        onAllNodesWithTag(
+            OutputSectionTestTags.OUTPUT_SECTION_TAG,
+            useUnmergedTree = true,
+        ).assertCountEquals(0)
+    }
 
     private suspend fun selectTestProcess(
         lines: List<LoggedProcessLine> = listOf(),

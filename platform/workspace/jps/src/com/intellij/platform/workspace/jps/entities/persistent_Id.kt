@@ -3,8 +3,8 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.SymbolicEntityId
-import org.jetbrains.annotations.NonNls
 import com.intellij.platform.workspace.storage.annotations.Open
+import org.jetbrains.annotations.NonNls
 import java.io.Serializable
 
 data class ModuleId(val name: @NlsSafe String) : SymbolicEntityId<ModuleEntity> {

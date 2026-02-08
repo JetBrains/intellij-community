@@ -14,3 +14,5 @@ class Bar : Foo
 // EXIST: { lookupString: "this@g" }
 // EXIST: { lookupString: "this@f" }
 // ABSENT: { lookupString: "this@Foo" }
+
+// IGNORE_K2

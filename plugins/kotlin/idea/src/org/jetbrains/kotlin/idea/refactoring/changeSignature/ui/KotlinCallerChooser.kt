@@ -19,6 +19,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 
+@K1Deprecation
 class KotlinCallerChooser(
     declaration: PsiElement,
     project: Project,
@@ -53,6 +55,7 @@ class KotlinCallerChooser(
     override fun getEmptyCalleeText() = KotlinBundle.message("text.callee.text.would.be.shown.here")
 }
 
+@K1Deprecation
 class KotlinMethodNode(
     method: PsiElement?,
     called: HashSet<PsiElement>,

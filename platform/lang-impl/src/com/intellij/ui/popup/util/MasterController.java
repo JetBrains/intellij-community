@@ -18,7 +18,7 @@ package com.intellij.ui.popup.util;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
 @ApiStatus.Internal
 public interface MasterController {

@@ -17,8 +17,13 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.GroupLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 

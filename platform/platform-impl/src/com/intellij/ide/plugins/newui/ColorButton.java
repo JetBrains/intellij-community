@@ -6,9 +6,11 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 /**
  * @author Alexander Lobas

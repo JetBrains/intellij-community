@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import java.lang.reflect.Method
 
 internal fun <T> lazyPub(initializer: () -> T) = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
@@ -55,6 +56,7 @@ internal fun gitReset(project: Project, projectRoot: VirtualFile) {
     }
 }
 
+@K1Deprecation
 inline fun edtExecute(crossinline body: () -> Unit) {
     ApplicationManager.getApplication().invokeAndWait {
         body()

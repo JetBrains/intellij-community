@@ -1,7 +1,7 @@
 package com.intellij.mcpserver.clients
 
-import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.clients.configs.STDIOServerConfig
+import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.clients.configs.VSCodeSSEConfig
 import com.intellij.mcpserver.clients.impl.VSCodeClient
 import kotlinx.serialization.json.JsonObject
@@ -10,7 +10,9 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 

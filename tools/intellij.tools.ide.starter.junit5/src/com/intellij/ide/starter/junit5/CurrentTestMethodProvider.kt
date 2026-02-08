@@ -25,9 +25,8 @@ open class CurrentTestMethodProvider : TestExecutionListener {
     di.direct.instance<CurrentTestMethod>().set(
       TestMethod(
         name = methodSource.methodName,
-        clazz = methodSource.javaClass.name,
-        clazzSimpleName = methodSource.javaClass.simpleName,
-        displayName = testIdentifier.displayName
+        displayName = testIdentifier.displayName,
+        testClass = methodSource.javaClass,
       )
     )
   }

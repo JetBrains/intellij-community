@@ -5,7 +5,13 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kapt.gradleJava
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
-import com.intellij.openapi.externalSystem.model.project.*
+import com.intellij.openapi.externalSystem.model.project.ContentRootData
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
+import com.intellij.openapi.externalSystem.model.project.LibraryData
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
+import com.intellij.openapi.externalSystem.model.project.LibraryLevel
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType
+import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptGradleModel

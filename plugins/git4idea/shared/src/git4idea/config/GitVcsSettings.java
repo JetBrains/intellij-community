@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
-import com.intellij.dvcs.branch.*;
+import com.intellij.dvcs.branch.DvcsBranchInfo;
+import com.intellij.dvcs.branch.DvcsBranchSettings;
+import com.intellij.dvcs.branch.DvcsCompareSettings;
+import com.intellij.dvcs.branch.DvcsSyncSettings;
+import com.intellij.dvcs.branch.GroupingKey;
 import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;

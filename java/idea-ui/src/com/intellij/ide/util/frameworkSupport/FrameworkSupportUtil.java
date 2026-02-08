@@ -16,7 +16,12 @@ import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public final class FrameworkSupportUtil {
   private static final Logger LOG = Logger.getInstance(FrameworkSupportUtil.class);

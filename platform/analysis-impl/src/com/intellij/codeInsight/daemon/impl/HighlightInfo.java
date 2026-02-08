@@ -6,9 +6,21 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionActionWithOptions;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CustomSuppressableInspectionTool;
+import com.intellij.codeInspection.ExternalSourceProblemGroup;
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
+import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.codeInspection.SuppressableProblemGroup;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -26,7 +38,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -35,13 +51,18 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,14 +70,29 @@ import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -1403,7 +1439,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  final void computeQuickFixesSynchronously(@NotNull PsiFile psiFile, @NotNull Document document) throws ExecutionException, InterruptedException {
+  final void computeQuickFixesSynchronously(@NotNull Project project, @NotNull Document document) throws ExecutionException, InterruptedException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -1418,8 +1454,7 @@ public class HighlightInfo implements Segment {
         Consumer<? super QuickFixActionRegistrar> computer = desc.fixesComputer();
         // recompute only if necessary
         List<IntentionActionDescriptor> result =
-          computerToResult.computeIfAbsent(computer,
-            __ -> doComputeLazyQuickFixes(document, psiFile.getProject(), desc.psiModificationStamp(), computer));
+          computerToResult.computeIfAbsent(computer, __ -> doComputeLazyQuickFixes(document, project, desc.psiModificationStamp(), computer));
         assert result != null;
         future = CompletableFuture.completedFuture(result);
         return new LazyFixDescription(desc.fixesComputer(), desc.psiModificationStamp(), future);

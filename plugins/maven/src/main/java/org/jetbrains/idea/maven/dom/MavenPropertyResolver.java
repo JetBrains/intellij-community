@@ -7,7 +7,10 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.dom.model.MavenDomParent;
+import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -15,7 +18,11 @@ import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

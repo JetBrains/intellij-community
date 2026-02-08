@@ -11,7 +11,7 @@ import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public enum CreateClassKind implements ClassKind {
   CLASS(JavaElementKind.CLASS),

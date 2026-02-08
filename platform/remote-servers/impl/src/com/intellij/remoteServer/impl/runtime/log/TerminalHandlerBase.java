@@ -5,7 +5,7 @@ import com.intellij.remoteServer.agent.util.log.TerminalListener;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class TerminalHandlerBase extends LoggingHandlerBase implements TerminalHandler {
   private boolean myClosed = false;

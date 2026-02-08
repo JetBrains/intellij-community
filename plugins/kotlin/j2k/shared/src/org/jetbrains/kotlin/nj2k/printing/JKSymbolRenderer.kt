@@ -9,7 +9,14 @@ import com.intellij.psi.search.PsiShortNamesCache
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.escaped
-import org.jetbrains.kotlin.nj2k.symbols.*
+import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseFunctionSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
+import org.jetbrains.kotlin.nj2k.symbols.containingClass
+import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
+import org.jetbrains.kotlin.nj2k.symbols.isEnumConstant
+import org.jetbrains.kotlin.nj2k.symbols.isStaticMember
+import org.jetbrains.kotlin.nj2k.symbols.isUnnamedCompanion
 import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.psi.KtFile

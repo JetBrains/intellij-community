@@ -3,7 +3,11 @@ package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.ExtensionDescriptor
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.extensions.PluginAware
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.XmlSerializer

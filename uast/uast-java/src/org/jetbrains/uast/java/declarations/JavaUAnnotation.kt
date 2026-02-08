@@ -5,7 +5,18 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnnotationEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 
 @ApiStatus.Internal

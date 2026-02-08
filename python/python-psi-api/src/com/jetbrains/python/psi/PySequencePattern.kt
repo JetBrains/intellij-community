@@ -6,5 +6,5 @@ import com.jetbrains.python.ast.findChildrenByClass
 
 interface PySequencePattern : PyAstSequencePattern, PyPattern {
   val elements: List<PyPattern>
-    get() = findChildrenByClass(PyPattern::class.java).toList()
+    get() = findChildrenByClass(PyPattern::class.java).asList()
 }

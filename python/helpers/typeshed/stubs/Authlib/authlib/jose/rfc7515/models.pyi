@@ -2,8 +2,8 @@ from _typeshed import Incomplete
 from typing_extensions import Self
 
 class JWSAlgorithm:
-    name: Incomplete
-    description: Incomplete
+    name: str | None
+    description: str | None
     algorithm_type: str
     algorithm_location: str
     def prepare_key(self, raw_data): ...
@@ -20,7 +20,7 @@ class JWSHeader(dict[str, object]):
 class JWSObject(dict[str, object]):
     header: Incomplete
     payload: Incomplete
-    type: Incomplete
+    type: str
     def __init__(self, header, payload, type: str = "compact") -> None: ...
     @property
     def headers(self): ...

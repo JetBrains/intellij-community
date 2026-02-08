@@ -1,7 +1,12 @@
 package com.intellij.database.run.ui.table;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.extractors.BinaryDisplayType;
 import com.intellij.database.extractors.DisplayType;
 import com.intellij.database.run.ui.DataAccessType;
@@ -11,7 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformati
 
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.PsiWhiteSpace
@@ -16,24 +17,46 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.BuilderByPattern
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtThrowExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater): KtWhenExpression {
     val ifExpression = updater.getWritable(element.topmostIfExpression())
     val parent = ifExpression.parent
 
-    val elementCommentSaver = CommentSaver(ifExpression, saveLineBreaks = true)
-    val fullCommentSaver = CommentSaver(PsiChildRange(ifExpression, ifExpression.siblings().last()), saveLineBreaks = true)
+    val commentSaver = CommentSaver(PsiChildRange(ifExpression, findLastIfBlockReturn(ifExpression.siblings())), saveLineBreaks = true)
 
     val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
     val loopJumpVisitor = LabelLoopJumpVisitor(loop)
 
     val toDelete = ArrayList<PsiElement>()
 
-    val (whenExpression, applyFullCommentSaver) = createWhenExpression(ifExpression, toDelete)
-
-    val commentSaver = if (applyFullCommentSaver) fullCommentSaver else elementCommentSaver
+    val whenExpression = createWhenExpression(ifExpression, toDelete)
 
     val whenExpressionInCodeFragment =
         KtPsiFactory(element.project).createExpressionCodeFragment(whenExpression.text, ifExpression)
@@ -53,9 +76,19 @@ fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater): KtWhenExpr
     commentSaver.restore(result)
 
     if (toDelete.isNotEmpty()) {
+        val first = toDelete.first()
+        val last = toDelete.last()
+        // after the block that is subject of inspection, there might be trailing comments that we need to restore
+        val actualLast = when {
+            first == last -> first
+            last is PsiComment -> {
+                (last.prevSibling as? PsiWhiteSpace)?.prevSibling ?: last.prevSibling
+            }
+            else -> last
+        }
         parent.deleteChildRange(
-            toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },
-            toDelete.last()
+            first.prevSibling as? PsiWhiteSpace ?: first,
+            actualLast
         )
     }
 
@@ -72,11 +105,15 @@ fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater): KtWhenExpr
     return result
 }
 
+private fun findLastIfBlockReturn(sequence: Sequence<PsiElement>): PsiElement =
+    sequence
+        .takeWhile { it is KtIfExpression || it is KtReturnExpression || it is PsiComment || it is PsiWhiteSpace }
+        .last { it is KtIfExpression || it is KtReturnExpression }
+
 private fun createWhenExpression(
     ifExpression: KtIfExpression,
     toDelete: ArrayList<PsiElement>
-): Pair<KtWhenExpression, Boolean> {
-    var applyFullCommentSaver = true
+): KtWhenExpression {
     val whenExpression = KtPsiFactory(ifExpression.project).buildExpression(reformat = false) {
         appendFixedText("when {\n")
 
@@ -105,7 +142,6 @@ private fun createWhenExpression(
                 // Try to build synthetic if / else according to KT-10750
                 val syntheticElseBranch = if (canPassThrough) null else buildNextBranch(baseIfExpressionForSyntheticBranch)
                 if (syntheticElseBranch == null) {
-                    applyFullCommentSaver = false
                     break
                 }
                 toDelete.addAll(baseIfExpressionForSyntheticBranch.siblingsUpTo(syntheticElseBranch))
@@ -121,7 +157,6 @@ private fun createWhenExpression(
                 currentIfExpression = currentElseBranch
             } else {
                 appendElseBlock(currentElseBranch)
-                applyFullCommentSaver = false
                 break
             }
         }
@@ -140,7 +175,7 @@ private fun createWhenExpression(
     }
     whenExpression.entries.forEach { entry -> entry.reformat() }
 
-    return Pair(whenExpression, applyFullCommentSaver)
+    return whenExpression
 }
 
 private fun KtIfExpression.topmostIfExpression(): KtIfExpression {
