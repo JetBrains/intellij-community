@@ -2,14 +2,23 @@
 package com.intellij.diagnostic
 
 import com.intellij.util.containers.UList
+import com.intellij.util.io.blockingDispatcher
 import com.sun.management.OperatingSystemMXBean
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(DelicateCoroutinesApi::class)
 internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDurationMs: Int, coroutineScope: CoroutineScope) {
   private val maxDumps: Int = maxDurationMs / dumpInterval
 
@@ -29,7 +38,7 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     get() = gcCurrentTime - gcStartTime
 
   init {
-    job = coroutineScope.launch(CoroutineName("freeze dumper")) {
+    job = coroutineScope.launch(CoroutineName("freeze dumper") + blockingDispatcher) {
       dumpThreadsLoop()
     }
   }

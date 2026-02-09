@@ -422,12 +422,13 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   inner class MySamplingTask(@JvmField val freezeFolder: String, private val taskStart: Long) :
     SamplingTask(dumpInterval = dumpInterval, maxDurationMs = maxDumpDuration, coroutineScope = coroutineScope) {
 
     override suspend fun processDumpedThreads(infos: Array<ThreadInfo>) {
       // finish processing even after the freeze end
-      val processingTask = coroutineScope.launch(CoroutineName("async freeze dumper")) {
+      val processingTask = coroutineScope.launch(CoroutineName("async freeze dumper") + blockingDispatcher) {
         val rawDump = ThreadDumper.getThreadDumpInfo(infos, true)
         val dump = EventCountDumper.addEventCountersTo(rawDump)
         dumpedThreads(dump)
@@ -440,11 +441,9 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       val file = dumpThreads(pathPrefix = "$freezeFolder/", appendMillisecondsToFileName = false, rawDump = threadDump.rawDump) ?: return
       try {
         val durationInSeconds = TimeUnit.SECONDS.convert(System.nanoTime() - taskStart, TimeUnit.NANOSECONDS)
-        withContext(Dispatchers.IO) {
-          val parent = file.parent
-          Files.createDirectories(parent)
-          Files.writeString(parent.resolve(DURATION_FILE_NAME), durationInSeconds.toString())
-        }
+        val parent = file.parent
+        Files.createDirectories(parent)
+        Files.writeString(parent.resolve(DURATION_FILE_NAME), durationInSeconds.toString())
 
         for (listener in EP_NAME.extensionList) {
           coroutineContext.ensureActive()
