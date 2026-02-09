@@ -56,6 +56,23 @@ a:com.intellij.ide.ui.LafManager
 - *a:getInstalledThemes():kotlin.sequences.Sequence
 *:com.intellij.ide.ui.PopupLocator
 - a:getPositionFor(com.intellij.openapi.ui.popup.JBPopup):java.awt.Point
+*f:com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
+- javax.swing.tree.TreeModel
+- <init>():V
+- addTreeModelListener(javax.swing.event.TreeModelListener):V
+- getChild(java.lang.Object,I):javax.swing.tree.DefaultMutableTreeNode
+- getChildCount(java.lang.Object):I
+- getIndexOfChild(java.lang.Object,java.lang.Object):I
+- getRoot():javax.swing.tree.DefaultMutableTreeNode
+- f:insertChild(javax.swing.tree.DefaultMutableTreeNode,I,javax.swing.tree.DefaultMutableTreeNode):V
+- isLeaf(java.lang.Object):Z
+- f:promiseRealNodes():org.jetbrains.concurrency.Promise
+- f:removeChild(javax.swing.tree.DefaultMutableTreeNode,I):V
+- removeTreeModelListener(javax.swing.event.TreeModelListener):V
+- f:setChildren(javax.swing.tree.DefaultMutableTreeNode,java.util.List):V
+- f:setRoot(javax.swing.tree.DefaultMutableTreeNode):V
+- f:updateNode(javax.swing.tree.DefaultMutableTreeNode,java.lang.Object):V
+- valueForPathChanged(javax.swing.tree.TreePath,java.lang.Object):V
 c:com.intellij.openapi.actionSystem.PlatformDataKeys
 - com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 - *sf:CONTEXT_MENU_LOCATOR:com.intellij.openapi.actionSystem.DataKey
