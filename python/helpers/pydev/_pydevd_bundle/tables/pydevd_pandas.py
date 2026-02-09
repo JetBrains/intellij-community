@@ -189,7 +189,9 @@ def get_inspection_outliers(table):
                 if outliers_count > 0:
                     results_per_column.append({
                         "columnName": str(col),
-                        "value": str(outliers_count)
+                        "value": str(outliers_count),
+                        "detailFirst": str(lower_bound),
+                        "detailSecond": str(upper_bound)
                     })
 
         is_triggered = len(results_per_column) > 0
