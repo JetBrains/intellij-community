@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -73,6 +72,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.whenTrue
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -81,7 +81,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.milliseconds
 
-open class CodeVisionHost(val project: Project) {
+open class CodeVisionHost(val project: Project, protected val coroutineScope: CoroutineScope) {
   companion object {
     private val logger = logger<CodeVisionHost>()
     const val defaultVisibleLenses: Int = 5
@@ -425,7 +425,7 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
           val modalityState = ModalityState.stateForComponent(editor.contentComponent).asContextElement()
-          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + modalityState + ClientId.coroutineContext()) {
+          coroutineScope.launch(Dispatchers.EDT + modalityState + ClientId.coroutineContext()) {
             recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
           }
         }
