@@ -39,11 +39,13 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -823,11 +825,35 @@ public final class AddImportHelper {
       return;
     }
 
-    // If target is a class attribute, import the containing class
+    // If target is a class attribute or nested class, import the top-level containing class
     PsiNamedElement elementToImport = target;
     var parent = ScopeUtil.getScopeOwner(target);
     if (parent instanceof PyClass pyClass) {
       elementToImport = pyClass;
+    }
+
+    // Walk up to the top-level class if elementToImport is itself a nested class
+    String nestedQualifierPrefix = null;
+    if (elementToImport instanceof PyClass && !PyUtil.isTopLevel(elementToImport)) {
+      List<String> nestingChain = new ArrayList<>();
+      nestingChain.add(elementToImport.getName());
+      PsiElement current = elementToImport;
+      while (current instanceof PyClass && !PyUtil.isTopLevel(current)) {
+        var outer = ScopeUtil.getScopeOwner(current);
+        if (outer instanceof PyClass outerClass) {
+          nestingChain.add(outerClass.getName());
+          current = outerClass;
+        }
+        else {
+          break;
+        }
+      }
+      if (current instanceof PyClass && PyUtil.isTopLevel(current)) {
+        elementToImport = (PsiNamedElement)current;
+        // Build qualifier like "Outer.Mid.Inner" from the chain [Inner, Mid, Outer]
+        Collections.reverse(nestingChain);
+        nestedQualifierPrefix = String.join(".", nestingChain);
+      }
     }
 
     final String name = elementToImport.getName();
@@ -850,6 +876,20 @@ public final class AddImportHelper {
     }
     else {
       addOrUpdateFromImportStatement(file, path, name, null, priority, element);
+      if (nestedQualifierPrefix != null) {
+        // Rewrite the qualifier reference to use the qualified nested class path, e.g. Inner -> Outer.Inner
+        // The element might be a qualified expression like Inner.do, so we need to find the unresolved
+        // qualifier that refers to the nested class and replace it with the full nesting chain.
+        PyElement toRewrite = element;
+        if (element instanceof PyReferenceExpression refExpr) {
+          PyExpression qualifier = refExpr.getQualifier();
+          if (qualifier instanceof PyReferenceExpression qualifierRef) {
+            toRewrite = qualifierRef;
+          }
+        }
+        final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
+        toRewrite.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(elementToImport), nestedQualifierPrefix));
+      }
     }
   }
 
