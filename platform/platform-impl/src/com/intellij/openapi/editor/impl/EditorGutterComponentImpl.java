@@ -2034,10 +2034,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
            isRealEditor() ? getFoldingAnchorWidth() : 0;
   }
 
-  int getFoldingAreaWidthForLineNumbersAfterIcons() {
-    return (int)(getFoldingAnchorWidth2D() / 1.4);
-  }
-
   private boolean isRealEditor() {
     return EditorUtil.isRealFileEditor(myEditor);
   }
