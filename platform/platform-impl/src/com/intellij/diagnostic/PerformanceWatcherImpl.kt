@@ -2,6 +2,7 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.diagnostic
 
+import com.intellij.diagnostic.PerformanceWatcherImpl.MySamplingTask
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.DebugAttachDetector
@@ -13,6 +14,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -29,13 +31,22 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.sanitizeFileName
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -402,7 +413,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     private fun stopFreezeReporting(task: MySamplingTask) {
       val taskStop = System.nanoTime()
       coroutineScope.launch {
-        task.stopAndWait()
+        task.stop()
 
         val durationMs = TimeUnit.MILLISECONDS.convert(taskStop - taskStart, TimeUnit.NANOSECONDS)
 
@@ -426,6 +437,8 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   inner class MySamplingTask(@JvmField val freezeFolder: String, private val taskStart: Long) :
     SamplingTask(dumpInterval = dumpInterval, maxDurationMs = maxDumpDuration, coroutineScope = coroutineScope) {
 
+    private val dumpTasks: MutableList<Job> = ContainerUtil.createConcurrentList()
+
     override suspend fun processDumpedThreads(infos: Array<ThreadInfo>) {
       // finish processing even after the freeze end
       val processingTask = coroutineScope.launch(CoroutineName("async freeze dumper") + blockingDispatcher) {
@@ -433,6 +446,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
         val dump = EventCountDumper.addEventCountersTo(rawDump)
         dumpedThreads(dump)
       }
+      dumpTasks += processingTask
       // don't schedule yet another thread dump - wait for completion
       processingTask.join()
     }
@@ -455,6 +469,11 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       catch (e: IOException) {
         LOG.info("Failed to write the duration file", e)
       }
+    }
+
+    suspend fun waitDumpProcessing() {
+      job.join()
+      dumpTasks.joinAll()
     }
   }
 
@@ -547,10 +566,13 @@ private class CoroutineDispatcherWatcher(
   }
 }
 
-private fun postProcessReportFolder(durationMs: Long, task: SamplingTask, dir: Path, logDir: Path): Path? {
+private suspend fun postProcessReportFolder(durationMs: Long, task: MySamplingTask, dir: Path, logDir: Path): Path? {
   if (Files.notExists(dir)) {
     return null
   }
+
+  LOG.debug { "Awaiting the $dir dumping tasks to finish" }
+  task.waitDumpProcessing()
 
   cleanup(dir)
   var reportDir = logDir.resolve("${dir.name}${getFreezePlaceSuffix(task)}-${TimeUnit.MILLISECONDS.toSeconds(durationMs)}sec")

@@ -25,7 +25,7 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
   var threadInfos: UList<Array<ThreadInfo>> = UList()
     private set
 
-  private val job: Job
+  protected val job: Job
   private val startTime: Long = System.nanoTime()
   private var currentTime: Long = startTime
   private val gcStartTime: Long = currentGcTime()
