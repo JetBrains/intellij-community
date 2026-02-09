@@ -1189,22 +1189,41 @@ public final class TreeState implements JDOMExternalizable {
 
   private boolean visit(@NotNull JTree tree) {
     TreeModel model = tree.getModel();
+
+    if (myPresentationData != null && model instanceof DefaultTreeModelWithCachedPresentation defaultModel && tree instanceof CachedTreePresentationSupport) {
+      var started = System.currentTimeMillis();
+      // The presentation is applied, meaning that everything is expanded already.
+      // We only have to wait until the nodes are actually loaded, and the model supports this directly.
+      defaultModel.promiseRealNodes().onProcessed(loaded -> {
+        List<TreePath> expanded = loaded == null ? Collections.emptyList() : loaded.stream().filter(path -> tree.isExpanded(path)).toList();
+        onExpandFinished(tree, expanded, started);
+        if (tree.isSelectionEmpty()) {
+          select(tree);
+        }
+      });
+      return true;
+    }
+
     if (!(model instanceof TreeVisitor.Acceptor)) return false;
 
     var started = System.currentTimeMillis();
     expand(tree, promise -> expand(tree).onProcessed(expanded -> {
-      if (LOG.isDebugEnabled() && expanded != null) {
-        LOG.debug("Expanded " + expanded.size() + " paths in " + (System.currentTimeMillis() - started) + " ms");
-      }
-      if (tree instanceof @NotNull Tree jbTree) {
-        jbTree.fireTreeStateRestoreFinished();
-      }
-      clearCachedPresentation(tree);
+      onExpandFinished(tree, expanded, started);
       if (isSelectionNeeded(expanded, tree, promise)) {
         select(tree).onProcessed(selected -> promise.setResult(null));
       }
     }));
     return true;
+  }
+
+  private static void onExpandFinished(@NotNull JTree tree, List<TreePath> expanded, long started) {
+    if (LOG.isDebugEnabled() && expanded != null) {
+      LOG.debug("Expanded " + expanded.size() + " paths in " + (System.currentTimeMillis() - started) + " ms");
+    }
+    if (tree instanceof @NotNull Tree jbTree) {
+      jbTree.fireTreeStateRestoreFinished();
+    }
+    clearCachedPresentation(tree);
   }
 
   private static final class SinglePathVisitor implements TreeVisitor {
