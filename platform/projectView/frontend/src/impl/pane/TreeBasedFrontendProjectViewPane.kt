@@ -2,31 +2,54 @@
 package com.intellij.platform.projectView.frontend.impl.pane
 
 import com.intellij.ide.ui.customization.CustomizationUtil
+import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
+import com.intellij.ide.util.treeView.PathElementIdProvider
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
-import com.intellij.platform.projectView.pane.*
+import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
+import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
+import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
+import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
+import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
+import com.intellij.platform.projectView.pane.ProjectViewNodeModel
+import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
+import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
+import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.pom.Navigatable
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.ui.treeStructure.TreeNodePresentation
+import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.withContext
+import org.jdom.Element
 import javax.swing.JComponent
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.DefaultTreeModel
 
 internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPane, UiDataProvider {
-  private val treeModel = DefaultTreeModel(null)
+  private val treeModel = DefaultTreeModelWithCachedPresentation()
   private val tree = Tree(treeModel).also {
     it.isRootVisible = false
     CustomizationUtil.installPopupHandler(it, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP)
@@ -70,8 +93,23 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
     EditSourceOnEnterKeyHandler.install(tree)
   }
 
+  override suspend fun manage() {
+    awaitCancellation()
+  }
+
   override fun applyStateChange(event: ProjectViewPaneStateEvent) {
     when (event) {
+      is ProjectViewChildrenLoaded -> {
+        if (event.parentId == SUPER_ROOT_ID) {
+          val newNode = createNode(event.children.single())
+          treeModel.setRoot(newNode)
+        }
+        else {
+          val parent = getNodeById(event.parentId) ?: return
+          val children = event.children.map { createNode(it) }
+          treeModel.setChildren(parent, children)
+        }
+      }
       is ProjectViewNodeAdded -> {
         val parent = getNodeById(event.parentId) ?: return
         val newNode = createNode(event.model)
@@ -79,13 +117,12 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
           treeModel.setRoot(newNode)
         }
         else {
-          treeModel.insertNodeInto(newNode, parent, event.index)
+          treeModel.insertChild(parent, event.index, newNode)
         }
       }
       is ProjectViewNodeUpdated -> {
         val node = getNodeById(event.model.id) ?: return
-        node.projectViewNode = event.model
-        treeModel.nodeChanged(node)
+        treeModel.updateNode(node, event.model)
       }
       is ProjectViewChildRemoved -> {
         val parent = getNodeById(event.parentId) ?: return
@@ -95,7 +132,7 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
           treeModel.setRoot(null)
         }
         else {
-          treeModel.removeNodeFromParent(child)
+          treeModel.removeChild(parent, event.index)
         }
       }
       is ProjectViewChildrenRemoved -> {
@@ -109,8 +146,7 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
           treeModel.setRoot(null)
         }
         else {
-          parent.removeAllChildren()
-          treeModel.nodesWereRemoved(parent, IntArray(childCount) { it }, children.toTypedArray())
+          treeModel.setChildren(parent, emptyList())
         }
       }
     }
@@ -159,11 +195,19 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
 
     override fun canNavigateToSource(): Boolean = model.canNavigateToSource()
   }
+
+  override fun saveStateTo(element: Element) {
+    TreeState.createOn(tree, true, false, true).writeExternal(element)
+  }
+
+  override fun restoreStateFrom(element: Element) {
+    TreeState.createFrom(element).applyTo(tree)
+  }
 }
 
 private class Node(
   model: ProjectViewNodeModel,
-) : DefaultMutableTreeNode(model), TreeNodeWithPresentation {
+) : DefaultMutableTreeNode(model), TreeNodeWithPresentation, PathElementIdProvider {
   var projectViewNode: ProjectViewNodeModel
     get() = userObject as ProjectViewNodeModel
     set(value) {
@@ -176,4 +220,6 @@ private class Node(
   override fun isLeaf(): Boolean {
     return projectViewNode.presentation.isLeaf
   }
+
+  override fun getPathElementId(): String = (presentation as TreeNodePresentationImpl).mainText
 }

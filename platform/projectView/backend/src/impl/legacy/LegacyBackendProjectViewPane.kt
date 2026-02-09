@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.backend.navigation.NavigationRequests
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
@@ -25,6 +24,7 @@ import com.intellij.platform.projectView.pane.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.LoadingNode
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
 import com.intellij.ui.tree.buildPresentation
@@ -202,6 +202,9 @@ private class AbstractProjectViewPaneStateManager(
 
   private suspend fun buildStateUpdateEvent(request: ModelUpdateRequest): ProjectViewPaneStateEvent {
     return when (request) {
+      is ModelChildrenLoaded -> {
+        ProjectViewChildrenLoaded(request.parentId, request.children.map { createNodeModel(it.id, it.modelNode) })
+      }
       is ModelNodeAdded -> {
         ProjectViewNodeAdded(request.parentId, request.index, createNodeModel(request.nodeId, request.modelNode))
       }
@@ -270,28 +273,56 @@ private class AbstractProjectViewPaneStateManager(
     LOG.trace { "Processing the request to load the children of the node $parentId..." }
     val parent = nodeById[parentId] ?: return
     LOG.trace { "...which is $parent" }
-    if (parent.loadChildren) {
-      LOG.trace("...but it has its children already loaded, done")
+    if (parent.childrenState != ChildrenState.NOT_LOADED) {
+      LOG.trace("...but it has its children already ${parent.childrenState}, done")
       return
     }
-    parent.loadChildren = true
-    if (parent.id == SUPER_ROOT_ID) {
+    parent.childrenState = ChildrenState.LOADING
+    tryLoadChildren(parent)
+  }
+
+  private fun tryLoadChildren(parent: LegacyProjectViewNode) {
+    val modelNodes = getModelChildren(parent) ?: return
+    finishLoadingChildren(parent, modelNodes)
+  }
+  
+  private fun getModelChildren(parent: LegacyProjectViewNode): List<Any>? {
+    return if (parent.id == SUPER_ROOT_ID) {
       val modelRoot = treeModel.root
-      if (modelRoot != null) {
-        addNode(SUPER_ROOT_ID, 0, modelRoot)
-        LOG.trace { "Loaded a new root: $modelRoot" }
+      if (modelRoot == null) {
+        LOG.trace("The backing model has no root yet, will wait until it's loaded")
+        return null
       }
+      if (modelRoot is LoadingNode) {
+        LOG.trace("The backing model is still loading the root, will wait until it's loaded")
+        return null
+      }
+      listOf(modelRoot)
     }
     else {
       val childCount = treeModel.getChildCount(parent.modelNode)
-      for (i in 0 until childCount) {
-        val modelChild = treeModel.getChild(parent.modelNode, i)
-        addNode(parentId, i, modelChild)
+      if (childCount == 1 && treeModel.getChild(parent.modelNode, 0) is LoadingNode) {
+        LOG.trace("The backing model is still loading the children, will wait until they're loaded")
+        return null
       }
-      LOG.trace { "Loaded $childCount children" }
+      (0 until childCount).map { treeModel.getChild(parent.modelNode, it) }
     }
   }
-  
+
+  private fun finishLoadingChildren(
+    parent: LegacyProjectViewNode,
+    modelNodes: List<Any>,
+  ) {
+    setChildren(parent.id, modelNodes)
+    parent.childrenState = ChildrenState.LOADED
+    LOG.trace { "Loaded ${modelNodes.size} children of ${parent.id}" }
+    if (parent.id == SUPER_ROOT_ID) {
+      val newRootId = nodeByModelNode.getValue(modelNodes.single()).id
+      LOG.trace("We have a new real root (id=$newRootId), loading its children immediatly")
+      loadChildren(newRootId)
+    }
+  }
+
   private fun handleModelUpdate(update: ModelUpdateRequest) {
     val result = modelUpdateChannel.trySend(update)
     check(result.isSuccess || result.isClosed)
@@ -304,42 +335,72 @@ private class AbstractProjectViewPaneStateManager(
     handleModelUpdate(ModelNodeUpdated(id, modelNode))
   }
   
-  private fun updateNodeStructure(modelParent: Any, children: List<Any>) {
+  private fun updateNodeStructure(modelParent: Any) {
     updateNodeValue(modelParent)
     val parent = getNodeByModelNode(modelParent) ?: return
-    if (parent.loadChildren) {
-      handleModelUpdate(ModelChildrenRemoved(parent.id))
-      for ((index, child) in children.withIndex()) {
-        addNode(parent.id, index, child)
+    when (parent.childrenState) {
+      ChildrenState.NOT_LOADED -> { }
+      ChildrenState.LOADING -> {
+        tryLoadChildren(parent)
+      }
+      ChildrenState.LOADED -> {
+        updateExistingChildren(parent)
       }
     }
   }
 
-  private fun insertChild(modelParent: Any, i: Int, modelChild: Any) {
-    val parent = getNodeByModelNode(modelParent) ?: return
-    if (parent.loadChildren) {
-      addNode(parent.id, i, modelChild)
+  private fun updateExistingChildren(parent: LegacyProjectViewNode) {
+    handleModelUpdate(ModelChildrenRemoved(parent.id))
+    val modelChildren = getModelChildren(parent) ?: emptyList()
+    for ((index, child) in modelChildren.withIndex()) {
+      addNode(parent.id, index, child)
     }
   }
 
+  private fun insertChildren(modelParent: Any, newIndices: IntArray) {
+    val parent = getNodeByModelNode(modelParent) ?: return
+    when (parent.childrenState) {
+      ChildrenState.NOT_LOADED -> { }
+      ChildrenState.LOADING -> {
+        tryLoadChildren(parent)
+      }
+      ChildrenState.LOADED -> {
+        for (i in newIndices) {
+          val modelChild = treeModel.getChild(modelParent, i)
+          addNode(parent.id, i, modelChild)
+        }
+      }
+    }
+  }
+  
+  private fun setChildren(parentId: Long, modelNodes: List<Any>) {
+    val newNodes = modelNodes.map { createNewNode(parentId, it) }
+    handleModelUpdate(ModelChildrenLoaded(parentId, newNodes.map { ModelChildDescriptor(it.id, it.modelNode) }))
+  }
+
   private fun addNode(parentId: Long?, index: Int, modelNode: Any) {
+    val newNode = createNewNode(parentId, modelNode)
+    if (parentId != null) {
+      handleModelUpdate(ModelNodeAdded(parentId, index, newNode.id, modelNode))
+    }
+  }
+
+  private fun createNewNode(
+    parentId: Long?,
+    modelNode: Any,
+  ): LegacyProjectViewNode {
     val newNodeId = nextNodeId++
     val newNode = LegacyProjectViewNode(newNodeId, parentId, modelNode)
     LOG.trace { "Adding $newNode" }
     nodeByModelNode[modelNode] = newNode
     nodeById[newNodeId] = newNode
-    if (parentId != null) {
-      handleModelUpdate(ModelNodeAdded(parentId, index, newNodeId, modelNode))
-    }
-    if (parentId == SUPER_ROOT_ID) {
-      LOG.trace("We have a new real root, loading its children immediatly")
-      loadChildren(newNode.id)
-    }
+    return newNode
   }
 
   private fun removeChild(modelParent: Any, index: Int) {
     val parent = getNodeByModelNode(modelParent) ?: return
-    if (parent.loadChildren) {
+    // In the LOADING state, a "removed" even means the "loading" node was removed, but we don't care about it.
+    if (parent.childrenState == ChildrenState.LOADED) {
       handleModelUpdate(ModelChildRemoved(parent.id, index))
     }
   }
@@ -392,10 +453,7 @@ private class AbstractProjectViewPaneStateManager(
       val parent = treePath.lastPathComponent
       updateNodeValue(parent) // leaf state update
       val childIndices = e.childIndices ?: return
-      val model = e.model
-      for (i in childIndices) {
-        insertChild(parent, i, model.getChild(parent, i))
-      }
+      insertChildren(parent, childIndices)
     }
 
     override fun treeNodesRemoved(e: TreeModelEvent) {
@@ -410,18 +468,20 @@ private class AbstractProjectViewPaneStateManager(
 
     override fun treeStructureChanged(e: TreeModelEvent) {
       val treePath = e.treePath
-      val model = e.model
       if (treePath == null || treePath.parentPath == null) {
-        updateNodeStructure(SuperRoot, listOfNotNull(model.root))
+        updateNodeStructure(SuperRoot)
         return
       }
-      val parent = treePath.lastPathComponent
-      updateNodeStructure(parent, (0 until model.getChildCount(parent)).map { i -> model.getChild(parent, i) })
+      updateNodeStructure(treePath.lastPathComponent)
     }
   }
 }
 
 private sealed class ModelUpdateRequest
+
+private data class ModelChildrenLoaded(val parentId: Long, val children: List<ModelChildDescriptor>) : ModelUpdateRequest()
+
+private data class ModelChildDescriptor(val id: Long, val modelNode: Any)
 
 private data class ModelNodeAdded(val parentId: Long, val index: Int, val nodeId: Long, val modelNode: Any) : ModelUpdateRequest()
 
@@ -435,8 +495,14 @@ private data class LegacyProjectViewNode(
   val id: Long,
   val parentId: Long?,
   val modelNode: Any,
-  var loadChildren: Boolean = false,
+  var childrenState: ChildrenState = ChildrenState.NOT_LOADED,
 )
+
+private enum class ChildrenState {
+  NOT_LOADED,
+  LOADING,
+  LOADED
+}
 
 private val TreeModelEvent.model: TreeModel
   get() = source as TreeModel

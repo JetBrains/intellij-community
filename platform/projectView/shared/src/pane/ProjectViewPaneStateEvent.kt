@@ -24,6 +24,16 @@ sealed class ProjectViewPaneStateSerializableEvent : ProjectViewPaneStateEvent, 
 }
 
 @ApiStatus.Internal
+data class ProjectViewChildrenLoaded(
+  val parentId: Long,
+  val children: List<ProjectViewNodeModel>,
+) : ProjectViewPaneStateEvent {
+  override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewChildrenLoadedDTO(
+    parentId, children.map { it.toDTO() }
+  )
+}
+
+@ApiStatus.Internal
 data class ProjectViewNodeAdded(
   val parentId: Long,
   val index: Int,
@@ -31,6 +41,16 @@ data class ProjectViewNodeAdded(
 ) : ProjectViewPaneStateEvent {
   override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeAddedDTO(
     parentId, index, model.toDTO()
+  )
+}
+
+@Serializable
+internal data class ProjectViewChildrenLoadedDTO(
+  val parentId: Long,
+  val childrenDTO: List<ProjectViewNodeModelDTO>,
+) : ProjectViewPaneStateEventDTO {
+  override fun toEvent(): ProjectViewPaneStateEvent = ProjectViewChildrenLoaded(
+    parentId, childrenDTO.map { it.toModel() }
   )
 }
 

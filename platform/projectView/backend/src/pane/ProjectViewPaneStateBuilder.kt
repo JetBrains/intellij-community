@@ -28,6 +28,14 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
       LOG.debug("Handling update: $update")
       when (update) {
+        is ProjectViewChildrenLoaded -> {
+          val parent = nodeById[update.parentId] ?: return null
+          val children = update.children.map { Node(it, mutableListOf()) }
+          parent.children.addAll(children)
+          for (child in children) {
+            nodeById[child.model.id] = child
+          }
+        }
         is ProjectViewNodeAdded -> {
           val parent = nodeById[update.parentId] ?: return null
           val newNode = Node(update.model, mutableListOf())

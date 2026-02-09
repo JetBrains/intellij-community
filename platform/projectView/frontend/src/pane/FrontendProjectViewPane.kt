@@ -6,7 +6,9 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.channels.ReceiveChannel
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
@@ -30,6 +32,15 @@ interface FrontendProjectViewPane {
   val component: JComponent
 
   val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
-  
+
+  @RequiresEdt
   fun applyStateChange(event: ProjectViewPaneStateEvent)
+  
+  @RequiresEdt
+  fun saveStateTo(element: Element)
+
+  @RequiresEdt
+  fun restoreStateFrom(element: Element)
+
+  suspend fun manage()
 }

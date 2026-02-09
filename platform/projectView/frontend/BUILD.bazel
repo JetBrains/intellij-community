@@ -28,6 +28,8 @@ jvm_library(
     "//platform/project/shared:project",
     "//fleet/rpc",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
   ]
 )
 
