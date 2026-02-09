@@ -1190,7 +1190,6 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     val components = getComponents()
     val pairs = ArrayList<Replacement>()
 
-    var buttonIndex = 0 // avoid N^2 button search
     for (index in effectiveOldActions.indices) {
       val prev: AnAction = effectiveOldActions[index]
       val next: AnAction = effectiveNewActions[index]
@@ -1216,6 +1215,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         return false // can't find what component to replace
       }
 
+      var buttonIndex = 0
       var actionButton: ActionButton? = null
       while (buttonIndex < components.size) {
         val component = components[buttonIndex]
