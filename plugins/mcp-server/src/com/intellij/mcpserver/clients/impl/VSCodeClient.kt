@@ -6,12 +6,12 @@ import com.intellij.mcpserver.clients.configs.ExistingConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.clients.configs.VSCodeConfig
 import com.intellij.mcpserver.clients.configs.VSCodeNetworkConfig
+import com.intellij.openapi.components.service
+import com.intellij.util.application
+import com.intellij.util.text.SemVer
+import kotlinx.coroutines.Deferred
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromStream
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.jsonObject
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
@@ -27,12 +27,18 @@ open class VSCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClien
     return stdio || network
   }
 
-  override fun getSSEConfig(): ServerConfig = VSCodeNetworkConfig(url = sseUrl, type = "sse")
+  private val vsCodeVersion: Deferred<SemVer?> = application.service<McpServiceScope>().scope.getSemVerOfVscodeFork("code")
 
   override suspend fun getSSEConfig(): ServerConfig = VSCodeNetworkConfig(url = sseUrl, type = "sse")
 
   override suspend fun getStreamableHttpConfig(): ServerConfig? {
-    return VSCodeNetworkConfig(url = streamableHttpUrl, type = "http")
+    // VScode supports streamable HTTP since 1.100.0 (https://github.com/microsoft/vscode/releases/tag/1.100.0)
+    return if (vsCodeVersion.await()?.isGreaterOrEqualThan(1, 100, 0) == false  ) {
+      null
+    }
+    else {
+      VSCodeNetworkConfig(url = streamableHttpUrl, type = "http")
+    }
   }
 
   override fun mcpServersKey(): String = "servers"

@@ -14,6 +14,18 @@ import com.intellij.mcpserver.stdio.main
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.lines
+import com.intellij.platform.eel.spawnProcess
+import com.intellij.util.text.SemVer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.ClassDiscriminatorMode
@@ -347,6 +359,17 @@ abstract class McpClient(
     private fun sanitizeSegment(segment: String): String =
       segment.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]+"), "")
 
+    fun CoroutineScope.getSemVerOfVscodeFork(exe: String): Deferred<SemVer?> {
+      return async(start = CoroutineStart.LAZY, context = Dispatchers.IO) {
+        val localEelApi = LocalEelDescriptor.toEelApi()
+        val versionStdout = try {
+          localEelApi.exec.spawnProcess(exe, "-v").eelIt().stdout.lines().first().trim()
+        } catch (_: ExecuteProcessException) {
+          return@async null
+        }
+        SemVer.parseFromText(versionStdout)
+      }
+    }
   }
 
   @JsonIgnoreUnknownKeys
