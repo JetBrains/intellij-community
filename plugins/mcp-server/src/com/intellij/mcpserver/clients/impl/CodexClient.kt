@@ -25,14 +25,14 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
     return stdio || network
   }
 
-  override fun getStreamableHttpConfig(): ServerConfig = CodexStreamableHttpConfig(url = streamableHttpUrl)
+  override suspend fun getStreamableHttpConfig(): ServerConfig = CodexStreamableHttpConfig(url = streamableHttpUrl)
 
   override fun readMcpServers(): Map<String, ExistingConfig>? {
     if (!configPath.exists()) return null
     return runCatching { parseCodexServers(configPath.readText()) }.getOrNull()
   }
 
-  override fun configure(config: ServerConfig) {
+  override suspend fun configure(config: ServerConfig) {
     val existingContent = if (configPath.exists()) configPath.readText() else ""
     val productServerKey = productSpecificServerKey()
 

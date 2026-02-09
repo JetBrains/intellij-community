@@ -11,6 +11,9 @@ import com.intellij.mcpserver.createStreamableServerJsonEntry
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.util.getHelpLink
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
@@ -20,6 +23,9 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.BottomGap
@@ -35,6 +41,10 @@ import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.TextTransferable
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.Nls
@@ -142,9 +152,15 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
               restartInfoTextCell.component.text = McpServerBundle.message("mcp.server.client.restart.info.settings", configuredMessage)
             }
 
-            fun performConfigurationAction(action: () -> Unit) {
+            fun performConfigurationAction(action: suspend () -> Unit) {
               runCatching {
-                action()
+                runWithModalProgressBlocking(
+                  ModalTaskOwner.guess(),
+                  McpServerBundle.message("autoconfigure.progress.title"),
+                  TaskCancellation.nonCancellable()
+                ) {
+                  action()
+                }
               }.onFailure {
                 thisLogger().info(it)
                 errorDuringConfiguration.set(true)
@@ -171,9 +187,9 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
                     mcpClient.autoConfigure()
                   }
                 }
-              }, options = getAdditionalOptionsArray(mcpClient, ::performConfigurationAction)).apply {
-                addSeparator = false
-              })
+              }, null)).apply {
+                configureAdditionalActions(mcpClient, this, ::performConfigurationAction)
+              }
               icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
               configuredTextCell = text("").visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
 
@@ -300,49 +316,59 @@ private interface CheckboxValidator {
   fun isValidNewValue(isSelected: Boolean): Boolean
 }
 
-private fun getAdditionalOptionsArray(mcpClient: McpClient, uiHandler: (() -> Unit) -> Unit): Array<Action> {
-  return buildList {
-    val streamConfig = runCatching { mcpClient.getStreamableHttpConfig() }.getOrNull()
-    if (streamConfig != null) {
-      add(object : AbstractAction(McpServerBundle.message("configure.with.0.transport", "Streamable HTTP")) {
-        override fun actionPerformed(e: ActionEvent?) {
-          uiHandler {
-            mcpClient.configure(streamConfig)
+fun configureAdditionalActions(mcpClient: McpClient, cell: Cell<JBOptionButton>, uiHandler: (suspend () -> Unit) -> Unit) {
+  cell.component.launchOnShow("config of MCP option button") {
+    val array = withContext(Dispatchers.Default) {
+      buildList {
+        val streamConfig = runCatching { mcpClient.getStreamableHttpConfig() }.getOrNull()
+        if (streamConfig != null) {
+          add(object : AnAction(McpServerBundle.message("configure.with.0.transport", "Streamable HTTP")) {
+            override fun actionPerformed(e: AnActionEvent) {
+              uiHandler {
+                mcpClient.configure(streamConfig)
+              }
+            }
+          })
+        }
+        val sseConfig = runCatching { mcpClient.getSSEConfig() }.getOrNull()
+        if (sseConfig != null) {
+          add(object : AnAction(McpServerBundle.message("configure.with.0.transport", "SSE")) {
+            override fun actionPerformed(e: AnActionEvent) {
+              uiHandler {
+                mcpClient.configure(sseConfig)
+              }
+            }
+          })
+        }
+        add(object : AnAction(McpServerBundle.message("configure.with.0.transport", "Stdio")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            uiHandler {
+              mcpClient.configure(mcpClient.getStdioConfig())
+            }
           }
-        }
-      })
-    }
-    val sseConfig = runCatching { mcpClient.getSSEConfig() }.getOrNull()
-    if (sseConfig != null) {
-      add(object : AbstractAction(McpServerBundle.message("configure.with.0.transport", "SSE")) {
-        override fun actionPerformed(e: ActionEvent?) {
-          uiHandler {
-            mcpClient.configure(sseConfig)
+        })
+        add(object : AnAction(McpServerBundle.message("open.settings.json")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            openFileInEditor(mcpClient.configPath)
           }
-        }
-      })
+        })
+        add(object : AnAction(McpServerBundle.message("copy.mcp.server.configuration")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            e.coroutineScope.launch {
+              CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(buildJsonObject {
+                put(McpClient.productSpecificServerKey(), McpClient.json.encodeToJsonElement(mcpClient.getPreferredConfig()))
+              }) as CharSequence))
+              showCopiedBallon(e)
+            }
+          }
+        })
+      }
     }
-    add(object : AbstractAction(McpServerBundle.message("configure.with.0.transport", "Stdio")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        uiHandler {
-          mcpClient.configure(mcpClient.getStdioConfig())
-        }
-      }
-    })
-    add(object : AbstractAction(McpServerBundle.message("open.settings.json")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        openFileInEditor(mcpClient.configPath)
-      }
-    })
-    add(object : AbstractAction(McpServerBundle.message("copy.mcp.server.configuration")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(buildJsonObject {
-          put(McpClient.productSpecificServerKey(), McpClient.json.encodeToJsonElement(mcpClient.getPreferredConfig()))
-        }) as CharSequence))
-        if (e != null) showCopiedBallon(e)
-      }
-    })
-  }.toTypedArray()
+    withContext(Dispatchers.UI) {
+      cell.component.setOptions(array)
+      cell.component.addSeparator = false
+    }
+  }
 }
 
 private fun openFileInEditor(filePath: Path) {
@@ -354,6 +380,10 @@ private fun openFileInEditor(filePath: Path) {
   virtualFile?.let { file ->
     FileEditorManager.getInstance(project).openFile(file, true)
   }
+}
+
+private fun showCopiedBallon(event: AnActionEvent) {
+  JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(McpServerBundle.message("json.configuration.copied.to.clipboard"), null, null, null).createBalloon().showInCenterOf(event.inputEvent?.source as JComponent)
 }
 
 private fun showCopiedBallon(event: ActionEvent) {

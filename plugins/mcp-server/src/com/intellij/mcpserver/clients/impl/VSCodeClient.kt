@@ -29,7 +29,11 @@ open class VSCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClien
 
   override fun getSSEConfig(): ServerConfig = VSCodeNetworkConfig(url = sseUrl, type = "sse")
 
-  override fun getStreamableHttpConfig(): ServerConfig? = VSCodeNetworkConfig(url = streamableHttpUrl, type = "http")
+  override suspend fun getSSEConfig(): ServerConfig = VSCodeNetworkConfig(url = sseUrl, type = "sse")
+
+  override suspend fun getStreamableHttpConfig(): ServerConfig? {
+    return VSCodeNetworkConfig(url = streamableHttpUrl, type = "http")
+  }
 
   override fun mcpServersKey(): String = "servers"
 

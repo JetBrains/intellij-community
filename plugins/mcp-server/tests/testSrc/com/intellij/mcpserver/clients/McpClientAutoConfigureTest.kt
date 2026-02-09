@@ -79,7 +79,9 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.autoConfigure()
+    runBlocking {
+      client.autoConfigure()
+    }
 
     val servers = readServers(client, configPath)
     val config = servers["test"]
@@ -96,7 +98,9 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = VSCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.autoConfigure()
+    runBlocking {
+      client.autoConfigure()
+    }
 
     val servers = readServers(client, configPath)
     val config = servers["test"]
@@ -113,7 +117,9 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = WindsurfClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.autoConfigure()
+    runBlocking {
+      client.autoConfigure()
+    }
 
     val servers = readServers(client, configPath)
     val config = servers["test"]
@@ -131,7 +137,9 @@ class McpClientAutoConfigureTest {
 
     val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
     // CodexClient overrides streamableHttpUrl, so it doesn't need service substitution
-    client.autoConfigure()
+    runBlocking {
+      client.autoConfigure()
+    }
 
     val result = configPath.readText()
     assertTrue(result.contains("[mcp_servers.codextest]"))
@@ -192,7 +200,9 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.autoConfigure()
+    runBlocking {
+      client.autoConfigure()
+    }
 
     val servers = readServers(client, configPath)
     assertTrue(servers.containsKey("my-custom-server"))
@@ -219,7 +229,9 @@ class McpClientAutoConfigureTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = VSCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.autoConfigure()
+    runBlocking {
+      client.autoConfigure()
+    }
 
     val servers = readServers(client, configPath)
     assertFalse(servers.containsKey("jetbrains"))
@@ -239,7 +251,9 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("codextest")
 
     val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.autoConfigure()
+    runBlocking {
+      client.autoConfigure()
+    }
 
     val result = configPath.readText()
     assertTrue(result.contains("""[projects."/Users/test/project"]"""))

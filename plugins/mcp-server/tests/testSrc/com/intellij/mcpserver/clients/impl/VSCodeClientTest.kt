@@ -4,6 +4,7 @@ import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -18,8 +19,9 @@ class VSCodeClientTest : VscodeForkMcpClientTest() {
 
   override fun getMcpServersKey(): String = "servers"
 
-  override fun getStreamableHttpConfigOrThrow(client: McpClient): ServerConfig =
+  override fun getStreamableHttpConfigOrThrow(client: McpClient): ServerConfig = runBlocking {
     client.getStreamableHttpConfig()!!
+  }
 
   override fun getUnrelatedSectionsTestJson(): String = """
     {

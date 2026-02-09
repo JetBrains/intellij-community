@@ -27,48 +27,42 @@ class ClaudeCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
     return stdio || network
   }
 
-  override fun configure(config: ServerConfig) {
-    runWithModalProgressBlocking(
-      ModalTaskOwner.guess(),
-      McpServerBundle.message("autoconfigure.progress.title"),
-      TaskCancellation.nonCancellable()
-    ) {
-      fun remove(name: String) {
-        val removeCmd = GeneralCommandLine().withExePath("claude").withParameters("mcp", "remove", "--scope", "user", name)
-        val output = ExecUtil.execAndGetOutput(removeCmd, 1000)
-        logger.trace { "Claude remove mcp stdout: ${output.stdout}" }
-        logger.trace { "Claude remove mcp stderr: ${output.stderr}" }
-      }
+  override suspend fun configure(config: ServerConfig) {
+    fun remove(name: String) {
+      val removeCmd = GeneralCommandLine().withExePath("claude").withParameters("mcp", "remove", "--scope", "user", name)
+      val output = ExecUtil.execAndGetOutput(removeCmd, 1000)
+      logger.trace { "Claude remove mcp stdout: ${output.stdout}" }
+      logger.trace { "Claude remove mcp stderr: ${output.stderr}" }
+    }
 
-      fun add(name: String, url: String, transportType: String) {
-        val addCmd = GeneralCommandLine()
-          .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-          .withExePath("claude")
-          .withParameters("mcp", "add", "--scope", "user", "--transport", transportType, name, url)
-        val out = ExecUtil.execAndGetOutput(addCmd, 1000)
-        if (out.exitCode != 0) {
-          throw McpClientConfigurationException(out.stdout)
-        }
+    fun add(name: String, url: String, transportType: String) {
+      val addCmd = GeneralCommandLine()
+        .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+        .withExePath("claude")
+        .withParameters("mcp", "add", "--scope", "user", "--transport", transportType, name, url)
+      val out = ExecUtil.execAndGetOutput(addCmd, 1000)
+      if (out.exitCode != 0) {
+        throw McpClientConfigurationException(out.stdout)
       }
+    }
 
-      val productKey = productSpecificServerKey()
-      remove(productKey)
-      if (config !is ClaudeCodeNetworkConfig) {
-        throw IllegalArgumentException("Unexpected config type: ${config::class.java}")
+    val productKey = productSpecificServerKey()
+    remove(productKey)
+    if (config !is ClaudeCodeNetworkConfig) {
+      throw IllegalArgumentException("Unexpected config type: ${config::class.java}")
+    }
+    add(productKey, config.url, config.type)
+    if (LEGACY_KEY != productKey) {
+      if (writeLegacy()) {
+        add(LEGACY_KEY, config.url, config.type)
       }
-      add(productKey, config.url, config.type)
-      if (LEGACY_KEY != productKey) {
-        if (writeLegacy()) {
-          add(LEGACY_KEY, config.url, config.type)
-        }
-        else {
-          remove(LEGACY_KEY)
-        }
+      else {
+        remove(LEGACY_KEY)
       }
     }
   }
 
-  override fun getSSEConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "sse", url = sseUrl)
+  override suspend fun getSSEConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "sse", url = sseUrl)
 
-  override fun getStreamableHttpConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "http", url = streamableHttpUrl)
+  override suspend fun getStreamableHttpConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "http", url = streamableHttpUrl)
 }

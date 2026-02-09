@@ -20,5 +20,9 @@ class CursorClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
 
   override fun getSSEConfig(): ServerConfig = CursorNetworkConfig(url = sseUrl, type = "sse")
 
-  override fun getStreamableHttpConfig(): ServerConfig = CursorNetworkConfig(url = streamableHttpUrl, type = "http")
+  override suspend fun getSSEConfig(): ServerConfig = CursorNetworkConfig(url = sseUrl, type = "sse")
+
+  override suspend fun getStreamableHttpConfig(): ServerConfig? {
+    return CursorNetworkConfig(url = streamableHttpUrl, type = "http")
+  }
 }

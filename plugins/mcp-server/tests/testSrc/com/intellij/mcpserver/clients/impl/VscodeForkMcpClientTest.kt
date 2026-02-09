@@ -9,6 +9,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.replacedServiceFixture
 import com.intellij.util.application
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -82,7 +83,7 @@ abstract class VscodeForkMcpClientTest {
    * Default implementation throws an error if null. VSCode overrides to use `!!`.
    */
   protected open fun getStreamableHttpConfigOrThrow(client: McpClient): ServerConfig {
-    return client.getStreamableHttpConfig() ?: error("Streamable HTTP config is null")
+    return runBlocking { client.getStreamableHttpConfig() } ?: error("Streamable HTTP config is null")
   }
 
   /**
@@ -140,7 +141,9 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.configure(getStreamableHttpConfigOrThrow(client))
+    runBlocking {
+      client.configure(getStreamableHttpConfigOrThrow(client))
+    }
 
     val servers = readServers(client, configPath)
     val config = servers[getTestOverrideKey()]
@@ -157,8 +160,8 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    val sseConfig = client.getSSEConfig() ?: error("SSE config is null")
-    client.configure(sseConfig)
+    val sseConfig = runBlocking { client.getSSEConfig() } ?: error("SSE config is null")
+    runBlocking { client.configure(sseConfig) }
 
     val servers = readServers(client, configPath)
     val config = servers[getTestOverrideKey()]
@@ -175,7 +178,7 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.configure(client.getStdioConfig())
+    runBlocking { client.configure(client.getStdioConfig()) }
 
     val servers = readServers(client, configPath)
     val config = servers[getTestOverrideKey()]
@@ -204,7 +207,7 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.configure(getStreamableHttpConfigOrThrow(client))
+    runBlocking { client.configure(getStreamableHttpConfigOrThrow(client)) }
 
     val result = configPath.readText()
     assertTrue(result.contains(getTestOverrideKey()))
@@ -219,7 +222,7 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    client.autoConfigure()
+    runBlocking { client.autoConfigure() }
 
     val result = configPath.readText()
     verifyUnrelatedSectionsPreserved(result)

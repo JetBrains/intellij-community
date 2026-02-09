@@ -65,16 +65,15 @@ abstract class McpClient(
    * @return null if configuration was completed without errors, or an error message otherwise
    */
   @Throws(McpClientConfigurationException::class)
-  open fun configure(config: ServerConfig) {
+  open suspend fun configure(config: ServerConfig) {
     val existingConfig = readExistingConfig()
     val updatedConfig = buildUpdatedConfig(existingConfig, config)
     writeConfigToFile(updatedConfig)
   }
 
-  class McpClientConfigurationException(override val message: String): Exception(message) {
-  }
+  class McpClientConfigurationException(override val message: String): Exception(message)
 
-  fun autoConfigure() {
+  suspend fun autoConfigure() {
     val streamableHttpConfig = getStreamableHttpConfig()
     if (streamableHttpConfig != null && runCatching { configure(streamableHttpConfig) }.isSuccess) {
       return
@@ -86,11 +85,11 @@ abstract class McpClient(
     return configure(getStdioConfig())
   }
 
-  fun getPreferredConfig(): ServerConfig = getStreamableHttpConfig() ?: getSSEConfig() ?: getStdioConfig()
+  suspend fun getPreferredConfig(): ServerConfig = getStreamableHttpConfig() ?: getSSEConfig() ?: getStdioConfig()
 
-  open fun getStreamableHttpConfig(): ServerConfig? = null
+  open suspend fun getStreamableHttpConfig(): ServerConfig? = null
 
-  open fun getSSEConfig(): ServerConfig? = null
+  open suspend fun getSSEConfig(): ServerConfig? = null
 
   fun getStdioConfig(): ServerConfig {
     val cmd = createStdioMcpServerCommandLine(McpServerService.getInstance().port, null)
