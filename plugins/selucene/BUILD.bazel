@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.selucene.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "selucene-plugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "selucene-plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":selucene-plugin_resources"]
+)
+### auto-generated section `build intellij.selucene.plugin` end
+
+### auto-generated section `build intellij.selucene.plugin.main` start
+jvm_library(
+  name = "selucene-plugin-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/selucene:selucene-plugin",
+    "//plugins/selucene/common",
+    "//plugins/selucene/frontend",
+    "//plugins/selucene/backend",
+  ]
+)
+
+jvm_library(
+  name = "selucene-plugin-main_test_lib",
+  module_name = "intellij.selucene.plugin.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":selucene-plugin-main"]
+)
+### auto-generated section `build intellij.selucene.plugin.main` end

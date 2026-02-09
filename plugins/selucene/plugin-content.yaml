@@ -1,0 +1,11 @@
+- name: lib/modules/intellij.selucene.backend.jar
+  contentModules:
+  - name: intellij.selucene.backend
+- name: lib/modules/intellij.selucene.frontend.jar
+  contentModules:
+  - name: intellij.selucene.frontend
+- name: lib/selucene-plugin.jar
+  modules:
+  - name: intellij.selucene.plugin
+  contentModules:
+  - name: intellij.selucene.common

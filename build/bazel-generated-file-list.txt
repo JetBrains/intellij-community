@@ -1473,6 +1473,10 @@ plugins/search-everywhere-ml/ranking/java
 plugins/search-everywhere-ml/ranking/vcs
 plugins/search-everywhere-ml/ranking/yaml
 plugins/search-everywhere-ml/typos
+plugins/selucene
+plugins/selucene/backend
+plugins/selucene/common
+plugins/selucene/frontend
 plugins/settings-repository
 plugins/settings-sync/jba
 plugins/settings-sync/settingsSync.performanceTesting

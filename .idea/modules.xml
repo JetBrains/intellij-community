@@ -482,6 +482,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/frontend/intellij.editorconfig.frontend.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/frontend/intellij.editorconfig.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.plugin.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.plugin.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/selucene/intellij.selucene.plugin.iml" filepath="$PROJECT_DIR$/plugins/selucene/intellij.selucene.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/selucene/intellij.selucene.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/selucene/intellij.selucene.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/emojipicker/intellij.emojipicker.iml" filepath="$PROJECT_DIR$/plugins/emojipicker/intellij.emojipicker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/core/intellij.evaluationPlugin.core.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/core/intellij.evaluationPlugin.core.iml" />
@@ -1749,6 +1751,10 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/yaml/intellij.searchEverywhereMl.ranking.yaml.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/yaml/intellij.searchEverywhereMl.ranking.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/typos/intellij.searchEverywhereMl.typos.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/typos/intellij.searchEverywhereMl.typos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/typos/intellij.searchEverywhereMl.typos.tests.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/typos/intellij.searchEverywhereMl.typos.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/selucene/backend/intellij.selucene.backend.iml" filepath="$PROJECT_DIR$/plugins/selucene/backend/intellij.selucene.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/selucene/common/intellij.selucene.common.iml" filepath="$PROJECT_DIR$/plugins/selucene/common/intellij.selucene.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/selucene/frontend/intellij.selucene.frontend.iml" filepath="$PROJECT_DIR$/plugins/selucene/frontend/intellij.selucene.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/selucene/intellij.selucene.plugin.iml" filepath="$PROJECT_DIR$/plugins/selucene/intellij.selucene.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-sync/jba/intellij.settingsSync.iml" filepath="$PROJECT_DIR$/plugins/settings-sync/jba/intellij.settingsSync.iml" />
