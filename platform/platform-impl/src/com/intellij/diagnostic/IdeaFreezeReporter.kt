@@ -108,8 +108,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
           }
         }
 
-        override suspend fun stopDumpingThreads() {
-          super.stopDumpingThreads()
+        override suspend fun stopAndWait() {
+          super.stopAndWait()
           if (stopped.compareAndSet(false, true)) {
             EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
           }

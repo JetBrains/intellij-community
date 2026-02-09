@@ -68,7 +68,7 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     job.cancel()
   }
 
-  open suspend fun stopDumpingThreads() {
+  open suspend fun stopAndWait() {
     job.cancelAndJoin()
   }
 }

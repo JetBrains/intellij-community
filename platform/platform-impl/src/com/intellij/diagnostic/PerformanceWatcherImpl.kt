@@ -380,7 +380,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     suspend fun stopDumpingAsync() {
       val oldState = state.getAndSet(CheckerState.FINISHED)
       if (oldState is CheckerState.FREEZE_LOGGING) {
-        oldState.dumpDask.stopDumpingThreads()
+        oldState.dumpDask.stopAndWait()
       }
     }
 
@@ -402,7 +402,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     private fun stopFreezeReporting(task: MySamplingTask) {
       val taskStop = System.nanoTime()
       coroutineScope.launch {
-        task.stopDumpingThreads()
+        task.stopAndWait()
 
         val durationMs = TimeUnit.MILLISECONDS.convert(taskStop - taskStart, TimeUnit.NANOSECONDS)
 
