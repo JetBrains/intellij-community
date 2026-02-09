@@ -18,6 +18,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.rd.util.first
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 
 // used externally
@@ -30,6 +31,10 @@ val editorCodeVisionEntryKey: Key<CodeVisionEntry> = Key.create("EditorCodeVisio
 
 val Editor.lensContext: EditorCodeVisionContext?
   get() = getOrCreateCodeVisionContext(this)
+
+@get:ApiStatus.Internal
+val Editor.lensContextIfCreated: EditorCodeVisionContext?
+  get() = getUserData(editorLensContextKey)
 
 val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
   get() = getUserData(codeVisionEntryOnHighlighterKey) ?: error("No CodeLensEntry for highlighter $this")
