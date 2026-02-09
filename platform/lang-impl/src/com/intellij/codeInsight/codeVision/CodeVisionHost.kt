@@ -39,6 +39,8 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
@@ -81,6 +83,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.milliseconds
 
+@ApiStatus.NonExtendable
 open class CodeVisionHost(val project: Project, protected val coroutineScope: CoroutineScope) {
   companion object {
     private val logger = logger<CodeVisionHost>()
@@ -146,6 +149,25 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
   @get:RequiresEdt
   val isInitialised: Boolean get() = _isInitialised
   private var _isInitialised = false
+
+  init {
+    CodeVisionContextExtensionProvider.EP_NAME.addExtensionPointListener(
+      coroutineScope,
+      object : ExtensionPointListener<CodeVisionContextExtensionProvider> {
+        override fun extensionAdded(
+          extension: CodeVisionContextExtensionProvider,
+          pluginDescriptor: PluginDescriptor,
+        ) {
+          EditorFactory.getInstance().editorList.asSequence()
+            .mapNotNull { it.getUserData(editorLensContextKey) }
+            .forEach { lensContext ->
+              val contextExtension = extension.createCodeVisionContext(project, lensContext) ?: return@forEach
+              lensContext.registerExtension(contextExtension)
+            }
+        }
+      }
+    )
+  }
 
   open fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
     //todo intellij statistic

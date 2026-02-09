@@ -97,15 +97,50 @@ f:com.intellij.codeInsight.codeVision.CodeVisionBundle
 f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
 - f:message(java.lang.String,java.lang.Object[]):java.lang.String
 - f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-c:com.intellij.codeInsight.codeVision.CodeVisionHost
+Fc:com.intellij.codeInsight.codeVision.CodeVisionHost
+- sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionHost$Companion
+- sf:defaultVisibleLenses:I
+- sf:settingsLensProviderId:java.lang.String
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- f:calculateCodeVisionSync(com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable):V
+- f:collectPlaceholders(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,kotlin.coroutines.Continuation):java.lang.Object
 - f:getAnchorForEntry(com.intellij.codeInsight.codeVision.CodeVisionEntry):com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+- f:getCodeVisionLifetime():com.jetbrains.rd.util.lifetime.Lifetime
+- f:getInvalidateProviderSignal():com.jetbrains.rd.util.reactive.Signal
+- f:getLifeSettingModel():com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsLiveModel
+- f:getPriorityForEntry(com.intellij.codeInsight.codeVision.CodeVisionEntry):I
+- f:getProject():com.intellij.openapi.project.Project
 - f:getProviderById(java.lang.String):com.intellij.codeInsight.codeVision.CodeVisionProvider
-- p:initialize():V
+- f:getProviders():java.util.List
+- handleLensClick(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
+- handleLensExtraAction(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry,java.lang.String):V
+- f:invalidateProvider(com.intellij.codeInsight.codeVision.CodeVisionHost$LensInvalidateSignal):V
+- sf:isCodeLensTest():Z
 - f:isInitialised():Z
+- f:nullIfDefault(com.intellij.codeInsight.codeVision.CodeVisionAnchorKind):com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+- bs:openCodeVisionSettings$default(com.intellij.codeInsight.codeVision.CodeVisionHost,com.intellij.codeInsight.codeVision.CodeVisionProvider,I,java.lang.Object):V
 com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 - sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
 - a:createProviders(com.intellij.openapi.project.Project):kotlin.sequences.Sequence
 f:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
+f:com.intellij.codeInsight.codeVision.EditorCodeVisionContext
+- <init>(com.intellij.codeInsight.codeVision.CodeVisionHost,com.intellij.openapi.editor.Editor):V
+- f:clearLenses():V
+- f:discardPending():V
+- f:getCodeVisionModel():com.intellij.codeInsight.codeVision.CodeVisionModel
+- f:getEditor():com.intellij.openapi.editor.Editor
+- f:getExtensions():java.util.List
+- f:getHasAnyPendingLenses():Z
+- f:getValidPairResult():kotlin.sequences.Sequence
+- f:getValidResult():kotlin.sequences.Sequence
+- f:getZombies():java.util.List
+- f:hasProviderCodeVision(java.lang.String):Z
+- f:invokeMoreMenu(I):V
+- f:notifyPendingLenses():V
+- f:resubmitThings():V
+- f:setResults(java.util.List):V
+- f:setZombieResults(java.util.List):V
+- f:setZombies(java.util.List):V
 com.intellij.codeInsight.codeVision.GenericPlaceholderCollector
 - a:collectPlaceholders(com.intellij.openapi.editor.Editor):java.util.List
 com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider

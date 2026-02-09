@@ -431,6 +431,10 @@
                     interface="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider"
                     dynamic="true" />
 
+    <extensionPoint qualifiedName="com.intellij.codeVisionContextExtensionProvider"
+                    interface="com.intellij.codeInsight.codeVision.CodeVisionContextExtensionProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="codeVisionPainterProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter"/>
     </extensionPoint>

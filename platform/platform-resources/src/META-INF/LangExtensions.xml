@@ -361,7 +361,6 @@
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionInitializer" open="true"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionHost" open="true"/>
     <postStartupActivity implementation="com.intellij.codeInsight.codeVision.CodeVisionInitializer$CodeVisionInitializerStartupActivity"/>
-    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionContextProvider" open="true"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel" open="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionThemeInfoProvider" open="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.editorActions.AutoHardWrapHandler" open="true"/>

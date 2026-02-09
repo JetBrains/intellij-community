@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorThreading
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -24,7 +26,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 // used externally
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
-
 // used externally
 val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create("CodeLensEntryOnHighlighter")
 val highlighterOnCodeVisionEntryKey: Key<RangeMarker> = Key.create("HighlighterOnHighlighterCodeLensEntry")
@@ -42,6 +43,16 @@ val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
   get() = getUserData(codeVisionEntryOnHighlighterKey) ?: error("No CodeLensEntry for highlighter $this")
 
 private val LOG: Logger = logger<EditorCodeVisionContext>()
+
+@ApiStatus.Internal
+interface CodeVisionContextExtensionProvider {
+  companion object {
+    internal val EP_NAME: ExtensionPointName<CodeVisionContextExtensionProvider> =
+      ExtensionPointName.create("com.intellij.codeVisionContextExtensionProvider")
+  }
+
+  fun createCodeVisionContext(project: Project, editorContext: EditorCodeVisionContext): EditorCodeVisionContextExtension?
+}
 
 @ApiStatus.Internal
 interface EditorCodeVisionContextExtension {
@@ -76,7 +87,7 @@ class EditorCodeVisionContext(
     }
   }
 
-  fun registerExtension(extension: EditorCodeVisionContextExtension) {
+  internal fun registerExtension(extension: EditorCodeVisionContextExtension) {
     _extensions.add(extension)
   }
 
@@ -191,7 +202,7 @@ class EditorCodeVisionContext(
 
   fun getValidResult(): Sequence<RangeMarker> {
     return rangeMarkers.asSequence().filter { it.isValid } +
-           extensions.flatMap { it.getValidResult() }
+           extensions.asSequence().flatMap { it.getValidResult() }
   }
 
   fun getValidPairResult(): Sequence<Pair<TextRange, CodeVisionEntry>> = getValidResult().map {
@@ -224,7 +235,14 @@ private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContex
     LOG.warn("Project wasn't available from editor during creating of code vision context")
     return null
   }
-  val newContext = project.service<CodeVisionContextProvider>().createCodeVisionContext(editor)
+
+  val codeVisionHost = project.service<CodeVisionHost>()
+  val newContext = EditorCodeVisionContext(codeVisionHost, editor)
+
+  for (provider in CodeVisionContextExtensionProvider.EP_NAME.extensionList) {
+    val contextExtension = provider.createCodeVisionContext(project, newContext) ?: continue
+    newContext.registerExtension(contextExtension)
+  }
   editor.putUserData(editorLensContextKey, newContext)
   return newContext
 }
