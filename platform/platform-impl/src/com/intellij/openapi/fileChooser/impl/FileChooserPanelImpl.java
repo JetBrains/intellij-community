@@ -232,8 +232,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
             if (!events.isEmpty() && !myReloadSuppressed) {
               UIUtil.invokeLaterIfNeeded(() -> {
                 synchronized (myLock) {
-                  if (key == myWatchKey && myCurrentDirectory != null) {
-                    reload(null);
+                if (key == myWatchKey && myCurrentDirectory != null) {
+                  var currentSelection = myList.getSelectedObject();
+                  var focusPath = currentSelection != null ? currentSelection.path : null;
+                  reload(focusPath);
                   }
                 }
               });
@@ -682,7 +684,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       WatchKey watchKey = null;
       if (myWatcher != null && isLocalFs(directory)) {
         try {
-          watchKey = directory.register(myWatcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE);
+          watchKey = directory.register(myWatcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
         }
         catch (Exception e) {
           if (LOG.isDebugEnabled()) LOG.debug("cannot watch " + directory, e);
