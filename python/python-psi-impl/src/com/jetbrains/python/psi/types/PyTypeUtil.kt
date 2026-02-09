@@ -358,4 +358,11 @@ object PyTypeUtil {
     val literalTypes = fieldNames.mapNotNull { PyLiteralType.stringLiteral(anchor, it) }
     return PyTupleType.create(anchor, literalTypes)
   }
+
+  @JvmStatic
+  fun widenLiteralAndNumeric(type: PyType?): PyType? {
+    return type
+      .let { PyLiteralType.upcastLiteralToClass(it) }
+      .let { PyNumericTowerType.enrich(it) }
+  }
 }

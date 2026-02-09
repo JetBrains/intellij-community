@@ -34,7 +34,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testNotAnnotatedDecoratorTurningFunctionIntoConstantIsIgnored() {
-    doTest("float", "() -> float",
+    doTest("*float", "() -> *float",
            """
              def dec(fun):
                  return 12
@@ -66,7 +66,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testNotAnnotatedDecoratorChangingFunctionSignatureIsIgnored() {
-    doTest("float", "() -> float",
+    doTest("*float", "() -> *float",
            """
              from typing import Callable
              

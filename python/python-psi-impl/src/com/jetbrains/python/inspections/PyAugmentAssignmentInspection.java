@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyNumericTowerType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -165,7 +166,7 @@ public final class PyAugmentAssignmentInspection extends PyInspection {
     }
 
     private boolean isNumeric(@NotNull PyType type, @NotNull PyBuiltinCache cache) {
-      return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext);
+      return PyTypeChecker.match(PyNumericTowerType.enrich(cache.getComplexType()), type, myTypeEvalContext);
     }
   }
 }

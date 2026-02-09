@@ -5040,6 +5040,34 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-83206
+  public void testIntNotIsInstanceFloat() {
+    doTest("int", """
+      if not isinstance((x := 42), float):
+          expr = x
+      """);
+  }
+
+  // PY-83206
+  public void ignoreTestFloatLiteralIsJustFloat() {
+    doTest("Never", """
+      a = .0
+      if isinstance(a, int):
+          expr = a
+      """);
+  }
+
+  // PY-83206
+  public void ignoreTestIntFloatTowerIsInstanceNever() {
+    // TODO: enable when we have proper type intersection logic
+    doTest("Never", """
+      def foo(y: int | float) -> None:
+          if isinstance(y, float):
+              if isinstance(y, int):
+                  expr = y
+      """);
+  }
+
   // PY-86873
   public void testNestedListUnpacking1() {
     doTest("int", """

@@ -574,6 +574,8 @@
                  description="Enable soft-key caching for TypeEvalContext"/>
     <registryKey key="python.typing.weak.keys.type.eval.context" defaultValue="true"
                  description="Enable weak-key caching for TypeEvalContext"/>
+    <registryKey key="python.numeric.tower.type" defaultValue="true"
+                 description="Enable specialized class type representing Python's numeric tower (int -> float -> complex)"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>

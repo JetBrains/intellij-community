@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.types.PyIntersectionType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyNumericTowerTypeKt;
 import com.jetbrains.python.psi.types.PyParamSpecType;
 import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -71,6 +72,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
      */
     UNSAFE_UNION,
     /**
+     * Render depleted numeric tower types (plain float/complex) with a leading {@code *}, e.g. {@code *float}.
+     */
+    NUMERIC_TOWER,
+    /**
      * Render bounds and constraints of TypeVars.
      */
     TYPE_VAR_BOUNDS,
@@ -86,6 +91,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   protected final boolean isRenderingUnsafeUnion() {
     return myRenderingFeatures.contains(Feature.UNSAFE_UNION);
+  }
+
+  protected final boolean isRenderingNumericTower() {
+    return myRenderingFeatures.contains(Feature.NUMERIC_TOWER);
   }
 
   private PyTypeRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<Feature> features) {
@@ -316,6 +325,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   @Override
   public @NotNull HtmlChunk visitPyClassLikeType(@NotNull PyClassLikeType classLikeType) {
     HtmlChunk classTypeRender = className(getTypeName(classLikeType));
+    if (isRenderingNumericTower() &&
+        (PyNumericTowerTypeKt.isPlainFloat(classLikeType) || PyNumericTowerTypeKt.isPlainComplex(classLikeType))) {
+      classTypeRender = new HtmlBuilder().append(escaped("*")).append(classTypeRender).toFragment();
+    }
     return classLikeType.isDefinition() ? wrapInTypingType(classTypeRender) : classTypeRender;
   }
 
@@ -364,6 +377,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
     return renderUnion(ContainerUtil.map(unionType.getMembers(), this::render));
   }
+
 
   @Override
   public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {

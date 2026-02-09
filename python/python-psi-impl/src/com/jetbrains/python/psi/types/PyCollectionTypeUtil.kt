@@ -31,7 +31,7 @@ object PyCollectionTypeUtil {
   private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
     val elements = sequence.elements
     val analyzedElementsType = PyUnionType.union(
-      elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { PyLiteralType.upcastLiteralToClass(context.getType(it)) }
+      elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { PyTypeUtil.widenLiteralAndNumeric(context.getType(it)) }
     )
     return if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
       PyUnionType.createWeakType(analyzedElementsType)
@@ -72,7 +72,7 @@ object PyCollectionTypeUtil {
       if (keyString == null) {
         return null
       }
-      strKeysToValueTypes[keyString] = Pair(element.value, PyLiteralType.upcastLiteralToClass(valueType))
+      strKeysToValueTypes[keyString] = Pair(element.value, PyTypeUtil.widenLiteralAndNumeric(valueType))
     }
 
     return strKeysToValueTypes
@@ -88,8 +88,8 @@ object PyCollectionTypeUtil {
       .forEach {
         val type = context.getType(it)
         val (keyType, valueType) = getKeyValueType(type)
-        keyTypes.add(PyLiteralType.upcastLiteralToClass(keyType))
-        valueTypes.add(PyLiteralType.upcastLiteralToClass(valueType))
+        keyTypes.add(PyTypeUtil.widenLiteralAndNumeric(keyType))
+        valueTypes.add(PyTypeUtil.widenLiteralAndNumeric(valueType))
       }
 
     if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {

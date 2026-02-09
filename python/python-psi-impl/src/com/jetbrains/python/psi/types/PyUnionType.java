@@ -128,19 +128,39 @@ public class PyUnionType implements PyCompositeType {
 
   private static @Nullable PyType unionOrDefault(@NotNull Collection<@Nullable PyType> members, @Nullable PyType defaultResult) {
     final LinkedHashSet<PyType> newMembers = new LinkedHashSet<>();
+    PyType resultDefault = defaultResult;
+    boolean hasFloatTower = false;
+    boolean hasComplexTower = false;
+
     for (PyType member : members) {
       if (member instanceof PyNeverType) {
-        defaultResult = PyNeverType.NEVER;
+        resultDefault = PyNeverType.NEVER;
         continue;
       }
+
       if (member instanceof PyUnionType unionType) {
         newMembers.addAll(unionType.getMembers());
       }
       else {
         newMembers.add(member);
       }
+
+      hasFloatTower |= PyNumericTowerTypeKt.isFloatTower(member);
+      hasComplexTower |= PyNumericTowerTypeKt.isComplexTower(member);
     }
-    return newMembers.size() < 2 ? ContainerUtil.getFirstItem(newMembers, defaultResult) : new PyUnionType(newMembers);
+
+    if (hasFloatTower || hasComplexTower) {
+      final boolean removeFloat = hasFloatTower;
+      final boolean removeComplex = hasComplexTower;
+      newMembers.removeIf(type ->
+                            (removeFloat && PyNumericTowerTypeKt.isPlainFloat(type)) ||
+                            (removeComplex && PyNumericTowerTypeKt.isPlainComplex(type))
+      );
+    }
+
+    return newMembers.size() < 2
+           ? ContainerUtil.getFirstItem(newMembers, resultDefault)
+           : new PyUnionType(newMembers);
   }
 
   /**

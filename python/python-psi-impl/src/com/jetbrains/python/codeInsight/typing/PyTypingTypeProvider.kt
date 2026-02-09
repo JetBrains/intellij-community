@@ -111,6 +111,7 @@ import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyNarrowedType
 import com.jetbrains.python.psi.types.PyNarrowedType.Companion.create
 import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyNumericTowerType
 import com.jetbrains.python.psi.types.PyParamSpecType
 import com.jetbrains.python.psi.types.PyPositionalVariadicType
 import com.jetbrains.python.psi.types.PySelfType
@@ -1673,7 +1674,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
                 return Ref(parameterized.toInstance())
               }
             }
-            val instanceType: PyType = type.toInstance()
+            val instanceType: PyType? = PyNumericTowerType.enrich(type.toInstance())
             return Ref(instanceType)
           }
         }

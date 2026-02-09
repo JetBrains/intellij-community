@@ -965,7 +965,20 @@ def excluding_fixed_size_list(p: list[str]):
                    """);
   }
 
-  // PY-79834 
+  // PY-83206
+  public void testMatchClassPatternNumbers() {
+    doTestByText("""
+                   arg: bool | int | float | complex
+                   
+                   match arg:
+                       case float(): assert_type(arg, float)
+                       case complex(): assert_type(arg, complex)
+                       case int(): assert_type(arg, bool | int) # Yes, bool is officially subtype of int
+                       case _: assert_never(arg)
+                   """);
+  }
+
+  // PY-79834
   public void testMatchNamedTuplePositionalArgs() {
     doTestByText("""
 from typing import NamedTuple, assert_type

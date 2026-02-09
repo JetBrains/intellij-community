@@ -42,6 +42,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyInstantiableType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyNumericTowerType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -288,10 +289,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                                                           boolean forceStrictNarrow,
                                                           @NotNull TypeEvalContext context) {
     if (suggested == null) return null;
+    final var unpackedInitial = PyNumericTowerType.unpackToUnion(initial);
     if (positive) {
       // Find all initial type members that are subtypes of the suggested (more specific than the narrowing "suggested" type).
       // Imagine having `list[int] | int` narrowed by `list[Any]`.
-      List<PyType> initialSubtypes = PyTypeUtil.toStream(initial)
+      List<PyType> initialSubtypes = PyTypeUtil.toStream(unpackedInitial)
         .filter(initialSubtype -> match(suggested, initialSubtype, context))
         .toList();
 
@@ -299,22 +301,22 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       // AND are not subtypes of those more specific initial types. 
       // This is needed to support generics of `Any`, because `list[Any]` is both a subtype, and a supertype of `list[str]`.
       StreamEx<PyType> suggestedSubtypes = PyTypeUtil.toStream(suggested)
-        .filter(suggestedSubtype -> match(initial, suggestedSubtype, context))
+        .filter(suggestedSubtype -> match(unpackedInitial, suggestedSubtype, context))
         .filter(suggestedSubtype -> !ContainerUtil.exists(initialSubtypes,
                                                           initialSubtype -> match(initialSubtype, suggestedSubtype, context)));
 
       List<PyType> types = StreamEx.of(initialSubtypes).append(suggestedSubtypes).toList();
-      return Ref.create(types.isEmpty() ? intersect(initial, suggested) : PyUnionType.union(types));
+      return Ref.create(types.isEmpty() ? intersect(unpackedInitial, suggested) : PyUnionType.union(types));
     }
     else {
-      if (initial instanceof PyUnionType unionType) {
+      if (unpackedInitial instanceof PyUnionType unionType) {
         return Ref.create(excludeFromUnion(unionType, suggested, context, forceStrictNarrow));
       }
-      if (match(suggested, initial, context)) {
+      if (match(suggested, unpackedInitial, context)) {
         return (forceStrictNarrow || isStrictNarrowingAllowed()) ? Ref.create(PyNeverType.NEVER) : null;
       }
-      Ref<@Nullable PyType> diff = trySubtract(initial, suggested, context);
-      return diff != null ? diff : Ref.create(initial);
+      Ref<@Nullable PyType> diff = trySubtract(unpackedInitial, suggested, context);
+      return diff != null ? diff : Ref.create(unpackedInitial);
     }
   }
 

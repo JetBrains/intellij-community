@@ -176,6 +176,11 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   }
 
   @Override
+  public PyType visitPyNumericTowerType(@NotNull PyNumericTowerType numericTowerType) {
+    return numericTowerType;
+  }
+
+  @Override
   public PyType visitPyType(@NotNull PyType type) {
     return type;
   }

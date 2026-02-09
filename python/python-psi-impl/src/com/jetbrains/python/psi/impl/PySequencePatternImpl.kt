@@ -21,6 +21,8 @@ import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.types.*
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -115,12 +117,12 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
 
   fun wrapInListType(elementType: PyType?): PyType? {
     val list = PyBuiltinCache.getInstance(this).getClass("list") ?: return null
-    return PyCollectionTypeImpl(list, false, listOf(upcastLiteralToClass(elementType)))
+    return PyCollectionTypeImpl(list, false, listOf(PyTypeUtil.widenLiteralAndNumeric(elementType)))
   }
 
   fun wrapInSequenceType(elementType: PyType?): PyType? {
     val sequence = PyPsiFacade.getInstance(getProject()).createClassByQName("typing.Sequence", this) ?: return null
-    return PyCollectionTypeImpl(sequence, false, listOf(upcastLiteralToClass(elementType)))
+    return PyCollectionTypeImpl(sequence, false, listOf(PyTypeUtil.widenLiteralAndNumeric(elementType)))
   }
 }
 

@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
 class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappingPattern, PyCaptureContext, PsiListLikeElement {
   private val elements: List<PyPattern>
@@ -79,7 +80,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 
   private fun wrapInMappingType(keyType: PyType?, valueType: PyType?): PyType? {
     val sequence = PyPsiFacade.getInstance(getProject()).createClassByQName("typing.Mapping", this) ?: return null
-    return PyCollectionTypeImpl(sequence, false, listOf(keyType, valueType).map { upcastLiteralToClass(it) })
+    return PyCollectionTypeImpl(sequence, false, listOf(keyType, valueType).map { PyTypeUtil.widenLiteralAndNumeric(it) })
   }
 }
 

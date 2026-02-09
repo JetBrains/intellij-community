@@ -615,7 +615,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                 @NotNull PyTypedElement element,
                                 @NotNull TypeEvalContext context) {
     final PyType actual = context.getType(element);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context, Feature.UNSAFE_UNION);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context, Feature.UNSAFE_UNION, Feature.NUMERIC_TOWER);
     assertEquals(message, expectedType, actualType);
   }
 
@@ -660,4 +660,3 @@ public abstract class PyTestCase extends UsefulTestCase {
     fail("Test " + comment + " was previously failing and was suppressed, but now it passes");
   }
 }
-
