@@ -20,9 +20,11 @@ import com.jetbrains.rd.util.first
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
+import java.util.concurrent.CopyOnWriteArrayList
 
 // used externally
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
+
 // used externally
 val codeVisionEntryOnHighlighterKey: Key<CodeVisionEntry> = Key.create("CodeLensEntryOnHighlighter")
 val highlighterOnCodeVisionEntryKey: Key<RangeMarker> = Key.create("HighlighterOnHighlighterCodeLensEntry")
@@ -41,9 +43,18 @@ val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
 
 private val LOG: Logger = logger<EditorCodeVisionContext>()
 
-open class EditorCodeVisionContext(
+@ApiStatus.Internal
+interface EditorCodeVisionContextExtension {
+  val hasAnyPendingLenses: Boolean
+
+  fun clearLenses()
+
+  fun getValidResult(): Sequence<RangeMarker>
+}
+
+class EditorCodeVisionContext(
   private val codeVisionHost: CodeVisionHost,
-  val editor: Editor
+  val editor: Editor,
 ) {
   private val outputLifetimes: SequentialLifetimes = SequentialLifetimes((editor as EditorImpl).disposable.createLifetime())
   private var rangeMarkers: List<RangeMarker> = listOf()
@@ -51,15 +62,22 @@ open class EditorCodeVisionContext(
   private var hasPendingLenses = false
 
   private val submittedGroupings = ArrayList<Pair<TextRange, (Int) -> Unit>>()
-  val codeVisionModel : CodeVisionModel = CodeVisionModel()
+  val codeVisionModel: CodeVisionModel = CodeVisionModel()
 
   var zombies: List<Pair<TextRange, CodeVisionEntry>> = ArrayList()
+
+  private val _extensions: MutableList<EditorCodeVisionContextExtension> = CopyOnWriteArrayList()
+  val extensions: List<EditorCodeVisionContextExtension> get() = _extensions
 
   init {
     (editor as EditorImpl).disposable.createLifetime().onTermination {
       rangeMarkers.forEach { it.dispose() }
       codeVisionModel.removeLenses(rangeMarkers)
     }
+  }
+
+  fun registerExtension(extension: EditorCodeVisionContextExtension) {
+    _extensions.add(extension)
   }
 
   @RequiresEdt
@@ -73,12 +91,12 @@ open class EditorCodeVisionContext(
 
   // used by Rider
   @Suppress("unused")
-  open val hasAnyPendingLenses: Boolean
-    get() = hasPendingLenses
+  val hasAnyPendingLenses: Boolean
+    get() = hasPendingLenses || extensions.any { it.hasAnyPendingLenses }
 
   @RequiresEdt
   fun setZombieResults(lenses: List<Pair<TextRange, CodeVisionEntry>>) {
-     zombies = lenses.filter { (range, _) ->  range.isValidFor(editor.document) }.toList()
+    zombies = lenses.filter { (range, _) -> range.isValidFor(editor.document) }.toList()
     setResults(zombies)
   }
 
@@ -129,7 +147,7 @@ open class EditorCodeVisionContext(
     viewService.runWithReusingLenses {
       val lifetime = outputLifetimes.next()
       val mergedLenses = getValidResult().groupBy { editor.document.getLineNumber(it.startOffset) }
-      
+
       submittedGroupings.clear()
       for ((_, lineLenses) in mergedLenses) {
         if (lineLenses.isEmpty()) {
@@ -166,11 +184,15 @@ open class EditorCodeVisionContext(
     }
   }
 
-  open fun clearLenses() {
+  fun clearLenses() {
     setResults(emptyList())
+    extensions.forEach { it.clearLenses() }
   }
 
-  open fun getValidResult(): Sequence<RangeMarker> = rangeMarkers.asSequence().filter { it.isValid }
+  fun getValidResult(): Sequence<RangeMarker> {
+    return rangeMarkers.asSequence().filter { it.isValid } +
+           extensions.flatMap { it.getValidResult() }
+  }
 
   fun getValidPairResult(): Sequence<Pair<TextRange, CodeVisionEntry>> = getValidResult().map {
     Pair(it.textRange, it.codeVisionEntryOrThrow)
