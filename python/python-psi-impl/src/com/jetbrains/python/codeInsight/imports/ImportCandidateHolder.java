@@ -40,6 +40,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   private final @Nullable QualifiedName myPath;
   private final @NotNull String myImportableName;
   private final @Nullable String myAsName;
+  private final @Nullable String myQualifiedReferenceText;
   private final int myRelevance;
 
   /**
@@ -54,7 +55,8 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
    *                      (empty for modules and packages located at source roots).
    */
   public ImportCandidateHolder(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file,
-                               @Nullable PyImportElement importElement, @Nullable QualifiedName path, @Nullable String asName) {
+                               @Nullable PyImportElement importElement, @Nullable QualifiedName path,
+                               @Nullable String asName, @Nullable String qualifiedReferenceText) {
     if (importElement == null && path == null) {
       throw new IllegalArgumentException("Either an import path or an existing import should be provided for " + importable);
     }
@@ -66,13 +68,14 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     myImportElement = importElement != null ? pointerManager.createSmartPsiElementPointer(importElement) : null;
     myPath = path;
     myAsName = asName;
+    myQualifiedReferenceText = qualifiedReferenceText;
     myRelevance = PyCompletionUtilsKt.computeCompletionWeight(importable, myImportableName, myPath, null, false);
     LOG.debug("Computed relevance for import item ", myImportableName, ": ", myRelevance);
   }
 
   public ImportCandidateHolder(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path) {
-    this(importable, file, importElement, path, null);
+    this(importable, file, importElement, path, null, null);
   }
 
   public @Nullable PsiNamedElement getImportable() {
@@ -93,6 +96,10 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
 
   public @Nullable QualifiedName getPath() {
     return myPath;
+  }
+
+  public @Nullable String getQualifiedReferenceText() {
+    return myQualifiedReferenceText;
   }
 
   /**
@@ -128,7 +135,9 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
 
   public @NotNull @NlsSafe String getPresentableText() {
     PyImportElement importElement = getImportElement();
-    final StringBuilder sb = new StringBuilder(getQualifiedName(getImportableName(), myPath, importElement));
+    final String name = myQualifiedReferenceText != null ? myQualifiedReferenceText : getImportableName();
+    final QualifiedName path = myQualifiedReferenceText != null ? null : myPath;
+    final StringBuilder sb = new StringBuilder(getQualifiedName(name, path, importElement));
     PsiElement parent = null;
     if (importElement != null) {
       parent = importElement.getParent();
@@ -140,6 +149,9 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
       if (source != null) {
         sb.append(source.asQualifiedName());
       }
+    }
+    else if (importElement == null && myQualifiedReferenceText != null && myPath != null) {
+      sb.append(" from ").append(myPath);
     }
     if (myAsName != null) {
       sb.append(" as ").append(myAsName);

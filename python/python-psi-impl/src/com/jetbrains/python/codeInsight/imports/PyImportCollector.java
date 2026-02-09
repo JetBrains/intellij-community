@@ -4,12 +4,8 @@ package com.jetbrains.python.codeInsight.imports;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -17,36 +13,16 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.unresolvedReference.PyCommonImportAliasesKt;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyQualifiedNameOwner;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyTypeAliasStatement;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
-import com.jetbrains.python.psi.stubs.PyTypeAliasNameIndex;
-import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -63,8 +39,8 @@ public class PyImportCollector {
     myReference = reference;
     myRefText = refText;
 
-    boolean qualify = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
-    fix = new AutoImportQuickFix(node, reference.getClass(), refText, qualify);
+    boolean useQualifiedImport = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    fix = new AutoImportQuickFix(node, reference.getClass(), refText, useQualifiedImport);
     seenCandidateNames = new HashSet<>();
   }
 
@@ -168,6 +144,9 @@ public class PyImportCollector {
           }
         }
       }
+      else if (symbol instanceof PyClass nestedClass) {
+        addNestedClassImportCandidate(existingImportFile, nestedClass);
+      }
     }
   }
 
@@ -240,5 +219,61 @@ public class PyImportCollector {
     }
     // only top-level target expressions and type aliases are included in VariableNameIndex and TypeAliasNameIndex, respectively
     return symbol instanceof PyTargetExpression || symbol instanceof PyTypeAliasStatement;
+  }
+
+  private void addNestedClassImportCandidate(@Nullable PsiFile existingImportFile, @NotNull PyClass nestedClass) {
+    if (PyUtil.isTopLevel(nestedClass)) {
+      return;
+    }
+    PyClass outermost = getOutermostClass(nestedClass);
+    if (outermost == null || !PyUtil.isTopLevel(outermost)) {
+      return;
+    }
+    String nestedQualifier = buildNestedQualifier(nestedClass, outermost);
+    if (nestedQualifier == null) {
+      return;
+    }
+    PsiFile srcfile = outermost.getContainingFile();
+    if (srcfile == null || !isAcceptableForImport(existingImportFile, srcfile)) {
+      return;
+    }
+    QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(outermost, myNode);
+    if (importPath == null) {
+      return;
+    }
+    String symbolImportQName = importPath + "." + nestedQualifier;
+    if (seenCandidateNames.add(symbolImportQName)) {
+      fix.addImport(outermost, srcfile, importPath, null, nestedQualifier);
+    }
+  }
+
+  private static @Nullable PyClass getOutermostClass(@NotNull PyClass pyClass) {
+    PyClass current = pyClass;
+    PyClass parent = PsiTreeUtil.getParentOfType(current, PyClass.class);
+    while (parent != null) {
+      current = parent;
+      parent = PsiTreeUtil.getParentOfType(current, PyClass.class);
+    }
+    return current;
+  }
+
+  private static @Nullable String buildNestedQualifier(@NotNull PyClass nested, @NotNull PyClass outermost) {
+    Deque<String> names = new ArrayDeque<>();
+    PyClass current = nested;
+    while (current != null) {
+      String name = current.getName();
+      if (name == null) {
+        return null;
+      }
+      names.addFirst(name);
+      if (current == outermost) {
+        break;
+      }
+      current = PsiTreeUtil.getParentOfType(current, PyClass.class);
+    }
+    if (current != outermost) {
+      return null;
+    }
+    return StringUtil.join(names, ".");
   }
 }

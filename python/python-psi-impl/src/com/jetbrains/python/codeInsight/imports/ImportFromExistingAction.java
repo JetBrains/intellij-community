@@ -162,7 +162,14 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addImportStatement(file, nameToImport, item.getAsName(), priority, myTarget, myInsertBefore);
         }
         if (item.getAsName() == null) {
-          myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
+          String referenceText = item.getQualifiedReferenceText();
+          if (referenceText != null) {
+            String qualifiedReference = qualifiedName.isEmpty() ? referenceText : qualifiedName + "." + referenceText;
+            myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedReference));
+          }
+          else {
+            myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
+          }
         }
       }
       else {
@@ -173,6 +180,9 @@ public class ImportFromExistingAction implements QuestionAction {
           // "Update" scenario takes place inside injected fragments, for normal AST addToExistingImport() will be used instead
           AddImportHelper.addOrUpdateFromImportStatement(
             file, qualifiedName, item.getImportableName(), item.getAsName(), priority, myTarget, myInsertBefore);
+        }
+        if (item.getAsName() == null && item.getQualifiedReferenceText() != null) {
+          myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), item.getQualifiedReferenceText()));
         }
       }
     }
@@ -186,6 +196,10 @@ public class ImportFromExistingAction implements QuestionAction {
     PsiElement parent = importElement.getParent();
     if (parent instanceof PyFromImportStatement) {
       AddImportHelper.addNameToFromImportStatement((PyFromImportStatement)parent, item.getImportableName(), item.getAsName());
+      if (item.getAsName() == null && item.getQualifiedReferenceText() != null) {
+        PyElementGenerator gen = PyElementGenerator.getInstance(myTarget.getProject());
+        myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), item.getQualifiedReferenceText()));
+      }
     }
     else { // just 'import'
       // all we need is to qualify our target
