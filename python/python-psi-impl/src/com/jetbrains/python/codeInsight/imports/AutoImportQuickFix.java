@@ -73,7 +73,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
    * @param importElement an existing import element that can be a source for the importable.
    */
   public void addImport(@NotNull PsiNamedElement importable, @NotNull PsiFile file, @Nullable PyImportElement importElement) {
-    myImports.add(new ImportCandidateHolder(importable, file, importElement, null));
+    myImports.add(new ImportCandidateHolder(importable, file, importElement, null, null, null));
   }
 
   /**
@@ -83,7 +83,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
    * @param path import path for the file, as a qualified name (a.b.c)
    */
   public void addImport(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path) {
-    myImports.add(new ImportCandidateHolder(importable, file, null, path));
+    myImports.add(new ImportCandidateHolder(importable, file, null, path, null, null));
   }
 
   public void addImport(@NotNull PsiNamedElement importable,
@@ -98,7 +98,15 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
                         @Nullable PyImportElement importElement,
                         @Nullable QualifiedName path,
                         @Nullable String asName) {
-    myImports.add(new ImportCandidateHolder(importable, file, importElement, path, asName));
+    myImports.add(new ImportCandidateHolder(importable, file, importElement, path, asName, null));
+  }
+
+  public void addImport(@NotNull PsiNamedElement importable,
+                        @NotNull PsiFileSystemItem file,
+                        @Nullable QualifiedName path,
+                        @Nullable String asName,
+                        @Nullable String qualifiedReferenceText) {
+    myImports.add(new ImportCandidateHolder(importable, file, null, path, asName, qualifiedReferenceText));
   }
 
   @Override
@@ -241,7 +249,8 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
                                      candidate.getFile(),
                                      PsiTreeUtil.findSameElementInCopy(importElement, target),
                                      candidate.getPath(),
-                                     candidate.getAsName());
+                                     candidate.getAsName(),
+                                     candidate.getQualifiedReferenceText());
   }
 
   private static class AutoImportLocallyQuickFix extends AutoImportQuickFix {
