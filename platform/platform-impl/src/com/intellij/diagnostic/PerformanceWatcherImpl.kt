@@ -46,6 +46,7 @@ import sun.awt.ModalityListener
 import sun.awt.SunToolkit
 import java.awt.Toolkit
 import java.io.IOException
+import java.lang.management.ThreadInfo
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -421,9 +422,21 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     }
   }
 
-  inner class MySamplingTask(@JvmField val freezeFolder: String, private val taskStart: Long)
-    : SamplingTask(dumpInterval = dumpInterval, maxDurationMs = maxDumpDuration, coroutineScope = coroutineScope) {
-    override suspend fun dumpedThreads(threadDump: ThreadDump) {
+  inner class MySamplingTask(@JvmField val freezeFolder: String, private val taskStart: Long) :
+    SamplingTask(dumpInterval = dumpInterval, maxDurationMs = maxDumpDuration, coroutineScope = coroutineScope) {
+
+    override suspend fun processDumpedThreads(infos: Array<ThreadInfo>) {
+      // finish processing even after the freeze end
+      val processingTask = coroutineScope.launch(CoroutineName("async freeze dumper")) {
+        val rawDump = ThreadDumper.getThreadDumpInfo(infos, true)
+        val dump = EventCountDumper.addEventCountersTo(rawDump)
+        dumpedThreads(dump)
+      }
+      // don't schedule yet another thread dump - wait for completion
+      processingTask.join()
+    }
+
+    private suspend fun dumpedThreads(threadDump: ThreadDump) {
       val file = dumpThreads(pathPrefix = "$freezeFolder/", appendMillisecondsToFileName = false, rawDump = threadDump.rawDump) ?: return
       try {
         val durationInSeconds = TimeUnit.SECONDS.convert(System.nanoTime() - taskStart, TimeUnit.NANOSECONDS)
