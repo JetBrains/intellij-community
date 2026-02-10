@@ -2,7 +2,7 @@
 package org.jetbrains.jewel.ui.icon
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.icons.rendering.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLoader
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
 @InternalJewelApi

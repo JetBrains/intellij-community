@@ -13,7 +13,7 @@ import org.jetbrains.icons.rendering.Bounds
 import org.jetbrains.icons.rendering.EmptyBitmapImageResource
 import org.jetbrains.icons.rendering.ImageModifiers
 import org.jetbrains.icons.rendering.ImageResource
-import org.jetbrains.icons.rendering.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLoader
 import org.jetbrains.icons.rendering.ImageScale
 import org.jetbrains.icons.rendering.RescalableImageResource
 import org.jetbrains.icons.impl.rendering.AwtImageResource

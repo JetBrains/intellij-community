@@ -14,7 +14,7 @@ import org.jetbrains.icons.impl.rendering.DefaultImageModifiers
 import org.jetbrains.icons.modifiers.svgPatcher
 import org.jetbrains.icons.patchers.combineWith
 import org.jetbrains.icons.rendering.ImageModifiers
-import org.jetbrains.icons.rendering.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLoader
 import java.awt.Image
 import java.awt.image.ImageFilter
 

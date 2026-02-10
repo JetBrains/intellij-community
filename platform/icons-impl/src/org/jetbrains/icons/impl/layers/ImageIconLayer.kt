@@ -4,7 +4,7 @@ package org.jetbrains.icons.impl.layers
 import kotlinx.serialization.Serializable
 import org.jetbrains.icons.layers.IconLayer
 import org.jetbrains.icons.modifiers.IconModifier
-import org.jetbrains.icons.rendering.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLoader
 
 @Serializable
 class ImageIconLayer(

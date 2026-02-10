@@ -2,6 +2,7 @@
 package org.jetbrains.icons.rendering
 
 import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.icons.ImageResourceLoader
 import org.jetbrains.icons.InternalIconsApi
 import org.jetbrains.icons.filters.ColorFilter
 import org.jetbrains.icons.patchers.SvgPatcher

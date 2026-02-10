@@ -14,14 +14,14 @@ import org.jetbrains.icons.impl.layers.IconIconLayer
 import org.jetbrains.icons.layers.IconLayer
 import org.jetbrains.icons.impl.layers.ImageIconLayer
 import org.jetbrains.icons.impl.layers.LayoutIconLayer
-import org.jetbrains.icons.rendering.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLoader
 import org.jetbrains.icons.impl.layers.ShapeIconLayer
 
 abstract class DefaultIconDesigner: IconDesigner {
   private val layers = mutableListOf<IconLayer>()
 
-  protected fun image(loader: ImageResourceLoader, modifier: IconModifier) {
-    layers.add(ImageIconLayer(loader, modifier))
+  override fun image(resourceLoader: ImageResourceLoader, modifier: IconModifier) {
+    layers.add(ImageIconLayer(resourceLoader, modifier))
   }
 
   override fun icon(icon: Icon, modifier: IconModifier) {
@@ -30,6 +30,10 @@ abstract class DefaultIconDesigner: IconDesigner {
 
   override fun custom(iconLayer: IconLayer) {
     layers.add(iconLayer)
+  }
+
+  override fun box(modifier: IconModifier, builder: IconDesigner.() -> Unit) {
+    layout(LayoutIconLayer.LayoutDirection.Box, IconUnit.Zero, modifier, builder)
   }
 
   override fun row(spacing: IconUnit, modifier: IconModifier, builder: IconDesigner.() -> Unit) {

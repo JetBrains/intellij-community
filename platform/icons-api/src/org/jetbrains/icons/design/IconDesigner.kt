@@ -3,6 +3,7 @@ package org.jetbrains.icons.design
 
 import org.jetbrains.icons.ExperimentalIconsApi
 import org.jetbrains.icons.Icon
+import org.jetbrains.icons.ImageResourceLoader
 import org.jetbrains.icons.layers.IconLayer
 import org.jetbrains.icons.modifiers.IconModifier
 import org.jetbrains.icons.modifiers.align
@@ -16,8 +17,10 @@ import org.jetbrains.icons.modifiers.size
  */
 @ExperimentalIconsApi
 interface IconDesigner {
+  fun image(resourceLoader: ImageResourceLoader, modifier: IconModifier = IconModifier)
   fun image(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier)
   fun icon(icon: Icon, modifier: IconModifier = IconModifier)
+  fun box(modifier: IconModifier = IconModifier, builder: IconDesigner.() -> Unit)
   fun row(spacing: IconUnit = 0.px, modifier: IconModifier = IconModifier, builder: IconDesigner.() -> Unit)
   fun column(spacing: IconUnit = 0.px, modifier: IconModifier = IconModifier, builder: IconDesigner.() -> Unit)
   fun animation(modifier: IconModifier = IconModifier, builder: IconAnimationDesigner.() -> Unit)

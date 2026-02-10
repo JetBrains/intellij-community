@@ -13,3 +13,10 @@ icon {
   swingIcon(AllIcons.Actions.AddDirectory)
 }
 ```
+
+## Serialization
+In order to add serialization support for custom swing icons, you have to register it's serializer.
+This depends on the current icon manager implementation, for example in IntelliJ, you use extension points.
+
+Use com.intellij.customLegacyIconSerializer extension inside intellij.platform.icons.impl.intellij module. 
+Check Jewel docs for registering standalone serializers if supported.

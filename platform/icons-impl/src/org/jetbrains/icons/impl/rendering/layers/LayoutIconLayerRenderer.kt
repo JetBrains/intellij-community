@@ -13,7 +13,7 @@ import org.jetbrains.icons.impl.rendering.modifiers.asPixels
 
 class LayoutIconLayerRenderer(
   private val layoutLayer: LayoutIconLayer,
-  private val renderingContext: RenderingContext,
+  renderingContext: RenderingContext,
 ) : IconLayerRenderer {
   private val currentContext = renderingContext.adjustTo(layoutLayer)
   private val nestedRenderers = createNestedRenderers(layoutLayer)
@@ -35,25 +35,33 @@ class LayoutIconLayerRenderer(
     val appliedLayout = layoutLayer.modifier.applyTo(layout, api.scaling)
     val finalBounds = appliedLayout.calculateFinalBounds()
 
-    if (layoutLayer.direction == LayoutIconLayer.LayoutDirection.Row) {
-      val spacingPx = layoutLayer.spacing.asPixels(api.scaling, api.bounds, true)
-      val remainingSize = finalBounds.width - spacingPx * (nestedRenderers.count() - 1)
-      val size = remainingSize / nestedRenderers.count()
-      var offset = 0
-      for (nestedRenderer in nestedRenderers) {
-        val nestedApi = api.withCustomContext(Bounds(finalBounds.x + offset, finalBounds.y, size, finalBounds.height))
-        nestedRenderer.render(nestedApi)
-        offset += size + spacingPx
+    when (layoutLayer.direction) {
+      LayoutIconLayer.LayoutDirection.Row -> {
+        val spacingPx = layoutLayer.spacing.asPixels(api.scaling, api.bounds, true)
+        val remainingSize = finalBounds.width - spacingPx * (nestedRenderers.count() - 1)
+        val size = remainingSize / nestedRenderers.count()
+        var offset = 0
+        for (nestedRenderer in nestedRenderers) {
+          val nestedApi = api.withCustomContext(Bounds(finalBounds.x + offset, finalBounds.y, size, finalBounds.height))
+          nestedRenderer.render(nestedApi)
+          offset += size + spacingPx
+        }
       }
-    } else {
-      val spacingPx = layoutLayer.spacing.asPixels(api.scaling, api.bounds, false)
-      val remainingSize = finalBounds.height - spacingPx * (nestedRenderers.count() - 1)
-      val size = remainingSize / nestedRenderers.count()
-      var offset = 0
-      for (nestedRenderer in nestedRenderers) {
-        val nestedApi = api.withCustomContext(Bounds(finalBounds.x, finalBounds.y + offset, finalBounds.width, size))
-        nestedRenderer.render(nestedApi)
-        offset += size + spacingPx
+      LayoutIconLayer.LayoutDirection.Column -> {
+        val spacingPx = layoutLayer.spacing.asPixels(api.scaling, api.bounds, false)
+        val remainingSize = finalBounds.height - spacingPx * (nestedRenderers.count() - 1)
+        val size = remainingSize / nestedRenderers.count()
+        var offset = 0
+        for (nestedRenderer in nestedRenderers) {
+          val nestedApi = api.withCustomContext(Bounds(finalBounds.x, finalBounds.y + offset, finalBounds.width, size))
+          nestedRenderer.render(nestedApi)
+          offset += size + spacingPx
+        }
+      }
+      else -> {
+        for (nestedRenderer in nestedRenderers) {
+          nestedRenderer.render(api)
+        }
       }
     }
   }
@@ -63,15 +71,26 @@ class LayoutIconLayerRenderer(
     var height = 0
     for (layer in nestedRenderers) {
       val dimensions = layer.calculateExpectedDimensions(scaling)
-      if (layoutLayer.direction == LayoutIconLayer.LayoutDirection.Row) {
-        width += dimensions.width
-        if (dimensions.height > height) {
-          height = dimensions.height
+      when (layoutLayer.direction) {
+        LayoutIconLayer.LayoutDirection.Row -> {
+          width += dimensions.width
+          if (dimensions.height > height) {
+            height = dimensions.height
+          }
         }
-      } else {
-        height += dimensions.height
-        if (dimensions.width > width) {
-          width = dimensions.width
+        LayoutIconLayer.LayoutDirection.Column -> {
+          height += dimensions.height
+          if (dimensions.width > width) {
+            width = dimensions.width
+          }
+        }
+        else -> {
+          if (dimensions.width > width) {
+            width = dimensions.width
+          }
+          if (dimensions.height > height) {
+            height = dimensions.height
+          }
         }
       }
     }

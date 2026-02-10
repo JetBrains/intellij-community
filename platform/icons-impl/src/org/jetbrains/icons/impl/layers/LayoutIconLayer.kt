@@ -39,6 +39,7 @@ class LayoutIconLayer(
 
   enum class LayoutDirection {
     Row,
-    Column
+    Column,
+    Box
   }
 }

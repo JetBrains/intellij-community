@@ -11,6 +11,7 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.InternalJewelApi",
     "org.jetbrains.icons.api.InternalIconsApi",
     "org.jetbrains.icons.api.ExperimentalIconsApi",
+    "org.jetbrains.icons.ExperimentalIconsApi",
   ],
   x_context_parameters = True,
   x_explicit_api_mode = "strict"

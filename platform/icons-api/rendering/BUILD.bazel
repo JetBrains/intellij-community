@@ -9,6 +9,7 @@ create_kotlinc_options(
   opt_in = [
     "org.jetbrains.icons.api.ExperimentalIconsApi",
     "org.jetbrains.icons.api.InternalIconsApi",
+    "org.jetbrains.icons.ExperimentalIconsApi",
   ],
   x_x_language = []
 )

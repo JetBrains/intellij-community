@@ -102,10 +102,12 @@ internal fun Icons(project: Project) {
         icon(missingIcon)
         badge(Color.Green, Circle)
       },
-      BadgeIcon(AllIcons.General.Error, Color.Green.toAwtColor(), BadgeDotProvider())
+      BadgeIcon(AllIcons.General.Error, Color.Green.toAwtColor(), BadgeDotProvider()),
+      "Icon with Badge"
     )
   })
 
+  val size = 30.percent
   icons.add(remember {
     ShowcaseIcon(
       icon {
@@ -119,22 +121,23 @@ internal fun Icons(project: Project) {
             icon(missingIcon, modifier = IconModifier.tintColor(Color.Cyan, BlendMode.Multiply))
           }
         }
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).align(IconAlign.TopLeft))
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).align(IconAlign.TopCenter))
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).align(IconAlign.TopRight))
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).align(IconAlign.CenterLeft))
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).tintColor(Color.Red).align(IconAlign.Center))
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).align(IconAlign.CenterRight))
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).align(IconAlign.BottomLeft))
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).align(IconAlign.BottomCenter))
-        icon(animatedIcon, modifier = IconModifier.size(20.percent).align(IconAlign.BottomRight))
+        icon(animatedIcon, modifier = IconModifier.size(size).align(IconAlign.TopLeft))
+        icon(animatedIcon, modifier = IconModifier.size(size).align(IconAlign.TopCenter))
+        icon(animatedIcon, modifier = IconModifier.size(size).align(IconAlign.TopRight))
+        icon(animatedIcon, modifier = IconModifier.size(size).align(IconAlign.CenterLeft))
+        icon(animatedIcon, modifier = IconModifier.size(size).tintColor(Color.Red).align(IconAlign.Center))
+        icon(animatedIcon, modifier = IconModifier.size(size).align(IconAlign.CenterRight))
+        icon(animatedIcon, modifier = IconModifier.size(size).align(IconAlign.BottomLeft))
+        icon(animatedIcon, modifier = IconModifier.size(size).align(IconAlign.BottomCenter))
+        icon(animatedIcon, modifier = IconModifier.size(size).align(IconAlign.BottomRight))
       },
-      null
+      null,
+      "Complex Layout Icon"
     )
   })
 
   val deferredIcon = remember {
-    project.guessProjectDir()?.findFile("src/main/kotlin/com/example/demo/test.kt")?.let {
+    project.guessProjectDir()?.findFile("build.gradle.kts")?.let {
       IconUtil.getIcon(it, 0, project)
     }
   } ?: AllIcons.General.Error
@@ -142,14 +145,16 @@ internal fun Icons(project: Project) {
   icons.add(
     ShowcaseIcon(
       deferredIcon.toNewIcon(),
-      deferredIcon
+      deferredIcon,
+      "Deferred Icon"
     )
   )
 
   icons.add(remember {
     ShowcaseIcon(
       animatedIcon,
-      SpinningProgressIcon()
+      SpinningProgressIcon(),
+      "Animated Icon"
     )
   })
 
@@ -171,80 +176,65 @@ internal fun Icons(project: Project) {
   icons.add(remember {
     ShowcaseIcon(
       deserialized,
-      null
+      null,
+      "Deserialized Dynamic Icon"
     )
   })
 
   Column(Modifier.fillMaxWidth()) {
     // Header
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-      Text("Name", Modifier.weight(1f))
-      Text("Role", Modifier.weight(1f))
+      Text("Title", Modifier.weight(1f))
+      Text("Compose", Modifier.weight(1f))
+      Text("Swing", Modifier.weight(1f))
+      Text("Old Api - Swing", Modifier.weight(1f))
     }
 
     // Body
     Column(Modifier.fillMaxWidth()) {
-      Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text("a", Modifier.weight(1f))
-        Text("b", Modifier.weight(1f))
-      }
-      Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text("a", Modifier.weight(1f))
-        Text("b", Modifier.weight(1f))
-      }
-      Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text("a", Modifier.weight(1f))
-        Text("b", Modifier.weight(1f))
+      for (icon in icons) {
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+          Text(icon.title, Modifier.weight(1f))
+          Column(Modifier.weight(1f)) {
+            Icon(icon.icon, "Icon")
+          }
+          wrapStaticSwingIcon(
+            icon.icon.toSwingIcon(),
+            modifier = Modifier.weight(1f)
+          )
+          wrapStaticSwingIcon(
+            icon.swingAlternative ?: AllIcons.General.Warning,
+            modifier = Modifier.weight(1f)
+          )
+        }
       }
     }
   }
-  IconsShowcase(icons)
 }
 
 class ShowcaseIcon(
   val icon: Icon,
   val swingAlternative: javax.swing.Icon?,
+  val title: String
 )
 
 @Composable
-private fun IconsShowcase(icons: List<ShowcaseIcon>) {
-  Text("Compose/Swing new/Swing old")
-  Row(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-    Column(modifier = Modifier.requiredWidth(60.dp)) {
-      for (icon in icons) {
-        Icon(icon.icon, "Icon")
-      }
-    }
-    wrapStaticSwingIcons(
-      icons.map {
-        it.icon.toSwingIcon()
-      }
-    )
-    wrapStaticSwingIcons(
-      icons.map { it.swingAlternative ?: AllIcons.General.Warning }
-    )
-  }
-}
-
-@Composable
-private fun wrapStaticSwingIcons(icons: List<javax.swing.Icon>) {
+private fun wrapStaticSwingIcon(icon: javax.swing.Icon, modifier: Modifier = Modifier) {
   SwingPanel(
     factory = {
       JPanel().apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        for (icon in icons) {
-          add(
-            JLabel(
-              icon
-            ).apply {
-              border = null
-              isOpaque = false
-            }
-          )
-        }
+        add(
+          JLabel(
+            icon
+          ).apply {
+            border = null
+            isOpaque = false
+          }
+        )
       }
     },
     background = Color.Transparent,
-    modifier = Modifier.width(60.dp).fillMaxHeight(),
+    modifier = modifier.fillMaxHeight(),
   )
 }

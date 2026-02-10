@@ -13,12 +13,12 @@ interface RescalableImageResource : ImageResource {
 
 @InternalIconsApi
 sealed interface ImageScale {
-  fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int? = null): Float
+  fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int): Float
 }
 
 @InternalIconsApi
 class FixedScale(val scale: Float) : ImageScale {
-  override fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int?): Float = scale
+  override fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int): Float = scale
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -36,12 +36,10 @@ class FixedScale(val scale: Float) : ImageScale {
 
 @InternalIconsApi
 class FitAreaScale(val width: Int, val height: Int) : ImageScale {
-  override fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int?): Float {
-    val scale = this.width / width.toFloat()
-    if (height != null) {
-      return minOf(scale, this.height / height.toFloat())
-    }
-    return scale
+  override fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int): Float {
+    val wscale = this.width / width.toFloat()
+    val hscale = this.height / height.toFloat()
+    return wscale.coerceAtMost(hscale)
   }
 
   override fun equals(other: Any?): Boolean {

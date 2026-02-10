@@ -17,7 +17,7 @@ import org.jetbrains.icons.impl.intellij.rendering.IntelliJImageResourceLoaderSe
 import org.jetbrains.icons.impl.intellij.rendering.IntelliJImageResourceProvider
 import org.jetbrains.icons.impl.rendering.SwingIcon
 import org.jetbrains.icons.rendering.IconRendererManager
-import org.jetbrains.icons.rendering.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLoader
 import org.jetbrains.icons.rendering.ImageResourceProvider
 
 class IntelliJIconManager : DefaultIconManager(), SwingIconManager {

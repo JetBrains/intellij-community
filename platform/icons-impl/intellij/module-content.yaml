@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.icons.impl.intellij.jar
+  modules:
+  - name: intellij.platform.icons.impl.intellij
+    libraries:
+      jetbrains.kotlinx.serialization.core.jvm:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1/kotlinx-serialization-core-jvm-1.jar

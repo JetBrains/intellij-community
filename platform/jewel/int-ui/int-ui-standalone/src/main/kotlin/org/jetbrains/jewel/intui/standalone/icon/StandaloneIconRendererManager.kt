@@ -6,15 +6,13 @@ package org.jetbrains.jewel.intui.standalone.icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.serialization.KSerializer
 import org.jetbrains.icons.ExperimentalIconsApi
 import org.jetbrains.icons.Icon
+import org.jetbrains.icons.impl.rendering.CoroutineBasedMutableIconUpdateFlow
+import org.jetbrains.icons.impl.rendering.DefaultIconRendererManager
 import org.jetbrains.icons.rendering.ImageModifiers
 import org.jetbrains.icons.rendering.MutableIconUpdateFlow
 import org.jetbrains.icons.rendering.RenderingContext
-import org.jetbrains.icons.layers.IconLayer
-import org.jetbrains.icons.impl.rendering.CoroutineBasedMutableIconUpdateFlow
-import org.jetbrains.icons.impl.rendering.DefaultIconRendererManager
 
 @OptIn(ExperimentalIconsApi::class)
 internal class StandaloneIconRendererManager : DefaultIconRendererManager() {

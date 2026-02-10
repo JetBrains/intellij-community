@@ -29,12 +29,14 @@ abstract class BaseImageIconLayerRenderer: IconLayerRenderer {
 
   override fun render(api: PaintingApi) {
     val currentImage = image
+    val w = api.scaling.applyTo(currentImage.width)
+    val h = api.scaling.applyTo(currentImage.height)
     val layout = DefaultLayerLayout(
       Bounds(
         0,
         0,
-        api.scaling.applyTo(currentImage.width) ?: api.bounds.width,
-        api.scaling.applyTo(currentImage.height) ?: api.bounds.width,
+        api.bounds.width.coerceAtMost(w ?: Integer.MAX_VALUE),
+        api.bounds.height.coerceAtMost(h ?: Integer.MAX_VALUE)
       ),
       api.bounds
     )
