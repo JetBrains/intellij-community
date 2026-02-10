@@ -47,37 +47,8 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
     private fun createFixIfPossible(expression: KtCallExpression): GradleMoveApplyPluginToPluginsBlockFix? {
         if (!expression.isTopLevel()) return null
         val pluginName = extractPluginName(expression) ?: return null
-        val pluginsBlock = expression.containingKtFile.findScriptInitializer("plugins")?.getBlock()
-        if (pluginsBlock == null) {
-            val pluginFixInfo = getPluginFixInfo(pluginName) ?: return null
-            return GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo)
-        }
-        if (pluginsBlock.containsPlugin(pluginName)) return null
         val pluginFixInfo = getPluginFixInfo(pluginName) ?: return null
         return GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo)
-    }
-
-    private fun KtBlockExpression.containsPlugin(pluginName: String): Boolean {
-        return this.descendantsOfType<KtCallExpression>().any { call ->
-            val callee = call.calleeExpression?.text ?: return@any false
-            when (callee) {
-                "id" -> {
-                    val arg = call.valueArguments.firstOrNull()?.getArgumentExpression() ?: return@any false
-                    arg.evaluateString() == pluginName
-                }
-
-                "kotlin" -> {
-                    val arg = call.valueArguments.firstOrNull()?.getArgumentExpression() ?: return@any false
-                    "org.jetbrains.kotlin.${arg.evaluateString()}" == pluginName
-                }
-
-                else -> false
-            }
-        } || this.children.any { child ->
-            // Check for bare plugin references like java or backtick syntax like `java`
-            val text = child.text.trim()
-            text == pluginName || text == "`$pluginName`"
-        }
     }
 
     private fun KtExpression.isTopLevel() = this.parent is KtScriptInitializer
@@ -170,18 +141,47 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
 }
 
 private class GradleMoveApplyPluginToPluginsBlockFix(
-    val pluginFixInfo: PluginFixInfo
+    private val pluginFixInfo: PluginFixInfo
 ) : KotlinModCommandQuickFix<KtCallExpression>() {
     override fun getName(): @IntentionName String = GradleInspectionBundle.message("intention.name.use.plugins.block")
 
     override fun getFamilyName(): @IntentionFamilyName String = name
 
     override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
-        val psiFactory = KtPsiFactory(project, true)
         val file = element.containingKtFile
         val classpathCallElement = PsiTreeUtil.findSameElementInCopy(pluginFixInfo.classpathCallElement?.element, file)
 
         val pluginsBlock = file.findScriptInitializer("plugins")?.getBlock()
+        if (pluginsBlock?.containsPlugin(pluginFixInfo.name) != true) addIdPlugin(file, pluginsBlock, pluginFixInfo)
+
+        element.delete()
+        removeClasspathCallElement(classpathCallElement)
+    }
+
+    private fun KtBlockExpression.containsPlugin(pluginName: String): Boolean {
+        return this.descendantsOfType<KtCallExpression>().any { call ->
+            val callee = call.calleeExpression?.text ?: return@any false
+            val argString = call.valueArguments.firstOrNull()?.getArgumentExpression()?.evaluateString() ?: return@any false
+            when (callee) {
+                "id" -> {
+                    argString == pluginName
+                }
+
+                "kotlin" -> {
+                    "org.jetbrains.kotlin.$argString" == pluginName
+                }
+
+                else -> false
+            }
+        } || this.children.any { child ->
+            // Check for bare plugin references like java or backtick syntax like `java`
+            val text = child.text.trim()
+            text == pluginName || text == "`$pluginName`"
+        }
+    }
+
+    private fun addIdPlugin(file: KtFile, pluginsBlock: KtBlockExpression?, pluginFixInfo: PluginFixInfo) {
+        val psiFactory = KtPsiFactory(file.project, true)
         val pluginIdCallText = "id(\"${pluginFixInfo.name}\")${pluginFixInfo.versionString?.let { " version \"$it\"" } ?: ""}"
         // add the plugin to the plugins block or create the block if it's missing with the plugin declaration
         if (pluginsBlock != null) {
@@ -193,11 +193,9 @@ private class GradleMoveApplyPluginToPluginsBlockFix(
                 it.addBefore(psiFactory.createExpression("plugins {\n$pluginIdCallText\n}"), it.firstChild)
             }
         }
+    }
 
-        // delete the apply call
-        element.delete()
-
-        // buildscript block handling
+    private fun removeClasspathCallElement(classpathCallElement: KtCallExpression?) {
         val dependenciesBlock = classpathCallElement?.findParentBlock("dependencies") ?: return
         // delete the corresponding plugin's dependency declaration
         classpathCallElement.delete()
@@ -209,6 +207,7 @@ private class GradleMoveApplyPluginToPluginsBlockFix(
         if (buildscriptBlock.children.size == 1) buildscriptBlock.findParentOfType<KtCallExpression>()?.delete()
     }
 }
+
 
 private data class PluginFixInfo(
     val name: String,

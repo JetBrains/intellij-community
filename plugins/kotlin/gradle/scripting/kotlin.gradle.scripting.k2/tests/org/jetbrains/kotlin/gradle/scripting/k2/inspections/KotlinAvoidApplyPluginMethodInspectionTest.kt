@@ -713,13 +713,20 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 <weak_warning>apply(plugin = "java")</weak_warning>
                 """.trimIndent()
             )
-            testNoIntentions(
+            testIntention(
                 """
                 plugins {
                     id("java")
                 }
                 
                 apply(plugin = "java")<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    id("java")
+                }
+                
+                <caret>
                 """.trimIndent(),
                 "Use the ‘plugins’ block"
             )
@@ -739,13 +746,20 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 <weak_warning>apply(plugin = "java")</weak_warning>
                 """.trimIndent()
             )
-            testNoIntentions(
+            testIntention(
                 """
                 plugins {
                     java
                 }
                 
                 apply(plugin = "java")<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    java
+                }
+                
+                <caret>
                 """.trimIndent(),
                 "Use the ‘plugins’ block"
             )
@@ -765,13 +779,20 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 <weak_warning>apply(plugin = "java")</weak_warning>
                 """.trimIndent()
             )
-            testNoIntentions(
+            testIntention(
                 """
                 plugins {
                     `java`
                 }
                 
                 apply(plugin = "java")<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    `java`
+                }
+                
+                <caret>
                 """.trimIndent(),
                 "Use the ‘plugins’ block"
             )
@@ -800,7 +821,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 <weak_warning>apply(plugin = "org.jetbrains.kotlin.jvm")</weak_warning>
                 """.trimIndent()
             )
-            testNoIntentions(
+            testIntention(
                 """
                 plugins {
                     kotlin("jvm") version "2.3.0"
@@ -816,6 +837,13 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 
                 apply(plugin = "org.jetbrains.kotlin.jvm")<caret>
+                """.trimIndent(),
+                """
+                plugins {
+                    kotlin("jvm") version "2.3.0"
+                }
+                
+                <caret>
                 """.trimIndent(),
                 "Use the ‘plugins’ block"
             )
@@ -837,7 +865,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 <weak_warning>apply(plugin = java2)</weak_warning>
                 """.trimIndent()
             )
-            testNoIntentions(
+            testIntention(
                 """
                 val java1 = "java"
                 plugins {
@@ -846,6 +874,15 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 
                 val java2 = "java"
                 apply(plugin = java2)<caret>
+                """.trimIndent(),
+                """
+                val java1 = "java"
+                plugins {
+                    id(java1)
+                }
+                
+                val java2 = "java"
+                <caret>
                 """.trimIndent(),
                 "Use the ‘plugins’ block"
             )
@@ -885,7 +922,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 
                 val java2 = "java"
-                
+                <caret>
                 """.trimIndent(),
                 "Use the ‘plugins’ block"
             )
