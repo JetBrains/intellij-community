@@ -93,9 +93,9 @@ internal class IdeaFreezeReporter : PerformanceListener {
       dumpTask?.stop()
 
       reset()
-      val watcher = PerformanceWatcher.getInstance()
-      val maxDumpDuration = watcher.maxDumpDuration
-      if (maxDumpDuration == 0) {
+
+      val maxDumpDuration = Registry.get("freeze.reporter.maxDumpDuration.ms").asInteger()
+      if (maxDumpDuration <= 0) {
         return
       }
 
