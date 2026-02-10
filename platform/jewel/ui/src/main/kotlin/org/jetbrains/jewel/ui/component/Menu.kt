@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.component
 
 import androidx.annotation.VisibleForTesting
@@ -59,6 +60,9 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -822,6 +826,12 @@ private fun MenuItem(
     )
 }
 
+@ApiStatus.Internal
+@InternalJewelApi
+@VisibleForTesting
+public val IsHoveredKey: SemanticsPropertyKey<Boolean> = SemanticsPropertyKey("IsHovered")
+internal var SemanticsPropertyReceiver.isHovered by IsHoveredKey
+
 @Composable
 internal fun MenuItemBase(
     selected: Boolean,
@@ -862,6 +872,7 @@ internal fun MenuItemBase(
                     interactionSource = interactionSource,
                     indication = null,
                 )
+                .semantics { isHovered = itemState.isHovered } // For testing purposes
                 .fillMaxWidth()
     ) {
         DisposableEffect(Unit) {

@@ -13,8 +13,7 @@ public interface FocusableComponentState : InteractiveComponentState {
 
     /**
      * Returns one of the provided values based on the component's current state priority: disabled → pressed →
-     * hovered+focused → hovered (not focused) → focused → active → normal. Note that when the component is hovered but
-     * not focused (and Swing compat mode is off), the active value is returned rather than hovered.
+     * hovered+focused → focused → active → normal.
      *
      * @param T The type of the state-dependent value.
      * @param normal The value to use when the component is in its default, uninteracted state.
@@ -22,8 +21,7 @@ public interface FocusableComponentState : InteractiveComponentState {
      * @param focused The value to use when [isFocused] is `true` and the component is not hovered or pressed.
      * @param pressed The value to use when [isPressed] is `true` (and Swing compat mode is off).
      * @param hovered The value to use when [isHovered] AND [isFocused] is `true` (and Swing compat mode is off).
-     * @param active The value to use when [isActive] is true, or when [isHovered] is true but [isFocused] is false (and
-     *   Swing compat mode is off).
+     * @param active The value to use when [isActive] is `true`.
      */
     @Composable
     public fun <T> chooseValue(normal: T, disabled: T, focused: T, pressed: T, hovered: T, active: T): T =
@@ -31,7 +29,6 @@ public interface FocusableComponentState : InteractiveComponentState {
             !isEnabled -> disabled
             isPressed && !JewelTheme.isSwingCompatMode -> pressed
             isHovered && isFocused && !JewelTheme.isSwingCompatMode -> hovered
-            isHovered && !isFocused && !JewelTheme.isSwingCompatMode -> active
             isFocused -> focused
             isActive -> active
             else -> normal
