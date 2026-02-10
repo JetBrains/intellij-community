@@ -195,10 +195,13 @@ public class ImportFromExistingAction implements QuestionAction {
     // did user choose 'import' or 'from import'?
     PsiElement parent = importElement.getParent();
     if (parent instanceof PyFromImportStatement) {
-      AddImportHelper.addNameToFromImportStatement((PyFromImportStatement)parent, item.getImportableName(), item.getAsName());
-      if (item.getAsName() == null && item.getQualifiedReferenceText() != null) {
+      if (item.getQualifiedReferenceText() != null) {
+        // The symbol is accessible via an already-imported module (e.g. "from . import src" → qualify as "src.MyClass")
         PyElementGenerator gen = PyElementGenerator.getInstance(myTarget.getProject());
         myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), item.getQualifiedReferenceText()));
+      }
+      else {
+        AddImportHelper.addNameToFromImportStatement((PyFromImportStatement)parent, item.getImportableName(), item.getAsName());
       }
     }
     else { // just 'import'

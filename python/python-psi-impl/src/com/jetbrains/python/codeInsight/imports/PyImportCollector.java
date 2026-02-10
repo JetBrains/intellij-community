@@ -76,9 +76,39 @@ public class PyImportCollector {
       if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
         PsiElement source = fromImportStatement.resolveImportSource();
         existingImportFile = addImportViaElement(existingImportFile, fromImportStatement.getImportElements()[0], source);
+        // Check if any imported module contains the target symbol (e.g. "from . import src" where src.MyClass exists)
+        for (PyImportElement importElement : fromImportStatement.getImportElements()) {
+          addCandidateViaImportedModule(importElement);
+        }
       }
     }
     return existingImportFile;
+  }
+
+  private void addCandidateViaImportedModule(@NotNull PyImportElement importElement) {
+    PsiElement resolved = importElement.resolve();
+    PyFile moduleFile = as(PyUtil.turnDirIntoInit(resolved), PyFile.class);
+    if (!(moduleFile instanceof PyFileImpl)) {
+      return;
+    }
+    PsiElement variant = moduleFile.findExportedName(myRefText);
+    PsiNamedElement definition = as(variant, PsiNamedElement.class);
+    if (definition == null || definition instanceof PyFile || definition instanceof PyImportElement) {
+      return;
+    }
+    String visibleName = importElement.getVisibleName();
+    if (visibleName == null) {
+      return;
+    }
+    String qualifiedRef = visibleName + "." + myRefText;
+    String qName = definition instanceof PyQualifiedNameOwner ? ((PyQualifiedNameOwner)definition).getQualifiedName() : null;
+    if (qName != null && seenCandidateNames.contains(qName)) {
+      return;
+    }
+    fix.addImport(definition, moduleFile, importElement, null, null, qualifiedRef);
+    if (qName != null) {
+      seenCandidateNames.add(qName);
+    }
   }
 
   private PsiFile addImportViaElement(PsiFile existingImportFile, PyImportElement importElement, PsiElement source) {

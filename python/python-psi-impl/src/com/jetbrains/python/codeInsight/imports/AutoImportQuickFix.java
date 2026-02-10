@@ -109,6 +109,15 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     myImports.add(new ImportCandidateHolder(importable, file, null, path, asName, qualifiedReferenceText));
   }
 
+  public void addImport(@NotNull PsiNamedElement importable,
+                        @NotNull PsiFileSystemItem file,
+                        @Nullable PyImportElement importElement,
+                        @Nullable QualifiedName path,
+                        @Nullable String asName,
+                        @Nullable String qualifiedReferenceText) {
+    myImports.add(new ImportCandidateHolder(importable, file, importElement, path, asName, qualifiedReferenceText));
+  }
+
   @Override
   public @NotNull String getText() {
     if (myUseQualifiedImport) return PyPsiBundle.message("ACT.qualify.with.module");
