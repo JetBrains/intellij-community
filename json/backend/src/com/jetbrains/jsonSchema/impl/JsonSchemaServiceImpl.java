@@ -92,7 +92,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       myRefs.clear();
       myAnyChangeCount.incrementAndGet();
     });
-    JsonSchemaVfsListener.startListening(project, this, connection);
+    JsonSchemaVfsListener.startListening(project);
     myCatalogManager.startUpdates();
   }
 
