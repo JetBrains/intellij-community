@@ -605,6 +605,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.screenshot-test.gradle", "android.jar")
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
+      spec.withModule("intellij.android.tracer", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
       spec.withModule("intellij.android.newProjectWizard", "android.jar")
       spec.withModule("intellij.android.wear-pairing", "android.jar")

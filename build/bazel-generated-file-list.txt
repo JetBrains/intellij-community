@@ -201,6 +201,7 @@ android/sync-memory-tests
 android/sync-perf-tests
 android/testartifacts
 android/threading-checker
+android/tracer
 android/transport-database
 android/utp
 android/visual-lint
