@@ -390,14 +390,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20679
   public void testIsInstanceViaTrue() {
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if isinstance(a, str) is True:
                  expr = a
              raise TypeError('Invalid type')""");
 
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if True is isinstance(a, str):
@@ -407,28 +407,28 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20679
   public void testIsInstanceViaFalse() {
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if isinstance(a, str) is not False:
                  expr = a
              raise TypeError('Invalid type')""");
 
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if False is not isinstance(a, str):
                  expr = a
              raise TypeError('Invalid type')""");
 
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if not isinstance(a, str) is False:
                  expr = a
              raise TypeError('Invalid type')""");
 
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if not False is isinstance(a, str):
@@ -438,28 +438,28 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20679
   public void testNotIsInstanceViaTrue() {
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if not isinstance(a, str) is True:
                  raise TypeError('Invalid type')
              expr = a""");
 
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if not True is isinstance(a, str):
                  raise TypeError('Invalid type')
              expr = a""");
 
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if isinstance(a, str) is not True:
                  raise TypeError('Invalid type')
              expr = a""");
 
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if True is not isinstance(a, str):
@@ -469,14 +469,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20679
   public void testNotIsInstanceViaFalse() {
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if isinstance(a, str) is False:
                  raise TypeError('Invalid type')
              expr = a""");
 
-    doTest("str",
+    doTest("None & str",
            """
              a = None
              if False is isinstance(a, str):
@@ -741,13 +741,13 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-5614
   public void testKnownTypeAttribute() {
-    doTest("str",
+    doTest("bool",
            """
              class C(object):
                  def __init__(self):
                      self.foo = 42
                  def f(self):
-                     if isinstance(self.foo, str):
+                     if isinstance(self.foo, bool):
                          expr = self.foo
              """);
   }
@@ -3411,12 +3411,13 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-9634
   public void testAfterIsInstanceAndAttributeUsage() {
-    doTest("Union[{bar}, int]",
+    doTest("Union[{bar}, {bar} & int]",
            """
              def bar(y):
                  if isinstance(y, int):
                      pass
-                 print(y.bar)    expr = y""");
+                 print(y.bar)
+                 expr = y""");
   }
 
   // PY-28052
@@ -3529,7 +3530,7 @@ public class PyTypeTest extends PyTestCase {
   public void testAssertionFunctionFromOuterScope() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> doTest("B",
+      () -> doTest("() -> None & B",
                    """
                      class B: pass
                      

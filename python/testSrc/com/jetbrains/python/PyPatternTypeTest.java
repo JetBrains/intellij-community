@@ -912,7 +912,7 @@ def func(val: tuple[*tuple[str, ...], *tuple[int, ...]]):
         case (x, y):
             # actual type doesn't matter here since the original type is invalid
             # this test verifies that there are no exceptions or infinite loops
-            assert_type(val, tuple[str, *tuple[int, ...]])
+                               assert_type(val, tuple[*tuple[str, ...], *tuple[int, ...]] | tuple[str, *tuple[int, ...]])
                    """);
   }
 

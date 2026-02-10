@@ -85,6 +85,7 @@ class PyIntersectionType private constructor(members: Collection<PyType?>) : PyC
     fun intersection(types: Collection<PyType?>): PyType? {
       val newMembers = buildSet {
         for (member in types) {
+          if (member is PyNeverType) return@intersection member
           if (member is PyIntersectionType) {
             addAll(member.members)
           }

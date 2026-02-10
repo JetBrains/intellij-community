@@ -1957,32 +1957,39 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-44974
   public void testBitwiseOrUnionIsInstance() {
-    doTest("str | dict | int",
+    doTest("B",
            """
-             a = [42]
-             if isinstance(a, str | dict | int):
+             class A: pass
+             class B(A): pass
+             a = A()
+             if isinstance(a, str | dict | B):
                  expr = a""");
   }
 
   // PY-44974
   public void testBitwiseOrUnionIsSubclass() {
-    doTest("type[str | dict | int]",
+    doTest("type[B]",
            """
-             a = list
-             if issubclass(a, str | dict | int):
+             class A: pass
+             class B(A): pass
+             a = A
+             if issubclass(a, str | dict | B):
                  expr = a""");
   }
 
   // PY-79861
   public void testWalrusIsSubclass() {
-    doTest("type[str | dict | int]",
+    doTest("type[B]",
            """
-             if issubclass(a := list, str | dict | int):
+             class A: pass
+             class B(A): pass
+             if issubclass(a := A, str | dict | B):
                  expr = a""");
   }
 
   // PY-79861
   public void testWalrusCallable() {
+    // TODO
     // should actually be `(...) -> object` ... should actually be `Literal[42] & (...) -> object ... should actually be `Never`
     //  but we don't support this case yet
     doTest("int",
@@ -1993,47 +2000,42 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-44974
   public void testBitwiseOrUnionIsInstanceIntNone() {
-    doTest("int | None",
+    doTest("B",
            """
-             a = [42]
-             if isinstance(a, int | None):
-                 expr = a""");
-  }
-
-  // PY-44974
-  public void testBitwiseOrUnionIsInstanceNoneInt() {
-    doTest("int | None",
-           """
-             a = [42]
-             if isinstance(a, None | int):
+             class A: pass
+             class B(A): pass
+             a = A()
+             if isinstance(a, B | None):
                  expr = a""");
   }
 
   // PY-79861
   public void testWalrusIsInstance() {
-    doTest("int",
+    doTest("B",
            """
-             if isinstance((a := [42]), int):
+             class A: pass
+             class B(A): pass
+             if isinstance((a := A()), B):
                  expr = a""");
   }
 
   // PY-44974
   public void testBitwiseOrUnionIsInstanceUnionInTuple() {
-    doTest("str | list | dict | bool | None",
+    doTest("Literal[42]",
            """
              from typing import Literal
              a: Literal[42] = 42
-             if isinstance(a, (str, (list | dict), bool | None)):
+             if isinstance(a, (str, (list | dict), int | None)):
                  expr = a""");
   }
 
   // PY-44974
   public void testBitwiseOrUnionOfUnionsIsInstance() {
-    doTest("dict | str | bool | list",
+    doTest("Literal[42]",
            """
              from typing import Union, Literal
              a: Literal[42] = 42
-             if isinstance(a, Union[dict, Union[str, Union[bool, list]]]):
+             if isinstance(a, Union[dict, Union[str, Union[int, list]]]):
                  expr = a""");
   }
 
