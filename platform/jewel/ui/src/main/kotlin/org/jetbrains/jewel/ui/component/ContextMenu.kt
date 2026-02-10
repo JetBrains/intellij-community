@@ -30,6 +30,7 @@ import androidx.compose.ui.window.rememberPopupPositionProviderAtPosition
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.menu.MenuHighlightState
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.theme.menuStyle
@@ -75,6 +76,7 @@ internal fun ContextMenu(
 ) {
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
+    val highlightState = remember { MenuHighlightState() }
     val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
     val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
 
@@ -99,7 +101,7 @@ internal fun ContextMenu(
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(LocalMenuController provides menuController) {
-            MenuContent(modifier = modifier, content = content)
+            MenuContent(modifier = modifier, highlightState = highlightState, content = content)
         }
     }
 }

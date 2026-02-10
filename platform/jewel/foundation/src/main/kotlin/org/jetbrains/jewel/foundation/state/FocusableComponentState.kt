@@ -12,7 +12,6 @@ public interface FocusableComponentState : InteractiveComponentState {
             !isEnabled -> disabled
             isPressed && !JewelTheme.isSwingCompatMode -> pressed
             isHovered && isFocused && !JewelTheme.isSwingCompatMode -> hovered
-            isHovered && !isFocused && !JewelTheme.isSwingCompatMode -> active
             isFocused -> focused
             isActive -> active
             else -> normal

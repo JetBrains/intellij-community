@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.component
 
 import androidx.annotation.VisibleForTesting
@@ -58,6 +59,9 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -83,6 +87,9 @@ import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
 import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.component.menu.LocalMenuHighlightState
+import org.jetbrains.jewel.ui.component.menu.LocalMenuItemIndex
+import org.jetbrains.jewel.ui.component.menu.MenuHighlightState
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
 import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
@@ -286,6 +293,7 @@ private fun PopupMenuImpl(
 ) {
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
+    val highlightState = remember { MenuHighlightState() }
     val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
 
     Popup(
@@ -308,7 +316,12 @@ private fun PopupMenuImpl(
 
         OverrideDarkMode(style.isDark) {
             CompositionLocalProvider(LocalMenuController provides menuController, LocalMenuStyle provides style) {
-                MenuContent(modifier = modifier, adContent = adContent, content = content)
+                MenuContent(
+                    modifier = modifier,
+                    adContent = adContent,
+                    highlightState = highlightState,
+                    content = content,
+                )
             }
         }
     }
@@ -322,6 +335,7 @@ public fun MenuContent(
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
     adContent: (@Composable () -> Unit)? = null,
+    highlightState: MenuHighlightState = remember { MenuHighlightState() },
     content: MenuScope.() -> Unit,
 ) {
     val items by remember(content) { derivedStateOf { content.asList() } }
@@ -356,42 +370,48 @@ public fun MenuContent(
         onDispose { localMenuController.clearShortcutActions() }
     }
 
-    Box(
-        modifier =
-            modifier
-                .popupShadowAndBorder(
-                    shape = menuShape,
-                    shadowSize = style.metrics.shadowSize,
-                    shadowColor = colors.shadow,
-                    borderWidth = style.metrics.borderWidth,
-                    borderColor = colors.border,
-                )
-                .background(colors.background, menuShape)
-                .width(IntrinsicSize.Max)
-                .onHover { localMenuController.onHoveredChange(it) }
-    ) {
-        Column(Modifier.clip(menuShape).verticalScroll(scrollState)) {
-            Column(Modifier.padding(style.metrics.contentPadding)) {
-                var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
-                items.forEach { item ->
-                    MenuItem(
-                        item = item,
-                        showIcons = anyItemHasIcon,
-                        showKeybindings = anyItemHasKeybinding,
-                        selectedSubMenu = selectedSubMenu,
-                        setSelectedSubMenu = { selectedSubMenu = it },
+    CompositionLocalProvider(LocalMenuHighlightState provides highlightState) {
+        Box(
+            modifier =
+                modifier
+                    .popupShadowAndBorder(
+                        shape = menuShape,
+                        shadowSize = style.metrics.shadowSize,
+                        shadowColor = colors.shadow,
+                        borderWidth = style.metrics.borderWidth,
+                        borderColor = colors.border,
                     )
+                    .background(colors.background, menuShape)
+                    .width(IntrinsicSize.Max)
+                    .onHover { localMenuController.onHoveredChange(it) }
+        ) {
+            Column(Modifier.clip(menuShape).verticalScroll(scrollState)) {
+                Column(Modifier.padding(style.metrics.contentPadding)) {
+                    var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
+                    items.forEachIndexed { index, item ->
+                        CompositionLocalProvider(
+                            LocalMenuItemIndex provides if (item is MenuSelectableItem) index else null
+                        ) {
+                            MenuItem(
+                                item = item,
+                                showIcons = anyItemHasIcon,
+                                showKeybindings = anyItemHasKeybinding,
+                                selectedSubMenu = selectedSubMenu,
+                                setSelectedSubMenu = { selectedSubMenu = it },
+                            )
+                        }
+                    }
                 }
+
+                adContent?.let { PopupAd(modifier = Modifier.fillMaxWidth()) { it() } }
             }
 
-            adContent?.let { PopupAd(modifier = Modifier.fillMaxWidth()) { it() } }
-        }
-
-        Box(modifier = Modifier.matchParentSize()) {
-            VerticalScrollbar(
-                rememberScrollbarAdapter(scrollState),
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd),
-            )
+            Box(modifier = Modifier.matchParentSize()) {
+                VerticalScrollbar(
+                    rememberScrollbarAdapter(scrollState),
+                    modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd),
+                )
+            }
         }
     }
 }
@@ -807,6 +827,9 @@ private fun MenuItem(
     )
 }
 
+@VisibleForTesting public val IsHoveredKey: SemanticsPropertyKey<Boolean> = SemanticsPropertyKey("IsHovered")
+internal var SemanticsPropertyReceiver.isHovered by IsHoveredKey
+
 @Composable
 internal fun MenuItemBase(
     selected: Boolean,
@@ -829,6 +852,12 @@ internal fun MenuItemBase(
     remember(enabled, selected) { itemState = itemState.copy(selected = selected, enabled = enabled) }
 
     val focusRequester = remember { FocusRequester() }
+    val highlightState = LocalMenuHighlightState.current
+    val itemIndex = LocalMenuItemIndex.current
+
+    val isHighlighted by remember {
+        derivedStateOf { highlightState?.highlightedItemIndex == itemIndex && itemIndex != null }
+    }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -840,10 +869,15 @@ internal fun MenuItemBase(
                     itemState = itemState.copy(hovered = true)
                     focusRequester.requestFocus()
                 }
-
                 is HoverInteraction.Exit -> itemState = itemState.copy(hovered = false)
-                is FocusInteraction.Focus -> itemState = itemState.copy(focused = true)
-                is FocusInteraction.Unfocus -> itemState = itemState.copy(focused = false)
+                is FocusInteraction.Focus -> {
+                    itemState = itemState.copy(focused = true)
+                    highlightState?.highlightItem(itemIndex)
+                }
+                is FocusInteraction.Unfocus -> {
+                    itemState = itemState.copy(focused = false)
+                    highlightState?.clearHighlight()
+                }
             }
         }
     }
@@ -865,6 +899,7 @@ internal fun MenuItemBase(
                     interactionSource = interactionSource,
                     indication = null,
                 )
+                .semantics { isHovered = itemState.isHovered } // For testing purposes
                 .fillMaxWidth()
     ) {
         DisposableEffect(Unit) {
@@ -883,7 +918,18 @@ internal fun MenuItemBase(
             LocalContentColor provides itemColors.contentFor(itemState).value,
             LocalTextStyle provides updatedTextStyle,
         ) {
-            val backgroundColor by itemColors.backgroundFor(itemState)
+            val backgroundColor by
+                remember(isHighlighted, itemState) {
+                    derivedStateOf {
+                        when {
+                            isHighlighted -> itemColors.backgroundHovered
+                            !itemState.isEnabled -> itemColors.backgroundDisabled
+                            itemState.isPressed -> itemColors.backgroundPressed
+                            itemState.isFocused -> itemColors.backgroundFocused
+                            else -> itemColors.background
+                        }
+                    }
+                }
 
             Row(
                 modifier =
@@ -1095,6 +1141,7 @@ internal fun Submenu(
 
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
+    val highlightState = remember { MenuHighlightState() }
     val parentMenuController = LocalMenuController.current
     val menuController =
         remember(parentMenuController, onDismissRequest) { parentMenuController.submenuController(onDismissRequest) }
@@ -1117,7 +1164,7 @@ internal fun Submenu(
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(LocalMenuController provides menuController) {
-            MenuContent(modifier = modifier, content = content)
+            MenuContent(modifier = modifier, highlightState = highlightState, content = content)
         }
     }
 }
