@@ -18,7 +18,16 @@ import com.intellij.platform.workspace.storage.toBuilder
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.model.GradleLightProject
-import org.jetbrains.plugins.gradle.model.projectModel.*
+import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityBuilder
+import org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntityBuilder
+import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityBuilder
+import org.jetbrains.plugins.gradle.model.projectModel.gradleBuilds
+import org.jetbrains.plugins.gradle.model.projectModel.gradleInfo
+import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
@@ -67,7 +76,6 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     entitySource: EntitySource,
   ): GradleExternalProjectEntityBuilder = GradleExternalProjectEntity(
-    externalProjectId = context.externalProjectEntityId,
     gradleVersion = context.gradleVersion.version,
     entitySource = entitySource
   )

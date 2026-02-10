@@ -13,39 +13,39 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 interface GradleModuleEntityBuilder : WorkspaceEntityBuilder<GradleModuleEntity> {
-    override var entitySource: EntitySource
-    var module: ModuleEntityBuilder
-    var gradleProjectId: GradleProjectEntityId
+  override var entitySource: EntitySource
+  var module: ModuleEntityBuilder
+  var gradleProjectId: GradleProjectEntityId
 }
 
 internal object GradleModuleEntityType : EntityType<GradleModuleEntity, GradleModuleEntityBuilder>() {
-    override val entityClass: Class<GradleModuleEntity> get() = GradleModuleEntity::class.java
-    operator fun invoke(
-        gradleProjectId: GradleProjectEntityId,
-        entitySource: EntitySource,
-        init: (GradleModuleEntityBuilder.() -> Unit)? = null,
-    ): GradleModuleEntityBuilder {
-        val builder = builder()
-        builder.gradleProjectId = gradleProjectId
-        builder.entitySource = entitySource
-        init?.invoke(builder)
-        return builder
-    }
+  override val entityClass: Class<GradleModuleEntity> get() = GradleModuleEntity::class.java
+  operator fun invoke(
+    gradleProjectId: GradleProjectEntityId,
+    entitySource: EntitySource,
+    init: (GradleModuleEntityBuilder.() -> Unit)? = null,
+  ): GradleModuleEntityBuilder {
+    val builder = builder()
+    builder.gradleProjectId = gradleProjectId
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
 }
 
 fun MutableEntityStorage.modifyGradleModuleEntity(
-    entity: GradleModuleEntity,
-    modification: GradleModuleEntityBuilder.() -> Unit,
+  entity: GradleModuleEntity,
+  modification: GradleModuleEntityBuilder.() -> Unit,
 ): GradleModuleEntity = modifyEntity(GradleModuleEntityBuilder::class.java, entity, modification)
 
 var ModuleEntityBuilder.gradleModuleEntity: GradleModuleEntityBuilder?
-        by WorkspaceEntity.extensionBuilder(GradleModuleEntity::class.java)
+  by WorkspaceEntity.extensionBuilder(GradleModuleEntity::class.java)
 
 
 @JvmOverloads
 @JvmName("createGradleModuleEntity")
 fun GradleModuleEntity(
-    gradleProjectId: GradleProjectEntityId,
-    entitySource: EntitySource,
-    init: (GradleModuleEntityBuilder.() -> Unit)? = null,
+  gradleProjectId: GradleProjectEntityId,
+  entitySource: EntitySource,
+  init: (GradleModuleEntityBuilder.() -> Unit)? = null,
 ): GradleModuleEntityBuilder = GradleModuleEntityType(gradleProjectId, entitySource, init)
