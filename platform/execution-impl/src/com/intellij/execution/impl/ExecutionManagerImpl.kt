@@ -586,7 +586,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
     val runningToStop = ContainerUtil.concat(runningOfTheSameType, runningIncompatible)
     if (runningToStop.isNotEmpty()) {
       if (configuration != null) {
-        if (runningOfTheSameType.isNotEmpty() && (runningOfTheSameType.size > 1 || contentToReuse == null || runningOfTheSameType.first() !== contentToReuse)) {
+        if (runningOfTheSameType.isNotEmpty() && (runningOfTheSameType.size > 1 || contentToReuse == null || runningOfTheSameType.first().id != contentToReuse.id)) {
           val result = configuration.configuration.restartSingleton(environment)
           if (result == RestartSingletonResult.NO_FURTHER_ACTION) {
             return
