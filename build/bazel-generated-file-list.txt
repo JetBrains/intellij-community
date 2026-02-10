@@ -598,6 +598,12 @@ platform/find/backend
 platform/foldings
 platform/forms_rt
 platform/icons
+platform/icons-api
+platform/icons-api/legacy-icon-support
+platform/icons-api/rendering
+platform/icons-api/rendering/lowlevel
+platform/icons-impl
+platform/icons-impl/intellij
 platform/ide-core
 platform/ide-core-impl
 platform/ide-core/plugins

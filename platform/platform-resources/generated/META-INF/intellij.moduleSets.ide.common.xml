@@ -121,6 +121,10 @@
     <module name="intellij.platform.projectModel.impl" loading="embedded"/>
     <module name="intellij.platform.analysis" loading="embedded"/>
     <module name="intellij.platform.analysis.impl" loading="embedded"/>
+    <module name="intellij.platform.icons.api" loading="embedded"/>
+    <module name="intellij.platform.icons.api.rendering" loading="embedded"/>
+    <module name="intellij.platform.icons.api.rendering.lowlevel" loading="embedded"/>
+    <module name="intellij.platform.icons.api.legacyIconSupport" loading="embedded"/>
     <module name="intellij.platform.ide.core" loading="embedded"/>
     <!-- endregion -->
     <!-- endregion -->
@@ -158,6 +162,8 @@
     <module name="intellij.platform.lang" loading="embedded"/>
     <module name="intellij.platform.lang.impl" loading="embedded"/>
     <module name="intellij.platform.ide.impl" loading="embedded"/>
+    <module name="intellij.platform.icons.impl" loading="embedded"/>
+    <module name="intellij.platform.icons.impl.intellij" loading="embedded"/>
     <module name="intellij.platform.ide.concurrency" loading="embedded"/>
     <module name="intellij.platform.builtInServer" loading="embedded"/>
     <module name="intellij.platform.externalSystem" loading="embedded"/>

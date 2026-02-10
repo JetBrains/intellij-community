@@ -30,6 +30,12 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.icons.rendering.ImageResourceProvider
+import org.jetbrains.icons.impl.intellij.IntelliJIconManager
+import org.jetbrains.icons.impl.intellij.rendering.IntelliJIconRendererManager
+import org.jetbrains.icons.impl.intellij.rendering.IntelliJImageResourceProvider
+import org.jetbrains.icons.rendering.IconRendererManager
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -40,11 +46,16 @@ import javax.swing.RepaintManager
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 
+@OptIn(ExperimentalIconsApi::class)
 internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncScope: CoroutineScope) {
   // IdeaLaF uses AllIcons - icon manager must be activated
   if (!isHeadless) {
     span("icon manager activation") {
-      IconManager.activate(CoreIconManager())
+      val iconManager = CoreIconManager()
+      IconManager.activate(iconManager)
+    }
+    span("new icon manager activation") {
+      IntelliJIconManager.activate()
     }
   }
 

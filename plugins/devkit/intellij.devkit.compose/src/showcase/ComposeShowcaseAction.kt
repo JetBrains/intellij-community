@@ -13,9 +13,9 @@ import org.jetbrains.jewel.bridge.compose
 import java.awt.Dimension
 import javax.swing.JComponent
 
-private fun createComposeShowcaseComponent(): JComponent {
+private fun createComposeShowcaseComponent(project: Project): JComponent {
   return compose {
-    ComposeShowcase()
+    ComposeShowcase(project)
   }
 }
 
@@ -31,7 +31,7 @@ internal class ComposeShowcaseAction : DumbAwareAction() {
   }
 }
 
-private class ComposeShowcaseDialog(project: Project?, @NlsSafe dialogTitle: String) :
+private class ComposeShowcaseDialog(val project: Project?, @NlsSafe dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
   init {
@@ -40,7 +40,7 @@ private class ComposeShowcaseDialog(project: Project?, @NlsSafe dialogTitle: Str
   }
 
   override fun createCenterPanel(): JComponent {
-    return Wrapper(createComposeShowcaseComponent()).apply {
+    return Wrapper(createComposeShowcaseComponent(project!!)).apply {
       minimumSize = Dimension(200, 100)
       preferredSize = Dimension(800, 600)
     }

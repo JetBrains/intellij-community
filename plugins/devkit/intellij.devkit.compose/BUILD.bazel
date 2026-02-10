@@ -7,6 +7,7 @@ create_kotlinc_options(
   opt_in = [
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "org.jetbrains.icons.api.ExperimentalIconsApi",
   ],
   plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"]
 )
@@ -60,6 +61,11 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/external-system-impl:externalSystem-impl",
     "//plugins/gradle",
+    "//platform/icons-api/legacy-icon-support",
+    "//platform/platform-impl/rpc",
+    "//fleet/util/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

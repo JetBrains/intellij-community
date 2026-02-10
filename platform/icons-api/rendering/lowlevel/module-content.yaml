@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.icons.api.rendering.lowlevel.jar
+  modules:
+  - name: intellij.platform.icons.api.rendering.lowlevel

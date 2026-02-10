@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api" />
   </component>
 </module>

@@ -13,6 +13,9 @@ plugins {
 
 dependencies {
     api(projects.ui)
+    api(project(":jb-icons-api"))
+    api(project(":jb-icons-api-rendering"))
+    api(project(":jb-icons-impl"))
     implementation(libs.jbr.api)
 }
 

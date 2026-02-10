@@ -12,6 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.awt.Desktop
 import java.net.URI
+import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.icons.design.px
+import org.jetbrains.icons.icon
+import org.jetbrains.icons.modifiers.IconModifier
+import org.jetbrains.icons.modifiers.size
 import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.samples.showcase.views.forCurrentOs
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
@@ -26,6 +31,7 @@ import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
 
+@OptIn(ExperimentalIconsApi::class)
 @ExperimentalLayoutApi
 @Composable
 internal fun DecoratedWindowScope.TitleBarView() {
@@ -117,7 +123,9 @@ internal fun DecoratedWindowScope.TitleBarView() {
                             )
 
                         IntUiThemes.Dark ->
-                            Icon(key = ShowcaseIcons.themeDark, contentDescription = "Dark", hints = arrayOf(Size(20)))
+                            Icon(icon {
+                                icon(ShowcaseIcons.themeDark, modifier = IconModifier.size(20.px))
+                            }, contentDescription = "Dark")
 
                         IntUiThemes.System ->
                             Icon(

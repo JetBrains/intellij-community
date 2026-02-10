@@ -14224,6 +14224,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1.jar",
+  sha256 = "3565b6d4d789bf70683c45566944287fc1d8dc75c23d98bd87d01059cc76f2b3",
+  downloaded_file_path = "kotlinx-serialization-core-jvm-1.8.1.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1-sources.jar",
+  sha256 = "d4a7221a0c2ccb47bc736340344b256506cf8a5a49882883f8f56385ae69a1bc",
+  downloaded_file_path = "kotlinx-serialization-core-jvm-1.8.1-sources.jar"
+)
+
+http_file(
   name = "com_pngencoder-pngencoder-0_14_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/pngencoder/pngencoder/0.14.0/pngencoder-0.14.0.jar",
   sha256 = "79bf02e8f49833dc3433ae1554999dd375075e5ab13447fc1e558857b51baecc",

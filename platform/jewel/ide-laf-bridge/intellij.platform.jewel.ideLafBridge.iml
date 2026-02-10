@@ -50,5 +50,6 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" exported="" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" />
   </component>
 </module>

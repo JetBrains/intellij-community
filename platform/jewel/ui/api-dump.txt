@@ -374,6 +374,8 @@ f:org.jetbrains.jewel.ui.component.IconButtonState$Companion
 - bs:of-3OtLUoY$default(org.jetbrains.jewel.ui.component.IconButtonState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.IconKt
 - sf:Icon(androidx.compose.ui.graphics.painter.Painter,java.lang.String,androidx.compose.ui.graphics.ColorFilter,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
+- sf:Icon(java.lang.String,androidx.compose.ui.Modifier,org.jetbrains.icons.rendering.LoadingStrategy,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
+- sf:Icon(org.jetbrains.icons.Icon,java.lang.String,androidx.compose.ui.Modifier,org.jetbrains.icons.rendering.LoadingStrategy,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I):V
 - sf:Icon-FHprtrg(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,J,org.jetbrains.jewel.ui.painter.PainterHint,androidx.compose.runtime.Composer,I,I):V
@@ -2320,6 +2322,10 @@ f:org.jetbrains.jewel.ui.graphics.CssLinearGradientBrushKt
 org.jetbrains.jewel.ui.icon.IconKey
 - a:getIconClass():java.lang.Class
 - a:path(Z):java.lang.String
+f:org.jetbrains.jewel.ui.icon.IconKeyKt
+- sf:iconKey(org.jetbrains.icons.design.IconDesigner,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.icons.modifiers.IconModifier):V
+- bs:iconKey$default(org.jetbrains.icons.design.IconDesigner,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.icons.modifiers.IconModifier,I,java.lang.Object):V
+f:org.jetbrains.jewel.ui.icon.IconUtilsKt
 f:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - org.jetbrains.jewel.ui.icon.IconKey
 - sf:$stable:I
