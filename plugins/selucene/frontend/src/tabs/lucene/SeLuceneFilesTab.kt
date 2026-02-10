@@ -9,13 +9,14 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+import com.intellij.selucene.common.SeLuceneProviderIdUtils
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.Nls
 
 @Suppress("HardCodedStringLiteral")
 class SeLuceneFilesTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: @Nls String get() = "Lucene Files"
-  override val id: String get() = ID
+  override val id: String get() = SeLuceneProviderIdUtils.LUCENE_FILES
   override val priority: Int
     get() = 10
 
@@ -35,7 +36,5 @@ class SeLuceneFilesTab(private val delegate: SeTabDelegate) : SeTab {
     Disposer.dispose(delegate)
   }
 
-  companion object {
-    const val ID: String = "LuceneFilesTab"
-  }
+
 }

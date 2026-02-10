@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 
 class SeLuceneFilesTabFactory : SeTabFactory {
   override val id: String
-    get() = SeLuceneFilesTab.ID
+    get() = SeLuceneProviderIdUtils.LUCENE_FILES
 
   override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
     if (project == null) return null

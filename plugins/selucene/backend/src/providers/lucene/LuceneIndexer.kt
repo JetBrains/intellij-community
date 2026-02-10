@@ -93,6 +93,17 @@ class LuceneIndexer(val project: Project, val coroutineScope: CoroutineScope) {
 
     return document
   }
+  suspend fun deleteIndex() {
+    mutex.withLock {
+      val writer = createWriter() ?: run {
+        LuceneSearcher.LOG.warn("Cannot create Lucene index writer")
+        return
+      }
+      writer.deleteAll()
+
+      writer.close()
+    }
+  }
 
   companion object {
     fun getInstance(project: Project): LuceneIndexer = project.service<LuceneIndexer>()
