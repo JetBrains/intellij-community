@@ -1,16 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.gradleJava.run.getReceiverClassFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -57,15 +54,6 @@ internal fun findDependencyType(expression: KtCallExpression): DependencyType? =
         else DependencyType.OTHER
     }
     return null
-}
-
-internal fun KtExpression.getReceiverClassFqName(): FqName? = analyze(this) {
-    val resolvedCall = this@getReceiverClassFqName.resolveToCall() ?: return null
-    val singleCall = resolvedCall.singleFunctionCallOrNull()
-        ?: resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>()
-        ?: return null
-    val callableId = singleCall.partiallyAppliedSymbol.symbol.callableId ?: return null
-    getReceiverClassFqName(singleCall) ?: callableId.classId?.asSingleFqName()
 }
 
 /**

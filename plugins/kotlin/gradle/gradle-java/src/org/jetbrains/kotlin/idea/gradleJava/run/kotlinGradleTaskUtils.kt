@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.application.ReadAction
@@ -131,8 +131,7 @@ private fun doesCustomizeTask(functionCall: KaCallableMemberCall<*, *>): Boolean
             || isMethodOfProject(methodName, classFqName)
 }
 
-@ApiStatus.Internal
-fun getReceiverClassFqName(functionCall: KaCallableMemberCall<*, *>): FqName? {
+private fun getReceiverClassFqName(functionCall: KaCallableMemberCall<*, *>): FqName? {
     val type = functionCall.partiallyAppliedSymbol.extensionReceiver?.type
         ?: functionCall.partiallyAppliedSymbol.dispatchReceiver?.type
     val unwrappedType = if (type is KaFlexibleType) type.lowerBound else type

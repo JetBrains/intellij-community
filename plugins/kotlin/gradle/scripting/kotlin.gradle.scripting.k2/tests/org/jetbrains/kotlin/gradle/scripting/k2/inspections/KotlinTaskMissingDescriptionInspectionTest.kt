@@ -269,6 +269,176 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @AllGradleVersionsSource
+    fun testNotMissingWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks.register<Copy>("someTask") {
+                    description = "some description"
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testNotMissingDelegationWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                val task by tasks.registering(Copy::class) {
+                    description = "some description"
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testNotMissingSetterWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks.register<Copy>("someTask") {
+                    setDescription("some description")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testNotMissingSetterDelegationWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                val task by tasks.registering(Copy::class) {
+                    setDescription("some description")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockNotMissingWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    register<Copy>("someTask") {
+                        description = "some description"
+                    }
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockDelegationNotMissingWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    val someTask by registering(Copy::class) {
+                        description = "some description"
+                    }
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testMissingWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                "tasks.<weak_warning>register</weak_warning><Copy>(\"someTask\") {}"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testMissingNoConfigBlockWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                "tasks.<weak_warning>register</weak_warning><Copy>(\"someTask\")"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testMissingDelegationWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                "val task by tasks.<weak_warning>registering</weak_warning>(Copy::class) {}"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testMissingDelegationNoConfigBlockWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                "val task by tasks.<weak_warning>registering</weak_warning>(Copy::class)"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    <weak_warning>register</weak_warning><Copy>("someTask")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockDelegationWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    val someTask by <weak_warning>registering</weak_warning>(Copy::class) {}
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockDelegationNoConfigBlockWithType(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    val someTask by <weak_warning>registering</weak_warning>(Copy::class)
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
     fun testAdding(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(

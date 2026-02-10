@@ -7,9 +7,15 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.asSafely
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -43,8 +49,10 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
         reportReference(expression)
     }
 
-    private fun KtExpression.isTaskContainerReceiver(): Boolean =
-        this.getReceiverClassFqName() in setOf(FqName(GRADLE_API_TASK_CONTAINER), GRADLE_KOTLIN_DSL_TASK_CONTAINER_SCOPE)
+    private fun KtExpression.isTaskContainerReceiver(): Boolean {
+        val containingClassSymbol = this.getReceiverClassId() ?: return false
+        return isInheritor(this, containingClassSymbol, GRADLE_API_TASK_CONTAINER_CLASS_ID)
+    }
 
     private fun checkConfigBlockAndReport(callExpression: KtCallExpression, blockExpression: KtBlockExpression) {
         if (blockExpression.hasDescriptionAssignment() || blockExpression.hasDescriptionSetter()) return
@@ -81,7 +89,8 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
         }
         .filter { it.operationReference.node.findChildByType(BinaryOperationPrecedence.ASSIGNMENT.tokenSet) != null }
         .any {
-            it.left?.getReceiverClassFqName() == FqName(GRADLE_API_TASK)
+            val receiverClassId = it.left!!.getReceiverClassId() ?: return@any false
+            isInheritor(it.left!!, receiverClassId, GRADLE_API_TASK_CLASS_ID)
         }
 
     private fun KtBlockExpression.hasDescriptionSetter(): Boolean = this.descendantsOfType<KtCallExpression>()
@@ -89,16 +98,37 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
             val callName = it.calleeExpression?.text
             callName == DESCRIPTION_SETTER
         }.any {
-            it.getReceiverClassFqName() == FqName(GRADLE_API_TASK)
+            val receiverClassId = it.getReceiverClassId() ?: return@any false
+            isInheritor(it, receiverClassId, GRADLE_API_TASK_CLASS_ID)
         }
+
+    private fun KtExpression.getReceiverClassId(): ClassId? = analyze(this) {
+        val resolvedCall = this@getReceiverClassId.resolveToCall() ?: return null
+        val callPartiallyAppliedSymbol = resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol ?: return null
+        val type = callPartiallyAppliedSymbol.extensionReceiver?.type
+            ?: callPartiallyAppliedSymbol.dispatchReceiver?.type
+        val unwrappedType = if (type is KaFlexibleType) type.lowerBound else type
+
+        return unwrappedType?.symbol?.classId ?: callPartiallyAppliedSymbol.symbol.callableId?.classId
+    }
+
+    private fun isInheritor(useSiteElement: KtElement, targetClassId: ClassId, baseClassId: ClassId): Boolean {
+        if (targetClassId == baseClassId) return true
+        return analyze(useSiteElement) {
+            val targetClass = findClass(targetClassId) ?: return@analyze false
+            val baseClass = findClass(baseClassId) ?: return@analyze false
+            return targetClass.isSubClassOf(baseClass)
+        }
+    }
 
     companion object {
         private const val DESCRIPTION_SETTER = "setDescription"
-        private val GRADLE_KOTLIN_DSL_TASK_CONTAINER_SCOPE = FqName("org.gradle.kotlin.dsl.TaskContainerScope")
+        private val GRADLE_API_TASK_CLASS_ID = ClassId.fromString(GRADLE_API_TASK.replace('.', '/'))
+        private val GRADLE_API_TASK_CONTAINER_CLASS_ID = ClassId.fromString(GRADLE_API_TASK_CONTAINER.replace('.', '/'))
     }
 }
 
-private class AddDescriptionFix() : KotlinModCommandQuickFix<KtCallExpression>() {
+private class AddDescriptionFix : KotlinModCommandQuickFix<KtCallExpression>() {
     override fun getName(): String = familyName
     override fun getFamilyName(): @IntentionFamilyName String = GradleInspectionBundle.message("intention.name.task.add.description")
 
