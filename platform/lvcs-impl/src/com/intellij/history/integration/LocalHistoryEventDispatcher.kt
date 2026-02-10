@@ -67,6 +67,14 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
         true
       }, VirtualFileFilter { file -> isVersioned(file) })
     }
+
+    val inContent = IdeaGateway.getVersionedFilterData().myProjectFileIndices.any { it.isInContent(dir) }
+
+    if (!inContent && isVersioned(dir)) {
+      // Non-recursively register this file or directory if it's outside project roots but is versioned.
+      // (recursive iteration would load files into VFS, we don't want it)
+      facade.created(gateway.getPathOrUrl(dir), dir.isDirectory)
+    }
   }
 
   private fun beforeContentsChange(e: VFileContentChangeEvent) {
