@@ -433,9 +433,22 @@ public fun EditableListComboBox(
     var hoveredItemIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(itemKeys) {
-        // Select the first item in the list when creating
-        listState.selectedKeys = setOf(itemKeys(selectedIndex, items.getOrNull(selectedIndex).orEmpty()))
+    val popupManager = remember {
+        PopupManager(
+            onPopupVisibleChange = {
+                hoveredItemIndex = -1
+                onPopupVisibleChange(it)
+            },
+            name = "EditableListComboBoxPopup",
+        )
+    }
+
+    LaunchedEffect(itemKeys, selectedIndex, popupManager.isPopupVisible.value) {
+        if (!popupManager.isPopupVisible.value) {
+            val item = items.getOrNull(selectedIndex).orEmpty()
+            listState.selectedKeys = setOf(itemKeys(selectedIndex, item))
+            textFieldState.edit { replace(0, length, item) }
+        }
     }
 
     fun setSelectedItem(index: Int) {
@@ -506,16 +519,7 @@ public fun EditableListComboBox(
                 setSelectedItem(indexOfSelected)
             }
         },
-        popupManager =
-            remember {
-                PopupManager(
-                    onPopupVisibleChange = {
-                        hoveredItemIndex = -1
-                        onPopupVisibleChange(it)
-                    },
-                    name = "EditableListComboBoxPopup",
-                )
-            },
+        popupManager = popupManager,
         popupContent = {
             PopupContent(
                 items = items,
@@ -676,15 +680,6 @@ internal fun <T : Any> ListComboBoxImpl(
         ),
     itemContent: @Composable (index: Int, item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    LaunchedEffect(itemKeys) {
-        val item = items.getOrNull(selectedIndex)
-        if (item != null) {
-            listState.selectedKeys = setOf(itemKeys(selectedIndex, item))
-        } else {
-            listState.selectedKeys = emptySet()
-        }
-    }
-
     val density = LocalDensity.current
     var comboBoxSize by remember { mutableStateOf(DpSize.Zero) }
     var currentComboBoxSize by remember { mutableStateOf(DpSize.Zero) }
@@ -759,6 +754,19 @@ internal fun <T : Any> ListComboBoxImpl(
             },
             name = "ListComboBoxPopup",
         )
+    }
+
+    // Sync external selectedIndex changes to listState, but only when popup is closed
+    // to avoid disrupting the user's active browsing session when popup is open
+    LaunchedEffect(itemKeys, selectedIndex, popupManager.isPopupVisible.value) {
+        if (!popupManager.isPopupVisible.value) {
+            val item = items.getOrNull(selectedIndex)
+            if (item != null) {
+                listState.selectedKeys = setOf(itemKeys(selectedIndex, item))
+            } else {
+                listState.selectedKeys = emptySet()
+            }
+        }
     }
 
     fun commitSelectionFromHoverOrMapped() {
