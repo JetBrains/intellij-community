@@ -91,24 +91,63 @@ public class PyImportCollector {
     if (!(moduleFile instanceof PyFileImpl)) {
       return;
     }
-    PsiElement variant = moduleFile.findExportedName(myRefText);
-    PsiNamedElement definition = as(variant, PsiNamedElement.class);
-    if (definition == null || definition instanceof PyFile || definition instanceof PyImportElement) {
-      return;
-    }
     String visibleName = importElement.getVisibleName();
     if (visibleName == null) {
       return;
     }
-    String qualifiedRef = visibleName + "." + myRefText;
-    String qName = definition instanceof PyQualifiedNameOwner ? ((PyQualifiedNameOwner)definition).getQualifiedName() : null;
-    if (qName != null && seenCandidateNames.contains(qName)) {
+    // Check for top-level symbol in the module
+    PsiElement variant = moduleFile.findExportedName(myRefText);
+    PsiNamedElement definition = as(variant, PsiNamedElement.class);
+    if (definition != null && !(definition instanceof PyFile || definition instanceof PyImportElement)) {
+      String qualifiedRef = visibleName + "." + myRefText;
+      String qName = definition instanceof PyQualifiedNameOwner ? ((PyQualifiedNameOwner)definition).getQualifiedName() : null;
+      if (qName == null || !seenCandidateNames.contains(qName)) {
+        fix.addImport(definition, moduleFile, importElement, null, null, qualifiedRef);
+        if (qName != null) {
+          seenCandidateNames.add(qName);
+        }
+      }
       return;
     }
-    fix.addImport(definition, moduleFile, importElement, null, null, qualifiedRef);
-    if (qName != null) {
-      seenCandidateNames.add(qName);
+    // Check for nested classes inside top-level classes of the module
+    addNestedCandidateViaImportedModule(importElement, moduleFile, visibleName);
+  }
+
+  private void addNestedCandidateViaImportedModule(@NotNull PyImportElement importElement,
+                                                   @NotNull PyFile moduleFile,
+                                                   @NotNull String visibleName) {
+    for (PyClass topLevelClass : moduleFile.getTopLevelClasses()) {
+      PyClass nested = findNestedClassByName(topLevelClass, myRefText);
+      if (nested == null) {
+        continue;
+      }
+      String nestedQualifier = buildNestedQualifier(nested, topLevelClass);
+      if (nestedQualifier == null) {
+        continue;
+      }
+      String qualifiedRef = visibleName + "." + nestedQualifier;
+      String qName = nested.getQualifiedName();
+      if (qName != null && seenCandidateNames.contains(qName)) {
+        continue;
+      }
+      fix.addImport(topLevelClass, moduleFile, importElement, null, null, qualifiedRef);
+      if (qName != null) {
+        seenCandidateNames.add(qName);
+      }
     }
+  }
+
+  private static @Nullable PyClass findNestedClassByName(@NotNull PyClass parentClass, @NotNull String name) {
+    for (PyClass nested : parentClass.getNestedClasses()) {
+      if (name.equals(nested.getName())) {
+        return nested;
+      }
+      PyClass deeperNested = findNestedClassByName(nested, name);
+      if (deeperNested != null) {
+        return deeperNested;
+      }
+    }
+    return null;
   }
 
   private PsiFile addImportViaElement(PsiFile existingImportFile, PyImportElement importElement, PsiElement source) {
