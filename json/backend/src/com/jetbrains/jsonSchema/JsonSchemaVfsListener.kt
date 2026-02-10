@@ -1,143 +1,155 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.jsonSchema;
+package com.jetbrains.jsonSchema
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.json.JsonFileType;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter;
-import com.intellij.util.Alarm.ThreadToUse;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.Topic;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.json.JsonFileType
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.ZipperUpdater
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter
+import com.intellij.util.Alarm
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.SequentialTaskExecutor
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.messages.Topic
+import com.jetbrains.jsonSchema.ide.JsonSchemaService
+import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl
+import java.util.Arrays
+import java.util.concurrent.ConcurrentHashMap
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
+class JsonSchemaVfsListener private constructor(updater: JsonSchemaUpdater) :
+  BulkVirtualFileListenerAdapter(object : VirtualFileContentsChangedAdapter() {
+    private val myUpdater = updater
+    override fun onFileChange(schemaFile: VirtualFile) {
+      myUpdater.onFileChange(schemaFile)
+    }
 
-public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
-  public static final Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
-  public static final Topic<Runnable> JSON_DEPS_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Deps.Changed", Runnable.class);
+    override fun onBeforeFileChange(schemaFile: VirtualFile) {
+      myUpdater.onFileChange(schemaFile)
+    }
+  }) {
 
-  public static @NotNull JsonSchemaUpdater startListening(@NotNull Project project, @NotNull JsonSchemaService service, @NotNull MessageBusConnection connection) {
-    final JsonSchemaUpdater updater = new JsonSchemaUpdater(project, service);
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(updater));
-    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeAnyChangeAbstractAdapter() {
-      @Override
-      protected void onChange(@Nullable PsiFile file) {
-        if (file != null) updater.onFileChange(file.getViewProvider().getVirtualFile());
-      }
-    }, (Disposable)service);
-    return updater;
-  }
+  class JsonSchemaUpdater(project: Project, service: JsonSchemaService) {
+    private val myProject: Project
+    private val myUpdater: ZipperUpdater
+    private val myService: JsonSchemaService
+    private val myDirtySchemas: MutableSet<VirtualFile?> = ConcurrentHashMap.newKeySet<VirtualFile?>()
+    private val myRunnable: Runnable
+    private val myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Json Vfs Updater Executor")
 
-  private JsonSchemaVfsListener(@NotNull JsonSchemaUpdater updater) {
-    super(new VirtualFileContentsChangedAdapter() {
-      private final @NotNull JsonSchemaUpdater myUpdater = updater;
-      @Override
-      protected void onFileChange(final @NotNull VirtualFile schemaFile) {
-        myUpdater.onFileChange(schemaFile);
-      }
+    init {
+      val disposable = service as Disposable
 
-      @Override
-      protected void onBeforeFileChange(@NotNull VirtualFile schemaFile) {
-        myUpdater.onFileChange(schemaFile);
-      }
-    });
-  }
-
-  public static final class JsonSchemaUpdater {
-    private static final int DELAY_MS = 200;
-
-    private final @NotNull Project myProject;
-    private final ZipperUpdater myUpdater;
-    private final @NotNull JsonSchemaService myService;
-    private final Set<VirtualFile> myDirtySchemas = ConcurrentCollectionFactory.createConcurrentSet();
-    private final Runnable myRunnable;
-    private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Json Vfs Updater Executor");
-
-    private JsonSchemaUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
-      Disposable disposable = (Disposable)service;
-
-      myProject = project;
-      myUpdater = new ZipperUpdater(DELAY_MS, ThreadToUse.POOLED_THREAD, disposable);
-      myService = service;
-      myRunnable = () -> {
-        if (myProject.isDisposed()) return;
-        Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
-        if (ContainerUtil.exists(scope, f -> service.possiblyHasReference(f.getName()))) {
-          myProject.getMessageBus().syncPublisher(JSON_DEPS_CHANGED).run();
-          JsonDependencyModificationTracker.forProject(myProject).incModificationCount();
+      myProject = project
+      myUpdater = ZipperUpdater(DELAY_MS, Alarm.ThreadToUse.POOLED_THREAD, disposable)
+      myService = service
+      myRunnable = Runnable {
+        if (myProject.isDisposed()) return@Runnable
+        val scope: MutableCollection<VirtualFile?> = HashSet<VirtualFile?>(myDirtySchemas)
+        if (ContainerUtil.exists<VirtualFile?>(
+            scope,
+            Condition { f: VirtualFile? -> service.possiblyHasReference(f!!.getName()) })
+        ) {
+          myProject.getMessageBus().syncPublisher<Runnable>(JSON_DEPS_CHANGED).run()
+          JsonDependencyModificationTracker.forProject(myProject).incModificationCount()
         }
-        myDirtySchemas.removeAll(scope);
-        if (scope.isEmpty()) return;
+        myDirtySchemas.removeAll(scope)
+        if (scope.isEmpty()) return@Runnable
 
-        Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isApplicableToFile(file)
-                                                                                 && ((JsonSchemaServiceImpl)myService).isMappedSchema(file, false));
-        if (finalScope.isEmpty()) return;
-        if (myProject.isDisposed()) return;
-        myProject.getMessageBus().syncPublisher(JSON_SCHEMA_CHANGED).run();
+        val finalScope: MutableCollection<VirtualFile?> =
+          ContainerUtil.filter<VirtualFile?>(scope, Condition { file: VirtualFile? ->
+            myService.isApplicableToFile(file)
+            && (myService as JsonSchemaServiceImpl).isMappedSchema(file!!, false)
+          })
+        if (finalScope.isEmpty()) return@Runnable
+        if (myProject.isDisposed()) return@Runnable
+        myProject.getMessageBus().syncPublisher<Runnable>(JSON_SCHEMA_CHANGED).run()
 
-        final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        final Editor[] editors = EditorFactory.getInstance().getAllEditors();
-        Arrays.stream(editors)
-              .filter(editor -> editor instanceof EditorEx && editor.getProject() == myProject)
-              .map(editor -> editor.getVirtualFile())
-              .filter(file -> file != null && file.isValid())
-              .forEach(file -> {
-                final Collection<VirtualFile> schemaFiles = ((JsonSchemaServiceImpl)myService).getSchemasForFile(file, false, true);
-                if (ContainerUtil.exists(schemaFiles, finalScope::contains)) {
-                  if (ApplicationManager.getApplication().isUnitTestMode()) {
-                    ReadAction.run(() -> restartAnalyzer(analyzer, psiManager, file));
-                  }
-                  else {
-                    ReadAction.nonBlocking(() -> restartAnalyzer(analyzer, psiManager, file))
-                      .expireWith(disposable)
-                      .submit(myTaskExecutor);
-                  }
-                }
-              });
-      };
+        val analyzer = DaemonCodeAnalyzer.getInstance(project)
+        val psiManager = PsiManager.getInstance(project)
+        val editors = EditorFactory.getInstance().getAllEditors()
+        Arrays.stream<Editor?>(editors)
+          .filter { editor: Editor? -> editor is EditorEx && editor.getProject() === myProject }
+          .map<VirtualFile?> { editor: Editor? -> editor!!.getVirtualFile() }
+          .filter { file: VirtualFile? -> file != null && file.isValid() }
+          .forEach { file: VirtualFile? ->
+            val schemaFiles = (myService as JsonSchemaServiceImpl).getSchemasForFile(file!!, false, true)
+            if (ContainerUtil.exists<VirtualFile?>(schemaFiles, Condition { o: VirtualFile? -> finalScope.contains(o) })) {
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                ReadAction.run<RuntimeException?>(ThrowableRunnable {
+                  Companion.restartAnalyzer(
+                    analyzer,
+                    psiManager,
+                    file
+                  )
+                })
+              }
+              else {
+                ReadAction.nonBlocking(Runnable { Companion.restartAnalyzer(analyzer, psiManager, file) })
+                  .expireWith(disposable)
+                  .submit(myTaskExecutor)
+              }
+            }
+          }
+      }
     }
 
-    private static void restartAnalyzer(@NotNull DaemonCodeAnalyzer analyzer, @NotNull PsiManager psiManager, @NotNull VirtualFile file) {
-      PsiFile psiFile = !psiManager.isDisposed() && file.isValid() ? psiManager.findFile(file) : null;
-      if (psiFile != null) analyzer.restart(psiFile, "JsonSchemaUpdater");
-    }
-
-    private void onFileChange(final @NotNull VirtualFile schemaFile) {
-      if (JsonFileType.DEFAULT_EXTENSION.equals(schemaFile.getExtension())) {
-        myDirtySchemas.add(schemaFile);
-        Application app = ApplicationManager.getApplication();
+    fun onFileChange(schemaFile: VirtualFile) {
+      if (JsonFileType.DEFAULT_EXTENSION == schemaFile.getExtension()) {
+        myDirtySchemas.add(schemaFile)
+        val app = ApplicationManager.getApplication()
         if (app.isUnitTestMode()) {
-          app.invokeLater(myRunnable, myProject.getDisposed());
+          app.invokeLater(myRunnable, myProject.getDisposed())
         }
         else {
-          myUpdater.queue(myRunnable);
+          myUpdater.queue(myRunnable)
         }
       }
+    }
+
+    companion object {
+      private const val DELAY_MS = 200
+
+      private fun restartAnalyzer(analyzer: DaemonCodeAnalyzer, psiManager: PsiManager, file: VirtualFile) {
+        val psiFile = if (!psiManager.isDisposed() && file.isValid()) psiManager.findFile(file) else null
+        if (psiFile != null) analyzer.restart(psiFile, "JsonSchemaUpdater")
+      }
+    }
+  }
+
+  companion object {
+    @JvmField
+    val JSON_SCHEMA_CHANGED: Topic<Runnable> =
+      Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable::class.java)
+
+    @JvmField
+    val JSON_DEPS_CHANGED: Topic<Runnable> = Topic.create("JsonSchemaVfsListener.Json.Deps.Changed", Runnable::class.java)
+
+    @JvmStatic
+    fun startListening(project: Project, service: JsonSchemaService, connection: MessageBusConnection): JsonSchemaUpdater {
+      val updater = JsonSchemaUpdater(project, service)
+      connection.subscribe<BulkFileListener>(VirtualFileManager.VFS_CHANGES, JsonSchemaVfsListener(updater))
+      PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeAnyChangeAbstractAdapter() {
+        override fun onChange(file: PsiFile?) {
+          if (file != null) updater.onFileChange(file.getViewProvider().getVirtualFile())
+        }
+      }, service as Disposable)
+      return updater
     }
   }
 }
