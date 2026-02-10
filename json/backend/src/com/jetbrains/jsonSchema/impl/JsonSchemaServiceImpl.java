@@ -68,7 +68,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
 
   private final @NotNull JsonSchemaCatalogManager myCatalogManager;
-  private final @NotNull JsonSchemaVfsListener.JsonSchemaUpdater mySchemaUpdater;
   private final JsonSchemaProviderFactories myFactories;
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
@@ -93,7 +92,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       myRefs.clear();
       myAnyChangeCount.incrementAndGet();
     });
-    mySchemaUpdater = JsonSchemaVfsListener.startListening(project, this, connection);
+    JsonSchemaVfsListener.startListening(project, this, connection);
     myCatalogManager.startUpdates();
   }
 
