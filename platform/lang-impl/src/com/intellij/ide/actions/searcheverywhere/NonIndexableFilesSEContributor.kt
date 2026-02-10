@@ -125,7 +125,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
         if (matchingDegree > 0) {
           val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: return@iterateNonIndexableFiles true
           val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
-          ReadAction.nonBlocking<Boolean> { consumer.process(itemDescriptor) }.executeSynchronously()
+          ReadAction.nonBlocking<Boolean> { consumer.process(itemDescriptor) }.wrapProgress(progressIndicator).executeSynchronously()
         }
         else {
           suboptimalMatches.add(file)
@@ -154,7 +154,9 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
           val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: continue
           val weight = matchingDegree * (otherNameMatchers.size - i) / (otherNameMatchers.size + 1)
           val itemDescriptor = FoundItemDescriptor<Any>(psiItem, weight)
-          if (!ReadAction.nonBlocking<Boolean> { consumer.process(itemDescriptor) }.executeSynchronously()) return
+          if (!ReadAction.nonBlocking<Boolean> {
+              consumer.process(itemDescriptor)
+            }.wrapProgress(progressIndicator).executeSynchronously()) return
           break
         }
       }
