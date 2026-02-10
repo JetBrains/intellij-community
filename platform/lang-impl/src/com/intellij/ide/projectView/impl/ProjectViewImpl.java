@@ -162,6 +162,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private final CopyPasteDelegator copyPasteDelegator;
 
+  private boolean isBackendMode;
+
   private final ReentrantLock lock = new ReentrantLock();
   // all these booleans must be accessed only in synchronized code (or DCL)
   private volatile boolean isInitialized;
@@ -915,6 +917,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     for (AbstractProjectViewPane pane : uninitializedPanes) {
       doAddPane(pane);
     }
+    if (isBackendMode) {
+      uninitializedPanes.clear();
+      return;
+    }
 
     Content[] contents = getContentManager().getContents();
     for (int i = 1; i < contents.length; i++) {
@@ -999,6 +1005,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void doAddPane(final @NotNull AbstractProjectViewPane newPane) {
+    if (isBackendMode) {
+      idToPane.put(newPane.getId(), newPane);
+      return;
+    }
+
     ThreadingAssertions.assertEventDispatchThread();
     int index;
     final ContentManager manager = getContentManager();
@@ -1201,6 +1212,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }, project);
     }
+  }
+  
+  @ApiStatus.Internal
+  public void setupBackend() {
+    if (isInitialized) return;
+    withLock(() -> {
+      if (isInitialized) return; // DCL
+      isBackendMode = true;
+      ensurePanesLoaded();
+      isInitialized = true;
+    });
   }
 
   private void setupToolwindowActions(@NotNull ToolWindow toolWindow) {
