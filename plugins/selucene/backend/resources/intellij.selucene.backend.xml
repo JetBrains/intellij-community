@@ -1,2 +1,21 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.selucene.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <actions>
+    <action id="Se.IndexFiles"
+            class="com.intellij.selucene.backend.providers.lucene.IndexFilesForLuceneAction"
+
+            text="Index Files for Lucene"
+            description="Index files for Lucene"
+            icon="AllIcons.Actions.BuildLoadChanges"/>
+  </actions>
+
 </idea-plugin>

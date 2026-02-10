@@ -27,6 +27,8 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/core-ui",
     "//platform/platform-frontend:frontend",
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/frontend",
   ]
 )
 ### auto-generated section `build intellij.selucene.frontend` end

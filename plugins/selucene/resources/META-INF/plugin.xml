@@ -4,7 +4,7 @@
   <vendor>JetBrains</vendor>
 
   <!-- Declare split content modules that belong to this plugin -->
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.selucene.common" loading="embedded"/>
     <module name="intellij.selucene.frontend"/>
     <module name="intellij.selucene.backend"/>

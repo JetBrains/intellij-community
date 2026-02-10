@@ -2,15 +2,15 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.searchEverywhere.frontend"/>
     <module name="intellij.selucene.common"/>
   </dependencies>
   <!-- endregion -->
+  
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhere.tabFactory implementation="com.intellij.selucene.frontend.tabs.lucene.SeLuceneFilesTabFactory"/>
+  </extensions>
 
-  <actions>
-    <action id="com.intellij.selucene.HelloWorldAction" class="com.intellij.selucene.HelloWorldAction"
-      text="Selucene: Hello World"
-      description="Shows a hello world message from the Selucene plugin">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-  </actions>
+
 </idea-plugin>
