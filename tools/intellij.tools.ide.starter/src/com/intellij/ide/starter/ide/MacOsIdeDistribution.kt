@@ -20,7 +20,8 @@ class MacOsIdeDistribution : IdeDistribution() {
     val infoPlistFile = appDir.resolve("Contents/Info.plist")
 
     infoPlistFile.inputStream().use {
-      val document = XmlBuilder.parse(it)
+      // on macOS Info.plist very often has doctype - <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      val document = XmlBuilder.parse(it, allowDoctype = true)
 
       val keys = document.getElementsByTagName("key")
 
