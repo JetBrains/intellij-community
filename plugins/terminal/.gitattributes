@@ -1,0 +1,2 @@
+# Do not touch line endings, especially for signed scripts
+*.ps1 -text
