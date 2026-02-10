@@ -228,6 +228,10 @@ private fun isModuleCloseSource(moduleName: String, context: CompilationContext)
     return false
   }
 
+  if (moduleName == "intellij.rd.platform") {
+    return false
+  }
+
   // todo will be removed on the next stage
   if (moduleName == "fleet.protocol" || moduleName.startsWith("fleet.rpc.")) {
     return false
