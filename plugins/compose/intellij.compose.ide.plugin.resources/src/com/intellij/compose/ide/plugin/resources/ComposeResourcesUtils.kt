@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.psi.PsiFile
 import java.nio.file.Path
 
 internal const val COMPOSE_RESOURCES_DIR: String = "composeResources"
@@ -23,7 +25,8 @@ internal const val VALUES_DIRNAME: String = "values"
 
 internal const val ANDROID_RESOURCE_REFERENCE = "org.jetbrains.android.dom.converters.AndroidResourceReference"
 
-private val VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES = setOf("drawable", "font", "values")
+internal val ALL_STRING_TAGS = setOf("string", "string-array", "plurals", "item", "resources")
+internal val VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES = setOf("drawable", "font", "values")
 
 internal val String.isValidInnerComposeResourcesDirName: Boolean
   get() =
@@ -76,6 +79,23 @@ internal fun Module.getComposeResourcesDir(): VirtualFile? {
     log.warn("No Compose resources directory found for module $name and source set $sourceSetName.")
     null
   }
+}
+
+/**
+ * Determines if the given file belongs to a Compose resources directory structure.
+ *
+ * This function checks whether the file's parent directory name is a valid inner Compose resources directory name
+ * and whether the grandparent directory is a registered Compose resources directory.
+ *
+ * @return `true` if the file is part of a Compose resources directory, `false` otherwise
+ */
+internal fun PsiFile.isComposeResourcesFile(
+  validInnerComposeResourcesDirNames: Set<String> = VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES,
+): Boolean {
+  val parentName = this.parent?.name ?: return false
+  if (!parentName.isValidInnerComposeResourcesDirNameFor(validInnerComposeResourcesDirNames)) return false
+  val composeResourcesDir = this.parent?.parent?.virtualFile?.toNioPathOrNull() ?: return false
+  return this.project.getAllComposeResourcesDirs().any { it.directoryPath == composeResourcesDir }
 }
 
 /**

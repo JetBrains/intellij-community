@@ -51,10 +51,7 @@ internal interface ComposeResourcesBase {
    */
   fun isComposeResourcesElement(element: PsiElement): Boolean {
     val psiFile = getPsiFile(element) ?: return false
-    val parentName = psiFile.parent?.name ?: return false
-    if (!parentName.isValidInnerComposeResourcesDirNameFor(validInnerComposeResourcesDirNames)) return false
-    val composeResourcesDir = psiFile.parent?.parent?.virtualFile?.toNioPathOrNull() ?: return false
-    return psiFile.project.getAllComposeResourcesDirs().any { it.directoryPath == composeResourcesDir }
+    return psiFile.isComposeResourcesFile(validInnerComposeResourcesDirNames)
   }
 
   /**

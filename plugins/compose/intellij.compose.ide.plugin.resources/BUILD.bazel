@@ -44,6 +44,8 @@ jvm_library(
     "//platform/ide-core",
     "@lib//:kotlinc-kotlin-compiler-tests-provided",
     "//platform/statistics",
+    "//libraries/icu4j",
+    "//libraries/kotlin/reflect",
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/base/psi",
   ]
@@ -119,6 +121,8 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//libraries/icu4j:icu4j_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
     "//plugins/kotlin/base/psi:psi_test_lib",
   ]
