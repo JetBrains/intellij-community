@@ -83,24 +83,31 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
         List(text.length) { i ->
           launch {
             delay(i * delay)
-            withContext(Dispatchers.EDT) {
-              span.addEvent("Calling find target second time in DelayTypeCommand")
-              val typingTarget = findTypingTarget(project)
-              if (typingTarget == null) {
-                throw Exception("Focus was lost during typing. Current focus is in: " +
-                                (KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass ?: "null"))
-              }
-              if (disableWriteProtection) {
-                val editor = DataManager.getInstance().getDataContext(typingTarget as? JComponent).getData(CommonDataKeys.EDITOR)
-                if (editor == null) {
-                  throw Exception("Cannot find Editor")
+            var typed = false
+            for (attempt in 1..3) {
+              typed = withContext(Dispatchers.EDT) {
+                val typingTarget = findTypingTarget(project)
+                if (typingTarget == null) return@withContext false
+                if (disableWriteProtection) {
+                  val editor = DataManager.getInstance().getDataContext(typingTarget as? JComponent).getData(CommonDataKeys.EDITOR)
+                  if (editor == null) throw Exception("Cannot find Editor")
+                  NonProjectFileWritingAccessProvider.allowWriting(listOf(editor.virtualFile))
                 }
-                NonProjectFileWritingAccessProvider.allowWriting(listOf(editor.virtualFile))
+                span.addEvent("Typing ${text[i]}")
+                writeIntentReadAction {
+                  typingTarget.type(text[i].toString())
+                }
+                true
               }
-              span.addEvent("Typing ${text[i]}")
-              writeIntentReadAction {
-                typingTarget.type(text[i].toString())
-              }
+              if (typed) break
+              span.addEvent("Focus lost while typing char $i, retry attempt $attempt")
+              delay(500)
+            }
+            if (!typed) {
+              throw Exception("Focus was lost during typing. Current focus is in: " +
+                              withContext(Dispatchers.EDT) {
+                                KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass ?: "null"
+                              })
             }
           }
         }
