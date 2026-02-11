@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -302,10 +303,8 @@ public final class JavaLibraryUtil {
 
     VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
     if (coordinates == null || libraryFiles.length > 1) {
-      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-
       for (VirtualFile libraryFile : libraryFiles) {
-        if (libraryFile.getFileSystem() != jarFileSystem) continue;
+        if (!libraryFile.getFileSystem().getProtocol().equals(StandardFileSystems.JAR_PROTOCOL)) continue;
 
         ProgressManager.checkCanceled();
 
