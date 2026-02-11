@@ -9,7 +9,7 @@ create_kotlinc_options(
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
-    "org.jetbrains.icons.api.ExperimentalIconsApi",
+    "org.jetbrains.icons.ExperimentalIconsApi",
   ],
   plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"],
   x_context_parameters = True,

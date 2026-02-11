@@ -28,8 +28,9 @@ class IntelliJIconManager : DefaultIconManager(), SwingIconManager {
   }
 
   override fun dynamicIcon(icon: Icon): DynamicIcon {
-    return createDynamicIcon(icon) { dynamicIcon, content ->
-      // TODO Send updates over network (also listen for them)
+    return createDynamicIcon(icon) { _, _ ->
+      // TODO Send updates over network and across serialization (also listen for them)
+      // When implemeted, also uncomment DynamicIconTest
     }
   }
 

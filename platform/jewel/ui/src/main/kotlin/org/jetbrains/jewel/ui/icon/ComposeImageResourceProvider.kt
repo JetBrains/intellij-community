@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.icon
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.decodeToImageBitmap
 import androidx.compose.ui.unit.Density
 import java.io.ByteArrayInputStream
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.resources.decodeToSvgPainter
 import org.jetbrains.icons.ExperimentalIconsApi
 import org.jetbrains.icons.InternalIconsApi
-import org.jetbrains.icons.design.Color
 import org.jetbrains.icons.modifiers.svgPatcher
 import org.jetbrains.icons.patchers.SvgPatchOperation
 import org.jetbrains.icons.patchers.SvgPatcher
@@ -34,12 +34,12 @@ public class ComposeImageResourceProvider : ImageResourceProvider {
         // TODO Support image modifiers
         if (loader is PathImageResourceLoader) {
             val extension = loader.path.substringAfterLast(".").lowercase()
-            val data = loader.loadData()
+            val data = loader.loadData(imageModifiers)
             val stream = ByteArrayInputStream(data)
             return when (extension) {
                 "svg" -> ComposePainterImageResource(patchSvg(imageModifiers, stream).decodeToSvgPainter(Density(1f)), imageModifiers)
                 // "xml" -> loader.loadData().decodeToImageVector()
-                else -> ComposeBitmapImageResource(loader.loadData().decodeToImageBitmap())
+                else -> ComposeBitmapImageResource(loader.loadData(imageModifiers).decodeToImageBitmap())
             }
         } else {
             error("Unsupported loader: $loader")
@@ -58,15 +58,46 @@ val builder = documentBuilderFactory.newDocumentBuilder()
     val knownModifiers = modifiers as? DefaultImageModifiers
     val patcher = knownModifiers?.stroke?.let { stroke ->
         svgPatcher {
-            replace("fill", Color.Transparent.toHex())
-            replace("stroke", stroke.toHex())
+            for (color in backgroundPalette) {
+                replaceIfMatches("fill", color.toIconsColor().toHex(), "transparent")
+            }
+            for (color in strokeColors) {
+                replaceIfMatches("fill", color.toIconsColor().toHex(), stroke.toHex())
+            }
         }
     } combineWith modifiers?.svgPatcher
     patcher?.patch(document.documentElement)
-    println("New SVG:")
-    println(document.writeToString())
     return document.writeToString().toByteArray()
 }
+
+private val backgroundPalette =
+    listOf(
+        Color(0xFFEBECF0),
+        Color(0xFFE7EFFD),
+        Color(0xFFDFF2E0),
+        Color(0xFFF2FCF3),
+        Color(0xFFFFE8E8),
+        Color(0xFFFFF5F5),
+        Color(0xFFFFF8E3),
+        Color(0xFFFFF4EB),
+        Color(0xFFEEE0FF),
+    )
+
+private val strokeColors =
+    listOf(
+        Color(0xFF000000),
+        Color(0xFFFFFFFF),
+        Color(0xFF818594),
+        Color(0xFF6C707E),
+        Color(0xFF3574F0),
+        Color(0xFF5FB865),
+        Color(0xFFE35252),
+        Color(0xFFEB7171),
+        Color(0xFFE3AE4D),
+        Color(0xFFFCC75B),
+        Color(0xFFF28C35),
+        Color(0xFF955AE0),
+    )
 
 private fun SvgPatcher.patch(element: Element) {
     for (operation in operations) {
@@ -78,9 +109,12 @@ private fun SvgPatcher.patch(element: Element) {
             }
             SvgPatchOperation.Operation.Replace -> {
                 if (operation.conditional) {
-                    val matches = element.getAttribute(operation.attributeName) == operation.expectedValue
+                    val matches =
+                        element.getAttribute(operation.attributeName).equals(operation.expectedValue, ignoreCase = true)
                     if (matches == !operation.negatedCondition) {
                         element.setAttribute(operation.attributeName, operation.value!!)
+                    } else {
+                        println("Conditional replace failed: ${element.getAttribute(operation.attributeName)} expected: ${operation.expectedValue}")
                     }
                 } else if (element.hasAttribute(operation.attributeName)) {
                     element.setAttribute(operation.attributeName, operation.value!!)

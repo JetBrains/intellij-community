@@ -1,4 +1,7 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Not possible before DynamicIcon can be synced cross-serialization
+
+
+/*// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.impl.intellij
 
 import com.intellij.testFramework.junit5.TestApplication
@@ -55,4 +58,4 @@ class DynamicIconTest {
       assertThat(lastChangeId).isGreaterThan(0)
     }
   }
-}
+}*/

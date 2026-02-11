@@ -2,6 +2,7 @@
 
 plugins {
   jewel
+  alias(libs.plugins.kotlinx.serialization)
 }
 
 sourceSets {
