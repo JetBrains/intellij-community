@@ -62,7 +62,7 @@
       "plugins/llm/core/src/com/intellij/ml/llm/core/models/LlmProfileService.kt",
       "plugins/llm/core/src/com/intellij/ml/llm/core/statistics/fus/AiaCustomModelsStateCollector.kt",
       "plugins/llm/core/src/com/intellij/ml/llm/core/statistics/fus/AiaThirdPartyLlmProviderUsageCollector.kt",
-      "plugins/llm/daemon/src/com/intellij/ml/llm/daemon/insight/ui/FeedbackPanel.kt",
+      "plugins/llm-experimental/insights/src/insight/ui/FeedbackPanel.kt",
       "plugins/llm/integration-tests/tests/testSrc/com/intellij/ml/llm/integration/tests/completionFullLine/CompletionSyncWithLookupFullLineTest.kt",
       "plugins/llm/integration-tests/tests/testSrc/com/intellij/ml/llm/integration/tests/nextEdit/NextEditFiltersTest.kt",
       "plugins/llm/integration-tests/tests/testSrc/com/intellij/ml/llm/integration/tests/nextEdit/NextEditStateTest.kt",
