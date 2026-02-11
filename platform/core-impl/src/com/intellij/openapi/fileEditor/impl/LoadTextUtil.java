@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
@@ -357,7 +358,7 @@ public final class LoadTextUtil {
     try {
       DetectResult info;
       if (GUESS_UTF) {
-        info = guessFromBytes(content, length, getDefaultCharsetFromEncodingManager(virtualFile));
+        info = guessFromBytes(content, length, getDefaultCharsetFromEncodingManager(virtualFile), virtualFile);
         if (info.BOM != null) {
           detectedFromBytes = AutoDetectionReason.FROM_BOM;
         }
@@ -375,7 +376,10 @@ public final class LoadTextUtil {
     }
   }
 
-  private static @NotNull DetectResult guessFromBytes(byte @NotNull [] content, int endOffset, @NotNull Charset defaultCharset) {
+  private static @NotNull DetectResult guessFromBytes(byte @NotNull [] content,
+                                                      int endOffset,
+                                                      @NotNull Charset defaultCharset,
+                                                      @NotNull VirtualFile virtualFile) {
     if (endOffset == 0) {
       return new DetectResult(null, CharsetToolkit.GuessedEncoding.SEVEN_BIT, null);
     }
@@ -385,7 +389,9 @@ public final class LoadTextUtil {
       byte[] bom = ObjectUtils.notNull(CharsetToolkit.getMandatoryBom(charset), CharsetToolkit.UTF8_BOM);
       return new DetectResult(charset, null, bom);
     }
-    CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(0, endOffset);
+    String extension = virtualFile.getExtension();
+    int encodingDetectionLimit = FileSizeLimit.getEncodingDetectionLimit(extension);
+    CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(0, Math.min(encodingDetectionLimit, endOffset));
     if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
       return new DetectResult(StandardCharsets.UTF_8, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
     }

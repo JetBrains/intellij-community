@@ -8,4 +8,8 @@ data class ExtensionSizeLimitInfo(
   val content: Int? = null,
   val intellijSense: Int? = null,
   val preview: Int? = null,
+  /**
+   * Maximum number of bytes to use for charset/encoding detection.
+   */
+  val encodingDetectionLimit: Int? = null,
 )
