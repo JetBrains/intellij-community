@@ -40,6 +40,7 @@
     <extensionPoint name="mcpToolsProvider" interface="com.intellij.mcpserver.McpToolsProvider" dynamic="true" />
     <extensionPoint name="mcpToolFilterProvider" interface="com.intellij.mcpserver.McpToolFilterProvider" dynamic="true" />
     <extensionPoint name="mcpToolset" interface="com.intellij.mcpserver.McpToolset" dynamic="true" />
+    <extensionPoint name="mcpProjectPathCustomizer" interface="com.intellij.mcpserver.McpProjectPathCustomizer" dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
