@@ -16,6 +16,7 @@ import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveIntAsNonNegativeDpOrUnspecified
 import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toPaddingValues
+import org.jetbrains.jewel.bridge.unscaledDp
 import org.jetbrains.jewel.ui.component.styling.MenuColors
 import org.jetbrains.jewel.ui.component.styling.MenuIcons
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
@@ -107,7 +108,7 @@ internal fun readMenuStyle(): MenuStyle {
                         iconSize = 16.dp,
                         minHeight =
                             if (isNewUiTheme()) {
-                                JBUI.CurrentTheme.List.rowHeight().dp.safeValue()
+                                JBUI.CurrentTheme.List.rowHeight().unscaledDp.safeValue()
                             } else {
                                 Dp.Unspecified
                             },

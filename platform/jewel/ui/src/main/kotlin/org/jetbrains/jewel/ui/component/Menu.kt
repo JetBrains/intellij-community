@@ -31,6 +31,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,7 +68,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.modifier.onHover
-import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
@@ -87,9 +87,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
 import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
-import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icon.IconKey
-import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.popupShadowAndBorder
 import org.jetbrains.jewel.ui.theme.menuStyle
 import org.jetbrains.skiko.hostOs
@@ -821,35 +819,17 @@ internal fun MenuItemBase(
     style: MenuStyle = JewelTheme.menuStyle,
     @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
-    var itemState by
-        remember(interactionSource) {
-            @Suppress("DEPRECATION") mutableStateOf(MenuItemState.of(selected = selected, enabled = enabled))
-        }
-
-    remember(enabled, selected) { itemState = itemState.copy(selected = selected, enabled = enabled) }
+    val itemState by rememberMenuItemState(selected, enabled, interactionSource)
 
     val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(interactionSource) {
-        interactionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is PressInteraction.Press -> itemState = itemState.copy(pressed = true)
-                is PressInteraction.Cancel,
-                is PressInteraction.Release -> itemState = itemState.copy(pressed = false)
-                is HoverInteraction.Enter -> {
-                    itemState = itemState.copy(hovered = true)
-                    focusRequester.requestFocus()
-                }
-
-                is HoverInteraction.Exit -> itemState = itemState.copy(hovered = false)
-                is FocusInteraction.Focus -> itemState = itemState.copy(focused = true)
-                is FocusInteraction.Unfocus -> itemState = itemState.copy(focused = false)
-            }
-        }
-    }
-
     val menuController = LocalMenuController.current
     val localInputModeManager = LocalInputModeManager.current
+
+    LaunchedEffect(itemState.isHovered) {
+        if (itemState.isHovered) {
+            focusRequester.requestFocus()
+        }
+    }
 
     Box(
         modifier =
@@ -872,52 +852,24 @@ internal fun MenuItemBase(
             onDispose {}
         }
 
-        val itemColors = style.colors.itemColors
-        val itemMetrics = style.metrics.itemMetrics
-
-        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
-        val updatedTextStyle = LocalTextStyle.current.copy(color = itemColors.contentFor(itemState).value)
-
-        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
-        CompositionLocalProvider(
-            LocalContentColor provides itemColors.contentFor(itemState).value,
-            LocalTextStyle provides updatedTextStyle,
-        ) {
-            val backgroundColor by itemColors.backgroundFor(itemState)
-
-            Row(
-                modifier =
-                    Modifier.fillMaxWidth()
-                        .defaultMinSize(minHeight = itemMetrics.minHeight)
-                        .drawItemBackground(itemMetrics, backgroundColor)
-                        .padding(itemMetrics.contentPadding),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (canShowIcon) {
-                    val iconModifier = Modifier.size(style.metrics.itemMetrics.iconSize)
-                    if (iconKey != null) {
-                        Icon(
-                            key = iconKey,
-                            contentDescription = null,
-                            modifier = iconModifier.thenIf(!enabled) { disabledAppearance() },
-                        )
-                    } else {
-                        Box(modifier = iconModifier)
-                    }
-                }
-
-                Box(modifier = Modifier.weight(1f, true)) { content(itemState) }
-
+        MenuItemLayout(
+            itemState = itemState,
+            style = style,
+            iconKey = iconKey,
+            canShowIcon = canShowIcon,
+            trailingContent =
                 if (canShowKeybinding) {
-                    Text(
-                        modifier = Modifier.padding(style.metrics.itemMetrics.keybindingsPadding),
-                        text = keybindingHint,
-                        color = itemColors.keybindingTintFor(itemState).value,
-                    )
-                }
-            }
-        }
+                    {
+                        @Suppress("DEPRECATION") // Not really deprecated, MenuItemColors will be made internal
+                        Text(
+                            modifier = Modifier.padding(style.metrics.itemMetrics.keybindingsPadding),
+                            text = keybindingHint,
+                            color = style.colors.itemColors.keybindingTintFor(itemState).value,
+                        )
+                    }
+                } else null,
+            content = { content(itemState) },
+        )
     }
 }
 
@@ -951,43 +903,15 @@ internal fun MenuSubmenuItem(
     style: MenuStyle = JewelTheme.menuStyle,
     @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
-    var itemState by
-        remember(interactionSource) {
-            @Suppress("DEPRECATION") mutableStateOf(MenuItemState.of(selected = selected, enabled = enabled))
-        }
-
-    remember(enabled) { itemState = itemState.copy(selected = false, enabled = enabled) }
-
+    var itemState by rememberMenuItemState(selected, enabled, interactionSource)
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(interactionSource) {
-        interactionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is PressInteraction.Press -> itemState = itemState.copy(pressed = true)
-                is PressInteraction.Cancel,
-                is PressInteraction.Release -> itemState = itemState.copy(pressed = false)
-
-                is HoverInteraction.Enter -> itemState = itemState.copy(hovered = true)
-                is HoverInteraction.Exit -> itemState = itemState.copy(hovered = false)
-                is FocusInteraction.Focus -> itemState = itemState.copy(focused = true)
-                is FocusInteraction.Unfocus -> itemState = itemState.copy(focused = false)
-            }
-        }
-    }
-
-    remember(selected) { itemState = itemState.copy(selected = selected) }
     LaunchedEffect(itemState.isSelected) { if (itemState.isSelected) focusRequester.requestFocus() }
 
-    val itemColors = style.colors.itemColors
-    val menuMetrics = style.metrics
-
-    @Suppress("DEPRECATION") // Not really deprecated, will be made internal
-    val backgroundColor by itemColors.backgroundFor(itemState)
     Box(
         modifier =
             modifier
                 .fillMaxWidth()
-                .drawItemBackground(menuMetrics.itemMetrics, backgroundColor)
                 .focusRequester(focusRequester)
                 .clickable(
                     onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
@@ -1004,32 +928,22 @@ internal fun MenuSubmenuItem(
                     }
                 }
     ) {
-        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
-        CompositionLocalProvider(LocalContentColor provides itemColors.contentFor(itemState).value) {
-            Row(
-                Modifier.fillMaxWidth().padding(menuMetrics.itemMetrics.contentPadding),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                if (showIcon) {
-                    if (iconKey != null) {
-                        Icon(key = iconKey, contentDescription = null)
-                    } else {
-                        Box(Modifier.size(style.metrics.itemMetrics.iconSize))
-                    }
-                }
-
-                Box(Modifier.weight(1f)) { content(itemState) }
-
+        MenuItemLayout(
+            itemState = itemState,
+            style = style,
+            iconKey = iconKey,
+            canShowIcon = showIcon,
+            trailingContent = {
+                @Suppress("DEPRECATION") // Not really deprecated, MenuItemColors will be made internal
                 Icon(
                     key = style.icons.submenuChevron,
-                    tint = itemColors.iconTintFor(itemState).value,
                     contentDescription = null,
                     modifier = Modifier.size(style.metrics.itemMetrics.iconSize),
-                    hint = Stateful(itemState),
+                    tint = style.colors.itemColors.iconTintFor(itemState).value,
                 )
-            }
-        }
+            },
+            content = { content(itemState) },
+        )
 
         if (itemState.isSelected) {
             Submenu(
@@ -1044,6 +958,60 @@ internal fun MenuSubmenuItem(
                 style = style,
                 content = submenu,
             )
+        }
+    }
+}
+
+@Suppress("DEPRECATION") // Not really deprecated, MenuItemColors be made internal
+@Composable
+internal fun MenuItemLayout(
+    itemState: MenuItemState,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    iconKey: IconKey? = null,
+    canShowIcon: Boolean = true,
+    trailingContent: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    val itemColors = style.colors.itemColors
+    val itemMetrics = style.metrics.itemMetrics
+
+    val contentColor = itemColors.contentFor(itemState).value
+    val backgroundColor by itemColors.backgroundFor(itemState)
+
+    CompositionLocalProvider(
+        LocalContentColor provides contentColor,
+        LocalTextStyle provides LocalTextStyle.current.copy(color = contentColor),
+    ) {
+        Row(
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = itemMetrics.minHeight)
+                    .drawItemBackground(itemMetrics, backgroundColor)
+                    .padding(itemMetrics.contentPadding),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (canShowIcon) {
+                val iconModifier = Modifier.size(itemMetrics.iconSize)
+                if (iconKey != null) {
+                    Icon(
+                        key = iconKey,
+                        contentDescription = null,
+                        modifier = iconModifier,
+                        tint = itemColors.iconTintFor(itemState).value,
+                    )
+                } else {
+                    Box(modifier = iconModifier)
+                }
+            }
+
+            Box(modifier = Modifier.weight(1f)) { content() }
+
+            if (trailingContent != null) {
+                trailingContent()
+            }
         }
     }
 }
@@ -1200,4 +1168,33 @@ public value class MenuItemState(public val state: ULong) : SelectableComponentS
             return MenuItemState(state)
         }
     }
+}
+
+@Suppress("DEPRECATION") // Not really deprecated, MenuItemState will be made internal
+@Composable
+internal fun rememberMenuItemState(
+    selected: Boolean,
+    enabled: Boolean,
+    interactionSource: MutableInteractionSource,
+): MutableState<MenuItemState> {
+    val itemState =
+        remember(interactionSource) { mutableStateOf(MenuItemState.of(selected = selected, enabled = enabled)) }
+
+    remember(enabled, selected) { itemState.value = itemState.value.copy(selected = selected, enabled = enabled) }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> itemState.value = itemState.value.copy(pressed = true)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release -> itemState.value = itemState.value.copy(pressed = false)
+                is HoverInteraction.Enter -> itemState.value = itemState.value.copy(hovered = true)
+                is HoverInteraction.Exit -> itemState.value = itemState.value.copy(hovered = false)
+                is FocusInteraction.Focus -> itemState.value = itemState.value.copy(focused = true)
+                is FocusInteraction.Unfocus -> itemState.value = itemState.value.copy(focused = false)
+            }
+        }
+    }
+
+    return itemState
 }

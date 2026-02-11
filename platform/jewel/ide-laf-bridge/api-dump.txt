@@ -28,6 +28,7 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:createVerticalBrush-8A-3gB4(java.util.List,F,F,I):androidx.compose.ui.graphics.Brush
 - bs:createVerticalBrush-8A-3gB4$default(java.util.List,F,F,I,I,java.lang.Object):androidx.compose.ui.graphics.Brush
 - sf:getDp(com.intellij.util.ui.JBValue):F
+- sf:getUnscaledDp(I):F
 - sf:retrieveArcAsCornerSize(java.lang.String):androidx.compose.foundation.shape.CornerSize
 - sf:retrieveArcAsCornerSizeOrDefault(java.lang.String,androidx.compose.foundation.shape.CornerSize):androidx.compose.foundation.shape.CornerSize
 - sf:retrieveArcAsCornerSizeWithFallbacks(java.lang.String[]):androidx.compose.foundation.shape.CornerSize
