@@ -62,7 +62,7 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
       }
     }
 
-  override fun getState() = state
+  override fun getState(): PasswordSafeOptions = state
 
   override fun loadState(state: PasswordSafeOptions) {
     val credentialStoreManager = CredentialStoreManager.getInstance()
@@ -72,24 +72,34 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
       LOG.error("Provider ${state.provider} from loaded credential store config is not supported in this environment")
     }
 
-    this.state = state
+    this.state.copySimpleProperties(state)
+
     providerType = state.provider
-    state.keepassDb = state.keepassDb.nullize(nullizeSpaces = true)
+    keepassDb = state.keepassDb
   }
 
-  override fun getStateModificationCount() = state.modificationCount
+  override fun getStateModificationCount(): Long = state.modificationCount
 }
 
 @ApiStatus.Internal
 class PasswordSafeOptions : BaseState() {
-  // do not use it directly
+  /**
+   * Must be accessed through [PasswordSafeSettings.providerType]
+   */
   @get:OptionTag("PROVIDER")
-  var provider by enum(defaultProviderType)
+  var provider: ProviderType by enum(defaultProviderType)
 
-  // do not use it directly
-  var keepassDb by string()
-  var isRememberPasswordByDefault by property(true)
+  /**
+   * Must be accessed through [PasswordSafeSettings.keepassDb]
+   */
+  var keepassDb: String? by string()
 
-  // do not use it directly
-  var pgpKeyId by string()
+  // Simple properties that don't have special accessors in PasswordSafeSettings
+  var isRememberPasswordByDefault: Boolean by property(true)
+  var pgpKeyId: String? by string()
+
+  fun copySimpleProperties(other: PasswordSafeOptions) {
+    isRememberPasswordByDefault = other.isRememberPasswordByDefault
+    pgpKeyId = other.pgpKeyId
+  }
 }
