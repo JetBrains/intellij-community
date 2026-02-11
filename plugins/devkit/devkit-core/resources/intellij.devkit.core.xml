@@ -25,6 +25,7 @@
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.EventLogDescriptionReferenceContributor"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
     <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.HttpDebugListener"/>
@@ -549,6 +550,10 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleNamespaceInspection"
                      key="inspection.content.module.namespace.name"/>
+
+    <localInspection language="UAST" projectType="INTELLIJ_PLUGIN" enabledByDefault="true" level="WARNING" shortName="EventLogDescription"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code" key="inspections.event.log.description.display.name"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.EventLogDescriptionInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>

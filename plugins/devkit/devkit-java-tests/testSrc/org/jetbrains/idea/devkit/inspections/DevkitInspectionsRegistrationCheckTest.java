@@ -11,8 +11,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
-
-  private static final int EXPECTED_INSPECTIONS_NUMBER = 86;
+  private static final int EXPECTED_INSPECTIONS_NUMBER = 87;
 
   /**
    * Inspections that are finished and intentionally disabled.
