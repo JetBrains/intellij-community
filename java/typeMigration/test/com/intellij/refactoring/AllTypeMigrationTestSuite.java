@@ -6,9 +6,11 @@ import com.intellij.codeInsight.ConvertToLongAdderIntentionTest;
 import com.intellij.codeInsight.ConvertToThreadLocalIntention6Test;
 import com.intellij.codeInsight.ConvertToThreadLocalIntentionTest;
 import com.intellij.codeInsight.inspections.GuavaInspectionTest;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+@Ignore("Manual only")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   TypeMigrationTest.class,

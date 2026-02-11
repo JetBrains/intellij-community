@@ -11,6 +11,7 @@ import com.intellij.testFramework.common.BazelTestUtil.getFileFromBazelRuntime
 import com.intellij.util.io.sanitizeFileName
 import org.junit.ClassRule
 import org.junit.rules.ExternalResource
+import org.junit.Ignore
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
@@ -27,6 +28,7 @@ internal val testSnapshotDir: Path =
 internal val objectSerializer
   get() = ObjectSerializer.instance
 
+@Ignore("Manual only")
 @RunWith(Suite::class)
 @Suite.SuiteClasses(ObjectSerializerTest::class,
                     NonDefaultConstructorTest::class,

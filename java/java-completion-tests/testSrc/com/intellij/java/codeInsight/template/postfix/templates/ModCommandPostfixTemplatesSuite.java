@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template.postfix.templates;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -42,5 +43,6 @@ import org.junit.runners.Suite;
   VarPostfixTemplateTest.ModVarPostfixTemplateTest.class,
   WhileStatementPostfixTemplateTest.ModWhileStatementPostfixTemplateTest.class,
 })
+@Ignore("Manual only")
 public class ModCommandPostfixTemplatesSuite {
 }

@@ -1094,6 +1094,7 @@ public final class JUnit5TeamCityRunner {
   public static class IgnorePostDiscoveryFilter implements PostDiscoveryFilter {
     private static final Class<? extends Annotation> ignoreJUnit3;
     private static final Class<? extends Annotation> ignoreIJ;
+    private static final String SUITE_UNIQUE_ID = UniqueId.forEngine("junit-platform-suite").getLastSegment().toString();
 
     static {
       try {
@@ -1129,6 +1130,9 @@ public final class JUnit5TeamCityRunner {
       if (source instanceof ClassSource classSource) {
         Class<?> aClass = classSource.getJavaClass();
         if (aClass.isAnnotationPresent(ignoreJUnit3) || aClass.isAnnotationPresent(ignoreIJ)) {
+          if (SUITE_UNIQUE_ID.equals(descriptor.getParent().map(p -> p.getUniqueId().getLastSegment().toString()).orElse(null))) {  // TODO: use org.junit.platform.suite.api.Disabled
+            descriptor.removeFromHierarchy();
+          }
           return FilterResult.excluded("Ignored");
         }
         return FilterResult.included(null);

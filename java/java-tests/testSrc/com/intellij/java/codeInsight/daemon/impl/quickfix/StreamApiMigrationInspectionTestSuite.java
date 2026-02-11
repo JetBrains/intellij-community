@@ -10,9 +10,11 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+@Ignore("Manual only")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   StreamApiMigrationInspectionTestSuite.AddAllTest.class,

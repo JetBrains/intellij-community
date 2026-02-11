@@ -4,8 +4,10 @@ package org.jetbrains.plugins.groovy;
 import org.jetbrains.plugins.groovy.util.AllTestsSuite;
 import org.jetbrains.plugins.groovy.util.SlowPolicy;
 import org.jetbrains.plugins.groovy.util.TestPackage;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
+@Ignore("Manual only")
 @RunWith(AllTestsSuite.class)
 @TestPackage(value = "org.jetbrains.plugins.groovy", policy = SlowPolicy.ALL)
 public class AllGroovyTestSuite {

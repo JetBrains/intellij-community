@@ -19,7 +19,9 @@ import com.intellij.sh.template.ShArrayLiveTemplateTest;
 import com.intellij.sh.template.ShLiveTemplateTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.Ignore;
 
+@Ignore("Manual only")
 public final class ShTestSuite {
   public static Test suite() {
     TestSuite testSuite = new TestSuite("All Shell Script tests");
@@ -30,6 +32,7 @@ public final class ShTestSuite {
     return testSuite;
   }
 
+  @Ignore("Manual only")
   public static final class ParserSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Parser");
@@ -38,6 +41,7 @@ public final class ShTestSuite {
     }
   }
 
+  @Ignore("Manual only")
   public static final class CompletionAndTemplateSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Completion & Template");
@@ -51,12 +55,14 @@ public final class ShTestSuite {
     }
   }
 
+  @Ignore("Manual only")
   public static final class InspectionsSuite {
     public static Test suite() {
       return new ShShellcheckTestSetup(new TestSuite(ShShellcheckInspectionTest.class, "Inspections"));
     }
   }
 
+  @Ignore("Manual only")
   public static final class OthersSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Others");

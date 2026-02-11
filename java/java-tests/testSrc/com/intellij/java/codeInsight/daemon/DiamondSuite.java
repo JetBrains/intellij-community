@@ -5,9 +5,11 @@ import com.intellij.java.codeInsight.daemon.impl.quickfix.ChangeNewOperatorTypeT
 import com.intellij.java.codeInsight.daemon.impl.quickfix.Simplify2DiamondInspectionsTest;
 import com.intellij.java.refactoring.IntroduceParameterTest;
 import com.intellij.java.refactoring.IntroduceVariableTest;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+@Ignore("Manual only")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   LightAdvHighlightingJdk7Test.class,

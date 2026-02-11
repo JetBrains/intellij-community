@@ -5,9 +5,11 @@ import com.intellij.polySymbols.query.PolySymbolScopeCachedDslTest
 import com.intellij.polySymbols.query.PolySymbolsCompletionQueryTest
 import com.intellij.polySymbols.query.PolySymbolsListQueryTest
 import com.intellij.polySymbols.query.PolySymbolsNameQueryTest
+import org.junit.Ignore
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
+@Ignore("Manual only")
 @RunWith(Suite::class)
 @Suite.SuiteClasses(
   PolySymbolsCompletionQueryTest::class,

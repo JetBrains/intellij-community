@@ -24,7 +24,9 @@ import com.intellij.java.slicer.SliceTreeTest;
 import com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspectionTest;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
+import com.intellij.idea.IJIgnore;
 
+@IJIgnore(issue = "Manual only")
 @Suite
 @SelectClasses({
   DataFlowInspectionTest.class,

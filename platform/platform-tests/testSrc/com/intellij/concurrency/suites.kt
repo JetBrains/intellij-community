@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.impl.BackgroundWriteActionTest
 import com.intellij.openapi.application.impl.BlockingSuspendingReadActionTest
 import com.intellij.openapi.application.impl.CancellableReadActionWithIndicatorTest
@@ -39,9 +40,12 @@ import com.intellij.util.concurrency.DumbServicePropagationTest
 import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.MergingUpdateQueuePropagationTest
 import com.intellij.util.concurrency.ThreadContextPropagationTest
+import org.junit.Ignore
+import org.junit.jupiter.api.Disabled
 import org.junit.platform.suite.api.SelectClasses
 import org.junit.platform.suite.api.Suite
 
+@IJIgnore(issue = "Manual only")
 @Suite
 @SelectClasses(
   // base
