@@ -28,6 +28,7 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:createVerticalBrush-8A-3gB4(java.util.List,F,F,I):androidx.compose.ui.graphics.Brush
 - bs:createVerticalBrush-8A-3gB4$default(java.util.List,F,F,I,I,java.lang.Object):androidx.compose.ui.graphics.Brush
 - sf:getDp(com.intellij.util.ui.JBValue):F
+- sf:getUnscaledDp(I):F
 - sf:retrieveArcAsCornerSize(java.lang.String):androidx.compose.foundation.shape.CornerSize
 - sf:retrieveArcAsCornerSizeOrDefault(java.lang.String,androidx.compose.foundation.shape.CornerSize):androidx.compose.foundation.shape.CornerSize
 - sf:retrieveArcAsCornerSizeWithFallbacks(java.lang.String[]):androidx.compose.foundation.shape.CornerSize
@@ -49,6 +50,8 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - bs:retrieveTextStyle-WdJyH8Q$default(java.lang.String,J,J,Z,I,J,I,java.lang.Object):androidx.compose.ui.text.TextStyle
 - sf:retrieveTextStyle-tD9LlGs(java.lang.String,java.lang.String,J,Z,I,J):androidx.compose.ui.text.TextStyle
 - bs:retrieveTextStyle-tD9LlGs$default(java.lang.String,java.lang.String,J,Z,I,J,I,java.lang.Object):androidx.compose.ui.text.TextStyle
+- sf:retrieveUnscaledIntAsDpOrUnspecified(java.lang.String):F
+- sf:retrieveUnscaledIntAsNonNegativeDpOrUnspecified(java.lang.String):F
 - sf:toAwtColor-8_81llA(J):java.awt.Color
 - sf:toAwtColorOrNull-8_81llA(J):java.awt.Color
 - sf:toComposeColor(java.awt.Color):J
