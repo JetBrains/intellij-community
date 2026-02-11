@@ -107,7 +107,6 @@ import org.jetbrains.kotlin.idea.debugger.test.AbstractPositionManagerTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractSelectExpressionForDebuggerTestWithAnalysisApi
 import org.jetbrains.kotlin.idea.debugger.test.AbstractSelectExpressionForDebuggerTestWithLegacyImplementation
 import org.jetbrains.kotlin.idea.debugger.test.AbstractSmartStepIntoTest
-import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceTestCase
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaSourceToLibrarySourceTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaSourceToLibraryTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToDecompiledLibraryTest
@@ -309,22 +308,9 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("jvm-debugger/test/kotlin.jvm-debugger.test.k1", category = DEBUGGER, testDataPath = "../testData") {
-        testClass<AbstractIrSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
-            model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
-        }
-
         testClass<AbstractPositionManagerTest> {
             model("positionManager", isRecursive = false, pattern = KT, testClassName = "SingleFile")
             model("positionManager", isRecursive = false, pattern = DIRECTORY, testClassName = "MultiFile")
-        }
-
-        testClass<AbstractFlowAsyncStackTraceTest> {
-            model("asyncStackTrace/flows")
-        }
-
-
-        testClass<AbstractCoroutineAsyncStackTraceTest> {
-            model("asyncStackTrace/coroutines")
         }
 
         testClass<AbstractSelectExpressionForDebuggerTestWithAnalysisApi> {
