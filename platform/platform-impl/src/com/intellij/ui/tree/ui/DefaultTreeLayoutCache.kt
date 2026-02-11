@@ -930,6 +930,9 @@ class DefaultTreeLayoutCache(
     private val messages = mutableListOf<String>()
 
     fun checkInvariants() {
+      if (LOG.isTraceEnabled) {
+        dumpState()
+      }
       if (rows.isEmpty()) {
         checkEmptyTree()
         return
@@ -946,6 +949,24 @@ class DefaultTreeLayoutCache(
         }
         // Log as ERROR to get a notification, but it still only happens when DEBUG is enabled, for performance reasons.
         LOG.error(Exception(details.toString()))
+      }
+    }
+
+    private fun dumpState() {
+      LOG.trace("Rows:")
+      for ((index, node) in rows.withIndex()) {
+        LOG.trace("$index: ${node.path}")
+      }
+      LOG.trace("Nodes:")
+      dumpNodes(root, 0)
+    }
+
+    private fun dumpNodes(root: Node?, depth: Int) {
+      if (root == null) return
+      LOG.trace("${" ".repeat(depth)} ${root.path}")
+      if (!root.isExpanded) return
+      for (node in root.children ?: emptyList()) {
+        dumpNodes(node, depth + 1)
       }
     }
 
