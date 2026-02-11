@@ -14,6 +14,8 @@ class SmoothCaretUsageLocalStorage : PersistentStateComponent<SmoothCaretUsageLo
   data class State(
     var feedbackNotificationShown: Boolean = false,
     var feedbackNotificationShownTime: Long = 0L,
+    // ISO-8601 string: "2026-02-10"
+    var firstEapRunDate: String? = null,
   )
 
   private var state = State()
@@ -27,6 +29,16 @@ class SmoothCaretUsageLocalStorage : PersistentStateComponent<SmoothCaretUsageLo
   fun recordFeedbackNotificationShown() {
     state.feedbackNotificationShown = true
     state.feedbackNotificationShownTime = System.currentTimeMillis()
+  }
+
+  /**
+   * Records the first EAP run date if not already set.
+   * Called from ProjectActivity on first project open.
+   */
+  fun recordFirstRunIfNeeded(date: String) {
+    if (state.firstEapRunDate == null) {
+      state.firstEapRunDate = date
+    }
   }
 
   companion object {
