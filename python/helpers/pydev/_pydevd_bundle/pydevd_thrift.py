@@ -541,7 +541,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
                 kind = df.dtype.kind
             except AttributeError:
                 try:
-                    kind = df.dtypes[0].kind
+                    kind = df.dtypes.iloc[0].kind
                 except (IndexError, KeyError, AttributeError):
                     kind = "O"
             format = array_default_format(kind)
