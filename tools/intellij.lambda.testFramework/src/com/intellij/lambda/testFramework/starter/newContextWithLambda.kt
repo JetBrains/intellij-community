@@ -6,7 +6,10 @@ import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.AdditionalModulesForDevBuildServer
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder
-import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.*
+import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.All
+import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.Monolith
+import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.OnlyBackend
+import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.OnlyFrontend
 
 fun Starter.newContextWithLambda(testName: String, config: IdeStartConfig): IDETestContext {
   try {
