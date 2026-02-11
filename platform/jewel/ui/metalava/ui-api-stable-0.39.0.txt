@@ -3087,6 +3087,10 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey New;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey NewFolder;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey NextOccurence;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey NotificationsBottomLeft;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey NotificationsBottomRight;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey NotificationsTopLeft;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey NotificationsTopRight;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey OfflineMode;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey OpenNewTab;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Pause;

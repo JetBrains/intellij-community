@@ -61,6 +61,8 @@ package org.jetbrains.jewel.bridge {
     method public static androidx.compose.ui.text.PlatformTextStyle retrievePlatformTextStyle();
     method public static androidx.compose.ui.text.TextStyle retrieveTextStyle(String fontKey, optional String? colorKey, optional long lineHeight, optional boolean bold, optional int fontStyle, optional long size);
     method public static androidx.compose.ui.text.TextStyle retrieveTextStyle(String key, optional long color, optional long lineHeight, optional boolean bold, optional int fontStyle, optional long size);
+    method public static float retrieveUnscaledIntAsDpOrUnspecified(String key);
+    method public static float retrieveUnscaledIntAsNonNegativeDpOrUnspecified(String key);
     method public static java.awt.Color toAwtColor(long);
     method public static java.awt.Color? toAwtColorOrNull(long);
     method public static long toComposeColor(java.awt.Color);
@@ -70,6 +72,7 @@ package org.jetbrains.jewel.bridge {
     method public static androidx.compose.foundation.layout.PaddingValues toPaddingValues(com.intellij.util.ui.JBInsets);
     method public static androidx.compose.foundation.layout.PaddingValues toPaddingValues(java.awt.Insets);
     property public static androidx.compose.ui.unit.Dp com.intellij.util.ui.JBValue.dp;
+    property public static androidx.compose.ui.unit.Dp int.unscaledDp;
   }
 
   public abstract sealed class JewelBridgeException extends java.lang.RuntimeException {
