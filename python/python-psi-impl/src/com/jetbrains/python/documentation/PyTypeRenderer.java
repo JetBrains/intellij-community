@@ -364,7 +364,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
         return renderUnionOfLiterals(literalsAndOthers.first);
       }
       return renderUnion(ContainerUtil.prepend(
-        ContainerUtil.map(literalsAndOthers.second, this::render),
+        ContainerUtil.map(literalsAndOthers.second, this::renderUnionMember),
         renderUnionOfLiterals(literalsAndOthers.first)
       ));
     }
@@ -375,7 +375,21 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       // Always put Any at the end of the union
       return renderUnion(List.of(render(PyUnionType.union(ContainerUtil.skipNulls(unionType.getMembers()))), visitUnknownType()));
     }
-    return renderUnion(ContainerUtil.map(unionType.getMembers(), this::render));
+    return renderUnion(ContainerUtil.map(unionType.getMembers(), this::renderUnionMember));
+  }
+
+  private @NotNull HtmlChunk renderUnionMember(@Nullable PyType member) {
+    HtmlChunk rendered = render(member);
+    // Add parentheses around intersections in unions when using | & syntax for clarity: (A & B) | C instead of A & B | C
+    // Not needed for Union[...] syntax
+    if (member instanceof PyIntersectionType && isBitwiseOrUnionAvailable()) {
+      return new HtmlBuilder()
+        .append(styled("(", PyHighlighter.PY_PARENTHS))
+        .append(rendered)
+        .append(styled(")", PyHighlighter.PY_PARENTHS))
+        .toFragment();
+    }
+    return rendered;
   }
 
 
@@ -438,7 +452,19 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
-    return renderList(ContainerUtil.map(intersectionType.getMembers(), this::render), " & ");
+    return renderList(ContainerUtil.map(intersectionType.getMembers(), member -> {
+      HtmlChunk rendered = render(member);
+      // Add parentheses around unions in intersections when using | & syntax for clarity: (A | B) & C instead of A | B & C
+  
+      if (member instanceof PyUnionType && isBitwiseOrUnionAvailable()) {
+        return new HtmlBuilder()
+          .append(styled("(", PyHighlighter.PY_PARENTHS))
+          .append(rendered)
+          .append(styled(")", PyHighlighter.PY_PARENTHS))
+          .toFragment();
+      }
+      return rendered;
+    }), " & ");
   }
 
   private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
