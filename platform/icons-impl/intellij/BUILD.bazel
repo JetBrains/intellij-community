@@ -12,6 +12,7 @@ create_kotlinc_options(
     "org.jetbrains.icons.ExperimentalIconsApi",
     "org.jetbrains.icons.InternalIconsApi",
   ],
+  progressive = False,
   x_x_language = []
 )
 

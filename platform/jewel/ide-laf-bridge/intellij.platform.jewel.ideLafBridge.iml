@@ -54,6 +54,8 @@
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.textmate.plugin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
   </component>
 </module>

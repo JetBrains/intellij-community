@@ -113,8 +113,6 @@ private fun SvgPatcher.patch(element: Element) {
                         element.getAttribute(operation.attributeName).equals(operation.expectedValue, ignoreCase = true)
                     if (matches == !operation.negatedCondition) {
                         element.setAttribute(operation.attributeName, operation.value!!)
-                    } else {
-                        println("Conditional replace failed: ${element.getAttribute(operation.attributeName)} expected: ${operation.expectedValue}")
                     }
                 } else if (element.hasAttribute(operation.attributeName)) {
                     element.setAttribute(operation.attributeName, operation.value!!)

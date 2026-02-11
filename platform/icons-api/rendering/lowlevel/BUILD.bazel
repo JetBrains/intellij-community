@@ -6,6 +6,7 @@ create_kotlinc_options(
   name = "custom_lowlevel",
   api_version = "2.2",
   language_version = "2.2",
+  progressive = False,
   x_x_language = []
 )
 

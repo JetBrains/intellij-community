@@ -18743,13 +18743,6 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "platform-jewel-int_ui-standalone-jetbrains-kotlinx-serialization-core-jvm",
-  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
   name = "org.commonmark/commonmark-0.24.0.jar_copy",
   src = "@org_commonmark-commonmark-0_24_0_http//file",

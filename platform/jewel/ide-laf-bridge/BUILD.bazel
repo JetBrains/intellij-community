@@ -103,7 +103,6 @@ jvm_library(
     "//plugins/textmate/plugin",
     "//plugins/textmate/plugin:plugin_test_lib",
     "@lib//:io-mockk-jvm",
-    "//python:python-community-impl",
   ],
   exports = [
     "//platform/jewel/foundation",
