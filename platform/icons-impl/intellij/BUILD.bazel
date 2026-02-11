@@ -40,11 +40,11 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-impl/rpc",
     "//fleet/util/core",
-    "@lib//:platform-icons-impl-intellij-jetbrains-kotlinx-serialization-core-jvm",
     "//platform/core-impl",
     "//platform/icons-api/legacy-icon-support",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
+    "//libraries/kotlinx/serialization/core",
   ]
 )
 
@@ -65,7 +65,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-impl/rpc",
     "//fleet/util/core",
-    "@lib//:platform-icons-impl-intellij-jetbrains-kotlinx-serialization-core-jvm",
     "//platform/core-impl",
     "//libraries/junit5",
     "//platform/testFramework/junit5",
@@ -77,6 +76,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:junit5Jupiter",
     "@lib//:assert_j",
+    "//libraries/kotlinx/serialization/core",
   ]
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij` end
