@@ -11,13 +11,13 @@ import com.sun.jdi.Method
  * The method signature description reflects Java runtime semantics,
  * so function on any JVM language can be represented.
  */
-data class JvmMethodSignature(
+internal data class JvmMethodSignature(
   val classFqn: String,
   val name: String,
   val argumentTypes: List<String>,
   val returnType: String
 ) {
-  private val arguments: String
+  val arguments: String
       get() = argumentTypes.joinToString(", ")
 
   override fun toString(): String = "$returnType $classFqn.$name($arguments)"
@@ -37,6 +37,7 @@ data class JvmMethodSignature(
       TypeConversionUtil.erasure(psiMethod.returnType)?.canonicalText ?: ""
     )
 
+    // Note: doesn't work with primitive types
     private fun PsiParameter.signature(): String {
       val paramType = TypeConversionUtil.erasure(this.type)
       if (this.isVarArgs) {

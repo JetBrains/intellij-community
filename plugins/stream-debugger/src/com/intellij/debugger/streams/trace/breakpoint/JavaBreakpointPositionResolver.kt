@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 
-class JavaBreakpointPositionResolver : BreakpointPositionResolver {
+internal class JavaBreakpointPositionResolver : BreakpointPositionResolver {
   /**
    * Searches breakpoint places for [StreamChain] operations
    */

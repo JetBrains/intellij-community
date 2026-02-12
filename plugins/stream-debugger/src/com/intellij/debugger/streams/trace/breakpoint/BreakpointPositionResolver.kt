@@ -11,7 +11,7 @@ internal interface BreakpointPositionResolver {
   suspend fun findBreakpointPositions(chain: StreamChain): BreakpointResolveResult
 }
 
-sealed class BreakpointResolveResult {
+internal sealed class BreakpointResolveResult {
   object NotFound : BreakpointResolveResult()
   /**
    * @param qualifierExpressionMethod null if a qualified expression is not a function call

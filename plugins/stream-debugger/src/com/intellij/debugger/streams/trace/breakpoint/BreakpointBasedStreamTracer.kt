@@ -29,6 +29,21 @@ class BreakpointBasedStreamTracer(
       LOG.error("SuspendContext is not available, probably tracer was executed after when the program is not suspended")
       return StreamTracer.Result.Unknown
     }
+    // TODO: maybe we need to use withAutoLoadClasses
+    val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
+
+    val breakpointPositionResolver = JavaBreakpointPositionResolver()
+    val breakpointFactory = BreakpointFactory()
+    val positions = breakpointPositionResolver.findBreakpointPositions(chain) as? BreakpointResolveResult.Found ?: return StreamTracer.Result.Unknown
+    val firstOp = positions.intermediateStepsMethods.first()
+
+    val breakpoint = breakpointFactory.createMethodExitBreakpoint(evaluationContext, firstOp) { ctx, method, returnValue ->
+      println("Method exit breakpoint hit: ${method.name()}")
+      returnValue
+    }
+    breakpoint.enable()
+    suspendContext.resume(true)
+
     // MVP: Placeholder for actual tracing logic
     
     // For now, return Unknown to indicate that tracing is not yet implemented
