@@ -102,8 +102,8 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
                 true
               }
               if (typed) break
-              span.addEvent("Focus lost while typing char $i, retry attempt $attempt")
-              delay(500)
+              span.addEvent("Focus lost while typing char $i, attempt $attempt of 3 failed")
+              if (attempt < 3) delay(500)
             }
             if (!typed) {
               val ex = Exception("Focus was lost during typing. Current focus is in: " +
