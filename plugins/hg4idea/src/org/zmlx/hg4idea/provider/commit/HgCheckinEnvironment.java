@@ -126,8 +126,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   }
 
   @Override
-  public @NotNull CancellablePromise<EditedCommitDetails> getAmendCommitDetails(@NotNull VirtualFile root) {
-    return getAmendService().getAmendCommitDetails(root);
+  public @NotNull CancellablePromise<EditedCommitDetails> getAmendCommitDetails(@NotNull VirtualFile root, @NotNull CommitToAmend commitToAmend) {
+    return getAmendService().getAmendCommitDetails(root, commitToAmend);
   }
 
   private @NotNull HgAmendCommitService getAmendService() {

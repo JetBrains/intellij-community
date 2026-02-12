@@ -177,7 +177,7 @@ f:com.intellij.dvcs.cherrypick.VcsCherryPickManager
 a:com.intellij.dvcs.commit.AmendCommitService
 - com.intellij.vcs.commit.AmendCommitAware
 - <init>(com.intellij.openapi.project.Project):V
-- getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.concurrency.CancellablePromise
+- getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.commit.CommitToAmend):org.jetbrains.concurrency.CancellablePromise
 - pf:getProject():com.intellij.openapi.project.Project
 f:com.intellij.dvcs.commit.CommitAndPushExecutorKt
 - sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String

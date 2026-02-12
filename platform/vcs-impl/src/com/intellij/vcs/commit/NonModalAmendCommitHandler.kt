@@ -55,17 +55,17 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
     workflowHandler.updateDefaultCommitActionName()
     workflowHandler.hideCommitChecksFailureNotification()
     updateAmendCommitState()
-    if (commitToAmend is CommitToAmend.Last) loadAmendDetails(amendAware, root) else restoreAmendDetails()
+    if (commitToAmend is CommitToAmend.None) restoreAmendDetails() else loadAmendDetails(amendAware, root, commitToAmend)
   }
 
   private fun updateAmendCommitState() {
     commitContext.commitWithoutChangesRoots = if (commitToAmend is CommitToAmend.Last) listOfNotNull(amendRoot) else emptyList()
   }
 
-  private fun loadAmendDetails(amendAware: AmendCommitAware, root: VirtualFile) {
+  private fun loadAmendDetails(amendAware: AmendCommitAware, root: VirtualFile, commitToAmend: CommitToAmend) {
     _isLoading = true
     setEditedCommit(EditedCommitPresentation.Loading)
-    amendDetailsGetter = amendAware.getAmendCommitDetails(root)
+    amendDetailsGetter = amendAware.getAmendCommitDetails(root, commitToAmend)
     amendDetailsGetter?.run {
       onSuccess { setAmendDetails(it) }
       onError { setEditedCommit(null) }

@@ -15,7 +15,7 @@ interface AmendCommitAware {
   @Throws(VcsException::class)
   fun getLastCommitMessage(root: VirtualFile): String?
 
-  fun getAmendCommitDetails(root: VirtualFile): CancellablePromise<EditedCommitDetails>
+  fun getAmendCommitDetails(root: VirtualFile, commitToAmend: CommitToAmend): CancellablePromise<EditedCommitDetails>
 
   suspend fun getAmendSpecificCommitTargets(root: VirtualFile, limit: Int): List<CommitToAmend.Specific>? = null
 }

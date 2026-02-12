@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.vcs.commit.AmendCommitAware
+import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -36,12 +37,21 @@ abstract class AmendCommitService(protected val project: Project) : AmendCommitA
   private val vcsLog: VcsProjectLog get() = VcsProjectLog.getInstance(project)
   private val vcsLogObjectsFactory: VcsLogObjectsFactory get() = project.service()
 
-  override fun getAmendCommitDetails(root: VirtualFile): CancellablePromise<EditedCommitDetails> {
+  override fun getAmendCommitDetails(root: VirtualFile, commitToAmend: CommitToAmend): CancellablePromise<EditedCommitDetails> {
     val repository = VcsRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return rejected(DvcsBundle.message("error.message.amend.no.repository.for.root", root))
     val logData = vcsLog.dataManager ?: return rejected(DvcsBundle.message("error.message.amend.no.vcs.log.available"))
-    val lastCommitId = repository.currentRevision ?: return rejected(DvcsBundle.message("error.message.amend.repository.is.empty.for.root", root))
 
-    return getCommitDetails(logData, root, vcsLogObjectsFactory.createHash(lastCommitId))
+    val commitHash = when (commitToAmend) {
+      is CommitToAmend.Last -> {
+        val lastCommitId =
+          repository.currentRevision ?: return rejected(DvcsBundle.message("error.message.amend.repository.is.empty.for.root", root))
+        vcsLogObjectsFactory.createHash(lastCommitId)
+      }
+      is CommitToAmend.Specific -> commitToAmend.targetHash
+      is CommitToAmend.None -> throw IllegalArgumentException("Cannot return commit details for CommitToAmend.None")
+    }
+
+    return getCommitDetails(logData, root, commitHash)
   }
 
   private fun getCommitDetails(logData: VcsLogData, root: VirtualFile, hash: Hash): AsyncPromise<EditedCommitDetails> {

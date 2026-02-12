@@ -142,8 +142,8 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     return amendService.getLastCommitMessage(root)
   }
 
-  override fun getAmendCommitDetails(root: VirtualFile): CancellablePromise<EditedCommitDetails> {
-    return amendService.getAmendCommitDetails(root)
+  override fun getAmendCommitDetails(root: VirtualFile, commitToAmend: CommitToAmend): CancellablePromise<EditedCommitDetails> {
+    return amendService.getAmendCommitDetails(root, commitToAmend)
   }
 
   private val amendService: GitAmendCommitService get() = myProject.getService(GitAmendCommitService::class.java)
