@@ -156,13 +156,10 @@ class TraceStreamRunner(val cs: CoroutineScope) {
       }
       withContext(Dispatchers.Default + TraceStreamUIScope(window.disposable)) {
         val project = session.getProject()
-        val expressionBuilder = provider.getExpressionBuilder(project)
-        val resultInterpreter = TraceResultInterpreterImpl(provider.getLibrarySupport().interpreterFactory)
-        val xValueInterpreter = provider.getXValueInterpreter(project)
         val debuggerLauncher = provider.getDebuggerCommandLauncher(session)
-        val tracer: StreamTracer = EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter)
 
         debuggerLauncher.launchDebuggerCommand {
+          val tracer: StreamTracer = provider.getTracerFor(chain, session)
           val result = tracer.trace(chain)
           when (result) {
             is StreamTracer.Result.Evaluated -> {

@@ -1,10 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.core.lib.impl
 
+import com.intellij.debugger.streams.core.lib.EvaluateExpressionBasedLibrarySupport
 import com.intellij.debugger.streams.core.lib.HandlerFactory
 import com.intellij.debugger.streams.core.lib.IntermediateOperation
 import com.intellij.debugger.streams.core.lib.InterpreterFactory
-import com.intellij.debugger.streams.core.lib.LibrarySupport
 import com.intellij.debugger.streams.core.lib.Operation
 import com.intellij.debugger.streams.core.lib.ResolverFactory
 import com.intellij.debugger.streams.core.lib.TerminalOperation
@@ -20,9 +20,10 @@ import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class LibrarySupportBase(private val compatibleLibrary: LibrarySupport = LibrarySupportBase.EMPTY) : LibrarySupport {
+abstract class LibrarySupportBase(private val compatibleLibrary: EvaluateExpressionBasedLibrarySupport = LibrarySupportBase.EMPTY) :
+  EvaluateExpressionBasedLibrarySupport {
   companion object {
-    val EMPTY: LibrarySupport = DefaultLibrarySupport()
+    val EMPTY: EvaluateExpressionBasedLibrarySupport = DefaultLibrarySupport()
   }
 
   private val mySupportedIntermediateOperations: MutableMap<String, IntermediateOperation> = mutableMapOf()

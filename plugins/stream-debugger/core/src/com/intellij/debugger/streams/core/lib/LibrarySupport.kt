@@ -7,7 +7,16 @@ import com.intellij.debugger.streams.core.trace.dsl.Dsl
  * @author Vitaliy.Bibaev
  */
 interface LibrarySupport {
-  fun createHandlerFactory(dsl: Dsl): HandlerFactory
   val interpreterFactory: InterpreterFactory
   val resolverFactory: ResolverFactory
+}
+
+interface BreakpointBasedLibrarySupport: LibrarySupport {
+  //fun createRuntimeHandlerFactory(): RuntimeHandlerFactory
+  //
+  //val breakpointResolverFactory: BreakpointResolverFactory
+}
+
+interface EvaluateExpressionBasedLibrarySupport: LibrarySupport {
+  fun createHandlerFactory(dsl: Dsl): HandlerFactory
 }
