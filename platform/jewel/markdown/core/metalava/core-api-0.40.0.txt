@@ -243,7 +243,7 @@ package org.jetbrains.jewel.markdown {
     property public abstract java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> children;
   }
 
-  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface WithInlineMarkdown {
+  @SuppressCompatibility @androidx.compose.runtime.Stable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface WithInlineMarkdown {
     method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
     property public abstract java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
   }
@@ -257,8 +257,33 @@ package org.jetbrains.jewel.markdown {
 
 package org.jetbrains.jewel.markdown.extensions {
 
+  @SuppressCompatibility @androidx.compose.runtime.Immutable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public abstract sealed class ImageRenderResult {
+  }
+
+  public static final class ImageRenderResult.Failed extends org.jetbrains.jewel.markdown.extensions.ImageRenderResult {
+    field public static final org.jetbrains.jewel.markdown.extensions.ImageRenderResult.Failed INSTANCE;
+  }
+
+  public static final class ImageRenderResult.Loading extends org.jetbrains.jewel.markdown.extensions.ImageRenderResult {
+    ctor public ImageRenderResult.Loading();
+    ctor public ImageRenderResult.Loading(optional androidx.compose.foundation.text.InlineTextContent? content);
+    method public androidx.compose.foundation.text.InlineTextContent? component1();
+    method public org.jetbrains.jewel.markdown.extensions.ImageRenderResult.Loading copy(optional androidx.compose.foundation.text.InlineTextContent? content);
+    method public androidx.compose.foundation.text.InlineTextContent? getContent();
+    property public androidx.compose.foundation.text.InlineTextContent? content;
+  }
+
+  public static final class ImageRenderResult.Success extends org.jetbrains.jewel.markdown.extensions.ImageRenderResult {
+    ctor public ImageRenderResult.Success(androidx.compose.foundation.text.InlineTextContent content);
+    method public androidx.compose.foundation.text.InlineTextContent component1();
+    method public org.jetbrains.jewel.markdown.extensions.ImageRenderResult.Success copy(optional androidx.compose.foundation.text.InlineTextContent content);
+    method public androidx.compose.foundation.text.InlineTextContent getContent();
+    property public androidx.compose.foundation.text.InlineTextContent content;
+  }
+
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface ImageRendererExtension {
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.text.InlineTextContent? renderImageContent(org.jetbrains.jewel.markdown.InlineMarkdown.Image image);
+    method @androidx.compose.runtime.Composable public default org.jetbrains.jewel.markdown.extensions.ImageRenderResult renderImage(org.jetbrains.jewel.markdown.InlineMarkdown.Image image);
+    method @Deprecated @androidx.compose.runtime.Composable public default androidx.compose.foundation.text.InlineTextContent? renderImageContent(org.jetbrains.jewel.markdown.InlineMarkdown.Image image);
   }
 
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownBlockProcessorExtension {
