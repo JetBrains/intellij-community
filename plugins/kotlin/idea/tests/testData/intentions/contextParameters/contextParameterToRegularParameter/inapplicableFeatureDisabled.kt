@@ -1,6 +1,6 @@
 // IS_APPLICABLE: false
 // COMPILER_ARGUMENTS: -XXLanguage:-ContextParameters
-// K2_ERROR: The feature "context parameters" is experimental and should be enabled explicitly. This can be done by supplying the compiler argument '-Xcontext-parameters', but note that no stability guarantees are provided.
+// K2_ERROR: The feature "context parameters" is only available since language version 2.4
 
 context(<caret>c1: Int)
 fun foo() {}
