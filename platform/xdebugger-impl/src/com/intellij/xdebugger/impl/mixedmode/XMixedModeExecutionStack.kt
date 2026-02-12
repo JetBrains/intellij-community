@@ -81,9 +81,14 @@ class XMixedModeExecutionStack(
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
     if (computedFramesMap.isCompleted) {
-      container as XStackFrameContainerEx
       val combinedFrames = filterIfNeeded(computedFramesMap.getCompleted().map { /*High frame*/it.value ?: /*Low frame*/it.key })
-      container.addStackFrames(combinedFrames, currentFrame, true)
+      if (container is XStackFrameContainerEx)
+        container.addStackFrames(combinedFrames, currentFrame, true)
+      else {
+        // Split debugger case, we have to set the frame manually since the XStackFrameContainerEx unavailable
+        container.addStackFrames(combinedFrames, true)
+        currentFrame?.let { frame -> session.setCurrentStackFrame(this, frame) }
+      }
       return
     }
 
@@ -151,11 +156,16 @@ class XMixedModeExecutionStack(
       }
       else {
         val builtResult = mixFramesResult.getOrThrow()
-        container as XStackFrameContainerEx
 
         val combinedFrames = builtResult.lowLevelToHighLevelFrameMap.map { /*High frame*/it.value ?: /*Low frame*/it.key }
         val filterIfNeededCombinedFrames = filterIfNeeded(combinedFrames)
-        container.addStackFrames(filterIfNeededCombinedFrames, builtResult.highestHighLevelFrame, true)
+        if (container is XStackFrameContainerEx)
+          container.addStackFrames(filterIfNeededCombinedFrames, builtResult.highestHighLevelFrame, true)
+        else {
+          // Split debugger case, we have to set the frame manually since the XStackFrameContainerEx unavailable
+          container.addStackFrames(filterIfNeededCombinedFrames, true)
+          builtResult.highestHighLevelFrame?.let { frame -> session.setCurrentStackFrame(this, frame) }
+        }
         computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
       }
     }
