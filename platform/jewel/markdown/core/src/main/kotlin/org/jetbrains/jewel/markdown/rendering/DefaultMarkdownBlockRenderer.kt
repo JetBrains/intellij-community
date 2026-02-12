@@ -18,9 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withCompositionLocal
@@ -51,6 +53,7 @@ import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.TextLayoutResult
@@ -92,6 +95,7 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
 import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
+import org.jetbrains.jewel.markdown.extensions.ImageRenderResult
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.BulletCharStyles
@@ -226,16 +230,14 @@ public open class DefaultMarkdownBlockRenderer(
         softWrap: Boolean = true,
         maxLines: Int = Int.MAX_VALUE,
     ) {
-        val originalImages = renderedImages(block)
-
-        val renderedContent = rememberRenderedContent(block, inlinesStyling, enabled, onUrlClick)
+        val (loadedImages, renderedContent) = rememberRenderedContent(block, inlinesStyling, enabled, onUrlClick)
         val textColor = inlinesStyling.textStyle.color.takeOrElse { LocalContentColor.current }
         val mergedStyle = inlinesStyling.textStyle.merge(TextStyle(color = textColor))
         val density = LocalDensity.current
 
         TextWithScalableInlineContent(
             text = renderedContent,
-            inlineContent = originalImages,
+            inlineContent = loadedImages,
             density = density,
             modifier = modifier,
             overflow = overflow,
@@ -632,27 +634,65 @@ public open class DefaultMarkdownBlockRenderer(
         styling: InlinesStyling,
         enabled: Boolean,
         onUrlClick: ((String) -> Unit)? = null,
-    ) =
-        remember(block.inlineContent, styling, enabled, onUrlClick) {
-            inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
-        }
+    ): Pair<Map<String, InlineTextContent>, AnnotatedString> {
+        val (originalImages, failedImages) = resolveImages(block)
+        val original =
+            remember(block.inlineContent, styling, enabled, onUrlClick) {
+                inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
+            }
+        // Note: failedImages is a SnapshotStateSet, so we use derivedStateOf to properly track
+        // changes to its contents.
+        val renderedContent by
+            remember(original, block, styling, enabled, onUrlClick) {
+                derivedStateOf {
+                    if (failedImages.isEmpty()) {
+                        original
+                    } else {
+                        rebuildWithFailedImagesAsLinks(original, failedImages, block, styling, enabled, onUrlClick)
+                    }
+                }
+            }
+        return originalImages to renderedContent
+    }
 
     @Composable
-    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
+    private fun resolveImages(blockInlineContent: WithInlineMarkdown): ResolvedImages {
         val map = remember(blockInlineContent) { mutableStateMapOf<String, InlineTextContent>() }
-
+        val failedSources = remember(blockInlineContent) { mutableStateSetOf<String>() }
         val imagesRenderer = rendererExtensions.firstNotNullOfOrNull { it.imageRendererExtension }
+        val images = remember(blockInlineContent) { getImages(blockInlineContent) }
 
-        for (image in getImages(blockInlineContent)) {
-            val renderedImage = imagesRenderer?.renderImageContent(image)
-            if (renderedImage == null) {
-                map.remove(image.source)
-            } else {
-                map[image.source] = renderedImage
+        for (image in images) {
+            val imageId = image.inlineContentId()
+            when (val result = imagesRenderer?.renderImage(image)) {
+                is ImageRenderResult.Success -> {
+                    map[imageId] = result.content
+                    failedSources.remove(imageId)
+                }
+
+                is ImageRenderResult.Loading -> {
+                    failedSources.remove(imageId)
+                    // Show the provided indicator, or with none drop any previous (now stale) success content so the
+                    // slot falls back to its placeholder text.
+                    if (result.content != null) {
+                        map[imageId] = result.content
+                    } else {
+                        map.remove(imageId)
+                    }
+                }
+
+                is ImageRenderResult.Failed -> {
+                    failedSources.add(imageId)
+                    map.remove(imageId)
+                }
+
+                null -> {
+                    // No renderer available, skip
+                }
             }
         }
 
-        return map
+        return map to failedSources
     }
 
     /**
@@ -1041,6 +1081,80 @@ private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = b
     collectImagesRecursively(input.inlineContent)
 }
 
+internal const val INLINE_CONTENT_TAG = "androidx.compose.foundation.text.inlineContent"
+
+/** Unicode picture frame character followed by a non-breaking space, used to indicate a failed image link. */
+internal const val BROKEN_IMAGE_INDICATOR = "\uD83D\uDDBC\u00A0" // 🖼 + NBSP
+
+private fun rebuildWithFailedImagesAsLinks(
+    old: AnnotatedString,
+    failedImages: Set<String>,
+    block: WithInlineMarkdown,
+    styling: InlinesStyling,
+    enabled: Boolean,
+    onUrlClick: ((String) -> Unit)?,
+): AnnotatedString {
+    // The inline-content id is content-derived (see InlineMarkdown.Image.inlineContentId), so occurrences that
+    // differ in alt text have distinct ids and each keeps its own fallback text.
+    val imagesById = getImages(block).associateBy { it.inlineContentId() }
+    val failedImageRanges =
+        old.getStringAnnotations(0, old.length)
+            .filter { it.tag == INLINE_CONTENT_TAG && it.item in failedImages }
+            .sortedBy { it.start }
+
+    if (failedImageRanges.isEmpty()) {
+        return old
+    }
+
+    return buildAnnotatedString {
+        var currentPos = 0
+        for (annotation in failedImageRanges) {
+            if (currentPos < annotation.start) {
+                append(old.subSequence(currentPos, annotation.start))
+            }
+            val image = imagesById[annotation.item]
+            val imageSource = image?.source.orEmpty()
+
+            // If the failed image was nested inside a link (e.g. a linked badge like [![alt](img)](dest)), point
+            // the fallback link at the enclosing link's destination.
+            val linkDestination =
+                old.getLinkAnnotations(annotation.start, annotation.end)
+                    .firstOrNull { it.start <= annotation.start && it.end >= annotation.end }
+                    ?.let { (it.item as? LinkAnnotation.Clickable)?.tag } ?: imageSource
+
+            // Fallback text is the alt; with no alt, show where the link points so the visible text matches the
+            // click target (the enclosing link's destination, or the image source when standalone).
+            val altText = image?.alt?.ifEmpty { null } ?: linkDestination
+
+            // Preserve the effective inline style at the replaced range
+            val enclosingStyle =
+                old.spanStyles
+                    .filter { it.start <= annotation.start && it.end >= annotation.end }
+                    .fold(styling.textStyle) { style, range -> style.merge(range.item) }
+
+            val index =
+                if (enabled) {
+                    val link =
+                        LinkAnnotation.Clickable(
+                            tag = linkDestination,
+                            linkInteractionListener = { onUrlClick?.invoke(linkDestination) },
+                            styles = enclosingStyle.smartMerge(styling.textLinkStyles, enabled = true),
+                        )
+                    pushLink(link)
+                } else {
+                    pushStyle(enclosingStyle.smartMerge(styling.linkDisabled, enabled = false).toSpanStyle())
+                }
+            append(BROKEN_IMAGE_INDICATOR)
+            append(altText)
+            pop(index)
+            currentPos = annotation.end
+        }
+        if (currentPos < old.length) {
+            append(old.subSequence(currentPos, old.length))
+        }
+    }
+}
+
 @Deprecated(
     message =
         "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
@@ -1092,6 +1206,8 @@ private fun MimeType.Known.fromMimeTypeString(mimeType: String): MimeType =
 
         else -> UNKNOWN
     }
+
+private typealias ResolvedImages = Pair<Map<String, InlineTextContent>, Set<String>>
 
 /** Test tag applied to the scalable inline content layout when SubcomposeLayout path is used. */
 @ApiStatus.Internal
