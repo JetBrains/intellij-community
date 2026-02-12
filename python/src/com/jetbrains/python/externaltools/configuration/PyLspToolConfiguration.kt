@@ -6,7 +6,15 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import java.nio.file.Path
 import kotlin.io.path.Path
 
-abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : PersistentStateComponent<State> {
+interface PyLspExecutionConfiguration {
+  var executableDiscoveryMode: ExecutableDiscoveryMode
+  var pathToExecutable: String
+  val executablePath: Path? get() = pathToExecutable.ifEmpty { null }?.let { Path(it) }
+  var sdkName: String
+}
+
+abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : PersistentStateComponent<State>,
+                                                                               PyLspExecutionConfiguration {
   open var enabled: Boolean = false
   var inspections: Boolean = true
   open var completions: Boolean? = null
@@ -20,10 +28,9 @@ abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : P
    * `null` means: not supported
    */
   open var documentation: Boolean? = null
-  var executableDiscoveryMode: ExecutableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER
-  var pathToExecutable: String = ""
-  val executablePath: Path? get() = pathToExecutable.ifEmpty { null }?.let { Path(it) }
-  var sdkName: String = DEFAULT_ENVIRONMENT
+  override var executableDiscoveryMode: ExecutableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER
+  override var pathToExecutable: String = ""
+  override var sdkName: String = DEFAULT_ENVIRONMENT
 
   final override fun getState(): State = this as State
 

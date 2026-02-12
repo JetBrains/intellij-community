@@ -528,6 +528,7 @@ private object ConstraintReducer {
       Variance.INFER_VARIANCE -> {
         UNREACHABLE()
       }
+      Variance.BIVARIANT -> {}
     }
     // success
   }
