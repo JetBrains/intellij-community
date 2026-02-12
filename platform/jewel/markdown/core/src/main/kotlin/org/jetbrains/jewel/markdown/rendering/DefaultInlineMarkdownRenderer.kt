@@ -210,9 +210,11 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         enabled: Boolean,
         currentTextStyle: TextStyle,
     ) {
-        // Each image source corresponds to one rendered image.
+        // The inline-content id must match the key the block renderer uses to look up the rendered image and
+        // its occurrence-specific fallback text, so both sides derive it from inlineContentId(). Any override
+        // of this function must use the same id.
         appendInlineContent(
-            node.source,
+            node.inlineContentId(),
             buildString {
                 append(" ![")
                 if (node.alt.isNotEmpty()) append(node.alt)
@@ -244,90 +246,105 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         action(node)
         pop(popTo)
     }
+}
 
-    /**
-     * Merges the current [TextStyle]into the given [TextLinkStyles] using the [smartMerge] algorithm.
-     *
-     * This function smartly merges the [SpanStyle]s within the provided [TextLinkStyles] with the current [TextStyle].
-     * The merge takes the [enabled] parameter into consideration, too. For each state (style, focusedStyle,
-     * hoveredStyle, pressedStyle) within [TextLinkStyles]:
-     * - If the style exists, it's smart-merged with the current [TextStyle].
-     * - If the style doesn't exist, it's ignored.
-     *
-     * @param linkStyles The [TextLinkStyles] to merge into.
-     * @param enabled Indicates if the text is enabled, affecting the merge behavior.
-     * @return A new [TextLinkStyles] object with the merged styles.
-     * @see smartMerge
-     */
-    private fun TextStyle.smartMerge(linkStyles: TextLinkStyles, enabled: Boolean) =
-        TextLinkStyles(
-            style = linkStyles.style?.let { spanStyle -> smartMerge(spanStyle, enabled).toSpanStyle() },
-            focusedStyle = linkStyles.focusedStyle?.let { spanStyle -> smartMerge(spanStyle, enabled).toSpanStyle() },
-            hoveredStyle = linkStyles.hoveredStyle?.let { spanStyle -> smartMerge(spanStyle, enabled).toSpanStyle() },
-            pressedStyle = linkStyles.pressedStyle?.let { spanStyle -> smartMerge(spanStyle, enabled).toSpanStyle() },
-        )
+/**
+ * A stable identity for an image occurrence, used as its inline-content id.
+ *
+ * The id is derived from every rendering-relevant field, so occurrences that differ in alt text, title, or size get
+ * distinct ids and keep their own fallback link text and placeholder size instead of collapsing onto each other.
+ * Occurrences that are identical in all of these share an id, which is harmless. Both [DefaultInlineMarkdownRenderer]
+ * (when emitting the annotation) and the block renderer (when keying the rendered image and its failure state) must use
+ * this function so their ids agree.
+ */
+internal fun InlineMarkdown.Image.inlineContentId(): String =
+    // We assume that the NUL separator won't appear in none of the properties, so distinct field tuples can't collide
+    // into one id
+    listOf(source, alt, title.orEmpty(), width?.toString().orEmpty(), height?.toString().orEmpty())
+        .joinToString(separator = "\u0000")
 
-    /**
-     * Merges the [TextStyle] into the provided [SpanStyle], applying a smart merging strategy.
-     *
-     * The logic is as follows:
-     * - **Font Style**: If `other` has a non-normal font style, it's used. Otherwise, the current style's font style is
-     *   used. This is to ensure that italic styles are preserved.
-     * - **Font Weight**: If only one style has a non-null font weight, that weight is used. If both have non-null
-     *   weights, the heavier weight is used, preventing any reduction in weight.
-     * - **Color**: The color from `other` is used if it's specified, unless `enabled` is false. If `other`'s color is
-     *   unspecified and `enabled` is true, the current style's color is used.
-     * - **Platform Style**: The platform span style is merged, if available.
-     * - **Other Properties**: All other properties (fontSize, fontFamily, etc.) are taken directly from `other`.
-     *
-     * @param other The [SpanStyle] to merge the current [TextStyle] into.
-     * @param enabled Indicates if the text is enabled. If false, the color will be set to [Color.Unspecified],
-     *   effectively hiding it.
-     * @return A new [TextStyle] with the properties merged according to the logic.
-     */
-    private fun TextStyle.smartMerge(other: SpanStyle, enabled: Boolean): TextStyle {
-        val otherFontWeight = other.fontWeight
-        val thisFontWeight = fontWeight
+/**
+ * Merges the current [TextStyle] into the given [TextLinkStyles] using the [smartMerge] algorithm.
+ *
+ * This function smartly merges the [SpanStyle]s within the provided [TextLinkStyles] with the current [TextStyle]. The
+ * merge takes the [enabled] parameter into consideration, too. For each state (style, focusedStyle, hoveredStyle,
+ * pressedStyle) within [TextLinkStyles]:
+ * - If the style exists, it's smart-merged with the current [TextStyle].
+ * - If the style doesn't exist, it's ignored.
+ *
+ * @param linkStyles The [TextLinkStyles] to merge into.
+ * @param enabled Indicates if the text is enabled, affecting the merge behavior.
+ * @return A new [TextLinkStyles] object with the merged styles.
+ * @see smartMerge
+ */
+internal fun TextStyle.smartMerge(linkStyles: TextLinkStyles, enabled: Boolean) =
+    TextLinkStyles(
+        style = linkStyles.style?.let { spanStyle -> smartMerge(spanStyle, enabled).toSpanStyle() },
+        focusedStyle = linkStyles.focusedStyle?.let { spanStyle -> smartMerge(spanStyle, enabled).toSpanStyle() },
+        hoveredStyle = linkStyles.hoveredStyle?.let { spanStyle -> smartMerge(spanStyle, enabled).toSpanStyle() },
+        pressedStyle = linkStyles.pressedStyle?.let { spanStyle -> smartMerge(spanStyle, enabled).toSpanStyle() },
+    )
 
-        return merge(
-            // We use the other's FontStyle (if any) when it's not just Normal, otherwise we keep
-            // our own FontStyle. This preserves incoming Italic, since Markdown has no way to
-            // reset it to Normal anyway.
-            fontStyle =
-                if (other.fontStyle != null && other.fontStyle != FontStyle.Normal) {
-                    other.fontStyle
-                } else {
-                    fontStyle
-                },
-            // If only one FontWeight is non-null, we use that; if both are null, it's also null.
-            // If they're both non-null, we take the highest one, since Markdown has no way to
-            // decrease the weight of text.
-            fontWeight =
-                when {
-                    otherFontWeight != null && thisFontWeight == null -> otherFontWeight
-                    otherFontWeight == null && thisFontWeight != null -> thisFontWeight
-                    otherFontWeight != null && thisFontWeight != null ->
-                        FontWeight(max(thisFontWeight.weight, otherFontWeight.weight))
+/**
+ * Merges the [TextStyle] into the provided [SpanStyle], applying a smart merging strategy.
+ *
+ * The logic is as follows:
+ * - **Font Style**: If `other` has a non-normal font style, it's used. Otherwise, the current style's font style is
+ *   used. This is to ensure that italic styles are preserved.
+ * - **Font Weight**: If only one style has a non-null font weight, that weight is used. If both have non-null weights,
+ *   the heavier weight is used, preventing any reduction in weight.
+ * - **Color**: The color from `other` is used if it's specified, unless `enabled` is false. If `other`'s color is
+ *   unspecified and `enabled` is true, the current style's color is used.
+ * - **Platform Style**: The platform span style is merged, if available.
+ * - **Other Properties**: All other properties (fontSize, fontFamily, etc.) are taken directly from `other`.
+ *
+ * @param other The [SpanStyle] to merge the current [TextStyle] into.
+ * @param enabled Indicates if the text is enabled. If false, the color will be set to [Color.Unspecified], effectively
+ *   hiding it.
+ * @return A new [TextStyle] with the properties merged according to the logic.
+ */
+internal fun TextStyle.smartMerge(other: SpanStyle, enabled: Boolean): TextStyle {
+    val otherFontWeight = other.fontWeight
+    val thisFontWeight = fontWeight
 
-                    else -> null
-                },
-            // The color is taken from the other, unless it's unspecified, or enabled is false
-            color = if (enabled) other.color.takeOrElse { color } else Color.Unspecified,
-            // Everything else comes from other
-            fontSize = other.fontSize,
-            fontSynthesis = other.fontSynthesis,
-            fontFamily = other.fontFamily,
-            fontFeatureSettings = other.fontFeatureSettings,
-            letterSpacing = other.letterSpacing,
-            baselineShift = other.baselineShift,
-            textGeometricTransform = other.textGeometricTransform,
-            localeList = other.localeList,
-            background = other.background,
-            textDecoration = other.textDecoration,
-            shadow = other.shadow,
-            drawStyle = other.drawStyle,
-            platformStyle =
-                PlatformTextStyle(platformStyle?.spanStyle?.merge(other.platformStyle), platformStyle?.paragraphStyle),
-        )
-    }
+    return merge(
+        // We use the other's FontStyle (if any) when it's not just Normal, otherwise we keep
+        // our own FontStyle. This preserves incoming Italic, since Markdown has no way to
+        // reset it to Normal anyway.
+        fontStyle =
+            if (other.fontStyle != null && other.fontStyle != FontStyle.Normal) {
+                other.fontStyle
+            } else {
+                fontStyle
+            },
+        // If only one FontWeight is non-null, we use that; if both are null, it's also null.
+        // If they're both non-null, we take the highest one, since Markdown has no way to
+        // decrease the weight of text.
+        fontWeight =
+            when {
+                otherFontWeight != null && thisFontWeight == null -> otherFontWeight
+                otherFontWeight == null && thisFontWeight != null -> thisFontWeight
+                otherFontWeight != null && thisFontWeight != null ->
+                    FontWeight(max(thisFontWeight.weight, otherFontWeight.weight))
+
+                else -> null
+            },
+        // The color is taken from the other, unless it's unspecified, or enabled is false
+        color = if (enabled) other.color.takeOrElse { color } else Color.Unspecified,
+        // Everything else comes from other
+        fontSize = other.fontSize,
+        fontSynthesis = other.fontSynthesis,
+        fontFamily = other.fontFamily,
+        fontFeatureSettings = other.fontFeatureSettings,
+        letterSpacing = other.letterSpacing,
+        baselineShift = other.baselineShift,
+        textGeometricTransform = other.textGeometricTransform,
+        localeList = other.localeList,
+        background = other.background,
+        textDecoration = other.textDecoration,
+        shadow = other.shadow,
+        drawStyle = other.drawStyle,
+        platformStyle =
+            PlatformTextStyle(platformStyle?.spanStyle?.merge(other.platformStyle), platformStyle?.paragraphStyle),
+    )
 }
