@@ -1,12 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction.impl.bridge
 
-import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -25,16 +22,9 @@ internal val SYNC_STORAGE_SNAPSHOT_BEFORE_DATA_SERVICES =
  * This is a temporary, internal API for migration purposes.
  */
 @ApiStatus.Internal
-class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeData, Unit>() {
+class GradleBridgeProjectDataService : ProjectDataManager.ProjectDataImportExtension {
 
-  override fun getTargetDataKey(): Key<GradleBridgeData> = GradleBridgeData.KEY
-
-  override fun importData(
-    toImport: Collection<DataNode<GradleBridgeData>>,
-    projectData: ProjectData?,
-    project: Project,
-    modelsProvider: IdeModifiableModelsProvider
-  ) {
+    override fun prepareImportData(projectData: ProjectData?, modelsProvider: IdeModifiableModelsProvider) {
     if (!Registry.`is`("gradle.phased.sync.bridge.disabled")) {
       removeModulesFromModelProvider(modelsProvider)
       removeEntitiesFromWorkspaceModel(modelsProvider)

@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.service.syncAction.impl.bridge
 
-import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager.ProjectDataImportExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -35,13 +33,9 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
  * This is a temporary, internal API for migration purposes.
  */
 @ApiStatus.Internal
-class GradleBridgeFinalizerDataService : AbstractProjectDataService<GradleBridgeFinalizerData, Unit>() {
-  override fun getTargetDataKey() = GradleBridgeFinalizerData.KEY
+class GradleBridgeFinalizerDataService : ProjectDataImportExtension {
 
-  override fun postProcess(toImport: Collection<DataNode<GradleBridgeFinalizerData?>?>,
-                           projectData: ProjectData?,
-                           project: Project,
-                           modelsProvider: IdeModifiableModelsProvider) {
+  override fun finalizeImportData(projectData: ProjectData?, modelsProvider: IdeModifiableModelsProvider) {
     if (!Registry.`is`("gradle.phased.sync.bridge.disabled") || projectData == null) return
 
     val currentStorage = modelsProvider.actualStorageBuilder

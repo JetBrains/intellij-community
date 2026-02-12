@@ -2,13 +2,16 @@
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -68,4 +71,29 @@ public interface ProjectDataManager {
    * must be manually called on the returned instance for these modifications to take effect.
    */
   @NotNull IdeModifiableModelsProvider createModifiableModelsProvider(@NotNull Project project);
+
+  /**
+   * An extension point to help pre- and post- process the data around {@link ProjectDataService} execution.
+   * Can be useful to clean up some stale data before execution.
+   * Or restore some missing workspace model entities after execution.
+   * Internal API. Do not use.
+   */
+  @ApiStatus.Internal
+  interface ProjectDataImportExtension {
+    ExtensionPointName<ProjectDataImportExtension> EP_NAME = ExtensionPointName.create("com.intellij.externalProjectData.extension");
+
+    /**
+     * Executed before data services processing
+     * @param projectData - project data to be imported
+     * @param modelsProvider - idea models before any modifications
+     */
+    default void prepareImportData(@Nullable ProjectData projectData, @NotNull IdeModifiableModelsProvider modelsProvider) {}
+
+    /**
+     * Executed after data services processing, before committing changes.
+     * @param projectData - project data that was imported
+     * @param modelsProvider - idea models with all modifications
+     */
+    default void finalizeImportData(@Nullable ProjectData projectData, @NotNull IdeModifiableModelsProvider modelsProvider) {}
+  }
 }

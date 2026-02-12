@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction.impl.bridge
 
-import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
@@ -19,16 +18,10 @@ import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
 import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 
 @ApiStatus.Internal
-class GradleBridgeModuleDataService : WorkspaceDataService<GradleBridgeModuleData> {
+class GradleBridgeModuleDataService : ProjectDataManager.ProjectDataImportExtension {
 
-  override fun getTargetDataKey(): Key<GradleBridgeModuleData> = GradleBridgeModuleData.KEY
-
-  override fun importData(
-    toImport: Collection<DataNode<GradleBridgeModuleData>>,
-    projectData: ProjectData?,
-    project: Project,
-    mutableStorage: MutableEntityStorage,
-  ) {
+  override fun finalizeImportData(projectData: ProjectData?, modelsProvider: IdeModifiableModelsProvider) {
+    val mutableStorage = (modelsProvider as? IdeModifiableModelsProviderImpl)?.actualStorageBuilder ?: return
     if (Registry.`is`("gradle.phased.sync.bridge.disabled")) return
     addGradleModuleEntities(mutableStorage)
   }

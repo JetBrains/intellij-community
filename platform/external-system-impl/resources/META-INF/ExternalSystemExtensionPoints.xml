@@ -15,6 +15,9 @@
     <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalProjectData.extension"
+                    interface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager$ProjectDataImportExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalWorkspaceDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService"
                     dynamic="true"/>
