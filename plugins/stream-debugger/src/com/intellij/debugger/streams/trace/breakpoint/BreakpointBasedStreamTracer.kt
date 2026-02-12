@@ -42,7 +42,7 @@ class BreakpointBasedStreamTracer(
       returnValue
     }
     breakpoint.enable()
-    suspendContext.resume(true)
+    suspendManager.resume(suspendContext)
 
     // MVP: Placeholder for actual tracing logic
     
