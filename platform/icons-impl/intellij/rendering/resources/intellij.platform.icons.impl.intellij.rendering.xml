@@ -1,0 +1,38 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.util.core"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.icons.api"/>
+    <module name="intellij.platform.icons.api.legacyIconSupport"/>
+    <module name="intellij.platform.icons.api.rendering"/>
+    <module name="intellij.platform.icons.impl"/>
+    <module name="intellij.platform.icons.impl.intellij"/>
+    <module name="intellij.platform.icons.impl.rendering"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.icons.customIconLayerRendererProvider"
+                    interface="org.jetbrains.icons.impl.intellij.rendering.custom.CustomIconLayerRendererProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.icons.imageResourceLoader"
+                    beanClass="org.jetbrains.icons.impl.intellij.rendering.ImageResourceLoaderExtension" dynamic="true">
+      <with attribute="loader" implements="org.jetbrains.icons.rendering.GenericImageResourceLoader"/>
+      <with attribute="location" implements="org.jetbrains.icons.ImageResourceLocation"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <customIconLayer implementation="org.jetbrains.icons.impl.intellij.rendering.SwingIconLayerRegistration"/>
+    <icons.customIconLayerRendererProvider implementation="org.jetbrains.icons.impl.intellij.rendering.SwingIconLayerRendererProvider"/>
+    <icons.imageResourceLoader
+      loader="org.jetbrains.icons.impl.intellij.rendering.images.ModuleImageResourceLoader"
+      location="org.jetbrains.icons.impl.intellij.ModuleImageResourceLocation"
+    />
+  </extensions>
+</idea-plugin>

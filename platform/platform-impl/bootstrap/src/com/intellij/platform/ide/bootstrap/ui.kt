@@ -34,6 +34,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.icons.InternalIconsApi
+import org.jetbrains.icons.impl.intellij.IntelliJIconManager
+import org.jetbrains.icons.impl.intellij.rendering.IntelliJIconRendererManager
+import org.jetbrains.icons.impl.intellij.rendering.images.IntelliJImageResourceProvider
+import org.jetbrains.icons.impl.rendering.DefaultSwingIconManager
+import org.jetbrains.icons.legacyIconSupport.SwingIconManager
+import org.jetbrains.icons.rendering.IconRendererManager
+import org.jetbrains.icons.rendering.ImageResourceProvider
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -44,11 +53,19 @@ import javax.swing.RepaintManager
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 
+@OptIn(ExperimentalIconsApi::class, InternalIconsApi::class)
 internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncScope: CoroutineScope) {
   // IdeaLaF uses AllIcons - icon manager must be activated
   if (!isHeadless) {
     span("icon manager activation") {
-      IconManager.activate(CoreIconManager())
+      val iconManager = CoreIconManager()
+      IconManager.activate(iconManager)
+    }
+    span("new icon manager activation") {
+      org.jetbrains.icons.IconManager.activate(IntelliJIconManager())
+      IconRendererManager.activate(IntelliJIconRendererManager())
+      ImageResourceProvider.activate(IntelliJImageResourceProvider())
+      SwingIconManager.activate(DefaultSwingIconManager())
     }
   }
 

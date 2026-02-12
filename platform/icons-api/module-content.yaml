@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.icons.api.jar
+  modules:
+  - name: intellij.platform.icons.api
