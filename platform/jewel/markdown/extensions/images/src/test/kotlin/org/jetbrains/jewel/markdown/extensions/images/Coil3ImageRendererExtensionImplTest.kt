@@ -4,24 +4,36 @@ package org.jetbrains.jewel.markdown.extensions.images
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
-import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.ColorImage
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -30,6 +42,7 @@ import coil3.decode.DataSource
 import coil3.request.ErrorResult
 import coil3.request.SuccessResult
 import coil3.test.FakeImageLoaderEngine
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.ceil
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,9 +53,14 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.markdown.DimensionSize
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
+import org.jetbrains.jewel.markdown.extensions.ImageRenderResult
+import org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
+import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.markdown.rendering.DOWNSCALED_INLINE_CONTENT_TAG
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer
+import org.jetbrains.jewel.markdown.rendering.InlinesStyling
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.markdown.testing.createMarkdownTestStyling
 import org.jetbrains.jewel.markdown.testing.createMarkdownTestThemeDefinition
 import org.jetbrains.jewel.ui.component.Text as JewelText
@@ -59,8 +77,9 @@ public class Coil3ImageRendererExtensionImplTest {
     @get:Rule public val composeTestRule: ComposeContentTestRule = createComposeRule()
 
     private val platformContext: PlatformContext = PlatformContext.INSTANCE
-    private val imageUrl = "https://example.com/image.png"
-    private val imageUrl2 = "https://example.com/image2.png"
+    private val loadingImageUrl = "https://example.com/image.png"
+    private val failingImageUrl = "https://example.com/nonexistent.png"
+    private val loadingImageUrl2 = "https://example.com/image2.png"
 
     @Test
     public fun `image renders with correct size on success`() {
@@ -68,15 +87,14 @@ public class Coil3ImageRendererExtensionImplTest {
         val fakeImageHeight = 100
         val fakeImage = ColorImage(Color.Red.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
 
         val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
         val imageMarkdown =
-            InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "Image loaded successfully")
+            InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "Image loaded successfully")
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoaderWithFakeEngine, imageMarkdown)
 
         composeTestRule
             .onNodeWithContentDescription("Image loaded successfully")
@@ -85,38 +103,18 @@ public class Coil3ImageRendererExtensionImplTest {
             .assertHeightIsEqualTo(fakeImageHeight.dp)
     }
 
-    @Test
-    public fun `placeholder remains small on error`() {
-        val engine =
-            FakeImageLoaderEngine.Builder()
-                .intercept(
-                    predicate = { it == imageUrl },
-                    interceptor = { ErrorResult(null, it.request, IllegalStateException("Failed to load")) },
-                )
-                .build()
-
-        val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
-
-        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
-        val imageMarkdown = InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "Failed to load image")
-
-        setContent(extension, imageMarkdown)
-
-        composeTestRule.onNodeWithContentDescription("Failed to load image").assertDoesNotExist()
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    public fun `placeholder remains small during loading state then changes to image size`() {
+    public fun `loading indicator shows during loading state then image appears on success`() {
         val testDispatcher = StandardTestDispatcher()
 
-        val fakeImageWidth = 150
-        val fakeImageHeight = 150
+        val fakeImageWidth = 50
+        val fakeImageHeight = 50
         val fakeImage = ColorImage(Color.Red.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
         val engine =
             FakeImageLoaderEngine.Builder()
                 .intercept(
-                    predicate = { it == imageUrl },
+                    predicate = { it == loadingImageUrl },
                     interceptor = {
                         delay(500.milliseconds) // simulating network delay
 
@@ -128,25 +126,106 @@ public class Coil3ImageRendererExtensionImplTest {
         val imageLoader =
             ImageLoader.Builder(platformContext).components { add(engine) }.coroutineContext(testDispatcher).build()
 
-        val extension = Coil3ImageRendererExtensionImpl(imageLoader)
-        val imageMarkdown = InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "A loading image")
+        val imageMarkdown = InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "A loading image")
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoader, imageMarkdown)
 
+        // fast forwarding coil's internal dispatcher
+        testDispatcher.scheduler.advanceTimeBy(250)
+        testDispatcher.scheduler.runCurrent()
+
+        // The actual image with its content description doesn't exist yet
+        composeTestRule.onNodeWithContentDescription("A loading image").assertDoesNotExist()
+
+        // Verify loading indicator is shown
         composeTestRule
-            .onNodeWithContentDescription("A loading image")
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
+            .assertExists()
+
+        // fast forwarding coil's internal dispatcher
+        testDispatcher.scheduler.advanceTimeBy(251)
+        testDispatcher.scheduler.runCurrent()
+
+        // After loading completes, image should appear and loading indicator should disappear
+        composeTestRule.onNodeWithContentDescription("A loading image").assertExists()
+        composeTestRule
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
+            .assertDoesNotExist()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    public fun `loading indicator shows during loading state then disappears on failure`() {
+        val testDispatcher = StandardTestDispatcher()
+
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == failingImageUrl },
+                    interceptor = {
+                        delay(500.milliseconds) // simulating network delay
+
+                        ErrorResult(null, it.request, IllegalStateException("Not found"))
+                    },
+                )
+                .build()
+
+        val imageLoader =
+            ImageLoader.Builder(platformContext).components { add(engine) }.coroutineContext(testDispatcher).build()
+        val altText = "Missing image"
+        val failingImageMarkdown = InlineMarkdown.Image(source = failingImageUrl, alt = altText, title = null)
+
+        setContent(imageLoader, failingImageMarkdown)
+
+        // fast forwarding coil's internal dispatcher
+        testDispatcher.scheduler.advanceTimeBy(250)
+        testDispatcher.scheduler.runCurrent()
+
+        // The actual image with its content description doesn't exist yet
+        composeTestRule.onNodeWithContentDescription(altText).assertDoesNotExist()
+
+        // Verify loading indicator is shown
+        composeTestRule
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
             .assertExists()
             .assertWidthIsEqualTo(1.dp)
             .assertHeightIsEqualTo(1.dp)
 
         // fast forwarding coil's internal dispatcher
-        testDispatcher.scheduler.advanceTimeBy(501)
+        testDispatcher.scheduler.advanceTimeBy(251)
         testDispatcher.scheduler.runCurrent()
 
         composeTestRule
-            .onNodeWithContentDescription("A loading image")
-            .assertWidthIsAtLeast(fakeImageWidth.dp)
-            .assertHeightIsAtLeast(fakeImageHeight.dp)
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
+            .assertDoesNotExist()
+
+        // After loading completes, image should appear and loading indicator should disappear
+        assertFailedLinkExists(altText)
+    }
+
+    @Test
+    public fun `failed image is rendered as link with alt text`() {
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == failingImageUrl },
+                    interceptor = { ErrorResult(null, it.request, IllegalStateException("Not found")) },
+                )
+                .build()
+
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
+        val altText = "Missing image"
+        val failingImageMarkdown = InlineMarkdown.Image(source = failingImageUrl, alt = altText, title = null)
+
+        setContent(imageLoader, failingImageMarkdown)
+
+        // Image should not be rendered
+        composeTestRule
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
+            .assertDoesNotExist()
+
+        // Failed image should be rendered as a link with alt text
+        assertFailedLinkExists(altText)
     }
 
     @Test
@@ -155,26 +234,23 @@ public class Coil3ImageRendererExtensionImplTest {
         val fakeImageHeight = 100
         val fakeImage = ColorImage(Color.Blue.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
-
-        val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
-
-        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
 
         // Specify different dimensions than the actual image
         val specifiedWidth = 100
         val specifiedHeight = 50
         val imageMarkdown =
             InlineMarkdown.Image(
-                source = imageUrl,
+                source = loadingImageUrl,
                 alt = "Alt text",
                 title = "Sized image",
                 width = DimensionSize.Pixels(specifiedWidth),
                 height = DimensionSize.Pixels(specifiedHeight),
                 inlineContent = emptyList(),
             )
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoader, imageMarkdown)
 
         composeTestRule
             .onNodeWithContentDescription("Sized image")
@@ -189,11 +265,7 @@ public class Coil3ImageRendererExtensionImplTest {
         val fakeImageHeight = 100
         val fakeImage = ColorImage(Color.Green.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
-
-        val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
-
-        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
 
         // Specify only width - height should be scaled proportionally
         val specifiedWidth = 100
@@ -201,15 +273,16 @@ public class Coil3ImageRendererExtensionImplTest {
         val expectedHeight = 50
         val imageMarkdown =
             InlineMarkdown.Image(
-                source = imageUrl,
+                source = loadingImageUrl,
                 alt = "Alt text",
                 title = "Width only image",
                 width = DimensionSize.Pixels(specifiedWidth),
                 height = null,
                 inlineContent = emptyList(),
             )
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoader, imageMarkdown)
 
         composeTestRule
             .onNodeWithContentDescription("Width only image")
@@ -224,11 +297,7 @@ public class Coil3ImageRendererExtensionImplTest {
         val fakeImageHeight = 100
         val fakeImage = ColorImage(Color.Yellow.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
-
-        val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
-
-        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
 
         // Specify only height - width should be scaled proportionally
         val specifiedHeight = 50
@@ -236,15 +305,16 @@ public class Coil3ImageRendererExtensionImplTest {
         val expectedWidth = 100
         val imageMarkdown =
             InlineMarkdown.Image(
-                source = imageUrl,
+                source = loadingImageUrl,
                 alt = "Alt text",
                 title = "Height only image",
                 width = null,
                 height = DimensionSize.Pixels(specifiedHeight),
                 inlineContent = emptyList(),
             )
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoader, imageMarkdown)
 
         composeTestRule
             .onNodeWithContentDescription("Height only image")
@@ -264,9 +334,9 @@ public class Coil3ImageRendererExtensionImplTest {
         val engine =
             FakeImageLoaderEngine.Builder()
                 .intercept(
-                    predicate = { it == imageUrl },
+                    predicate = { it == loadingImageUrl },
                     interceptor = {
-                        delay(500) // simulating network delay
+                        delay(500.milliseconds) // simulating network delay
 
                         SuccessResult(fakeImage, it.request, DataSource.MEMORY)
                     },
@@ -276,13 +346,11 @@ public class Coil3ImageRendererExtensionImplTest {
         val imageLoader =
             ImageLoader.Builder(platformContext).components { add(engine) }.coroutineContext(testDispatcher).build()
 
-        val extension = Coil3ImageRendererExtensionImpl(imageLoader)
-
         val specifiedWidth = 150
         val specifiedHeight = 75
         val imageMarkdown =
             InlineMarkdown.Image(
-                source = imageUrl,
+                source = loadingImageUrl,
                 alt = "Alt text",
                 title = "Loading sized image",
                 width = DimensionSize.Pixels(specifiedWidth),
@@ -290,7 +358,7 @@ public class Coil3ImageRendererExtensionImplTest {
                 inlineContent = emptyList(),
             )
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoader, imageMarkdown)
 
         // During loading, placeholder should have the specified dimensions
         composeTestRule
@@ -299,7 +367,7 @@ public class Coil3ImageRendererExtensionImplTest {
             .assertWidthIsEqualTo(specifiedWidth.dp)
             .assertHeightIsEqualTo(specifiedHeight.dp)
 
-        // Fast forward to complete loading
+        // Fast-forward to complete loading
         testDispatcher.scheduler.advanceTimeBy(501)
         testDispatcher.scheduler.runCurrent()
 
@@ -317,16 +385,14 @@ public class Coil3ImageRendererExtensionImplTest {
         val fakeImageHeight = 100
         val fakeImage = ColorImage(Color.Green.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
 
         val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
-
-        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
 
         // Specify 100x100 (1:1 aspect ratio) - image will be stretched/squished
         val imageMarkdown =
             InlineMarkdown.Image(
-                source = imageUrl,
+                source = loadingImageUrl,
                 alt = "Alt text",
                 title = "Stretched square image",
                 width = DimensionSize.Pixels(100),
@@ -334,7 +400,7 @@ public class Coil3ImageRendererExtensionImplTest {
                 inlineContent = emptyList(),
             )
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoaderWithFakeEngine, imageMarkdown)
 
         // Both dimensions should be exactly as specified, even though aspect ratio differs
         composeTestRule
@@ -351,16 +417,14 @@ public class Coil3ImageRendererExtensionImplTest {
         val fakeImageHeight = 100
         val fakeImage = ColorImage(Color.Yellow.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
 
         val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
-
-        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
 
         // Specify 50x200 (1:4 aspect ratio) - very different from original 2:1
         val imageMarkdown =
             InlineMarkdown.Image(
-                source = imageUrl,
+                source = loadingImageUrl,
                 alt = "Alt text",
                 title = "Tall stretched image",
                 width = DimensionSize.Pixels(50),
@@ -368,7 +432,7 @@ public class Coil3ImageRendererExtensionImplTest {
                 inlineContent = emptyList(),
             )
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoaderWithFakeEngine, imageMarkdown)
 
         composeTestRule
             .onNodeWithContentDescription("Tall stretched image")
@@ -384,16 +448,14 @@ public class Coil3ImageRendererExtensionImplTest {
         val fakeImageHeight = 100
         val fakeImage = ColorImage(Color.Magenta.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
 
         val imageLoaderWithFakeEngine = ImageLoader.Builder(platformContext).components { add(engine) }.build()
-
-        val extension = Coil3ImageRendererExtensionImpl(imageLoaderWithFakeEngine)
 
         // Specify 300x50 (6:1 aspect ratio) - wider than original 2:1
         val imageMarkdown =
             InlineMarkdown.Image(
-                source = imageUrl,
+                source = loadingImageUrl,
                 alt = "Alt text",
                 title = "Wide stretched image",
                 width = DimensionSize.Pixels(300),
@@ -401,7 +463,7 @@ public class Coil3ImageRendererExtensionImplTest {
                 inlineContent = emptyList(),
             )
 
-        setContent(extension, imageMarkdown)
+        setContent(imageLoaderWithFakeEngine, imageMarkdown)
 
         composeTestRule
             .onNodeWithContentDescription("Wide stretched image")
@@ -417,10 +479,11 @@ public class Coil3ImageRendererExtensionImplTest {
         val containerWidth = 100
         val fakeImage = ColorImage(Color.Blue.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        val paragraph = Paragraph(InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "HUGE image"))
+        val paragraph =
+            Paragraph(InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "HUGE image"))
 
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidth)
 
@@ -444,10 +507,11 @@ public class Coil3ImageRendererExtensionImplTest {
         val containerWidth = 100
         val fakeImage = ColorImage(Color.Blue.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        val paragraph = Paragraph(InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "HUGE image"))
+        val paragraph =
+            Paragraph(InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "HUGE image"))
 
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidth)
 
@@ -464,10 +528,11 @@ public class Coil3ImageRendererExtensionImplTest {
         val containerWidth = 200
         val fakeImage = ColorImage(Color.Green.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
-        val paragraph = Paragraph(InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "smol image"))
+        val paragraph =
+            Paragraph(InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "smol image"))
 
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidth)
 
@@ -488,12 +553,12 @@ public class Coil3ImageRendererExtensionImplTest {
         val containerWidth = 100
         val fakeImage = ColorImage(Color.Red.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
         val paragraph =
             Paragraph(
-                InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "HUGE image"),
+                InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "HUGE image"),
                 InlineMarkdown.Text(" and then some!"),
             )
 
@@ -516,13 +581,13 @@ public class Coil3ImageRendererExtensionImplTest {
         val containerWidth = 100
         val fakeImage = ColorImage(Color.Blue.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
         val paragraph =
             Paragraph(
                 InlineMarkdown.Text("Behold the "),
-                InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "HUGE image"),
+                InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "HUGE image"),
             )
 
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidth)
@@ -544,13 +609,13 @@ public class Coil3ImageRendererExtensionImplTest {
         val containerWidth = 100
         val fakeImage = ColorImage(Color.Green.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
         val paragraph =
             Paragraph(
                 InlineMarkdown.Text("Behold, the "),
-                InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "HUGE image"),
+                InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "HUGE image"),
                 InlineMarkdown.Text("!!!"),
             )
 
@@ -572,12 +637,12 @@ public class Coil3ImageRendererExtensionImplTest {
         val fakeImageHeight = 100
         val fakeImage = ColorImage(Color.Yellow.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
         val paragraph =
             Paragraph(
                 InlineMarkdown.Text("Prefix "),
-                InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "Intrinsic image"),
+                InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "Intrinsic image"),
                 InlineMarkdown.Text("followedbyanincrediblelonguninterrupredsequenceofwords"),
             )
 
@@ -644,16 +709,16 @@ public class Coil3ImageRendererExtensionImplTest {
 
         val engine =
             FakeImageLoaderEngine.Builder()
-                .intercept({ it == imageUrl }, fakeImage1)
-                .intercept({ it == imageUrl2 }, fakeImage2)
+                .intercept({ it == loadingImageUrl }, fakeImage1)
+                .intercept({ it == loadingImageUrl2 }, fakeImage2)
                 .build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
         val paragraph =
             Paragraph(
-                InlineMarkdown.Image(source = imageUrl, alt = "Alt text 1", title = "First image"),
+                InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text 1", title = "First image"),
                 InlineMarkdown.Text(" text between "),
-                InlineMarkdown.Image(source = imageUrl2, alt = "Alt text 2", title = "Second image"),
+                InlineMarkdown.Image(source = loadingImageUrl2, alt = "Alt text 2", title = "Second image"),
             )
 
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidth)
@@ -699,13 +764,13 @@ public class Coil3ImageRendererExtensionImplTest {
         val containerWidth = 50
         val fakeImage = ColorImage(Color.Cyan.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
         val paragraph =
             Paragraph(
                 InlineMarkdown.Text("Zero width: "),
-                InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "Zero width image"),
+                InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "Zero width image"),
             )
 
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidth)
@@ -727,16 +792,16 @@ public class Coil3ImageRendererExtensionImplTest {
 
         val engine =
             FakeImageLoaderEngine.Builder()
-                .intercept({ it == imageUrl }, fakeImage1)
-                .intercept({ it == imageUrl2 }, fakeImage2)
+                .intercept({ it == loadingImageUrl }, fakeImage1)
+                .intercept({ it == loadingImageUrl2 }, fakeImage2)
                 .build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
         val paragraph =
             Paragraph(
-                InlineMarkdown.Image(source = imageUrl, alt = "Alt text 1", title = "smol image"),
+                InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text 1", title = "smol image"),
                 InlineMarkdown.Text(" and "),
-                InlineMarkdown.Image(source = imageUrl2, alt = "Alt text 2", title = "beeg image"),
+                InlineMarkdown.Image(source = loadingImageUrl2, alt = "Alt text 2", title = "beeg image"),
             )
 
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidth)
@@ -766,13 +831,13 @@ public class Coil3ImageRendererExtensionImplTest {
         val containerWidth = 100
         val fakeImage = ColorImage(Color.Magenta.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
-        val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
         val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
 
         val paragraph =
             Paragraph(
                 InlineMarkdown.Text("Edge case: "),
-                InlineMarkdown.Image(source = imageUrl, alt = "Alt text", title = "Barely oversized"),
+                InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "Barely oversized"),
             )
 
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidth)
@@ -789,15 +854,592 @@ public class Coil3ImageRendererExtensionImplTest {
         composeTestRule.onNodeWithTag(DOWNSCALED_INLINE_CONTENT_TAG).assertExists()
     }
 
-    private fun setContent(extension: Coil3ImageRendererExtensionImpl, image: InlineMarkdown.Image) {
+    @Test
+    public fun `failed image without alt text shows URL as link text`() {
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == failingImageUrl },
+                    interceptor = { ErrorResult(null, it.request, IllegalStateException("Not found")) },
+                )
+                .build()
+
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
+        val failingImageMarkdown = InlineMarkdown.Image(source = failingImageUrl, alt = "", title = null)
+
+        setContent(imageLoader, failingImageMarkdown)
+
+        // Failed image without alt text should show URL as link text
+        assertFailedLinkExists(failingImageUrl)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    public fun `previously failed image shows link instead of loading indicator on retry`() {
+        val testDispatcher = StandardTestDispatcher()
+
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == failingImageUrl },
+                    interceptor = {
+                        delay(100.milliseconds)
+                        ErrorResult(null, it.request, IllegalStateException("Failed"))
+                    },
+                )
+                .build()
+
+        val imageLoader =
+            ImageLoader.Builder(platformContext).components { add(engine) }.coroutineContext(testDispatcher).build()
+        val altText = "Failing image"
+        val failingImageMarkdown = InlineMarkdown.Image(source = failingImageUrl, alt = altText, title = null)
+
+        setContent(imageLoader, failingImageMarkdown)
+
+        // Initially loading indicator should be shown
+        composeTestRule
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
+            .assertExists()
+
+        // Complete first request - should fail and show link
+        testDispatcher.scheduler.advanceTimeBy(101)
+        testDispatcher.scheduler.runCurrent()
+
+        // Wait for link to appear, then verify loading indicator is gone
+        assertFailedLinkExists(altText)
+        composeTestRule
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
+            .assertDoesNotExist()
+    }
+
+    @Test
+    public fun `same source with different alt text renders each occurrence independently`() {
+        val fakeImage = ColorImage(Color.Green.toArgb(), width = 120, height = 80)
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
+
+        // Same URL, different alt/title: the two occurrences must not collapse onto a single one.
+        setContent(
+            imageLoader,
+            InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt A", title = "Image A"),
+            InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt B", title = "Image B"),
+        )
+
+        // Rendering the second occurrence must not break the first: both are present.
+        composeTestRule.onNodeWithContentDescription("Image A").assertExists()
+        composeTestRule.onNodeWithContentDescription("Image B").assertExists()
+    }
+
+    @Test
+    public fun `same source with different specified widths sizes each occurrence independently`() {
+        val fakeImage = ColorImage(Color.Red.toArgb(), width = 200, height = 100)
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
+
+        // Same URL and alt, different specified width: each occurrence keeps its own size.
+        setContent(
+            imageLoader,
+            InlineMarkdown.Image(
+                source = loadingImageUrl,
+                alt = "Alt",
+                title = "Narrow",
+                width = DimensionSize.Pixels(50),
+            ),
+            InlineMarkdown.Image(
+                source = loadingImageUrl,
+                alt = "Alt",
+                title = "Wide",
+                width = DimensionSize.Pixels(99),
+            ),
+        )
+
+        composeTestRule.onNodeWithContentDescription("Narrow").assertExists().assertWidthIsEqualTo(50.dp)
+        composeTestRule.onNodeWithContentDescription("Wide").assertExists().assertWidthIsEqualTo(99.dp)
+    }
+
+    @Test
+    public fun `identical images share the same fate when loading fails`() {
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == failingImageUrl },
+                    interceptor = { ErrorResult(null, it.request, IllegalStateException("Not found")) },
+                )
+                .build()
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
+
+        // Two byte-for-byte identical occurrences share a content id, so they coalesce and fail together.
+        setContent(
+            imageLoader,
+            InlineMarkdown.Image(source = failingImageUrl, alt = "Shared alt", title = "Shared image"),
+            InlineMarkdown.Image(source = failingImageUrl, alt = "Shared alt", title = "Shared image"),
+        )
+
+        // The fallback link appears once loading fails...
+        assertFailedLinkExists("Shared alt")
+        // ...and neither occurrence rendered as an image: if either had succeeded, its content-description node
+        // would exist. Its absence proves both share the failed fate.
+        composeTestRule.onNodeWithContentDescription("Shared image").assertDoesNotExist()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    public fun `rapid source changes are debounced so only the settled source is loaded`() {
+        val firstImage = ColorImage(Color.Green.toArgb(), width = 40, height = 40)
+        val secondImage = ColorImage(Color.Blue.toArgb(), width = 80, height = 80)
+
+        val firstUrlLoads = AtomicInteger(0)
+        val secondUrlLoads = AtomicInteger(0)
+
+        val testDispatcher = StandardTestDispatcher()
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == loadingImageUrl },
+                    interceptor = {
+                        firstUrlLoads.incrementAndGet()
+                        SuccessResult(firstImage, it.request, DataSource.MEMORY)
+                    },
+                )
+                .intercept(
+                    predicate = { it == loadingImageUrl2 },
+                    interceptor = {
+                        secondUrlLoads.incrementAndGet()
+                        SuccessResult(secondImage, it.request, DataSource.MEMORY)
+                    },
+                )
+                .build()
+        val imageLoader =
+            ImageLoader.Builder(platformContext).components { add(engine) }.coroutineContext(testDispatcher).build()
+
+        val source = mutableStateOf(loadingImageUrl)
+
+        // Drive the debounce clock manually: the delay lives in a LaunchedEffect, so it advances with the
+        // Compose mainClock, while the actual Coil load advances with testDispatcher.
+        composeTestRule.mainClock.autoAdvance = false
+        setContentWithDynamicSource(imageLoader, source)
+
+        // Initial composition: the first source is already settled, so it loads immediately (no debounce).
+        composeTestRule.mainClock.advanceTimeBy(16)
+        testDispatcher.scheduler.advanceUntilIdle()
+        composeTestRule.mainClock.advanceTimeBy(16)
+        assertEquals(1, firstUrlLoads.get())
+        assertEquals(0, secondUrlLoads.get())
+
+        // "Type" a new URL; let the recomposition launch the debounce coroutine.
+        source.value = loadingImageUrl2
+        composeTestRule.mainClock.advanceTimeBy(16)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Still inside the 300ms window: the new URL must not have been requested yet.
+        composeTestRule.mainClock.advanceTimeBy(200)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals("new source must not load during the debounce window", 0, secondUrlLoads.get())
+
+        // Cross the debounce threshold: now the settled source loads, exactly once.
+        composeTestRule.mainClock.advanceTimeBy(150)
+        testDispatcher.scheduler.advanceUntilIdle()
+        composeTestRule.mainClock.advanceTimeBy(16)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals("settled source must load after the debounce window", 1, secondUrlLoads.get())
+        // The first URL was never reloaded while the second was being typed.
+        assertEquals(1, firstUrlLoads.get())
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    public fun `intermediate source values typed within the debounce window never load`() {
+        val intermediateUrl = "https://example.com/intermediate.png"
+
+        val initialImage = ColorImage(Color.Green.toArgb(), width = 40, height = 40)
+        val intermediateImage = ColorImage(Color.Yellow.toArgb(), width = 60, height = 60)
+        val finalImage = ColorImage(Color.Blue.toArgb(), width = 80, height = 80)
+
+        val initialLoads = AtomicInteger(0)
+        val intermediateLoads = AtomicInteger(0)
+        val finalLoads = AtomicInteger(0)
+
+        val testDispatcher = StandardTestDispatcher()
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == loadingImageUrl },
+                    interceptor = {
+                        initialLoads.incrementAndGet()
+                        SuccessResult(initialImage, it.request, DataSource.MEMORY)
+                    },
+                )
+                .intercept(
+                    predicate = { it == intermediateUrl },
+                    interceptor = {
+                        intermediateLoads.incrementAndGet()
+                        SuccessResult(intermediateImage, it.request, DataSource.MEMORY)
+                    },
+                )
+                .intercept(
+                    predicate = { it == loadingImageUrl2 },
+                    interceptor = {
+                        finalLoads.incrementAndGet()
+                        SuccessResult(finalImage, it.request, DataSource.MEMORY)
+                    },
+                )
+                .build()
+        val imageLoader =
+            ImageLoader.Builder(platformContext).components { add(engine) }.coroutineContext(testDispatcher).build()
+
+        val source = mutableStateOf(loadingImageUrl)
+
+        composeTestRule.mainClock.autoAdvance = false
+        setContentWithDynamicSource(imageLoader, source)
+
+        // Settle on the initial source.
+        composeTestRule.mainClock.advanceTimeBy(16)
+        testDispatcher.scheduler.advanceUntilIdle()
+        composeTestRule.mainClock.advanceTimeBy(16)
+        assertEquals(1, initialLoads.get())
+
+        // Type an intermediate value; its debounce coroutine starts and gets partway through the window...
+        source.value = intermediateUrl
+        composeTestRule.mainClock.advanceTimeBy(16)
+        testDispatcher.scheduler.advanceUntilIdle()
+        composeTestRule.mainClock.advanceTimeBy(100)
+
+        // ...then change again before the window elapses. The intermediate coroutine is cancelled mid-delay,
+        // so its assignment (which happens after delay) never runs and its URL is never requested.
+        source.value = loadingImageUrl2
+        composeTestRule.mainClock.advanceTimeBy(16)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Still inside the final source's window: neither the intermediate nor the final value has loaded.
+        composeTestRule.mainClock.advanceTimeBy(200)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals("intermediate value must never load", 0, intermediateLoads.get())
+        assertEquals(0, finalLoads.get())
+
+        // After the final source settles, only it loads.
+        composeTestRule.mainClock.advanceTimeBy(150)
+        testDispatcher.scheduler.advanceUntilIdle()
+        composeTestRule.mainClock.advanceTimeBy(16)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals("intermediate value must never load", 0, intermediateLoads.get())
+        assertEquals("only the settled final source loads", 1, finalLoads.get())
+        assertEquals(1, initialLoads.get())
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    public fun `switching between two valid sources never flashes the loading indicator`() {
+        val firstImage = ColorImage(Color.Green.toArgb(), width = 40, height = 40)
+        val secondImage = ColorImage(Color.Blue.toArgb(), width = 80, height = 80)
+
+        val testDispatcher = StandardTestDispatcher()
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == loadingImageUrl },
+                    interceptor = {
+                        delay(200.milliseconds)
+                        SuccessResult(firstImage, it.request, DataSource.MEMORY)
+                    },
+                )
+                .intercept(
+                    predicate = { it == loadingImageUrl2 },
+                    interceptor = {
+                        delay(200.milliseconds)
+                        SuccessResult(secondImage, it.request, DataSource.MEMORY)
+                    },
+                )
+                .build()
+        val imageLoader =
+            ImageLoader.Builder(platformContext).components { add(engine) }.coroutineContext(testDispatcher).build()
+
+        val source = mutableStateOf(loadingImageUrl)
+
+        composeTestRule.mainClock.autoAdvance = false
+        setContentWithDynamicSource(imageLoader, source)
+
+        // Load the first source fully.
+        composeTestRule.mainClock.advanceTimeBy(16)
+        testDispatcher.scheduler.advanceUntilIdle()
+        composeTestRule.mainClock.advanceTimeBy(16)
+        composeTestRule.onNodeWithContentDescription("img").assertExists()
+
+        // Switch to the second (also valid) source and let the debounce settle, but do NOT complete its load yet.
+        source.value = loadingImageUrl2
+        composeTestRule.mainClock.advanceTimeBy(16)
+        composeTestRule.mainClock.advanceTimeBy(320)
+
+        // While the new source is loading, the previous image is kept (stale-while-revalidate): the image node
+        // is still present and the loading indicator never appears.
+        composeTestRule
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("img").assertExists()
+
+        // Once the new source finishes loading, it is shown at its own size, still without any spinner.
+        testDispatcher.scheduler.advanceUntilIdle()
+        composeTestRule.mainClock.advanceTimeBy(16)
+        composeTestRule
+            .onNodeWithContentDescription(Coil3ImageRendererExtensionImpl.LOADING_INDICATOR_DESCRIPTION)
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("img").assertExists().assertWidthIsEqualTo(80.dp)
+    }
+
+    @Test
+    public fun `failed image nested in emphasis keeps the emphasis style in the fallback link`() {
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == failingImageUrl },
+                    interceptor = { ErrorResult(null, it.request, IllegalStateException("Not found")) },
+                )
+                .build()
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
+
+        // Emphasis is the only source of italics here, so italic in the fallback link can only have come from the
+        // enclosing emphasis - not the base text style or the link style.
+        val inlinesStyling =
+            InlinesStyling(
+                textStyle = TextStyle.Default,
+                inlineCode = SpanStyle(Color.Black),
+                link = SpanStyle(Color.Blue),
+                linkDisabled = SpanStyle(Color.Gray),
+                linkFocused = SpanStyle(Color.Blue),
+                linkHovered = SpanStyle(Color.Blue),
+                linkPressed = SpanStyle(Color.Blue),
+                linkVisited = SpanStyle(Color.Blue),
+                emphasis = SpanStyle(fontStyle = FontStyle.Italic),
+                strongEmphasis = SpanStyle(fontWeight = FontWeight.Bold),
+                inlineHtml = SpanStyle(Color.Black),
+            )
+        val paragraphStyling = MarkdownStyling.Paragraph(inlinesStyling)
+
+        val paragraph =
+            Paragraph(
+                InlineMarkdown.Emphasis(
+                    "*",
+                    InlineMarkdown.Image(source = failingImageUrl, alt = "broken", title = null),
+                )
+            )
+
+        var rendered: AnnotatedString? = null
         composeTestRule.setContent {
-            val inlineContent = buildMap { extension.renderImageContent(image)?.let { put("inlineTextContent", it) } }
-            val annotatedString = buildAnnotatedString {
-                append("Rendered inline text image: ")
-                appendInlineContent("inlineTextContent", "[rendered image]")
+            JewelTheme(createMarkdownTestThemeDefinition()) {
+                val imageExtension = Coil3ImageRendererExtension(imageLoader)
+                val renderer =
+                    DefaultMarkdownBlockRenderer(
+                        rootStyling = createMarkdownTestStyling(),
+                        rendererExtensions = listOf(imageExtension),
+                        inlineRenderer = DefaultInlineMarkdownRenderer(listOf(imageExtension)),
+                    )
+                Box(modifier = Modifier.width(Int.MAX_VALUE.dp)) {
+                    renderer.RenderParagraph(
+                        block = paragraph,
+                        styling = paragraphStyling,
+                        enabled = true,
+                        onUrlClick = {},
+                        onTextLayout = { rendered = it.layoutInput.text },
+                        modifier = Modifier,
+                        overflow = TextOverflow.Clip,
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                    )
+                }
             }
-            BasicText(text = annotatedString, inlineContent = inlineContent)
         }
+
+        // Wait until the failed image has been rebuilt into a fallback link.
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            rendered?.let { it.getLinkAnnotations(0, it.length).isNotEmpty() } == true
+        }
+
+        val text = rendered!!
+        val link = text.getLinkAnnotations(0, text.length).first().item as LinkAnnotation.Clickable
+        // The fallback link inherits the emphasis it was nested in, matching a real link in the same context.
+        assertEquals(FontStyle.Italic.value, link.styles?.style?.fontStyle?.value)
+    }
+
+    @Test
+    public fun `failed image nested in a link points the fallback link at the outer destination`() {
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == failingImageUrl },
+                    interceptor = { ErrorResult(null, it.request, IllegalStateException("Not found")) },
+                )
+                .build()
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
+
+        val destination = "https://destination.example"
+        // Paragraph with the text: [![broken](failing)](destination)
+        val paragraph =
+            Paragraph(
+                InlineMarkdown.Link(
+                    destination,
+                    null,
+                    InlineMarkdown.Image(source = failingImageUrl, alt = "broken", title = null),
+                )
+            )
+
+        var rendered: AnnotatedString? = null
+        composeTestRule.setContent {
+            JewelTheme(createMarkdownTestThemeDefinition()) {
+                val imageExtension = Coil3ImageRendererExtension(imageLoader)
+                val renderer =
+                    DefaultMarkdownBlockRenderer(
+                        rootStyling = createMarkdownTestStyling(),
+                        rendererExtensions = listOf(imageExtension),
+                        inlineRenderer = DefaultInlineMarkdownRenderer(listOf(imageExtension)),
+                    )
+                Box(modifier = Modifier.width(Int.MAX_VALUE.dp)) {
+                    renderer.RenderParagraph(
+                        block = paragraph,
+                        styling = createMarkdownTestStyling().paragraph,
+                        enabled = true,
+                        onUrlClick = {},
+                        onTextLayout = { rendered = it.layoutInput.text },
+                        modifier = Modifier,
+                        overflow = TextOverflow.Clip,
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                    )
+                }
+            }
+        }
+
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            rendered?.let { it.getLinkAnnotations(0, it.length).isNotEmpty() } == true
+        }
+
+        val text = rendered!!
+        val link = text.getLinkAnnotations(0, text.length).first().item as LinkAnnotation.Clickable
+        // The fallback link targets the enclosing link's destination, not the (broken) image source.
+        assertEquals(destination, link.tag)
+    }
+
+    @Test
+    public fun `loading with null content drops a previously loaded image`() {
+        val loading = mutableStateOf(false)
+        val successContent =
+            InlineTextContent(Placeholder(10.sp, 10.sp, PlaceholderVerticalAlign.Bottom)) {
+                Box(Modifier.fillMaxSize().testTag("loaded-image"))
+            }
+        // A custom renderer that shows a loaded image, then "refreshes" it and returns Loading(null).
+        val extension =
+            object : MarkdownRendererExtension {
+                override val imageRendererExtension =
+                    object : ImageRendererExtension {
+                        @Composable
+                        override fun renderImage(image: InlineMarkdown.Image): ImageRenderResult =
+                            if (loading.value) {
+                                ImageRenderResult.Loading(null)
+                            } else {
+                                ImageRenderResult.Success(successContent)
+                            }
+                    }
+            }
+
+        val paragraph = Paragraph(InlineMarkdown.Image(source = loadingImageUrl, alt = "alt", title = null))
+
+        composeTestRule.setContent {
+            JewelTheme(createMarkdownTestThemeDefinition()) {
+                val styling = createMarkdownTestStyling()
+                val renderer =
+                    DefaultMarkdownBlockRenderer(
+                        rootStyling = styling,
+                        rendererExtensions = listOf(extension),
+                        inlineRenderer = DefaultInlineMarkdownRenderer(listOf(extension)),
+                    )
+                Box(modifier = Modifier.width(Int.MAX_VALUE.dp)) {
+                    renderer.RenderParagraph(
+                        block = paragraph,
+                        styling = styling.paragraph,
+                        enabled = true,
+                        onUrlClick = {},
+                        modifier = Modifier,
+                    )
+                }
+            }
+        }
+
+        // The loaded image content is shown.
+        composeTestRule.onNodeWithTag("loaded-image").assertExists()
+
+        // Refreshing into Loading(null) must drop the stale success content instead of keeping it on screen.
+        loading.value = true
+        composeTestRule.onNodeWithTag("loaded-image").assertDoesNotExist()
+    }
+
+    @Test
+    public fun `failed image with no alt in a link shows the destination as the fallback text`() {
+        val engine =
+            FakeImageLoaderEngine.Builder()
+                .intercept(
+                    predicate = { it == failingImageUrl },
+                    interceptor = { ErrorResult(null, it.request, IllegalStateException("Not found")) },
+                )
+                .build()
+        val imageLoader = ImageLoader.Builder(platformContext).components { add(engine) }.build()
+
+        val destination = "https://destination.example"
+        // Paragraph with the text: [![](failing)](destination)
+        val paragraph =
+            Paragraph(
+                InlineMarkdown.Link(
+                    destination,
+                    null,
+                    InlineMarkdown.Image(source = failingImageUrl, alt = "", title = null),
+                )
+            )
+
+        var rendered: AnnotatedString? = null
+        composeTestRule.setContent {
+            JewelTheme(createMarkdownTestThemeDefinition()) {
+                val imageExtension = Coil3ImageRendererExtension(imageLoader)
+                val renderer =
+                    DefaultMarkdownBlockRenderer(
+                        rootStyling = createMarkdownTestStyling(),
+                        rendererExtensions = listOf(imageExtension),
+                        inlineRenderer = DefaultInlineMarkdownRenderer(listOf(imageExtension)),
+                    )
+                Box(modifier = Modifier.width(Int.MAX_VALUE.dp)) {
+                    renderer.RenderParagraph(
+                        block = paragraph,
+                        styling = createMarkdownTestStyling().paragraph,
+                        enabled = true,
+                        onUrlClick = {},
+                        onTextLayout = { rendered = it.layoutInput.text },
+                        modifier = Modifier,
+                        overflow = TextOverflow.Clip,
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                    )
+                }
+            }
+        }
+
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            rendered?.let { it.getLinkAnnotations(0, it.length).isNotEmpty() } == true
+        }
+
+        val text = rendered!!
+        // With no alt, the visible text falls back to the destination (not the broken image source), so it
+        // matches the link's click target.
+        assertTrue(text.text.contains(destination))
+        assertTrue(!text.text.contains(failingImageUrl))
+        val link = text.getLinkAnnotations(0, text.length).first().item as LinkAnnotation.Clickable
+        assertEquals(destination, link.tag)
+    }
+
+    private fun assertFailedLinkExists(altText: String) {
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodes(hasText(altText, substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun setContent(imageLoader: ImageLoader, vararg images: InlineMarkdown.Image) {
+        val paragraph = Paragraph(*images)
+        setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidthDp = Int.MAX_VALUE)
     }
 
     private fun setConstrainedContentWithParagraph(
@@ -816,6 +1458,31 @@ public class Coil3ImageRendererExtensionImplTest {
                         inlineRenderer = DefaultInlineMarkdownRenderer(listOf(imageExtension)),
                     )
                 Box(modifier = Modifier.width(containerWidthDp.dp).testTag(PARAGRAPH_WRAPPER_TAG)) {
+                    blockRenderer.RenderParagraph(
+                        block = paragraph,
+                        styling = markdownStyling.paragraph,
+                        enabled = true,
+                        onUrlClick = {},
+                        modifier = Modifier,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun setContentWithDynamicSource(imageLoader: ImageLoader, source: State<String>) {
+        composeTestRule.setContent {
+            JewelTheme(createMarkdownTestThemeDefinition()) {
+                val imageExtension = Coil3ImageRendererExtension(imageLoader)
+                val markdownStyling = createMarkdownTestStyling()
+                val blockRenderer =
+                    DefaultMarkdownBlockRenderer(
+                        rootStyling = markdownStyling,
+                        rendererExtensions = listOf(imageExtension),
+                        inlineRenderer = DefaultInlineMarkdownRenderer(listOf(imageExtension)),
+                    )
+                val paragraph = Paragraph(InlineMarkdown.Image(source = source.value, alt = "Alt", title = "img"))
+                Box(modifier = Modifier.width(Int.MAX_VALUE.dp).testTag(PARAGRAPH_WRAPPER_TAG)) {
                     blockRenderer.RenderParagraph(
                         block = paragraph,
                         styling = markdownStyling.paragraph,
