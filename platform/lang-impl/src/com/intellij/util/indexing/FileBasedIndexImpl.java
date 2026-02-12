@@ -165,6 +165,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   /** How often, on average, flush each index to the disk */
   private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
+  /**
+   * If true -- track {@link FilesToUpdateCollector#modificationCount()} per project, and skip looking for
+   * updates if current modCount was already processed per project
+   */
+  private static final boolean USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES = getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", false);
 
   final CoroutineScope coroutineScope;
 
@@ -924,18 +929,42 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           // Make sure that condition for forceUpdate is not more restrictive than condition for indexUnsavedDocuments,
           // because indexUnsavedDocuments builds a diff of in-memory/on-the-disc state.
           // Also make sure that if forceUpdate is invoked, it is invoked before indexUnsavedDocuments
-          boolean includeFilesFromOtherProjects = restrictedFile == null && project == null;
+
+          boolean includeFilesFromOtherProjects = (restrictedFile == null && project == null);
+          //TODO RC: why we use projectScope here, ignoring scope parameter altogether?
+          GlobalSearchScope projectScope = project == null ? null : GlobalSearchScope.everythingScope(project);
+          IdFilter projectIndexableFilesFilter = projectIndexableFiles(project);
+
           ProjectFilesCondition projectFilterCondition = new ProjectFilesCondition(
-            projectIndexableFiles(project),
+            projectIndexableFilesFilter,
             // TODO: index changed documents from other projects too for performance reasons: changed documents will break
             //  fast check (myUpToDateIndicesForUnsavedOrTransactedDocuments) in indexUnsavedDocument
-            project == null ? null : GlobalSearchScope.everythingScope(project),
+            /*scope: */ projectScope,
             restrictedFile,
-            includeFilesFromOtherProjects);
-
+            //MAYBE RC: force this to false?
+            includeFilesFromOtherProjects
+          );
           if (!ActionUtil.isDumbMode(project) || getCurrentDumbModeAccessType_NoDumbChecks() == null) {
-            forceUpdate(project, projectFilterCondition);
+            //RC: if (restrictedFile!=null) we can't use modCount-based updates skipping, because with (restrictedFile!=null)
+            //    we do not process _all_ the new updates, but only those with (restrictedFile), hence after that processing
+            //    statement 'all updates up to [modCount] have been processed' is not true -> we can't bump up lastProcessedModCount.
+            //RC: Why can't we just abandon (restrictedFile) filtering altogether, and always apply all the updates available (if any)?
+            //    We could, but turns out it opens the pandora box: we have some deadlocks hidden inside Stubs building (which happens
+            //    during indexing by Stubs index), and these deadlocks are unreachable when (restrictedFile) branch is in place -- but
+            //    they become reachable if the (restrictedFile) branch is dropped. So we stuck with (restrictedFile) for now.
+            //TODO RC: with (restrictedFile!=null) we can't _fully_ utilise modCount-based optimization, we still can utilise
+            //         it _partially_. Namely: if modCount hasn't changed since last (full) forceUpdate() -> there are definitely
+            //         no new updates to apply, even when filtering by restrictedFile. The difference with regular branch
+            //         (restrictedFile==null) is that we should NOT bump up lastProcessedModCount after the update, since we
+            //         don't process _all_ the updates in queue, but only those with (restrictedFile)
+            boolean skipUpdatingIfNoNewUpdatesAvailable = (restrictedFile == null);
+            forceUpdate(
+              project,
+              skipUpdatingIfNoNewUpdatesAvailable,
+              projectFilterCondition
+            );
           }
+
           indexUnsavedDocuments(indexId, project, projectFilterCondition, restrictedFile);
         }
         catch (RuntimeException e) {
@@ -1296,7 +1325,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           FileContentImpl fc = psiFile instanceof PsiBinaryFile ? (FileContentImpl)FileContentImpl.createByFile(virtualFile, project)
                                                                 : (FileContentImpl)FileContentImpl.createByText(virtualFile,
                                                                                                                 psiFile.getViewProvider()
-                                                                                                                  .getContents(), project);
+                                                                                                                .getContents(), project);
           initFileContent(fc, psiFile);
           Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
           return CachedValueProvider.Result.createSingleDependency(result, psiFile);
@@ -1862,23 +1891,73 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
 
   private void forceUpdate(@Nullable Project project,
+                           boolean skipUpdatingIfNoNewUpdatesAvailable,
                            @NotNull ProjectFilesCondition filter) {
     Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
+    runIfHaveNewUpdatesFor(
+      project,
+      skipUpdatingIfNoNewUpdatesAvailable && USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES,
+      () -> {
+        if (!allFilesToUpdate.isEmpty()) {
+          List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
+          if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
+            if (LOG.isDebugEnabled()) {
+              List<String> files = ContainerUtil.map(virtualFilesToBeUpdatedForProject, request -> request.getFile().getPath());
+              String message = "Indexing the following files because up-to-date indexes were requested by <see the stacktrace>. " +
+                               "Number of files: " + files.size() + " paths: " + StringUtil.trimLog(Strings.join(files, ", "), 500);
+              LOG.debug(message, new Throwable());
+            }
 
-    if (!allFilesToUpdate.isEmpty()) {
-      List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
-
-      if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
-        if (LOG.isDebugEnabled()) {
-          List<String> files = ContainerUtil.map(virtualFilesToBeUpdatedForProject, request -> request.getFile().getPath());
-          String message = "Indexing the following files because up-to-date indexes were requested by <see the stacktrace>. " +
-                           "Number of files: " + files.size() + " paths: " + StringUtil.trimLog(Strings.join(files, ", "), 500);
-          LOG.debug(message, new Throwable());
+            myForceUpdateTask.processAll(virtualFilesToBeUpdatedForProject, project);
+          }
         }
-
-        myForceUpdateTask.processAll(virtualFilesToBeUpdatedForProject, project);
       }
+    );
+  }
+
+  private static final Key<Long> LAST_PROCESSED_MOD_COUNT = Key.create("LAST_PROCESSED_MOD_COUNT");
+
+  /**
+   * Runs the task if myFilesToUpdateCollector _likely_ has some new updates (for the project), since the last time this method was called.
+   * Skips the task otherwise if there are no new updates since the last call.
+   * The task execution is skipped only if it is _guaranteed_ there are no new updates, but the opposite is not true:
+   * if the task is executed, it means we just _can't guarantee_ there are no new updates.
+   * @param skipUpdatingIfNoNewUpdatesAvailable if false, always runs the task, doesn't check if there are new updates available,
+   *                                            if true -- check if there are possibly new updates first before running the task.
+   */
+  private <E extends Exception> void runIfHaveNewUpdatesFor(@Nullable Project project,
+                                                            boolean skipUpdatingIfNoNewUpdatesAvailable,
+                                                            @NotNull ThrowableRunnable<E> task) throws E {
+    if (!skipUpdatingIfNoNewUpdatesAvailable) {
+      LOG.debug("skipUpdatingIfNoNewUpdatesAvailable=false -> do updates regardless of updates availability");
+      task.run();
+      return;
     }
+
+    if (project == null) {
+      LOG.debug("project=null -> can't check updates availability -> be conservative, do updates");
+      //can't tell are there any new updates -> be conservative, assume there are:
+      task.run();
+      return;
+    }
+
+    Long lastProcessedModCount = project.getUserData(LAST_PROCESSED_MOD_COUNT);
+    long currentModCount = myFilesToUpdateCollector.modificationCount();
+    if (lastProcessedModCount != null && lastProcessedModCount >= currentModCount) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("modCountCheck[last: " + lastProcessedModCount + " >= current: " + currentModCount + "] -> skip updates");
+      }
+      //everything is already processed
+      return;
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("modCountCheck[last: " + lastProcessedModCount + " < current: " + currentModCount + "] -> do updates");
+    }
+
+    task.run();
+    //update last_processed only if task completed successfully:
+    project.putUserData(LAST_PROCESSED_MOD_COUNT, currentModCount);
   }
 
   @Internal
@@ -1957,8 +2036,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     Collection<ID<?, ?>> contentDependentIndexes = ContainerUtil.intersection(IndexingStamp.getNontrivialFileIndexedStates(fileId),
                                                                               myRegisteredIndexes.getRequiringContentIndices());
-    IndexingEventsLogger.tryLog(() -> "doTransientStateChangeForFile,inputId=" + fileId + ",document=" + (document == null ? "null" : "notnull") +
-                                      ",indexesToClean=" + contentDependentIndexes);
+    IndexingEventsLogger.tryLog(
+      () -> "doTransientStateChangeForFile,inputId=" + fileId + ",document=" + (document == null ? "null" : "notnull") +
+            ",indexesToClean=" + contentDependentIndexes);
 
     removeTransientFileDataFromIndices(contentDependentIndexes, fileId, file);
     for (ID<?, ?> candidate : contentDependentIndexes) {
@@ -2021,7 +2101,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Project projectForFile = ContainerUtil.getFirstItem(containingProjects);
     if (TRACE_STUB_INDEX_UPDATES && containingProjects.size() > 1) {
       LOG.info("File " + fileId + " belongs to " + containingProjects.size() + " projects. " +
-                "Indexing in " + projectForFile.getLocationHash());
+               "Indexing in " + projectForFile.getLocationHash());
     }
 
     var indexingRequest = projectForFile.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
@@ -2180,6 +2260,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private static final @NotNull IntPredicate ACCEPT_ALL = (fileId -> true);
+
   @Override
   @Internal
   public @NotNull IntPredicate getAccessibleFileIdFilter(@Nullable Project project) {
