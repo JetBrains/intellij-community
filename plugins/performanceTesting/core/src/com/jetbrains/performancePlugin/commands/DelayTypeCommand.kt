@@ -80,9 +80,11 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
 
     PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext()).useWithScope { span ->
       coroutineScope {
+        val barriers = Array(text.length) { CompletableDeferred<Unit>() }
         List(text.length) { i ->
           launch {
             delay(i * delay)
+            if (i > 0) barriers[i - 1].await()
             var typed = false
             for (attempt in 1..3) {
               typed = withContext(Dispatchers.EDT) {
@@ -104,10 +106,14 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
               delay(500)
             }
             if (!typed) {
-              throw Exception("Focus was lost during typing. Current focus is in: " +
-                              withContext(Dispatchers.EDT) {
-                                KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass ?: "null"
-                              })
+              barriers[i].completeExceptionally(
+                Exception("Focus was lost during typing. Current focus is in: " +
+                          withContext(Dispatchers.EDT) {
+                            KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass ?: "null"
+                          }))
+            }
+            else {
+              barriers[i].complete(Unit)
             }
           }
         }
