@@ -2,14 +2,15 @@
 package org.jetbrains.jewel.ui.icon
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.icons.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLocation
 import org.jetbrains.icons.impl.rendering.DefaultImageModifiers
 import org.jetbrains.icons.rendering.ImageModifiers
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
+// TODO: Replace with ModuleImageResourceLocation and custom Loader for it
 @InternalJewelApi
 @ApiStatus.Internal
-public class PathImageResourceLoader(public val path: String, public val classLoader: ClassLoader?) : ImageResourceLoader {
+public class PathImageResourceLocation(public val path: String, public val classLoader: ClassLoader?) : ImageResourceLocation {
     public fun loadData(imageModifiers: ImageModifiers?): ByteArray {
         val knownMods = imageModifiers as? DefaultImageModifiers
         val finalPath = applyPathModifiers(path, knownMods)

@@ -43,6 +43,7 @@ jvm_library(
     "@lib//:jna",
     "//platform/icons-api",
     "//platform/icons-impl",
+    "//platform/icons-impl/rendering",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

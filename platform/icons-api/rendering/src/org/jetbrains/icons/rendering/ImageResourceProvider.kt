@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.rendering
 
-import org.jetbrains.icons.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLocation
 import org.jetbrains.icons.InternalIconsApi
 import java.util.ServiceLoader
 
 @InternalIconsApi
 interface ImageResourceProvider {
-  fun loadImage(loader: ImageResourceLoader, imageModifiers: ImageModifiers? = null): ImageResource
+  fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers? = null): ImageResource
 
   companion object {
     @Volatile

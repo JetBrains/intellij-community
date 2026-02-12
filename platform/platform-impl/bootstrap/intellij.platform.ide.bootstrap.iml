@@ -48,5 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.icons.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons.impl.intellij" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl.rendering" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl.intellij.rendering" />
   </component>
 </module>

@@ -44,5 +44,6 @@
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.platform.icons.api" />
     <orderEntry type="module" module-name="intellij.platform.icons.impl" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl.rendering" />
   </component>
 </module>

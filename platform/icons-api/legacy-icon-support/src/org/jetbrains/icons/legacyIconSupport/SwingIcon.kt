@@ -3,11 +3,9 @@ package org.jetbrains.icons.legacyIconSupport
 
 import org.jetbrains.icons.ExperimentalIconsApi
 import org.jetbrains.icons.Icon
-import org.jetbrains.icons.IconManager
 import org.jetbrains.icons.design.IconDesigner
 import org.jetbrains.icons.icon
 import org.jetbrains.icons.modifiers.IconModifier
-import org.jetbrains.icons.modifiers.fillMaxSize
 
 /**
  * Layer for embedding swing icons.
@@ -33,10 +31,5 @@ fun javax.swing.Icon.toNewIcon(modifier: IconModifier = IconModifier): Icon {
  */
 @ExperimentalIconsApi
 fun Icon.toSwingIcon(): javax.swing.Icon {
-  return swingIconManager().toSwingIcon(this)
-}
-
-@ExperimentalIconsApi
-private fun swingIconManager(): SwingIconManager {
-  return IconManager.getInstance() as? SwingIconManager ?: error("Current IconManager doesn't implement SwingIconManager")
+  return SwingIconManager.getInstance().toSwingIcon(this)
 }

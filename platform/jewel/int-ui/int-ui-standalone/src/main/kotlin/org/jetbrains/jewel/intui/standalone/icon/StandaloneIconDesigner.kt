@@ -3,11 +3,11 @@ package org.jetbrains.jewel.intui.standalone.icon
 
 import org.jetbrains.icons.impl.design.DefaultIconDesigner
 import org.jetbrains.icons.modifiers.IconModifier
-import org.jetbrains.jewel.ui.icon.PathImageResourceLoader
+import org.jetbrains.jewel.ui.icon.PathImageResourceLocation
 
 internal class StandaloneIconDesigner : DefaultIconDesigner() {
     override fun image(path: String, classLoader: ClassLoader?, modifier: IconModifier) {
-        image(PathImageResourceLoader(path, classLoader), modifier)
+        image(PathImageResourceLocation(path, classLoader), modifier)
     }
 
     override fun createNestedDesigner(): StandaloneIconDesigner = StandaloneIconDesigner()

@@ -3,7 +3,7 @@ package org.jetbrains.icons.impl.layers
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.icons.modifiers.IconModifier
-import org.jetbrains.icons.impl.rendering.IconAnimationFrame
+import org.jetbrains.icons.impl.IconAnimationFrame
 import org.jetbrains.icons.layers.IconLayer
 
 @Serializable

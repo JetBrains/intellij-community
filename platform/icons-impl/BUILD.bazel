@@ -33,15 +33,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//platform/icons-api",
-    "//platform/icons-api/rendering",
-    "//platform/icons-api/rendering/lowlevel",
     "//libraries/kotlinx/serialization/core",
-    "//platform/icons-api/legacy-icon-support",
   ],
-  exports = [
-    "//platform/icons-api",
-    "//platform/icons-api/rendering",
-    "//platform/icons-api/rendering/lowlevel",
-  ]
+  exports = ["//platform/icons-api"]
 )
 ### auto-generated section `build intellij.platform.icons.impl` end

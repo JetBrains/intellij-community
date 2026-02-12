@@ -626,6 +626,8 @@ platform/icons-api/rendering
 platform/icons-api/rendering/lowlevel
 platform/icons-impl
 platform/icons-impl/intellij
+platform/icons-impl/intellij/rendering
+platform/icons-impl/rendering
 platform/ide-core
 platform/ide-core-impl
 platform/ide-core/plugins

@@ -33,10 +33,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.platform.icons.api" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.icons.api.rendering" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.icons.api.rendering.lowlevel" exported="" />
     <orderEntry type="module" module-name="intellij.platform.icons" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="module" module-name="intellij.platform.icons.api.legacyIconSupport" />
   </component>
 </module>

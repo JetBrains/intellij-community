@@ -14,13 +14,13 @@ import org.jetbrains.icons.impl.layers.IconIconLayer
 import org.jetbrains.icons.layers.IconLayer
 import org.jetbrains.icons.impl.layers.ImageIconLayer
 import org.jetbrains.icons.impl.layers.LayoutIconLayer
-import org.jetbrains.icons.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLocation
 import org.jetbrains.icons.impl.layers.ShapeIconLayer
 
 abstract class DefaultIconDesigner: IconDesigner {
   private val layers = mutableListOf<IconLayer>()
 
-  override fun image(resourceLoader: ImageResourceLoader, modifier: IconModifier) {
+  override fun image(resourceLoader: ImageResourceLocation, modifier: IconModifier) {
     layers.add(ImageIconLayer(resourceLoader, modifier))
   }
 

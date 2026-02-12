@@ -2,14 +2,14 @@
 package org.jetbrains.icons.rendering
 
 import org.jetbrains.icons.ExperimentalIconsApi
-import org.jetbrains.icons.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLocation
 import org.jetbrains.icons.InternalIconsApi
 import org.jetbrains.icons.filters.ColorFilter
 import org.jetbrains.icons.patchers.SvgPatcher
 
 @OptIn(InternalIconsApi::class)
 @ExperimentalIconsApi
-fun imageResource(loader: ImageResourceLoader, imageModifiers: ImageModifiers? = null): ImageResource = ImageResourceProvider.getInstance().loadImage(loader, imageModifiers)
+fun imageResource(loader: ImageResourceLocation, imageModifiers: ImageModifiers? = null): ImageResource = ImageResourceProvider.getInstance().loadImage(loader, imageModifiers)
 
 @ExperimentalIconsApi
 interface ImageModifiers {

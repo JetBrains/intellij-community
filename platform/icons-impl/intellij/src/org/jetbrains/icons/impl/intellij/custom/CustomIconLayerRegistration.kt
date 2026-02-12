@@ -9,7 +9,7 @@ abstract class CustomIconLayerRegistration<T : IconLayer>(
   klass: KClass<T>
 ): CustomSerializableRegistration<T>(klass) {
   @ApiStatus.Internal
-  companion object: CustomSerializableRegistration.Companion<IconLayer, CustomImageResourceLoader<*>>(
+  companion object: CustomSerializableRegistration.Companion<IconLayer, CustomIconLayerRegistration<*>>(
     IconLayer ::class,
     "com.intellij.customIconLayer"
   )

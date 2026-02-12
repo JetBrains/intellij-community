@@ -3,7 +3,7 @@ package org.jetbrains.icons.impl.design
 
 import org.jetbrains.icons.design.IconAnimationDesigner
 import org.jetbrains.icons.design.IconDesigner
-import org.jetbrains.icons.impl.rendering.IconAnimationFrame
+import org.jetbrains.icons.impl.IconAnimationFrame
 
 class DefaultIconAnimationDesigner(
   val rootDesigner: DefaultIconDesigner

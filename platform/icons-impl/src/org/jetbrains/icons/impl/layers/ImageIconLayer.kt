@@ -4,12 +4,12 @@ package org.jetbrains.icons.impl.layers
 import kotlinx.serialization.Serializable
 import org.jetbrains.icons.layers.IconLayer
 import org.jetbrains.icons.modifiers.IconModifier
-import org.jetbrains.icons.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLocation
 
 @Serializable
 class ImageIconLayer(
-  val loader: ImageResourceLoader,
-  override val modifier: IconModifier
+    val loader: ImageResourceLocation,
+    override val modifier: IconModifier
 ) : IconLayer {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

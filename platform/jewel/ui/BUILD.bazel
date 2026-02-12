@@ -11,6 +11,7 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.InternalJewelApi",
     "org.jetbrains.icons.api.InternalIconsApi",
     "org.jetbrains.icons.ExperimentalIconsApi",
+    "org.jetbrains.icons.InternalIconsApi",
   ],
   x_context_parameters = True,
   x_explicit_api_mode = "strict"
@@ -49,6 +50,7 @@ jvm_library(
     "//platform/icons-api/rendering",
     "//platform/icons-api/rendering/lowlevel",
     "//platform/icons-impl",
+    "//platform/icons-impl/rendering",
   ],
   exports = [
     "//platform/jewel/foundation",
@@ -89,6 +91,7 @@ jvm_library(
     "//platform/icons-api/rendering",
     "//platform/icons-api/rendering/lowlevel",
     "//platform/icons-impl",
+    "//platform/icons-impl/rendering",
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
   ],

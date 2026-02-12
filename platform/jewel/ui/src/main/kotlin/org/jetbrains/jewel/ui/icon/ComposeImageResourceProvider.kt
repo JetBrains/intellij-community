@@ -18,7 +18,7 @@ import org.jetbrains.icons.patchers.SvgPatcher
 import org.jetbrains.icons.patchers.combineWith
 import org.jetbrains.icons.rendering.ImageModifiers
 import org.jetbrains.icons.rendering.ImageResource
-import org.jetbrains.icons.ImageResourceLoader
+import org.jetbrains.icons.ImageResourceLocation
 import org.jetbrains.icons.rendering.ImageResourceProvider
 import org.jetbrains.icons.impl.rendering.DefaultImageModifiers
 import org.jetbrains.jewel.foundation.InternalJewelApi
@@ -30,19 +30,19 @@ import org.w3c.dom.Element
 @ApiStatus.Internal
 @InternalIconsApi
 public class ComposeImageResourceProvider : ImageResourceProvider {
-    override fun loadImage(loader: ImageResourceLoader, imageModifiers: ImageModifiers?): ImageResource {
+    override fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource {
         // TODO Support image modifiers
-        if (loader is PathImageResourceLoader) {
-            val extension = loader.path.substringAfterLast(".").lowercase()
-            val data = loader.loadData(imageModifiers)
+        if (location is PathImageResourceLocation) {
+            val extension = location.path.substringAfterLast(".").lowercase()
+            val data = location.loadData(imageModifiers)
             val stream = ByteArrayInputStream(data)
             return when (extension) {
                 "svg" -> ComposePainterImageResource(patchSvg(imageModifiers, stream).decodeToSvgPainter(Density(1f)), imageModifiers)
                 // "xml" -> loader.loadData().decodeToImageVector()
-                else -> ComposeBitmapImageResource(loader.loadData(imageModifiers).decodeToImageBitmap())
+                else -> ComposeBitmapImageResource(location.loadData(imageModifiers).decodeToImageBitmap())
             }
         } else {
-            error("Unsupported loader: $loader")
+            error("Unsupported loader: $location")
         }
     }
 }
