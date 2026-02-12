@@ -226,8 +226,39 @@ f:org.jetbrains.jewel.markdown.SemanticsKt
 - a:getInlineContent():java.util.List
 *:org.jetbrains.jewel.markdown.WithTextContent
 - a:getContent():java.lang.String
+*a:org.jetbrains.jewel.markdown.extensions.ImageRenderResult
+- sf:$stable:I
+*f:org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Failed
+- org.jetbrains.jewel.markdown.extensions.ImageRenderResult
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Failed
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Loading
+- org.jetbrains.jewel.markdown.extensions.ImageRenderResult
+- sf:$stable:I
+- <init>():V
+- <init>(androidx.compose.foundation.text.InlineTextContent):V
+- b:<init>(androidx.compose.foundation.text.InlineTextContent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():androidx.compose.foundation.text.InlineTextContent
+- f:copy(androidx.compose.foundation.text.InlineTextContent):org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Loading
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Loading,androidx.compose.foundation.text.InlineTextContent,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Loading
+- equals(java.lang.Object):Z
+- f:getContent():androidx.compose.foundation.text.InlineTextContent
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Success
+- org.jetbrains.jewel.markdown.extensions.ImageRenderResult
+- sf:$stable:I
+- <init>(androidx.compose.foundation.text.InlineTextContent):V
+- f:component1():androidx.compose.foundation.text.InlineTextContent
+- f:copy(androidx.compose.foundation.text.InlineTextContent):org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Success
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Success,androidx.compose.foundation.text.InlineTextContent,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.ImageRenderResult$Success
+- equals(java.lang.Object):Z
+- f:getContent():androidx.compose.foundation.text.InlineTextContent
+- hashCode():I
 *:org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
-- a:renderImageContent(org.jetbrains.jewel.markdown.InlineMarkdown$Image,androidx.compose.runtime.Composer,I):androidx.compose.foundation.text.InlineTextContent
+- renderImage(org.jetbrains.jewel.markdown.InlineMarkdown$Image,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.markdown.extensions.ImageRenderResult
+- renderImageContent(org.jetbrains.jewel.markdown.InlineMarkdown$Image,androidx.compose.runtime.Composer,I):androidx.compose.foundation.text.InlineTextContent
 *:org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 - a:canProcess(org.commonmark.node.CustomBlock):Z
 - a:processMarkdownBlock(org.commonmark.node.CustomBlock,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
