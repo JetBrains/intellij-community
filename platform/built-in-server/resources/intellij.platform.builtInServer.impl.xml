@@ -40,11 +40,21 @@
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.toolboxServiceHandler" interface="org.jetbrains.ide.ToolboxServiceHandler" dynamic="true" />
+
+    <extensionPoint name="builtInServerInfoContributor"
+                    interface="org.jetbrains.ide.BuiltInServerInfoContributor"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>
     <applicationActivity implementation="org.jetbrains.ide.BuiltInServerManagerLauncher"/>
+
+    <applicationActivity implementation="org.jetbrains.ide.BuiltInServerDiscoveryServiceLauncher"/>
+
+    <builtInServerInfoContributor implementation="org.jetbrains.ide.OpenedProjectRootsContributor"/>
+
+    <postStartupActivity implementation="org.jetbrains.ide.OpenedProjectRootsContributor"/>
 
     <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
     <browsersConfigurableProvider instance="org.jetbrains.builtInWebServer.BuiltInServerConfigurable"/>
@@ -79,4 +89,8 @@
 
     <binaryRequestHandler implementation="org.jetbrains.io.jsonRpc.socket.RpcBinaryRequestHandler"/>
   </extensions>
+  <applicationListeners>
+    <listener class="org.jetbrains.ide.ProjectRootsProjectCloseListener"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
 </idea-plugin>

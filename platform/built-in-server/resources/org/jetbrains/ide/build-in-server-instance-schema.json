@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jetbrains.com/intellij/build-server-instance-schema.json",
+  "title": "Built-in Server Instance Info",
+  "description": "Describes a running IDE instance exposed via the built-in server.",
+  "type": "object",
+  "required": [
+    "url",
+    "authToken",
+    "dateTime",
+    "pid",
+    "jvmOptionsPath",
+    "paths",
+    "ideInfo"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Built-in server endpoint URL."
+    },
+    "authToken": {
+      "type": "string",
+      "description": "Bearer authentication token."
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the instance info was created."
+    },
+    "pid": {
+      "type": "integer",
+      "description": "Process ID of the running IDE instance."
+    },
+    "jvmOptionsPath": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Absolute path to the JVM options file. Null when unavailable."
+    },
+    "paths": {
+      "type": "object",
+      "description": "IDE instance directory paths.",
+      "required": [
+        "installDir",
+        "bin",
+        "config",
+        "system",
+        "logs",
+        "plugins"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "installDir": {
+          "type": "string",
+          "description": "IDE installation root directory (e.g. '/Applications/IntelliJ IDEA.app/Contents')."
+        },
+        "bin": {
+          "type": "string",
+          "description": "Path to the bin directory containing IDE launcher scripts and executables."
+        },
+        "config": {
+          "type": "string",
+          "description": "Path to the configuration directory."
+        },
+        "system": {
+          "type": "string",
+          "description": "Path to the system (caches) directory."
+        },
+        "logs": {
+          "type": "string",
+          "description": "Path to the logs directory."
+        },
+        "plugins": {
+          "type": "string",
+          "description": "Path to the plugins directory."
+        }
+      }
+    },
+    "properties": {
+      "type": "object",
+      "description": "Additional properties contributed by plugins.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "ideInfo": {
+      "type": "object",
+      "description": "IDE and environment details.",
+      "required": [
+        "productCode",
+        "productName",
+        "fullVersion",
+        "buildNumber",
+        "runtime",
+        "os",
+        "gc",
+        "memoryMb"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "productCode": {
+          "type": "string",
+          "description": "Product code of the IDE, e.g. 'IU', 'IC', 'PS'."
+        },
+        "productName": {
+          "type": "string",
+          "description": "Full product name, e.g. 'IntelliJ IDEA Ultimate'."
+        },
+        "fullVersion": {
+          "type": "string",
+          "description": "Full version string, e.g. '2025.1'."
+        },
+        "buildNumber": {
+          "type": "string",
+          "description": "Build number, e.g. '251.123.456'."
+        },
+        "buildDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Human-readable build date, e.g. 'January 1, 2025'. Null when unavailable."
+        },
+        "runtime": {
+          "type": "object",
+          "description": "JVM runtime information.",
+          "required": [
+            "version",
+            "vmName",
+            "vmVendor"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "type": "string",
+              "description": "Java runtime version (java.runtime.version)."
+            },
+            "vmName": {
+              "type": "string",
+              "description": "JVM name (java.vm.name)."
+            },
+            "vmVendor": {
+              "type": "string",
+              "description": "JVM vendor (java.vm.vendor)."
+            }
+          }
+        },
+        "os": {
+          "type": "object",
+          "description": "Operating system information.",
+          "required": [
+            "name",
+            "version",
+            "arch"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "OS name (os.name)."
+            },
+            "version": {
+              "type": "string",
+              "description": "OS version (os.version)."
+            },
+            "arch": {
+              "type": "string",
+              "description": "OS architecture (os.arch)."
+            }
+          }
+        },
+        "gc": {
+          "type": "string",
+          "description": "Comma-separated list of garbage collector names."
+        },
+        "memoryMb": {
+          "type": "integer",
+          "description": "Maximum heap memory in megabytes."
+        }
+      }
+    }
+  }
+}

@@ -38,6 +38,7 @@ a:org.jetbrains.ide.BuiltInServerManager
 - a:addAuthToken(com.intellij.util.Url):com.intellij.util.Url
 - a:configureRequestToWebServer(java.net.URLConnection):V
 - a:createClientBootstrap():io.netty.bootstrap.Bootstrap
+- a:getAddress():java.net.InetAddress
 - sf:getInstance():org.jetbrains.ide.BuiltInServerManager
 - a:getPort():I
 - a:getServerDisposable():com.intellij.openapi.Disposable
