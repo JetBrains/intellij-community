@@ -25,12 +25,15 @@ class BreakpointBasedStreamTracer(
   override suspend fun trace(chain: StreamChain): StreamTracer.Result {
     val xDebugProcess = session.debugProcess as? JavaDebugProcess ?: return StreamTracer.Result.Unknown
     val suspendContext = xDebugProcess.session.suspendContext as? SuspendContextImpl
+    val suspendManager = xDebugProcess.debuggerSession.process.suspendManager
     if (suspendContext == null) {
-      LOG.error("SuspendContext is not available, probably tracer was executed after when the program is not suspended")
+      LOG.error("SuspendContext is not available, probably tracer was executed when the program is not suspended")
       return StreamTracer.Result.Unknown
     }
     // TODO: maybe we need to use withAutoLoadClasses
     val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
+
+    //val stackDepthBeforeTracing = suspendContext.cachedThreadFrameCount
 
     val breakpointPositionResolver = JavaBreakpointPositionResolver()
     val breakpointFactory = BreakpointFactory()
