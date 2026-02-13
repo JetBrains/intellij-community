@@ -16,15 +16,18 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
+import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.Validator;
@@ -267,27 +270,40 @@ public final class InspectionValidatorWrapper implements Validator {
   private boolean checkUnderReadAction(@NotNull MyValidatorProcessingItem item,
                                        @NotNull CompileContext context,
                                        @NotNull Computable<? extends Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
-    return DumbService.getInstance(context.getProject()).runReadActionInSmartMode(() -> {
-      PsiFile file = item.getPsiFile();
-      if (file == null) return false;
+    List<CompilerMessage> result = ReadAction.nonBlocking(() -> {
+        PsiFile file = item.getPsiFile();
+        if (file == null) return null;
 
-      Document document = myPsiDocumentManager.getCachedDocument(file);
-      if (document != null && myPsiDocumentManager.isUncommited(document)) {
-        String url = file.getViewProvider().getVirtualFile().getUrl();
-        context.addMessage(CompilerMessageCategory.WARNING, JavaCompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
-        return false;
-      }
+        Document document = myPsiDocumentManager.getCachedDocument(file);
+        if (document != null && myPsiDocumentManager.isUncommited(document)) {
+          VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
+          return List.<CompilerMessage>of(new CompilerMessageImpl(
+            context.getProject(),
+            CompilerMessageCategory.WARNING,
+            JavaCompilerBundle.message("warning.text.file.has.been.changed"),
+            virtualFile,
+            -1,
+            -1,
+            null
+          ));
+        }
+        return buildCompilerMessages(context, runnable.compute());
+      })
+      .expireWhen(() -> context.getProgressIndicator().isCanceled())
+      .inSmartMode(context.getProject())
+      .executeSynchronously();
 
-      return !reportProblems(context, runnable.compute());
-    });
+    if (result == null) return false;
+    return !reportProblems(context, result);
   }
 
-  private boolean reportProblems(CompileContext context, Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap) {
-    if (problemsMap.isEmpty()) {
-      return false;
-    }
-
-    boolean errorsReported = false;
+  private @NotNull List<@NotNull CompilerMessage> buildCompilerMessages(
+    CompileContext context,
+    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap
+  ) {
+    if (problemsMap.isEmpty()) return Collections.emptyList();
+    Project project = context.getProject();
+    List<CompilerMessage> messages = new ArrayList<>();
     for (Map.Entry<ProblemDescriptor, HighlightDisplayLevel> entry : problemsMap.entrySet()) {
       ProblemDescriptor problemDescriptor = entry.getKey();
       PsiElement element = problemDescriptor.getPsiElement();
@@ -304,8 +320,24 @@ public final class InspectionValidatorWrapper implements Validator {
       assert document != null;
       int line = document.getLineNumber(offset);
       int column = offset - document.getLineStartOffset(line);
-      context.addMessage(category, problemDescriptor.getDescriptionTemplate(), virtualFile.getUrl(), line + 1, column + 1);
-      if (CompilerMessageCategory.ERROR == category) {
+      messages.add(new CompilerMessageImpl(
+        project,
+        category,
+        problemDescriptor.getDescriptionTemplate(),
+        virtualFile,
+        line + 1,
+        column + 1,
+        null
+      ));
+    }
+    return messages;
+  }
+
+  private static boolean reportProblems(CompileContext context, List<CompilerMessage> problems) {
+    boolean errorsReported = false;
+    for (CompilerMessage problem : problems) {
+      context.addMessage(problem);
+      if (CompilerMessageCategory.ERROR == problem.getCategory()) {
         errorsReported = true;
       }
     }
