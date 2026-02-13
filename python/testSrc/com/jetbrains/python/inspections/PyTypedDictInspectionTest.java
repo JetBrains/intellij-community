@@ -1260,6 +1260,22 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
     ));
   }
 
+  // PY-76847
+  public void testParamOverlapsWithTypedDict() {
+    doTestByText("""
+    from typing import TypedDict, Unpack
+    class TD1(TypedDict):
+        v1: Required[int]
+        v2: NotRequired[str]
+        v3: Required[str]
+    
+    def foo1(<warning descr="Parameter 'v1' overlaps with TypedDict">v1: int</warning>, <warning descr="Parameter 'v2' overlaps with TypedDict">v2: str</warning>, **kwargs: Unpack[TD1]) -> None:
+        ...
+    def foo1(v1: int, v2: str, /, **kwargs: Unpack[TD1]) -> None: # pos-only OK
+        ...
+    """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
