@@ -4,5 +4,13 @@
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
                         serviceImplementation="com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager"/>
     <multiRoutingFileSystemBackend implementation="com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend" os="windows"/>
+
+
+    <advancedSetting
+      default="true"
+      id="wsl.env.var.interactive.shell"
+      bundle="messages.PlatformIdeImplWslBundle"
+      groupKey="advanced.settings.wsl"
+    />
   </extensions>
 </idea-plugin>
