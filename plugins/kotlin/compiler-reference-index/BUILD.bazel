@@ -37,6 +37,7 @@ jvm_library(
     "//java/compiler/impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//plugins/gradle",
+    "//plugins/kotlin/gradle/gradle",
   ],
   runtime_deps = [
     "@lib//:kotlinc-kotlin-build-tools-impl",

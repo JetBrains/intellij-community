@@ -74,6 +74,10 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.idea.search.refIndex.bta.GradleFileWatcher
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
+import org.jetbrains.plugins.gradle.settings.GradleSettings.getInstance
 import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.atomic.LongAdder
@@ -84,7 +88,7 @@ import kotlin.concurrent.write
 /**
  * Based on [com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase] and [com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl]
  */
-class KotlinCompilerReferenceIndexService(private val project: Project) : Disposable, ModificationTracker {
+class KotlinCompilerReferenceIndexService(private val project: Project, private val coroutineScope: CoroutineScope) : Disposable, ModificationTracker {
     private var initialized: Boolean = false
     private var storage: KotlinCompilerReferenceIndexStorage? = null
     private var activeBuildCount = 0
@@ -158,6 +162,23 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
                 withWriteLock { closeStorage() }
             }
         })
+
+        if (GradleFileWatcher.isApplicable(project)) {
+            GradleFileWatcher(project, coroutineScope, ::onExternalCompilationDetected)
+        }
+    }
+
+    private fun onExternalCompilationDetected(compiledModules: List<Module>) {
+        executeOnBuildThread {
+            compilationCounter.increment()
+            withDirtyScopeUnderWriteLock {
+                compilerActivityFinished(compiledModules)
+            }
+            withWriteLock {
+                val projectPath = runReadAction { projectIfNotDisposed?.basePath }
+                openStorage(projectPath)
+            }
+        }
     }
 
     internal class KCRIIsUpToDateConsumer : IsUpToDateCheckConsumer {
