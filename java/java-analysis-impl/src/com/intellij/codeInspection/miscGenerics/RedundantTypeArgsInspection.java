@@ -97,24 +97,26 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
         return;
       }
     }
-    final PsiMethod method = expression.resolveMethod();
-    if (method == null) return;
-    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-    if (typeParameters.length > 0 &&
-        JavacQuirksInspectionVisitor.isSuspicious(expression.getArgumentList().getExpressions(), method)) {
-      return;
-    }
-    if (typeParameters.length == typeArguments.length &&
-        PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, method, typeParameters) ||
-        typeParameters.length == 0) {
-      String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.problem.descriptor"
-                                              : "inspection.redundant.type.problem.descriptor";
-      final ProblemDescriptor descriptor =
-        inspectionManager.createProblemDescriptor(typeArgumentList,
-                                                  JavaAnalysisBundle.message(key),
-                                                  ourQuickFixAction,
-                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-      problems.add(descriptor);
+    final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+    final PsiElement element = resolveResult.getElement();
+    if (element instanceof PsiMethod method && resolveResult.isValidResult()) {
+      final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+      if (typeParameters.length > 0 &&
+          JavacQuirksInspectionVisitor.isSuspicious(expression.getArgumentList().getExpressions(), method)) {
+        return;
+      }
+      if (typeParameters.length == typeArguments.length &&
+          PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, method, typeParameters) ||
+          typeParameters.length == 0) {
+        String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.problem.descriptor"
+                                                : "inspection.redundant.type.problem.descriptor";
+        final ProblemDescriptor descriptor =
+          inspectionManager.createProblemDescriptor(typeArgumentList,
+                                                    JavaAnalysisBundle.message(key),
+                                                    ourQuickFixAction,
+                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+        problems.add(descriptor);
+      }
     }
   }
 
