@@ -139,6 +139,8 @@ public interface EditorSettings {
 
   @ApiStatus.Experimental
   boolean isAnimatedCaret();
+  @ApiStatus.Experimental
+  void setAnimatedCaret(boolean animatedCaret);
 
   @ApiStatus.Experimental
   EditorSettings.CaretEasing getCaretEasing();

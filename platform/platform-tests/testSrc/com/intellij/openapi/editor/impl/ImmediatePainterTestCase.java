@@ -171,6 +171,7 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
     getEditor().getSettings().setAdditionalColumnsCount(3);
 
     getEditor().getSettings().setCaretRowShown(false);
+    getEditor().getSettings().setAnimatedCaret(false);
   }
 
   protected RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
