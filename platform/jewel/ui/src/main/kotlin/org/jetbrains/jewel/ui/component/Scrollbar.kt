@@ -29,6 +29,7 @@ import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.foundation.v2.maxScrollOffset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
@@ -40,7 +41,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -49,11 +49,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerInputScope
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.node.DelegatingNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.hideFromAccessibility
@@ -441,6 +444,7 @@ private fun thumbColorTween(showScrollbar: Boolean, visibility: ScrollbarVisibil
             when {
                 visibility is AlwaysVisible || !showScrollbar ->
                     visibility.thumbColorAnimationDuration.inWholeMilliseconds.toInt()
+
                 else -> 0
             },
         delayMillis =
@@ -487,55 +491,18 @@ private fun horizontalMeasurePolicy(
     layout(constraints.maxWidth, placeable.height) { placeable.place(pixelRange.first, 0) }
 }
 
-@Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.scrollbarDrag(
     interactionSource: MutableInteractionSource,
     draggedInteraction: MutableState<DragInteraction.Start?>,
     sliderAdapter: SliderAdapter,
-): Modifier = composed {
-    val currentInteractionSource by rememberUpdatedState(interactionSource)
-    val currentDraggedInteraction by rememberUpdatedState(draggedInteraction)
-    val currentSliderAdapter by rememberUpdatedState(sliderAdapter)
+): Modifier = this then ScrollbarDragModifier(interactionSource, draggedInteraction, sliderAdapter)
 
-    pointerInput(Unit) {
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false)
-            val interaction = DragInteraction.Start()
-            currentInteractionSource.tryEmit(interaction)
-            currentDraggedInteraction.value = interaction
-            currentSliderAdapter.onDragStarted()
-            val isSuccess =
-                drag(down.id) { change ->
-                    currentSliderAdapter.onDragDelta(change.positionChange())
-                    change.consume()
-                }
-            val finishInteraction =
-                if (isSuccess) {
-                    DragInteraction.Stop(interaction)
-                } else {
-                    DragInteraction.Cancel(interaction)
-                }
-            currentInteractionSource.tryEmit(finishInteraction)
-            currentDraggedInteraction.value = null
-        }
-    }
-}
-
-@Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.scrollOnPressTrack(
     clickBehavior: TrackClickBehavior,
     isVertical: Boolean,
     reverseLayout: Boolean,
     sliderAdapter: SliderAdapter,
-) = composed {
-    val coroutineScope = rememberCoroutineScope()
-    val scroller =
-        remember(sliderAdapter, coroutineScope, reverseLayout, clickBehavior) {
-            TrackPressScroller(coroutineScope, sliderAdapter, reverseLayout, clickBehavior)
-        }
-
-    Modifier.pointerInput(scroller) { detectScrollViaTrackGestures(isVertical = isVertical, scroller = scroller) }
-}
+) = this then ScrollOnPressTrackModifier(clickBehavior, isVertical, reverseLayout, sliderAdapter)
 
 /** Responsible for scrolling when the scrollbar track is pressed (outside the thumb). */
 private class TrackPressScroller(
@@ -673,6 +640,127 @@ internal const val DELAY_BEFORE_SECOND_SCROLL_ON_TRACK_PRESS: Long = 300L
 
 /** The delay between each subsequent (after the 2nd) scroll while the scrollbar track is pressed outside the thumb. */
 internal const val DELAY_BETWEEN_SCROLLS_ON_TRACK_PRESS: Long = 100L
+
+@Immutable
+private data class ScrollbarDragModifier(
+    val interactionSource: MutableInteractionSource,
+    val draggedInteraction: MutableState<DragInteraction.Start?>,
+    val sliderAdapter: SliderAdapter,
+) : ModifierNodeElement<ScrollbarDragNode>() {
+    override fun create() = ScrollbarDragNode(interactionSource, draggedInteraction, sliderAdapter)
+
+    override fun update(node: ScrollbarDragNode) {
+        node.interactionSource = interactionSource
+        node.draggedInteraction = draggedInteraction
+        node.sliderAdapter = sliderAdapter
+    }
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "scrollbarDrag"
+        properties["interactinSource"] = interactionSource
+        properties["draggedInteraction"] = draggedInteraction
+        properties["sliderAdapter"] = sliderAdapter
+    }
+}
+
+private class ScrollbarDragNode(
+    var interactionSource: MutableInteractionSource,
+    var draggedInteraction: MutableState<DragInteraction.Start?>,
+    var sliderAdapter: SliderAdapter,
+) : DelegatingNode() {
+    init {
+        delegate(
+            SuspendingPointerInputModifierNode {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val interaction = DragInteraction.Start()
+
+                    interactionSource.tryEmit(interaction)
+                    draggedInteraction.value = interaction
+                    sliderAdapter.onDragStarted()
+
+                    val isSuccess =
+                        drag(down.id) { change ->
+                            sliderAdapter.onDragDelta(change.positionChange())
+                            change.consume()
+                        }
+
+                    val finishInteraction =
+                        if (isSuccess) {
+                            DragInteraction.Stop(interaction)
+                        } else {
+                            DragInteraction.Cancel(interaction)
+                        }
+
+                    interactionSource.tryEmit(finishInteraction)
+                    draggedInteraction.value = null
+                }
+            }
+        )
+    }
+}
+
+@Immutable
+private data class ScrollOnPressTrackModifier(
+    val clickBehavior: TrackClickBehavior,
+    val isVertical: Boolean,
+    val reverseLayout: Boolean,
+    val sliderAdapter: SliderAdapter,
+) : ModifierNodeElement<ScrollOnPressTrackNode>() {
+    override fun create() = ScrollOnPressTrackNode(clickBehavior, isVertical, reverseLayout, sliderAdapter)
+
+    override fun update(node: ScrollOnPressTrackNode) {
+        node.update(clickBehavior, isVertical, reverseLayout, sliderAdapter)
+    }
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "scrollOnPressTrack"
+        properties["clickBehavior"] = clickBehavior
+        properties["isVertical"] = isVertical
+        properties["reverseLayout"] = reverseLayout
+        properties["sliderAdapter"] = sliderAdapter
+    }
+}
+
+private class ScrollOnPressTrackNode(
+    var clickBehavior: TrackClickBehavior,
+    var isVertical: Boolean,
+    var reverseLayout: Boolean,
+    var sliderAdapter: SliderAdapter,
+) : DelegatingNode() {
+    private val pointerInputNode =
+        delegate(
+            SuspendingPointerInputModifierNode {
+                val scroller = TrackPressScroller(coroutineScope, sliderAdapter, reverseLayout, clickBehavior)
+
+                detectScrollViaTrackGestures(isVertical = isVertical, scroller = scroller)
+            }
+        )
+
+    fun update(
+        clickBehavior: TrackClickBehavior,
+        isVertical: Boolean,
+        reverseLayout: Boolean,
+        sliderAdapter: SliderAdapter,
+    ) {
+        val needsReset =
+            this.clickBehavior != clickBehavior ||
+                this.isVertical != isVertical ||
+                this.reverseLayout != reverseLayout ||
+                this.sliderAdapter != sliderAdapter
+
+        if (needsReset) {
+            this.clickBehavior = clickBehavior
+            this.isVertical = isVertical
+            this.reverseLayout = reverseLayout
+            this.sliderAdapter = sliderAdapter
+
+            // This cancels the current block and restarts it (recreating the scroller)
+            // In other words, this `if` block is the "Key" equivalent
+            pointerInputNode.resetPointerInputHandler()
+        }
+    }
+}
 
 internal class SliderAdapter(
     val adapter: ScrollbarAdapter,
