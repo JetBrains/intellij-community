@@ -33,7 +33,7 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
  * This is a temporary, internal API for migration purposes.
  */
 @ApiStatus.Internal
-class GradleBridgeFinalizerDataService : ProjectDataImportExtension {
+class SyntheticEntitySourceMarker : ProjectDataImportExtension {
 
   override fun finalizeImportData(projectData: ProjectData?, modelsProvider: IdeModifiableModelsProvider) {
     if (!Registry.`is`("gradle.phased.sync.bridge.disabled") || projectData == null) return

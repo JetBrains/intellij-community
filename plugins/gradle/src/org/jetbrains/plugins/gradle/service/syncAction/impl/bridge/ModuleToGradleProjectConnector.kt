@@ -18,7 +18,7 @@ import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
 import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 
 @ApiStatus.Internal
-class GradleBridgeModuleDataService : ProjectDataManager.ProjectDataImportExtension {
+class ModuleToGradleProjectConnector : ProjectDataManager.ProjectDataImportExtension {
 
   override fun finalizeImportData(projectData: ProjectData?, modelsProvider: IdeModifiableModelsProvider) {
     val mutableStorage = (modelsProvider as? IdeModifiableModelsProviderImpl)?.actualStorageBuilder ?: return

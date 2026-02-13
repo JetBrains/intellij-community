@@ -22,7 +22,7 @@ internal val SYNC_STORAGE_SNAPSHOT_BEFORE_DATA_SERVICES =
  * This is a temporary, internal API for migration purposes.
  */
 @ApiStatus.Internal
-class GradleBridgeProjectDataService : ProjectDataManager.ProjectDataImportExtension {
+class SyncContributorCleanup : ProjectDataManager.ProjectDataImportExtension {
 
     override fun prepareImportData(projectData: ProjectData?, modelsProvider: IdeModifiableModelsProvider) {
     if (!Registry.`is`("gradle.phased.sync.bridge.disabled")) {
