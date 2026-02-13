@@ -699,7 +699,8 @@
                  description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
     <registryKey key="git.commit.staged.saver.use.index.info" defaultValue="true"
                  description="Uses an optimized approach to save and restore the index during changelist commits, improving performance"/>
-
+    <registryKey key="git.amend.specific.commit" defaultValue="false"
+                 description="Adds a dropdown link with a commit selector in the commit tool window to amend a specific commit"/>
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider" order="first"/>

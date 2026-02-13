@@ -4,6 +4,7 @@ package git4idea.checkin
 import com.intellij.dvcs.commit.AmendCommitService
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.CommitToAmend
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.NonNls
 @Service(Service.Level.PROJECT)
 internal class GitAmendCommitService(project: Project) : AmendCommitService(project) {
   override fun isAmendCommitSupported(): Boolean = true
-  override fun isAmendSpecificCommitSupported(): Boolean = true
+  override fun isAmendSpecificCommitSupported(): Boolean = Registry.`is`("git.amend.specific.commit")
 
   @Throws(VcsException::class)
   override fun getLastCommitMessage(root: VirtualFile): String {
