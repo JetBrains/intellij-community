@@ -609,6 +609,8 @@ public class PyTypeCheckerInspection extends PyInspection {
         if (unmappedContainer.getName() == null || !(containerType instanceof PyPositionalVariadicType)) continue;
         PyType expandedVararg = PyTypeChecker.substitute(containerType, substitutions, myTypeEvalContext);
         if (!(expandedVararg instanceof PyUnpackedTupleType unpackedTuple) || unpackedTuple.isUnbound()) continue;
+        if (unpackedTuple.getElementTypes().isEmpty()) continue;
+        if (ContainerUtil.all(unpackedTuple.getElementTypes(), e -> e instanceof PyPositionalVariadicType)) continue;
         unfilledPositionalVarargs.add(
           new UnfilledPositionalVararg(unmappedContainer.getName(),
                                        PythonDocumentationProvider.getTypeName(expandedVararg, myTypeEvalContext)));
