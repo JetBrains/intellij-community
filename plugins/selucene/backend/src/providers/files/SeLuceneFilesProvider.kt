@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.selucene.backend.providers.lucene
+package com.intellij.selucene.backend.providers.files
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 import com.intellij.psi.PsiManager
@@ -36,10 +38,12 @@ class SeLuceneFilesProvider(private val project: Project) : SeItemsProvider {
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     if (params.inputQuery.isEmpty()) return
 
-    LuceneSearcher.search(params.inputQuery, project).collect {
-      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of((it.path))) ?: return@collect
-      collector.put(SeLuceneFileItem(virtualFile, it.name, it.score))
-    }
+    FileIndex.getInstance(project)
+      .search(params)
+      .collect {
+        val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of((it.path))) ?: return@collect
+        collector.put(SeLuceneFileItem(virtualFile, it.name, it.score))
+      }
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {

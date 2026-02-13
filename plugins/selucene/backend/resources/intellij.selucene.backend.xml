@@ -10,22 +10,18 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.selucene.backend.providers.lucene.SeLuceneFilesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.selucene.backend.providers.files.SeLuceneFilesProviderFactory"/>
+    <vfs.asyncListener implementation="com.intellij.selucene.backend.providers.files.ChangeListener"/>
+    <backgroundPostStartupActivity implementation="com.intellij.selucene.backend.providers.files.InitLuceneIndex"/>
   </extensions>
 
   <actions>
     <action id="Se.IndexFiles"
-            class="com.intellij.selucene.backend.providers.lucene.debugActions.IndexFilesForLuceneAction"
+            class="com.intellij.selucene.backend.providers.files.debugActions.IndexFilesForLuceneAction"
 
             text="Index Files for Lucene"
             description="Index files for Lucene"
             icon="AllIcons.Actions.BuildLoadChanges"/>
-
-    <action id="Se.DeleteLuceneIndex"
-            class="com.intellij.selucene.backend.providers.lucene.debugActions.DeleteLuceneIndexAction"
-            text="Delete SE Lucene Index"
-            description="Deletes the SE Lucene index in the .idea folder"
-            icon="AllIcons.Actions.ClearCash"/>
   </actions>
 
 </idea-plugin>
