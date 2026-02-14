@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ui.colorpicker
 
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
-import sun.awt.AWTPermissions
+import java.awt.AWTPermission
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.GridBagConstraints
@@ -166,7 +165,7 @@ private fun canPickupColorFromDisplay(): Boolean {
   }
 
   return try {
-    System.getSecurityManager()?.checkPermission(AWTPermissions.READ_DISPLAY_PIXELS_PERMISSION)
+    System.getSecurityManager()?.checkPermission(AWTPermission("readDisplayPixels"))
     true
   }
   catch (e: SecurityException) {
