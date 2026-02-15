@@ -1,20 +1,24 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
+import org.jetbrains.kotlin.idea.base.util.isGradleModule
+import org.jetbrains.kotlin.idea.base.util.isMavenModule
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
-import org.jetbrains.plugins.gradle.settings.GradleSettings.getInstance
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -22,13 +26,16 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Watches Compiler Reference Index artifact directories produced by Gradle builds
+ * Watches KCRI artifact directories produced by Kotlin Build Tools API-based builds (Gradle and Maven)
  * and detects which modules were recompiled by comparing file timestamps.
  *
- * Uses periodic polling via a coroutine with [delay] to check CRI artifact timestamps.
+ * For Gradle, KCRI artifacts are located at `build/kotlin/compileKotlin/cacheable/cri/` under each module directory.
+ * For Maven, KCRI artifacts are located at `target/kotlin-ic/compile/cri/` under each module directory.
+ *
+ * Uses periodic polling via a coroutine with [delay] to check KCRI artifact timestamps.
  */
 @OptIn(ExperimentalBuildToolsApi::class)
-internal class GradleFileWatcher(
+internal class BtaFileWatcher(
     private val project: Project,
     coroutineScope: CoroutineScope,
     private val onModulesCompiled: (List<Module>) -> Unit,
@@ -49,8 +56,12 @@ internal class GradleFileWatcher(
         val modulesAndPaths = runReadAction {
             val project = project.takeUnless { it.isDisposed } ?: return@runReadAction null
             ModuleManager.getInstance(project).modules.mapNotNull { module ->
-                val externalPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return@mapNotNull null
-                val criPath = Path.of(externalPath, "build", "kotlin", "compileKotlin", "cacheable", CriToolchain.DATA_PATH)
+                val modulePath = getModulePath(module) ?: return@mapNotNull null
+                val criPath = when {
+                    module.isGradleModule -> Path.of(modulePath, "build", "kotlin", "compileKotlin", "cacheable", CriToolchain.DATA_PATH)
+                    module.isMavenModule -> Path.of(modulePath, "target", "kotlin-ic", "compile", CriToolchain.DATA_PATH)
+                    else -> return@mapNotNull null
+                }
                 module to criPath
             }.distinct()
         } ?: return
@@ -78,11 +89,28 @@ internal class GradleFileWatcher(
     }
 
     companion object {
-        private val LOG = logger<GradleFileWatcher>()
-        private val POLLING_INTERVAL = 10.seconds
-        private const val CRI_GRADLE_PROPERTY = "kotlin.compiler.generateCompilerRefIndex"
+        /**
+         * Resolves the file system path for a module.
+         * For Gradle modules, uses [ExternalSystemApiUtil.getExternalProjectPath].
+         * For Maven modules, falls back to the first content root.
+         */
+        private fun getModulePath(module: Module): String? = ExternalSystemApiUtil.getExternalProjectPath(module)
+            ?: ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.path
 
-        internal fun isApplicable(project: Project): Boolean = getInstance(project).linkedProjectsSettings.isNotEmpty() &&
-                readGradleProperty(project, CRI_GRADLE_PROPERTY)?.toBoolean() ?: false
+        private val LOG = logger<BtaFileWatcher>()
+        private val POLLING_INTERVAL = 10.seconds
+        private const val CRI_PROPERTY = "kotlin.compiler.generateCompilerRefIndex"
+
+        internal fun isApplicable(project: Project): Boolean = isGradleCriEnabled(project) || isMavenCriEnabled(project)
+
+        private fun isGradleCriEnabled(project: Project): Boolean = ReadAction.compute<Boolean, RuntimeException> {
+            GradleSettings.getInstance(project).linkedProjectsSettings.isNotEmpty() &&
+                    readGradleProperty(project, CRI_PROPERTY)?.toBoolean() ?: false
+        }
+
+        // TODO KTIJ-37735: check if CRI_PROPERTY is enabled for Maven projects
+        private fun isMavenCriEnabled(project: Project): Boolean = runReadAction {
+            ModuleManager.getInstance(project).modules.any { it.isMavenModule }
+        }
     }
 }

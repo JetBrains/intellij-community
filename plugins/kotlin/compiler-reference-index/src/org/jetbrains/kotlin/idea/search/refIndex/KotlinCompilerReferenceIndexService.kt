@@ -74,10 +74,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.idea.search.refIndex.bta.GradleFileWatcher
+import org.jetbrains.kotlin.idea.search.refIndex.bta.BtaFileWatcher
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
-import org.jetbrains.plugins.gradle.settings.GradleSettings.getInstance
 import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.atomic.LongAdder
@@ -163,8 +161,8 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
             }
         })
 
-        if (GradleFileWatcher.isApplicable(project)) {
-            GradleFileWatcher(project, coroutineScope, ::onExternalCompilationDetected)
+        if (BtaFileWatcher.isApplicable(project)) {
+            BtaFileWatcher(project, coroutineScope, ::onExternalCompilationDetected)
         }
     }
 
