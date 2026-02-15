@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.codeInsight.actions;
 
+import com.intellij.gradle.java.groovy.codeInsight.actions.AddGradleDslPluginAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;

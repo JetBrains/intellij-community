@@ -25,6 +25,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.time.Month;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -376,6 +378,21 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getSplashImageUrl() {
+    if (getVersionName().equals("IntelliJ IDEA")) {
+      LocalDate startDate = LocalDate.of(2026, Month.JULY, 5);
+      LocalDate endDate = LocalDate.of(2026, Month.JULY, 13);
+      LocalDate nowDate = LocalDate.now();
+      String splashUrl = splashImageUrl;
+      if (splashUrl != null &&
+          (
+            Boolean.parseBoolean(System.getProperty("show.kotlin.anniversary.splash")) ||
+            nowDate.isAfter(startDate) && nowDate.isBefore(endDate)
+          )
+      ) {
+        return splashUrl.replace(".png", "_kotlin_15.png");
+      }
+    }
+
     if (isEap && eapSplashImageUrl != null) return eapSplashImageUrl;
 
     if (simplifiedSplashImageUrl != null) {

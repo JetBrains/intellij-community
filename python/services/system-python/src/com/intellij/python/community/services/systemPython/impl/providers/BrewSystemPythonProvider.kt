@@ -25,7 +25,7 @@ internal class BrewSystemPythonProvider : SystemPythonProvider {
 
     val pythons = withContext(Dispatchers.IO) {
       try {
-        return@withContext collectPythonsInPaths(eelApi, listOf(binDirectory), listOf(python3XNamePattern))
+        return@withContext collectPythonsInPaths( listOf(binDirectory), listOf(python3XNamePattern))
       }
       catch (e: RuntimeException) {
         LOGGER.error("failed to discover brew pythons", e)

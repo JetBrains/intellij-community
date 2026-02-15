@@ -1137,7 +1137,7 @@ c:com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog
 - pf:myDecorator:com.intellij.refactoring.extractMethod.ExtractMethodDecorator
 - pf:myFragment:com.intellij.codeInsight.codeFragment.CodeFragment
 - pf:myProject:com.intellij.openapi.project.Project
-- p:mySignaturePreviewTextArea:com.intellij.refactoring.ui.MethodSignatureComponent
+- pf:mySignaturePreviewTextArea:com.intellij.refactoring.ui.MethodSignatureComponent
 - pf:myValidator:com.intellij.refactoring.extractMethod.ExtractMethodValidator
 - p:myVariableData:com.intellij.refactoring.util.AbstractVariableData[]
 - p:getParameterColumns():com.intellij.util.ui.ColumnInfo[]

@@ -8,6 +8,13 @@ internal enum class AgentSessionProvider {
   CLAUDE,
 }
 
+internal enum class AgentSessionActivity {
+  READY,
+  PROCESSING,
+  REVIEWING,
+  UNREAD,
+}
+
 @Immutable
 internal data class AgentSubAgent(
   @JvmField val id: String,
@@ -20,6 +27,7 @@ internal data class AgentSessionThread(
   @JvmField val title: String,
   @JvmField val updatedAt: Long,
   @JvmField val archived: Boolean,
+  @JvmField val activity: AgentSessionActivity = AgentSessionActivity.READY,
   @JvmField val provider: AgentSessionProvider = AgentSessionProvider.CODEX,
   @JvmField val subAgents: List<AgentSubAgent> = emptyList(),
   @JvmField val originBranch: String? = null,

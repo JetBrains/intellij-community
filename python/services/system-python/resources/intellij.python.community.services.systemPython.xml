@@ -13,6 +13,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.python.community.services.systemPython.impl.SystemPythonInitialLoader"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint dynamic="false" qualifiedName="com.intellij.python.community.services.systemPython.impl.eelFilter"
+                    interface="com.intellij.python.community.services.systemPython.impl.EelDescriptorFilter"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="Pythonid">
     <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.LegacySystemPythonProvider"/>
 
@@ -28,7 +32,7 @@
     <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.PyenvSystemPythonProvider"/>
 
     <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.UnixSystemPythonProvider"
-                          os="unix"/>
+                          /> <!-- we need it even on Windows for WSL/Docker/ssh -->
 
   </extensions>
 </idea-plugin>

@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="intellij.gradle.java.groovy"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.properties.psi"/>

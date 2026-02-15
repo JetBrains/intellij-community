@@ -213,7 +213,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     span("postTask executing$suffix") {
       for (result in entries) {
         if (result.postTask != null) {
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.UI) {
             result.postTask.invoke()
           }
         }

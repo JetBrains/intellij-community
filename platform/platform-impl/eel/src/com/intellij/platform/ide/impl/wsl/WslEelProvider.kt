@@ -19,7 +19,7 @@ import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider
-import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
+import com.intellij.platform.ijent.community.impl.ijentFailSafeFileSystemApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider
 import com.intellij.util.containers.ContainerUtil
@@ -83,9 +83,9 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
 
       val ijentFsProvider = IjentNioFileSystemProvider.getInstance()
 
+      val descriptor = WslEelDescriptor(WSLDistribution(distributionId), wslRoot)
       try {
-        val descriptor = WslEelDescriptor(WSLDistribution(distributionId), wslRoot)
-        val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope, descriptor, checkIsIjentInitialized = {
+        val ijentFs = ijentFailSafeFileSystemApi(coroutineScope, descriptor, checkIsIjentInitialized = {
           WslIjentManager.getInstance().isIjentInitialized(descriptor)
         })
         val fs = ijentFsProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
@@ -116,6 +116,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
             // This function avoids fetching root directories directly from IJent.
             // This way, various UI file trees don't start all WSL containers during loading the file system root.
             useRootDirectoriesFromOriginalFs = true,
+            eelDescriptor = descriptor
           ).getFileSystem(ijentUri)
         }
         else {

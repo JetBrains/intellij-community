@@ -29,13 +29,11 @@ import java.util.jar.Manifest;
 public final class JarFileSerializer {
   public static final String SPECIFICATION_VERSION = "0.1";
   public static final String SPECIFICATION_TITLE = "IntelliJ Runtime Module Repository";
-  private static final Attributes.Name MAIN_PLUGIN_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Main-Plugin-Module-Id");
   private static final Attributes.Name BOOTSTRAP_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Module-Name");
   private static final Attributes.Name BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Class-Path");
 
   public static @NotNull RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
     Map<RuntimeModuleId, RawRuntimeModuleDescriptor> rawData = new HashMap<>();
-    String mainPluginModuleName;
     try (JarInputStream input = new JarInputStream(new BufferedInputStream(Files.newInputStream(jarPath)))) {
       Manifest manifest = input.getManifest();
       if (manifest == null) {
@@ -49,7 +47,6 @@ public final class JarFileSerializer {
       if (!version.equals(SPECIFICATION_VERSION)) {
         throw new IOException("'" + jarPath + "' has unsupported version '" + version + "' ('" + SPECIFICATION_VERSION + "' is expected)");
       }
-      mainPluginModuleName = mainAttributes.getValue(MAIN_PLUGIN_MODULE_ATTRIBUTE_NAME);
       JarEntry entry;
       XMLInputFactory factory = XMLInputFactory.newDefaultFactory();
       while ((entry = input.getNextJarEntry()) != null) {
@@ -60,8 +57,7 @@ public final class JarFileSerializer {
         }
       }
     }
-    RuntimeModuleId mainPluginModuleId = mainPluginModuleName != null ? RuntimeModuleId.module(mainPluginModuleName) : null;
-    return RawRuntimeModuleRepositoryData.create(rawData, jarPath.getParent(), mainPluginModuleId);
+    return RawRuntimeModuleRepositoryData.create(rawData, jarPath.getParent());
   }
 
   public static @NotNull String @Nullable [] loadBootstrapClasspath(@NotNull Path jarPath, @NotNull String bootstrapModuleName)
@@ -87,7 +83,6 @@ public final class JarFileSerializer {
   public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors,
                                @Nullable String bootstrapModuleName,
                                @NotNull Path jarFile,
-                               @Nullable String mainPluginModuleId,
                                int generatorVersion)
     throws IOException, XMLStreamException {
     Files.createDirectories(jarFile.getParent());
@@ -101,9 +96,6 @@ public final class JarFileSerializer {
       attributes.put(BOOTSTRAP_MODULE_ATTRIBUTE_NAME, bootstrapModuleName);
       Collection<String> bootstrapClasspath = CachedClasspathComputation.computeClasspath(descriptors, RuntimeModuleId.module(bootstrapModuleName));
       attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, String.join(" ", bootstrapClasspath));
-    }
-    if (mainPluginModuleId != null) {
-      attributes.put(MAIN_PLUGIN_MODULE_ATTRIBUTE_NAME, mainPluginModuleId);
     }
     try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)), manifest)) {
       XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();

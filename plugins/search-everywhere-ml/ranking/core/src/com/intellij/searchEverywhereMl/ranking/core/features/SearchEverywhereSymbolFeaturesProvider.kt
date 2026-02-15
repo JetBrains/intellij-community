@@ -40,7 +40,7 @@ internal class SearchEverywhereSymbolFeaturesProvider
   }
 
   private fun getParentStatisticianFeatures(element: PsiElement): List<EventPair<*>> {
-    val parent = runReadAction { element.takeIf { it.isValid }?.parent as? PsiNamedElement }
+    val parent = runReadAction { element.takeIf { it.isValid }?.context as? PsiNamedElement }
                  ?: return emptyList()
     val service = service<SearchEverywhereStatisticianService>()
 

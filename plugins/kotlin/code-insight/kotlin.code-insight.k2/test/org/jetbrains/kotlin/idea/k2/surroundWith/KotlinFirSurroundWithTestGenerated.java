@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.surroundWith;
 
@@ -731,6 +731,21 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
         @TestMetadata("singleExpression.kt")
         public void testSingleExpression() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/singleExpression.kt");
+        }
+
+        @TestMetadata("usageOutsideOfSelectionBlock.kt")
+        public void testUsageOutsideOfSelectionBlock() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/usageOutsideOfSelectionBlock.kt");
+        }
+
+        @TestMetadata("usageOutsideOfSelectionBlock2.kt")
+        public void testUsageOutsideOfSelectionBlock2() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/usageOutsideOfSelectionBlock2.kt");
+        }
+
+        @TestMetadata("usageOutsideOfSelectionBlock3.kt")
+        public void testUsageOutsideOfSelectionBlock3() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/usageOutsideOfSelectionBlock3.kt");
         }
 
         @TestMetadata("usedAsExpression.kt")

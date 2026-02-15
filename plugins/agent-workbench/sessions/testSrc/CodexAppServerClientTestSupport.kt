@@ -24,7 +24,6 @@ interface CodexBackend {
     scope: CoroutineScope,
     tempDir: Path,
     configPath: Path,
-    workingDirectory: Path? = null,
   ): CodexAppServerClient
 
   suspend fun run(scope: CoroutineScope, tempDir: Path, configPath: Path)
@@ -39,13 +38,11 @@ internal fun createMockBackendDefinition(): CodexBackend {
       scope: CoroutineScope,
       tempDir: Path,
       configPath: Path,
-      workingDirectory: Path?,
     ): CodexAppServerClient {
       return createMockClient(
         scope = scope,
         tempDir = tempDir,
         configPath = configPath,
-        workingDirectory = workingDirectory,
       )
     }
 
@@ -81,7 +78,6 @@ internal fun createRealBackendDefinition(): CodexBackend {
       scope: CoroutineScope,
       tempDir: Path,
       configPath: Path,
-      workingDirectory: Path?,
     ): CodexAppServerClient {
       val codexBinary = resolveCodexBinary()
       assumeTrue(codexBinary != null, "Codex CLI not found. Set CODEX_BIN or ensure codex is on PATH.")
@@ -91,7 +87,6 @@ internal fun createRealBackendDefinition(): CodexBackend {
         scope,
         executablePathProvider = { codexBinary!! },
         environmentOverrides = mapOf("CODEX_HOME" to codexHome.toString()),
-        workingDirectory = workingDirectory,
       )
     }
 
@@ -168,7 +163,6 @@ internal fun createMockClient(
   scope: CoroutineScope,
   tempDir: Path,
   configPath: Path,
-  workingDirectory: Path? = null,
   environmentOverrides: Map<String, String> = emptyMap(),
 ): CodexAppServerClient {
   val codexPath = createCodexShim(tempDir, configPath)
@@ -176,7 +170,6 @@ internal fun createMockClient(
     scope,
     executablePathProvider = { codexPath.toString() },
     environmentOverrides = environmentOverrides,
-    workingDirectory = workingDirectory,
   )
 }
 
@@ -222,10 +215,21 @@ private fun resolveTestClasspath(): String {
       .map(String::trim)
       .filter(String::isNotEmpty)
     if (entries.isNotEmpty()) {
-      return entries.joinToString(File.pathSeparator)
+      return absolutizeClasspathEntries(entries)
     }
   }
-  return System.getProperty("java.class.path")
+  val classpath = System.getProperty("java.class.path")
+  val entries = classpath.split(File.pathSeparator)
+    .map(String::trim)
+    .filter(String::isNotEmpty)
+  return absolutizeClasspathEntries(entries)
+}
+
+private fun absolutizeClasspathEntries(entries: List<String>): String {
+  return entries.joinToString(File.pathSeparator) { entry ->
+    val path = Path.of(entry)
+    if (path.isAbsolute) entry else path.toAbsolutePath().normalize().toString()
+  }
 }
 
 private fun writeAppServerArgsFile(tempDir: Path, classpath: String, configPath: Path): Path {

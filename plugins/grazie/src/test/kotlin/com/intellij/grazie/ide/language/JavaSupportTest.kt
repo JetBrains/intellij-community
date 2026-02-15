@@ -19,6 +19,7 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import org.junit.jupiter.api.assertDoesNotThrow
 import java.util.function.Consumer
 
 
@@ -293,6 +294,18 @@ class JavaSupportTest : GrazieTestBase() {
     """)
     myFixture.checkHighlighting()
     assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+  }
+
+  fun `test dependency parser creates correct trees based on text content language`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.AMERICAN_ENGLISH))
+    myFixture.configureByText("a.java", """
+      // In der tiefen Winternacht saß der alte Mann am Feuer. Die fast.
+      
+      // Hello. This is really English text. Nothing to see here. Die fast.
+    """.trimIndent())
+    assertDoesNotThrow {
+      myFixture.checkHighlighting()
+    }
   }
 
   fun `test asian-english mixed texts`() {

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER
 import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.gradle.java.groovy.codeInsight.AbstractGradleGroovyCompletionContributor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
@@ -26,7 +27,6 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactIn
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.idea.reposearch.SearchParameters
-import org.jetbrains.plugins.gradle.codeInsight.AbstractGradleCompletionContributor
 import org.jetbrains.plugins.groovy.lang.completion.GrDummyIdentifierProvider.DUMMY_IDENTIFIER_DECAPITALIZED
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 /**
  * @author Vladislav.Soroka
  */
-class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionContributor() {
+class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyCompletionContributor() {
   init {
     // map-style notation:
     // e.g.:

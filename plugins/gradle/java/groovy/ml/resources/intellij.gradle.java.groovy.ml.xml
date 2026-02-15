@@ -3,6 +3,7 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.completion.ml.ranking"/>
     <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="intellij.gradle.java.groovy"/>
     <module name="intellij.java.psi"/>
     <!-- endregion -->
   </dependencies>

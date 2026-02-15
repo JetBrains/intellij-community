@@ -19,7 +19,7 @@ internal class KotlinScriptEntityService(val project: Project) {
         val snapshot = project.workspaceModel.currentSnapshot
         val diagnostics = entity.reports.map { report -> report.map() }
         val configurationEntity =
-            entity.configurationEntity?.let { snapshot.resolve(it) } ?: return null
+            entity.configuration?.let { snapshot.resolve(it) } ?: return null
 
         return ResultWithDiagnostics.Success(
             ScriptCompilationConfigurationWrapper(VirtualFileScriptSource(virtualFile), configurationEntity.data.asCompilationConfiguration()),

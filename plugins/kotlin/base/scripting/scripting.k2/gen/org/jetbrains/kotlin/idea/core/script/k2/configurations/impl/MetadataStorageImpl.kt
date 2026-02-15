@@ -14,8 +14,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     override fun initializeMetadata() {
         val primitiveTypeLongNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Long")
         val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-        val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
+        val primitiveTypeByteNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Byte")
         val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
+        val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
         val primitiveTypeStringNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "String")
         val primitiveTypeIntNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "Int")
         val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
@@ -63,30 +64,14 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         addMetadata(typeMetadata)
 
         typeMetadata = FinalClassMetadata.ClassMetadata(
-            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityId",
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
             properties = listOf(
                 OwnPropertyMetadata(
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
                     name = "hash",
-                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = false,
-                        typeMetadata = FinalClassMetadata.ClassMetadata(
-                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationHash",
-                            properties = listOf(
-                                OwnPropertyMetadata(
-                                    isComputable = false,
-                                    isKey = false,
-                                    isOpen = false,
-                                    name = "value",
-                                    valueType = primitiveTypeLongNotNullable,
-                                    withDefault = false
-                                )
-                            ),
-                            supertypes = listOf()
-                        )
-                    ),
+                    valueType = primitiveTypeLongNotNullable,
                     withDefault = false
                 ),
                 OwnPropertyMetadata(
@@ -102,7 +87,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isKey = false,
                     isOpen = false,
                     name = "tag",
-                    valueType = primitiveTypeIntNotNullable,
+                    valueType = primitiveTypeByteNotNullable,
                     withDefault = false
                 )
             ),
@@ -257,33 +242,18 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
-                    name = "configurationEntity",
+                    name = "configuration",
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = true, typeMetadata = FinalClassMetadata.ClassMetadata(
-                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityId",
+                        isNullable = true,
+                        typeMetadata = FinalClassMetadata.ClassMetadata(
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
                             properties = listOf(
                                 OwnPropertyMetadata(
                                     isComputable = false,
                                     isKey = false,
                                     isOpen = false,
                                     name = "hash",
-                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                        isNullable = false,
-                                        typeMetadata = FinalClassMetadata.ClassMetadata(
-                                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationHash",
-                                            properties = listOf(
-                                                OwnPropertyMetadata(
-                                                    isComputable = false,
-                                                    isKey = false,
-                                                    isOpen = false,
-                                                    name = "value",
-                                                    valueType = primitiveTypeLongNotNullable,
-                                                    withDefault = false
-                                                )
-                                            ),
-                                            supertypes = listOf()
-                                        )
-                                    ),
+                                    valueType = primitiveTypeLongNotNullable,
                                     withDefault = false
                                 ),
                                 OwnPropertyMetadata(
@@ -299,7 +269,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                     isKey = false,
                                     isOpen = false,
                                     name = "tag",
-                                    valueType = primitiveTypeIntNotNullable,
+                                    valueType = primitiveTypeByteNotNullable,
                                     withDefault = false
                                 )
                             ),
@@ -621,65 +591,18 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
-                    name = "hash",
+                    name = "identity",
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
                         isNullable = false,
                         typeMetadata = FinalClassMetadata.ClassMetadata(
-                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationHash",
-                            properties = listOf(
-                                OwnPropertyMetadata(
-                                    isComputable = false,
-                                    isKey = false,
-                                    isOpen = false,
-                                    name = "value",
-                                    valueType = primitiveTypeLongNotNullable,
-                                    withDefault = false
-                                )
-                            ),
-                            supertypes = listOf()
-                        )
-                    ),
-                    withDefault = false
-                ),
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "tag",
-                    valueType = primitiveTypeIntNotNullable,
-                    withDefault = false
-                ),
-                OwnPropertyMetadata(
-                    isComputable = true,
-                    isKey = false,
-                    isOpen = false,
-                    name = "symbolicId",
-                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(
-                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityId",
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
                             properties = listOf(
                                 OwnPropertyMetadata(
                                     isComputable = false,
                                     isKey = false,
                                     isOpen = false,
                                     name = "hash",
-                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                        isNullable = false,
-                                        typeMetadata = FinalClassMetadata.ClassMetadata(
-                                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationHash",
-                                            properties = listOf(
-                                                OwnPropertyMetadata(
-                                                    isComputable = false,
-                                                    isKey = false,
-                                                    isOpen = false,
-                                                    name = "value",
-                                                    valueType = primitiveTypeLongNotNullable,
-                                                    withDefault = false
-                                                )
-                                            ),
-                                            supertypes = listOf()
-                                        )
-                                    ),
+                                    valueType = primitiveTypeLongNotNullable,
                                     withDefault = false
                                 ),
                                 OwnPropertyMetadata(
@@ -695,7 +618,47 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                     isKey = false,
                                     isOpen = false,
                                     name = "tag",
-                                    valueType = primitiveTypeIntNotNullable,
+                                    valueType = primitiveTypeByteNotNullable,
+                                    withDefault = false
+                                )
+                            ),
+                            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+                        )
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = true,
+                    isKey = false,
+                    isOpen = false,
+                    name = "symbolicId",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.ClassMetadata(
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+                            properties = listOf(
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "hash",
+                                    valueType = primitiveTypeLongNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "presentableName",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "tag",
+                                    valueType = primitiveTypeByteNotNullable,
                                     withDefault = false
                                 )
                             ),
@@ -713,21 +676,17 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -1993444866)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -1579312771)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = 748449801)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
-            metadataHash = -1571734842
+            metadataHash = 734280406
         )
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId", metadataHash = 1246211390)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 206069110)
         addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityId",
-            metadataHash = -1191275642
-        )
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationHash",
-            metadataHash = -220363049
+            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+            metadataHash = -1310517564
         )
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData", metadataHash = -305007550)
@@ -743,6 +702,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsKotlinScriptEntitySource",
             metadataHash = -809979893
         )
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -383858566)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 1880685048)
     }
 }

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiFile;
@@ -55,7 +55,7 @@ public final class GistManagerImpl extends GistManager {
 
   private final GistStorage gistStorage;
 
-  static final class MyBulkFileListener implements BulkFileListener {
+  static final class MyBulkFileListener implements BulkFileListenerBackgroundable {
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       if (ContainerUtil.exists(events, MyBulkFileListener::shouldDropCache)) {

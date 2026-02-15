@@ -3,8 +3,6 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.psi.util.contextOfType
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKnownDecorator.TYPING_RUNTIME
@@ -29,7 +27,7 @@ fun PyClassLikeType.isProtocol(context: TypeEvalContext): Boolean = containsProt
 
 fun PyClass.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
 
-fun PyClassType.isRuntimeCheckable(context: TypeEvalContext): Boolean = 
+fun PyClassType.isRuntimeCheckable(context: TypeEvalContext): Boolean =
   PyKnownDecoratorUtil.getKnownDecorators(pyClass, context).any {
     it in listOf(TYPING_RUNTIME_CHECKABLE, TYPING_RUNTIME_CHECKABLE_EXT, TYPING_RUNTIME, TYPING_RUNTIME_EXT)
   }
@@ -47,12 +45,11 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
   val resolveContext = PyResolveContext.defaultContext(context)
   val result = mutableListOf<Pair<PyTypeMember, List<PyTypeMember>>>()
 
-  val protocolMembers = protocol.toInstance().getAllMembers(resolveContext)
   val superClassesMembers = protocol.toInstance().getSuperClassTypes(context)
     .filterNotNull()
     .filter { it.isProtocol(context) }
     .flatMap { it.toInstance().getAllMembers(resolveContext).asIterable() }
-  protocolMembers.addAll(superClassesMembers)
+  val protocolMembers = protocol.toInstance().getAllMembers(resolveContext) + superClassesMembers
 
   for (protocolMember in protocolMembers) {
     val protocolElement = protocolMember.element ?: continue
@@ -107,5 +104,5 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
 
 private fun containsProtocol(types: List<PyClassLikeType?>) = types.any { type ->
   val classQName = type?.classQName
-  PROTOCOL == classQName || PROTOCOL_EXT == classQName
+  PyTypingTypeProvider.PROTOCOL == classQName || PyTypingTypeProvider.PROTOCOL_EXT == classQName
 }

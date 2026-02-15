@@ -18,8 +18,7 @@ public final class RunnerRegistry {
   private static final List<Entry<?>> ourRunners = List.of(
     new Entry<>(KotlinCompilerRunner.class, KotlinCompilerRunner::new, p -> p.getFileName().toString().endsWith(".kt")),
     new Entry<>(JavaCompilerRunner.class, JavaCompilerRunner::new, p -> p.getFileName().toString().endsWith(".java")),
-    new Entry<>(BytecodeInstrumentationRunner.class, BytecodeInstrumentationRunner::new),
-    new Entry<>(FormsCompiler.class, FormsCompiler::new, p -> p.getFileName().toString().endsWith(FormBinding.FORM_EXTENSION))
+    new Entry<>(BytecodeInstrumentationRunner.class, BytecodeInstrumentationRunner::new)
   );
 
   /**

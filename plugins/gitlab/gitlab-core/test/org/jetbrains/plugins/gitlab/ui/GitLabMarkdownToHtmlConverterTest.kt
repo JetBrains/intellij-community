@@ -7,16 +7,14 @@ import git4idea.repo.GitRepository
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.GitLabRestIdData
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_FILE_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_MR_LINK_PREFIX
-import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath.Companion.extractProjectPath
 import java.nio.file.Path
 
-private const val IMAGES_API_BASE = """http://base/url/api/v4/projects/test-account%2Fmr-test"""
-private const val WEB_BASE = """http://base/url/-/project/testRestId"""
+private const val IMAGES_API_BASE = """http://base/url/api/v4/projects/1"""
+private const val WEB_BASE = """http://base/url/-/project/1"""
 private const val P_CLASS = """class="custom_image""""
 
 class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
@@ -318,10 +316,9 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
 
   private fun convertToHtml(markdownSource: String): @NlsSafe String {
     val serverPath = GitLabServerPath("http://base/url")
-    val projectPath = GitLabProjectPath("test-account", "mr-test")
-    val projectCoordinates = GitLabProjectCoordinates(serverPath, projectPath)
-    val projectId = GitLabRestIdData("testRestId")
-    val converter = GitLabMarkdownToHtmlConverter(project, gitRepository, projectCoordinates, projectId)
+    val projectId = "1"
+    val projectFullPath = extractProjectPath("test-account/mr-test") ?: error("Failed to extract project path")
+    val converter = GitLabMarkdownToHtmlConverter(project, gitRepository, serverPath, projectId, projectFullPath)
     return converter.convertToHtml(markdownSource)
   }
 }

@@ -16,11 +16,11 @@ import kotlin.math.roundToLong
 
 @Composable
 internal fun threadIndicatorColor(thread: AgentSessionThread): Color {
-  // TODO: map thread status to indicator color once status is available.
-  return if (thread.archived) {
-    JewelTheme.globalColors.text.disabled
-  } else {
-    JewelTheme.globalColors.text.info.copy(alpha = 0.8f)
+  return when (thread.activity) {
+    AgentSessionActivity.UNREAD -> Color(0xFF4DA3FF)
+    AgentSessionActivity.REVIEWING -> Color(0xFF2FD1C4)
+    AgentSessionActivity.PROCESSING -> Color(0xFFFF9F43)
+    AgentSessionActivity.READY -> Color(0xFF3FE47E)
   }
 }
 

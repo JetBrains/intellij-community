@@ -7,6 +7,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -109,6 +112,9 @@ internal class InMemorySessionsTreeUiState : SessionsTreeUiState {
 internal class AgentSessionsTreeUiStateService
   : SerializablePersistentStateComponent<AgentSessionsTreeUiStateService.SessionsTreeUiStateState>(SessionsTreeUiStateState()),
     SessionsTreeUiState {
+
+  private val _lastUsedProviderFlow = MutableStateFlow(getLastUsedProvider())
+  val lastUsedProviderFlow: StateFlow<AgentSessionProvider?> = _lastUsedProviderFlow.asStateFlow()
 
   override fun isProjectCollapsed(path: String): Boolean {
     return normalizeSessionsProjectPath(path) in state.collapsedProjectPaths
@@ -226,11 +232,29 @@ internal class AgentSessionsTreeUiStateService
     return true
   }
 
+  fun getLastUsedProvider(): AgentSessionProvider? {
+    val name = state.lastUsedProvider ?: return null
+    return AgentSessionProvider.entries.firstOrNull { it.name == name }
+  }
+
+  fun setLastUsedProvider(provider: AgentSessionProvider) {
+    updateState { it.copy(lastUsedProvider = provider.name) }
+    _lastUsedProviderFlow.value = provider
+  }
+
+  override fun loadState(state: SessionsTreeUiStateState) {
+    super.loadState(state)
+    _lastUsedProviderFlow.value = state.lastUsedProvider?.let { name ->
+      AgentSessionProvider.entries.firstOrNull { it.name == name }
+    }
+  }
+
   @Serializable
   internal data class SessionsTreeUiStateState(
     @JvmField val collapsedProjectPaths: Set<String> = emptySet(),
     @JvmField val visibleThreadCountByProject: Map<String, Int> = emptyMap(),
     @JvmField val openProjectThreadPreviewsByProject: Map<String, List<ThreadPreviewState>> = emptyMap(),
+    @JvmField val lastUsedProvider: String? = null,
   )
 
   @Serializable

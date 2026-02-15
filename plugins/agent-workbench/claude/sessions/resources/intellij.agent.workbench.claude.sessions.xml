@@ -1,0 +1,7 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.claude.common"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

@@ -205,8 +205,8 @@ class AgentSessionsServiceOnDemandIntegrationTest {
         .single { it.path == PROJECT_PATH }
         .worktrees
         .single { it.path == WORKTREE_PATH }
-      // refresh() always loads closed worktrees once; the second on-demand request should still be deduplicated.
-      assertThat(invocationCount.get()).isEqualTo(2)
+      // refresh() skips closed worktrees; only the first on-demand request loads, the second is deduplicated.
+      assertThat(invocationCount.get()).isEqualTo(1)
       assertThat(worktree.threads.map { it.id }).containsExactly("wt-codex-1")
     }
   }

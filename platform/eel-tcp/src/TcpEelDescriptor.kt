@@ -6,7 +6,7 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import java.nio.file.Path
 
-abstract class TcpEelDescriptor : EelDescriptorWithoutNativeFileChooserSupport, EelPathBoundDescriptor {
+abstract class TcpEelDescriptor(override val osFamily: EelOsFamily) : EelDescriptorWithoutNativeFileChooserSupport, EelPathBoundDescriptor {
   abstract val rootPathString: String
   override val rootPath: Path
     get() = Path.of(rootPathString)
@@ -20,6 +20,4 @@ abstract class TcpEelDescriptor : EelDescriptorWithoutNativeFileChooserSupport, 
   }
 
   override fun hashCode(): Int = rootPathString.hashCode()
-
-  override val osFamily: EelOsFamily = EelOsFamily.Posix // FIXME
 }

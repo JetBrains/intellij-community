@@ -62,7 +62,8 @@ fun CoroutineScope.registerIjentNioFs(
               root = nioRoot,
               ijentFsProvider = IjentNioFileSystemProvider.getInstance(),
               originalFsProvider = localFS.provider(),
-              useRootDirectoriesFromOriginalFs = false
+              useRootDirectoriesFromOriginalFs = false,
+              eelDescriptor = ijentFs.ijentFs.descriptor
             ).let { wrapFileSystemProvider?.invoke(it) ?: it }.getFileSystem(uri)
 
           }

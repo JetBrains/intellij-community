@@ -10,8 +10,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.FieldPanel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -20,361 +24,530 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToolTip;
 import javax.swing.ToolTipManager;
+import javax.swing.border.TitledBorder;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ResourceBundle;
 
 public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProperties, B extends XBreakpoint<T>>
-        extends XBreakpointCustomPropertiesPanel<B> {
-    private JPanel myConditionsPanel;
-    private JPanel myInstanceFiltersPanel;
-    private JCheckBox myInstanceFiltersCheckBox;
-    private JPanel myInstanceFiltersFieldPanel;
-    private JPanel myClassFiltersPanel;
-    private JCheckBox myClassFiltersCheckBox;
-    private JPanel myClassFiltersFieldPanel;
-    private JPanel myPassCountPanel;
-    private JCheckBox myPassCountCheckbox;
-    private JTextField myPassCountField;
+  extends XBreakpointCustomPropertiesPanel<B> {
+  private final JPanel myConditionsPanel;
+  private final JPanel myInstanceFiltersPanel;
+  private final JCheckBox myInstanceFiltersCheckBox;
+  private final JPanel myInstanceFiltersFieldPanel;
+  private final JPanel myClassFiltersPanel;
+  private final JCheckBox myClassFiltersCheckBox;
+  private final JPanel myClassFiltersFieldPanel;
+  private final JPanel myPassCountPanel;
+  private final JCheckBox myPassCountCheckbox;
+  private final JTextField myPassCountField;
 
-    private final FieldPanel myInstanceFiltersField;
-    private final FieldPanel myClassFiltersField;
+  private final FieldPanel myInstanceFiltersField;
+  private final FieldPanel myClassFiltersField;
 
-    private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
-    private ClassFilter[] myClassExclusionFilters = ClassFilter.EMPTY_ARRAY;
-    private InstanceFilter[] myInstanceFilters = InstanceFilter.EMPTY_ARRAY;
-    protected final Project myProject;
+  private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
+  private ClassFilter[] myClassExclusionFilters = ClassFilter.EMPTY_ARRAY;
+  private InstanceFilter[] myInstanceFilters = InstanceFilter.EMPTY_ARRAY;
+  protected final Project myProject;
 
-    private PsiClass myBreakpointPsiClass;
+  private PsiClass myBreakpointPsiClass;
 
-    public KotlinBreakpointFiltersPanel(Project project) {
-        myProject = project;
-        myInstanceFiltersField = new FieldPanel(new MyTextField(), "", null,
-                                                new ActionListener() {
-                                                    @Override
-                                                    public void actionPerformed(ActionEvent e) {
-                                                        reloadInstanceFilters();
-                                                        EditInstanceFiltersDialog _dialog = new EditInstanceFiltersDialog(myProject);
-                                                        _dialog.setFilters(myInstanceFilters);
-                                                        _dialog.show();
-                                                        if (_dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-                                                            myInstanceFilters = _dialog.getFilters();
-                                                            updateInstanceFilterEditor(true);
-                                                        }
-                                                    }
-                                                },
-                                                null
-        );
-
-        myClassFiltersField = new FieldPanel(new MyTextField(), "", null,
-                                             new ActionListener() {
-                                                 @Override
-                                                 public void actionPerformed(ActionEvent e) {
-                                                     reloadClassFilters();
-
-                                                     com.intellij.ide.util.ClassFilter classFilter = createClassConditionFilter();
-
-                                                     EditClassFiltersDialog _dialog = new EditClassFiltersDialog(myProject, classFilter);
-                                                     _dialog.setFilters(myClassFilters, myClassExclusionFilters);
-                                                     _dialog.show();
-                                                     if (_dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-                                                         myClassFilters = _dialog.getFilters();
-                                                         myClassExclusionFilters = _dialog.getExclusionFilters();
-                                                         updateClassFilterEditor(true);
-                                                     }
-                                                 }
-                                             },
-                                             null
-        );
-
-        ActionListener updateListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateCheckboxes();
-            }
-        };
-
-        myPassCountCheckbox.addActionListener(updateListener);
-        myInstanceFiltersCheckBox.addActionListener(updateListener);
-        myClassFiltersCheckBox.addActionListener(updateListener);
-
-        ToolTipManager.sharedInstance().registerComponent(myClassFiltersField.getTextField());
-        ToolTipManager.sharedInstance().registerComponent(myInstanceFiltersField.getTextField());
-
-        insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
-        insert(myClassFiltersFieldPanel, myClassFiltersField);
-
-        DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
-        DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
-        DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
+  public KotlinBreakpointFiltersPanel(Project project) {
+    myProject = project;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myConditionsPanel = new JPanel();
+      myConditionsPanel.setLayout(new GridLayoutManager(4, 2, new Insets(2, 2, 5, 5), -1, 7));
+      myConditionsPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent");
+      panel1.add(myConditionsPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                        null, null, 0, false));
+      myConditionsPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
+                                                                                              this.$$$getMessageFromBundle$$$(
+                                                                                                "messages/KotlinDebuggerCoreBundle",
+                                                                                                "property.watchpoint.properties.panel.panel.group.conditions"),
+                                                                                              TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                              TitledBorder.DEFAULT_POSITION, null, null));
+      myInstanceFiltersPanel = new JPanel();
+      myInstanceFiltersPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, 0));
+      myConditionsPanel.add(myInstanceFiltersPanel,
+                            new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                null, 0, false));
+      myInstanceFiltersCheckBox = new JCheckBox();
+      myInstanceFiltersCheckBox.setMargin(new Insets(2, 2, 0, 2));
+      this.$$$loadButtonText$$$(myInstanceFiltersCheckBox, this.$$$getMessageFromBundle$$$("messages/KotlinDebuggerCoreBundle",
+                                                                                           "property.watchpoint.properties.panel.option.instance.filters"));
+      myInstanceFiltersPanel.add(myInstanceFiltersCheckBox,
+                                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myInstanceFiltersPanel.add(panel2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      panel2.add(spacer1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_FIXED, 1, null, new Dimension(15, -1), null, 0, false));
+      myInstanceFiltersFieldPanel = new JPanel();
+      panel2.add(myInstanceFiltersFieldPanel,
+                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
+                                     false));
+      myClassFiltersPanel = new JPanel();
+      myClassFiltersPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, 0));
+      myConditionsPanel.add(myClassFiltersPanel,
+                            new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                null, 0, false));
+      myClassFiltersCheckBox = new JCheckBox();
+      myClassFiltersCheckBox.setMargin(new Insets(2, 2, 0, 2));
+      this.$$$loadButtonText$$$(myClassFiltersCheckBox, this.$$$getMessageFromBundle$$$("messages/KotlinDebuggerCoreBundle",
+                                                                                        "property.watchpoint.properties.panel.option.class.filters"));
+      myClassFiltersPanel.add(myClassFiltersCheckBox,
+                              new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel3 = new JPanel();
+      panel3.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myClassFiltersPanel.add(panel3, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                          null, null, 0, false));
+      myClassFiltersFieldPanel = new JPanel();
+      panel3.add(myClassFiltersFieldPanel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                               null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      panel3.add(spacer2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_FIXED, 1, null, new Dimension(15, -1), null, 0, false));
+      myPassCountPanel = new JPanel();
+      myPassCountPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, 0));
+      myConditionsPanel.add(myPassCountPanel,
+                            new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                null, 0, false));
+      myPassCountCheckbox = new JCheckBox();
+      myPassCountCheckbox.setMargin(new Insets(2, 2, 0, 2));
+      this.$$$loadButtonText$$$(myPassCountCheckbox, this.$$$getMessageFromBundle$$$("messages/KotlinDebuggerCoreBundle",
+                                                                                     "property.watchpoint.properties.panel.option.pass.count"));
+      myPassCountPanel.add(myPassCountCheckbox, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                    null, null, null, 0, false));
+      final JPanel panel4 = new JPanel();
+      panel4.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPassCountPanel.add(panel4, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                       null, null, 0, false));
+      myPassCountField = new JTextField();
+      myPassCountField.setEnabled(false);
+      myPassCountField.setHorizontalAlignment(10);
+      panel4.add(myPassCountField, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                       new Dimension(15, -1), null, 0, false));
+      final Spacer spacer3 = new Spacer();
+      panel4.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_FIXED, 1, null, new Dimension(15, -1), null, 0, false));
+      final Spacer spacer4 = new Spacer();
+      myConditionsPanel.add(spacer4, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                         GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
     }
+    myInstanceFiltersField = new FieldPanel(new MyTextField(), "", null,
+                                            new ActionListener() {
+                                              @Override
+                                              public void actionPerformed(ActionEvent e) {
+                                                reloadInstanceFilters();
+                                                EditInstanceFiltersDialog _dialog = new EditInstanceFiltersDialog(myProject);
+                                                _dialog.setFilters(myInstanceFilters);
+                                                _dialog.show();
+                                                if (_dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+                                                  myInstanceFilters = _dialog.getFilters();
+                                                  updateInstanceFilterEditor(true);
+                                                }
+                                              }
+                                            },
+                                            null
+    );
 
-    @Override
-    public @NotNull JComponent getComponent() {
-        return myConditionsPanel;
-    }
+    myClassFiltersField = new FieldPanel(new MyTextField(), "", null,
+                                         new ActionListener() {
+                                           @Override
+                                           public void actionPerformed(ActionEvent e) {
+                                             reloadClassFilters();
 
-    @Override
-    public boolean isVisibleOnPopup(@NotNull B breakpoint) {
-        JavaBreakpointProperties properties = breakpoint.getProperties();
-        if (properties != null) {
-            return properties.isCOUNT_FILTER_ENABLED() || properties.isCLASS_FILTERS_ENABLED() || properties.isINSTANCE_FILTERS_ENABLED();
-        }
-        return false;
-    }
+                                             com.intellij.ide.util.ClassFilter classFilter = createClassConditionFilter();
 
-    @Override
-    public void saveTo(@NotNull B breakpoint) {
-        JavaBreakpointProperties properties = breakpoint.getProperties();
-        if (properties == null) {
-            return;
-        }
+                                             EditClassFiltersDialog _dialog = new EditClassFiltersDialog(myProject, classFilter);
+                                             _dialog.setFilters(myClassFilters, myClassExclusionFilters);
+                                             _dialog.show();
+                                             if (_dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+                                               myClassFilters = _dialog.getFilters();
+                                               myClassExclusionFilters = _dialog.getExclusionFilters();
+                                               updateClassFilterEditor(true);
+                                             }
+                                           }
+                                         },
+                                         null
+    );
 
-        boolean changed = false;
-        try {
-            String text = myPassCountField.getText().trim();
-            int filter = !text.isEmpty() ? Integer.parseInt(text) : 0;
-            if (filter < 0) filter = 0;
-            changed = properties.setCOUNT_FILTER(filter);
-        } catch (Exception ignored) {
-        }
-
-        changed = properties.setCOUNT_FILTER_ENABLED(properties.getCOUNT_FILTER() > 0 && myPassCountCheckbox.isSelected()) || changed;
-        reloadInstanceFilters();
-        reloadClassFilters();
-        updateInstanceFilterEditor(true);
-        updateClassFilterEditor(true);
-
-        changed = properties.setINSTANCE_FILTERS_ENABLED(
-                !myInstanceFiltersField.getText().isEmpty() && myInstanceFiltersCheckBox.isSelected()) || changed;
-        changed = properties.setCLASS_FILTERS_ENABLED(!myClassFiltersField.getText().isEmpty() && myClassFiltersCheckBox.isSelected()) ||
-                  changed;
-        changed = properties.setClassFilters(myClassFilters) || changed;
-        changed = properties.setClassExclusionFilters(myClassExclusionFilters) || changed;
-        changed = properties.setInstanceFilters(myInstanceFilters) || changed;
-        if (changed) {
-            ((XBreakpointBase<?, ?, ?>) breakpoint).fireBreakpointChanged();
-        }
-    }
-
-    private static void insert(JPanel panel, JComponent component) {
-        panel.setLayout(new BorderLayout());
-        panel.add(component, BorderLayout.CENTER);
-    }
-
-    @Override
-    public void loadFrom(@NotNull B breakpoint) {
-        JavaBreakpointProperties properties = breakpoint.getProperties();
-        if (properties != null) {
-            if (properties.getCOUNT_FILTER() > 0) {
-                myPassCountField.setText(Integer.toString(properties.getCOUNT_FILTER()));
-            } else {
-                myPassCountField.setText("");
-            }
-
-            myPassCountCheckbox.setSelected(properties.isCOUNT_FILTER_ENABLED());
-
-            myInstanceFiltersCheckBox.setSelected(properties.isINSTANCE_FILTERS_ENABLED());
-            myInstanceFiltersField.setEnabled(properties.isINSTANCE_FILTERS_ENABLED());
-            myInstanceFiltersField.getTextField().setEditable(properties.isINSTANCE_FILTERS_ENABLED());
-            myInstanceFilters = properties.getInstanceFilters();
-            updateInstanceFilterEditor(true);
-
-            myClassFiltersCheckBox.setSelected(properties.isCLASS_FILTERS_ENABLED());
-            myClassFiltersField.setEnabled(properties.isCLASS_FILTERS_ENABLED());
-            myClassFiltersField.getTextField().setEditable(properties.isCLASS_FILTERS_ENABLED());
-            myClassFilters = properties.getClassFilters();
-            myClassExclusionFilters = properties.getClassExclusionFilters();
-            updateClassFilterEditor(true);
-
-            XSourcePosition position = breakpoint.getSourcePosition();
-            // TODO: need to calculate psi class
-            //myBreakpointPsiClass = breakpoint.getPsiClass();
-        }
+    ActionListener updateListener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
         updateCheckboxes();
+      }
+    };
+
+    myPassCountCheckbox.addActionListener(updateListener);
+    myInstanceFiltersCheckBox.addActionListener(updateListener);
+    myClassFiltersCheckBox.addActionListener(updateListener);
+
+    ToolTipManager.sharedInstance().registerComponent(myClassFiltersField.getTextField());
+    ToolTipManager.sharedInstance().registerComponent(myInstanceFiltersField.getTextField());
+
+    insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
+    insert(myClassFiltersFieldPanel, myClassFiltersField);
+
+    DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
+    DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
+    DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
+  }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  @Override
+  public @NotNull JComponent getComponent() {
+    return myConditionsPanel;
+  }
+
+  @Override
+  public boolean isVisibleOnPopup(@NotNull B breakpoint) {
+    JavaBreakpointProperties properties = breakpoint.getProperties();
+    if (properties != null) {
+      return properties.isCOUNT_FILTER_ENABLED() || properties.isCLASS_FILTERS_ENABLED() || properties.isINSTANCE_FILTERS_ENABLED();
+    }
+    return false;
+  }
+
+  @Override
+  public void saveTo(@NotNull B breakpoint) {
+    JavaBreakpointProperties properties = breakpoint.getProperties();
+    if (properties == null) {
+      return;
     }
 
-    private void updateInstanceFilterEditor(boolean updateText) {
-        List<String> filters = new ArrayList<>();
-        for (InstanceFilter instanceFilter : myInstanceFilters) {
-            if (instanceFilter.isEnabled()) {
-                filters.add(Long.toString(instanceFilter.getId()));
-            }
-        }
-        if (updateText) {
-            myInstanceFiltersField.setText(StringUtil.join(filters, " "));
-        }
-
-        String tipText = concatWithEx(new StringBuilder(), filters, " ", (int) Math.sqrt(myInstanceFilters.length) + 1, "\n").toString();
-        myInstanceFiltersField.getTextField().setToolTipText(tipText);
+    boolean changed = false;
+    try {
+      String text = myPassCountField.getText().trim();
+      int filter = !text.isEmpty() ? Integer.parseInt(text) : 0;
+      if (filter < 0) filter = 0;
+      changed = properties.setCOUNT_FILTER(filter);
+    }
+    catch (Exception ignored) {
     }
 
-    private class MyTextField extends JTextField {
-        private MyTextField() {}
+    changed = properties.setCOUNT_FILTER_ENABLED(properties.getCOUNT_FILTER() > 0 && myPassCountCheckbox.isSelected()) || changed;
+    reloadInstanceFilters();
+    reloadClassFilters();
+    updateInstanceFilterEditor(true);
+    updateClassFilterEditor(true);
 
-        @Override
-        public String getToolTipText(MouseEvent event) {
-            reloadClassFilters();
-            updateClassFilterEditor(false);
-            reloadInstanceFilters();
-            updateInstanceFilterEditor(false);
-            String toolTipText = super.getToolTipText(event);
-            return getToolTipText().isEmpty() ? null : toolTipText;
-        }
+    changed = properties.setINSTANCE_FILTERS_ENABLED(
+      !myInstanceFiltersField.getText().isEmpty() && myInstanceFiltersCheckBox.isSelected()) || changed;
+    changed = properties.setCLASS_FILTERS_ENABLED(!myClassFiltersField.getText().isEmpty() && myClassFiltersCheckBox.isSelected()) ||
+              changed;
+    changed = properties.setClassFilters(myClassFilters) || changed;
+    changed = properties.setClassExclusionFilters(myClassExclusionFilters) || changed;
+    changed = properties.setInstanceFilters(myInstanceFilters) || changed;
+    if (changed) {
+      ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointChanged();
+    }
+  }
 
-        @Override
-        public JToolTip createToolTip() {
-            JToolTip toolTip = new JToolTip() {{
-                setUI(new MultiLineTooltipUI());
-            }};
-            toolTip.setComponent(this);
-            return toolTip;
-        }
+  private static void insert(JPanel panel, JComponent component) {
+    panel.setLayout(new BorderLayout());
+    panel.add(component, BorderLayout.CENTER);
+  }
+
+  @Override
+  public void loadFrom(@NotNull B breakpoint) {
+    JavaBreakpointProperties properties = breakpoint.getProperties();
+    if (properties != null) {
+      if (properties.getCOUNT_FILTER() > 0) {
+        myPassCountField.setText(Integer.toString(properties.getCOUNT_FILTER()));
+      }
+      else {
+        myPassCountField.setText("");
+      }
+
+      myPassCountCheckbox.setSelected(properties.isCOUNT_FILTER_ENABLED());
+
+      myInstanceFiltersCheckBox.setSelected(properties.isINSTANCE_FILTERS_ENABLED());
+      myInstanceFiltersField.setEnabled(properties.isINSTANCE_FILTERS_ENABLED());
+      myInstanceFiltersField.getTextField().setEditable(properties.isINSTANCE_FILTERS_ENABLED());
+      myInstanceFilters = properties.getInstanceFilters();
+      updateInstanceFilterEditor(true);
+
+      myClassFiltersCheckBox.setSelected(properties.isCLASS_FILTERS_ENABLED());
+      myClassFiltersField.setEnabled(properties.isCLASS_FILTERS_ENABLED());
+      myClassFiltersField.getTextField().setEditable(properties.isCLASS_FILTERS_ENABLED());
+      myClassFilters = properties.getClassFilters();
+      myClassExclusionFilters = properties.getClassExclusionFilters();
+      updateClassFilterEditor(true);
+
+      XSourcePosition position = breakpoint.getSourcePosition();
+      // TODO: need to calculate psi class
+      //myBreakpointPsiClass = breakpoint.getPsiClass();
+    }
+    updateCheckboxes();
+  }
+
+  private void updateInstanceFilterEditor(boolean updateText) {
+    List<String> filters = new ArrayList<>();
+    for (InstanceFilter instanceFilter : myInstanceFilters) {
+      if (instanceFilter.isEnabled()) {
+        filters.add(Long.toString(instanceFilter.getId()));
+      }
+    }
+    if (updateText) {
+      myInstanceFiltersField.setText(StringUtil.join(filters, " "));
     }
 
-    private void reloadClassFilters() {
-        String filtersText = myClassFiltersField.getText();
+    String tipText = concatWithEx(new StringBuilder(), filters, " ", (int)Math.sqrt(myInstanceFilters.length) + 1, "\n").toString();
+    myInstanceFiltersField.getTextField().setToolTipText(tipText);
+  }
 
-        ArrayList<ClassFilter> classFilters = new ArrayList<>();
-        ArrayList<ClassFilter> exclusionFilters = new ArrayList<>();
-        int startFilter = -1;
-        for (int i = 0; i <= filtersText.length(); i++) {
-            if (i < filtersText.length() && !Character.isWhitespace(filtersText.charAt(i))) {
-                if (startFilter == -1) {
-                    startFilter = i;
-                }
-            } else {
-                if (startFilter >= 0) {
-                    if (filtersText.charAt(startFilter) == '-') {
-                        exclusionFilters.add(new ClassFilter(filtersText.substring(startFilter + 1, i)));
-                    } else {
-                        classFilters.add(new ClassFilter(filtersText.substring(startFilter, i)));
-                    }
-                    startFilter = -1;
-                }
-            }
-        }
-        for (ClassFilter classFilter : myClassFilters) {
-            if (!classFilter.isEnabled()) {
-                classFilters.add(classFilter);
-            }
-        }
-        for (ClassFilter classFilter : myClassExclusionFilters) {
-            if (!classFilter.isEnabled()) {
-                exclusionFilters.add(classFilter);
-            }
-        }
-        myClassFilters = classFilters.toArray(ClassFilter.EMPTY_ARRAY);
-        myClassExclusionFilters = exclusionFilters.toArray(ClassFilter.EMPTY_ARRAY);
+  private class MyTextField extends JTextField {
+    private MyTextField() { }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+      reloadClassFilters();
+      updateClassFilterEditor(false);
+      reloadInstanceFilters();
+      updateInstanceFilterEditor(false);
+      String toolTipText = super.getToolTipText(event);
+      return getToolTipText().isEmpty() ? null : toolTipText;
     }
 
-    private void reloadInstanceFilters() {
-        String filtersText = myInstanceFiltersField.getText();
+    @Override
+    public JToolTip createToolTip() {
+      JToolTip toolTip = new JToolTip() {{
+        setUI(new MultiLineTooltipUI());
+      }};
+      toolTip.setComponent(this);
+      return toolTip;
+    }
+  }
 
-        ArrayList<InstanceFilter> idxs = new ArrayList<>();
-        int startNumber = -1;
-        for (int i = 0; i <= filtersText.length(); i++) {
-            if (i < filtersText.length() && Character.isDigit(filtersText.charAt(i))) {
-                if (startNumber == -1) {
-                    startNumber = i;
-                }
-            } else {
-                if (startNumber >= 0) {
-                    idxs.add(InstanceFilter.create(filtersText.substring(startNumber, i)));
-                    startNumber = -1;
-                }
-            }
+  private void reloadClassFilters() {
+    String filtersText = myClassFiltersField.getText();
+
+    ArrayList<ClassFilter> classFilters = new ArrayList<>();
+    ArrayList<ClassFilter> exclusionFilters = new ArrayList<>();
+    int startFilter = -1;
+    for (int i = 0; i <= filtersText.length(); i++) {
+      if (i < filtersText.length() && !Character.isWhitespace(filtersText.charAt(i))) {
+        if (startFilter == -1) {
+          startFilter = i;
         }
-        for (InstanceFilter instanceFilter : myInstanceFilters) {
-            if (!instanceFilter.isEnabled()) {
-                idxs.add(instanceFilter);
-            }
+      }
+      else {
+        if (startFilter >= 0) {
+          if (filtersText.charAt(startFilter) == '-') {
+            exclusionFilters.add(new ClassFilter(filtersText.substring(startFilter + 1, i)));
+          }
+          else {
+            classFilters.add(new ClassFilter(filtersText.substring(startFilter, i)));
+          }
+          startFilter = -1;
         }
-        myInstanceFilters = idxs.toArray(InstanceFilter.EMPTY_ARRAY);
+      }
+    }
+    for (ClassFilter classFilter : myClassFilters) {
+      if (!classFilter.isEnabled()) {
+        classFilters.add(classFilter);
+      }
+    }
+    for (ClassFilter classFilter : myClassExclusionFilters) {
+      if (!classFilter.isEnabled()) {
+        exclusionFilters.add(classFilter);
+      }
+    }
+    myClassFilters = classFilters.toArray(ClassFilter.EMPTY_ARRAY);
+    myClassExclusionFilters = exclusionFilters.toArray(ClassFilter.EMPTY_ARRAY);
+  }
+
+  private void reloadInstanceFilters() {
+    String filtersText = myInstanceFiltersField.getText();
+
+    ArrayList<InstanceFilter> idxs = new ArrayList<>();
+    int startNumber = -1;
+    for (int i = 0; i <= filtersText.length(); i++) {
+      if (i < filtersText.length() && Character.isDigit(filtersText.charAt(i))) {
+        if (startNumber == -1) {
+          startNumber = i;
+        }
+      }
+      else {
+        if (startNumber >= 0) {
+          idxs.add(InstanceFilter.create(filtersText.substring(startNumber, i)));
+          startNumber = -1;
+        }
+      }
+    }
+    for (InstanceFilter instanceFilter : myInstanceFilters) {
+      if (!instanceFilter.isEnabled()) {
+        idxs.add(instanceFilter);
+      }
+    }
+    myInstanceFilters = idxs.toArray(InstanceFilter.EMPTY_ARRAY);
+  }
+
+  private void updateClassFilterEditor(boolean updateText) {
+    List<String> filters = new ArrayList<>();
+    for (ClassFilter classFilter : myClassFilters) {
+      if (classFilter.isEnabled()) {
+        filters.add(classFilter.getPattern());
+      }
+    }
+    List<String> excludeFilters = new ArrayList<>();
+    for (ClassFilter classFilter : myClassExclusionFilters) {
+      if (classFilter.isEnabled()) {
+        excludeFilters.add("-" + classFilter.getPattern());
+      }
+    }
+    if (updateText) {
+      String editorText = StringUtil.join(filters, " ");
+      if (!filters.isEmpty()) {
+        editorText += " ";
+      }
+      editorText += StringUtil.join(excludeFilters, " ");
+      myClassFiltersField.setText(editorText);
     }
 
-    private void updateClassFilterEditor(boolean updateText) {
-        List<String> filters = new ArrayList<>();
-        for (ClassFilter classFilter : myClassFilters) {
-            if (classFilter.isEnabled()) {
-                filters.add(classFilter.getPattern());
-            }
-        }
-        List<String> excludeFilters = new ArrayList<>();
-        for (ClassFilter classFilter : myClassExclusionFilters) {
-            if (classFilter.isEnabled()) {
-                excludeFilters.add("-" + classFilter.getPattern());
-            }
-        }
-        if (updateText) {
-            String editorText = StringUtil.join(filters, " ");
-            if (!filters.isEmpty()) {
-                editorText += " ";
-            }
-            editorText += StringUtil.join(excludeFilters, " ");
-            myClassFiltersField.setText(editorText);
-        }
-
-        int width = (int) Math.sqrt(myClassExclusionFilters.length + myClassFilters.length) + 1;
-        StringBuilder tipTextBuilder = new StringBuilder();
-        concatWithEx(tipTextBuilder, filters, " ", width, "\n");
-        if (!filters.isEmpty()) {
-            tipTextBuilder.append("\n");
-        }
-        String tipText = concatWithEx(tipTextBuilder, excludeFilters, " ", width, "\n").toString();
-        myClassFiltersField.getTextField().setToolTipText(tipText);
+    int width = (int)Math.sqrt(myClassExclusionFilters.length + myClassFilters.length) + 1;
+    StringBuilder tipTextBuilder = new StringBuilder();
+    concatWithEx(tipTextBuilder, filters, " ", width, "\n");
+    if (!filters.isEmpty()) {
+      tipTextBuilder.append("\n");
     }
+    String tipText = concatWithEx(tipTextBuilder, excludeFilters, " ", width, "\n").toString();
+    myClassFiltersField.getTextField().setToolTipText(tipText);
+  }
 
-    private static @NlsSafe StringBuilder concatWithEx(StringBuilder builder, List<String> s, String glue, int N, String nthGlue) {
-        int i = 1;
-        for (Iterator<String> iterator = s.iterator(); iterator.hasNext(); i++) {
-            String str = iterator.next();
-            builder.append(str);
-            if (iterator.hasNext()) {
-                if (i % N == 0) {
-                    builder.append(nthGlue);
-                } else {
-                    builder.append(glue);
-                }
-            }
+  private static @NlsSafe StringBuilder concatWithEx(StringBuilder builder, List<String> s, String glue, int N, String nthGlue) {
+    int i = 1;
+    for (Iterator<String> iterator = s.iterator(); iterator.hasNext(); i++) {
+      String str = iterator.next();
+      builder.append(str);
+      if (iterator.hasNext()) {
+        if (i % N == 0) {
+          builder.append(nthGlue);
         }
-        return builder;
-    }
-
-    protected com.intellij.ide.util.ClassFilter createClassConditionFilter() {
-        return myBreakpointPsiClass == null
-               ? null
-               : (aClass -> myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true));
-    }
-
-    protected void updateCheckboxes() {
-        boolean passCountApplicable = true;
-        if (myInstanceFiltersCheckBox.isSelected() || myClassFiltersCheckBox.isSelected()) {
-            passCountApplicable = false;
+        else {
+          builder.append(glue);
         }
-        myPassCountCheckbox.setEnabled(passCountApplicable);
-
-        boolean passCountSelected = myPassCountCheckbox.isSelected();
-        myInstanceFiltersCheckBox.setEnabled(!passCountSelected);
-        myClassFiltersCheckBox.setEnabled(!passCountSelected);
-
-        myPassCountField.setEditable(myPassCountCheckbox.isSelected());
-        myPassCountField.setEnabled(myPassCountCheckbox.isSelected());
-
-        myInstanceFiltersField.setEnabled(myInstanceFiltersCheckBox.isSelected());
-        myInstanceFiltersField.getTextField().setEditable(myInstanceFiltersCheckBox.isSelected());
-
-        myClassFiltersField.setEnabled(myClassFiltersCheckBox.isSelected());
-        myClassFiltersField.getTextField().setEditable(myClassFiltersCheckBox.isSelected());
+      }
     }
+    return builder;
+  }
+
+  protected com.intellij.ide.util.ClassFilter createClassConditionFilter() {
+    return myBreakpointPsiClass == null
+           ? null
+           : (aClass -> myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true));
+  }
+
+  protected void updateCheckboxes() {
+    boolean passCountApplicable = true;
+    if (myInstanceFiltersCheckBox.isSelected() || myClassFiltersCheckBox.isSelected()) {
+      passCountApplicable = false;
+    }
+    myPassCountCheckbox.setEnabled(passCountApplicable);
+
+    boolean passCountSelected = myPassCountCheckbox.isSelected();
+    myInstanceFiltersCheckBox.setEnabled(!passCountSelected);
+    myClassFiltersCheckBox.setEnabled(!passCountSelected);
+
+    myPassCountField.setEditable(myPassCountCheckbox.isSelected());
+    myPassCountField.setEnabled(myPassCountCheckbox.isSelected());
+
+    myInstanceFiltersField.setEnabled(myInstanceFiltersCheckBox.isSelected());
+    myInstanceFiltersField.getTextField().setEditable(myInstanceFiltersCheckBox.isSelected());
+
+    myClassFiltersField.setEnabled(myClassFiltersCheckBox.isSelected());
+    myClassFiltersField.getTextField().setEditable(myClassFiltersCheckBox.isSelected());
+  }
 }

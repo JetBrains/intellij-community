@@ -66,6 +66,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiElement
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBPanelWithEmptyText
@@ -80,6 +81,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -110,8 +112,10 @@ import javax.swing.SwingUtilities
 class StructureViewWrapperImpl(
   private val project: Project,
   private val myToolWindow: ToolWindow,
-  private val coroutineScope: CoroutineScope,
+  parentCoroutineScope: CoroutineScope,
 ) : StructureViewWrapper, Disposable {
+  private val coroutineScope = parentCoroutineScope.childScope("StructureViewWrapperImpl")
+
   private var myFile: VirtualFile? = null
   private var myStructureView: StructureView? = null
   private var myFileEditor: FileEditor? = null
@@ -393,6 +397,8 @@ class StructureViewWrapperImpl(
   // StructureView interface implementation
   // -------------------------------------------------------------------------
   override fun dispose() {
+    coroutineScope.cancel()
+
     //we don't really need it
     //rebuild();
   }

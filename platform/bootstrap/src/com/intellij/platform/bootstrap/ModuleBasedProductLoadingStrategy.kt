@@ -28,14 +28,11 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.repository.IncludedRuntimeModule
-import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
-import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
-import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
@@ -265,64 +262,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           })
         }
       }
-      deferredDescriptors.addAll(loadPluginDescriptorsFromAdditionalRepositories(scope, additionalRepositoryPaths, context, zipFilePool))
     }
     return scope.async { DiscoveredPluginsList(deferredDescriptors.awaitAll().filterNotNull(), PluginsSourceContext.Custom) }
-  }
-
-  private fun loadPluginDescriptorsFromAdditionalRepositories(
-    scope: CoroutineScope,
-    repositoryPaths: List<Path>,
-    context: PluginDescriptorLoadingContext,
-    zipFilePool: ZipEntryResolverPool,
-  ): Collection<Deferred<PluginMainDescriptor?>> {
-    val repositoriesByPaths = scope.async {
-      val repositoriesByPaths = repositoryPaths.associateWith {
-        try {
-          RuntimeModuleRepositorySerialization.loadFromJar(it)
-        }
-        catch (e: MalformedRepositoryException) {
-          logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load module repository for a custom plugin: $e", e)
-          null
-        } 
-      }
-      (moduleRepository as RuntimeModuleRepositoryImpl).loadAdditionalRepositories(repositoriesByPaths.values.filterNotNull())
-      repositoriesByPaths
-    }
-    return repositoryPaths.map { path -> 
-      scope.async { 
-        val repositoryDataMap = repositoriesByPaths.await()
-        val repositoryData = repositoryDataMap[path] ?: return@async null
-        val mainModuleId = repositoryData.mainPluginModuleId ?: return@async null
-        try {
-          val mainModule = moduleRepository.getModule(RuntimeModuleId.module(mainModuleId))
-          /* 
-            It would be probably better to reuse PluginModuleGroup here, and load information about additional modules from plugin.xml. 
-            However, currently this won't work because plugin model v2 requires that there is an XML configuration file for each module
-            mentioned in the <content> tag, but in the test plugins we have modules without configuration files. 
-          */
-          val descriptors = ArrayList<RuntimeModuleDescriptor>()
-          descriptors.add(mainModule)
-          repositoryData.allModuleIds.asSequence()
-            .filter { it != mainModule.moduleId }
-            .mapTo(descriptors) { moduleRepository.getModule(it) }
-          val moduleGroup = CustomPluginModuleGroup(descriptors, mainModule)
-          loadPluginDescriptorFromRuntimeModule(
-            pluginModuleGroup = moduleGroup,
-            context = context,
-            zipFilePool = zipFilePool,
-            serviceModuleMapping = null,
-            mainGroupResourceRootSet = emptySet(),
-            isBundled = false,
-            pluginDir = path.parent,
-          )
-        }
-        catch (t: Throwable) {
-          logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load custom plugin '$mainModuleId': $t", t)
-          null
-        }
-      }
-    }
   }
 
   private fun loadPluginDescriptorFromRuntimeModule(
@@ -455,10 +396,11 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
     val paths = resolvedModule.resourceRootPaths
     val singlePath = paths.singleOrNull()
+    val isRunningFromSourcesWithoutDevBuild = PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild()
     /* when running from sources without dev build, resources of a content module may include the module output directory and paths to its
        module-level libraries, so this function may return null so resolveModuleFile and resolveCustomModuleClassesRoots from
        ModuleBasedPluginXmlPathResolver will be used to load the module */
-    if (singlePath == null && !(PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild())) {
+    if (singlePath == null && !isRunningFromSourcesWithoutDevBuild) {
       error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
     }
 

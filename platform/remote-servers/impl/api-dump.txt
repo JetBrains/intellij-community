@@ -77,7 +77,7 @@ com.intellij.remoteServer.util.CallbackWrapper
 - a:onError(java.lang.String):V
 - a:onSuccess(java.lang.Object):V
 c:com.intellij.remoteServer.util.CloudAccountSelectionEditor
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(java.util.List):V
 - s:createRunConfiguration(com.intellij.ide.util.projectWizard.WizardContext,com.intellij.remoteServer.ServerType,com.intellij.openapi.module.Module,com.intellij.remoteServer.util.CloudDeploymentNameConfiguration):V
 - getMainPanel():javax.swing.JComponent

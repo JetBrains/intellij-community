@@ -1478,6 +1478,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-80837
+  public void testParameterDefaultValueType() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def f(
+                       a: str = "ok",
+                       b: int = <warning descr="Expected type 'int', got 'str' instead">"not ok"</warning>,
+                       c: Literal[True] = True,
+                       d: Literal[True] = <warning descr="Expected type 'Literal[True]', got 'Literal[False]' instead">False</warning>
+                   ): ...
+                   """
+    );
+  }
+
   // PY-53611
   public void testTypedDictRequiredNotRequiredEquivalence() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);

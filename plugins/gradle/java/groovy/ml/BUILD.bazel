@@ -24,6 +24,7 @@ jvm_library(
     "//plugins/completion-ml-ranking",
     "//plugins/groovy/groovy-psi:psi",
     "//java/java-psi-api:psi",
+    "//plugins/gradle/java/groovy",
   ]
 )
 ### auto-generated section `build intellij.gradle.java.groovy.ml` end

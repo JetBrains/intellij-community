@@ -42,7 +42,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 class PyLiteralType private constructor(cls: PyClass, val expression: PyExpression) : PyClassTypeImpl(cls, false) {
 
-  override fun getName(): String = "Literal[${expression.text}]"
+  override val name: String = "Literal[${expression.text}]"
 
   override fun toString(): String = "PyLiteralType: ${expression.text}"
 
@@ -52,7 +52,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
 
   override fun hashCode(): Int = 31 * pyClass.hashCode()
 
-  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyLiteralType(this)
     }

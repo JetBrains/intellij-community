@@ -3,6 +3,8 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -133,6 +135,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   private var isAvailable: Boolean = true,
   private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>,
 ) : ToolWindowEx {
+  private val toolWindowClientId = ClientId.current
   private val contentFactory: AtomicReference<ToolWindowFactory?> = AtomicReference(contentFactory)
 
   @JvmField
@@ -185,7 +188,9 @@ private val LOG = logger<ToolWindowManagerImpl>()
   private var tabsSplittingAllowed: Boolean = false
 
   private val contentManager = SynchronizedClearableLazy {
-    val result = createContentManager()
+    val result = withExplicitClientId(toolWindowClientId) {
+      createContentManager()
+    }
     if (toolWindowManager.isNewUi) {
       result.addContentManagerListener(UpdateBackgroundContentManager())
     }
@@ -236,8 +241,8 @@ private val LOG = logger<ToolWindowManagerImpl>()
 
   internal fun updateContentBackgroundColors() {
     val color = JBUI.CurrentTheme.ToolWindow.background()
-
-    for (content in contentManager.value.contents) {
+    val contentManager = contentManager.valueIfInitialized ?: return
+    for (content in contentManager.contents) {
       InternalDecoratorImpl.setBackgroundRecursively(content.component, color)
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.customization
 
 import com.intellij.openapi.application.ApplicationManager
@@ -30,13 +30,14 @@ interface ExternalProductResourceUrls {
    * used by JetBrains IDEs as a reference.
    */
   val updateMetadataUrl: Url?
+    get() = null
 
   /**
    * Returns URL which can be used to download a patch from build [from] to build [to].
    * This function is called only if [the metadata][updateMetadataUrl] contains information about a patch for these versions, 
    * and a user initiates update.
    */
-  fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url?
+  fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? = null
 
   /**
    * Returns a function which computes URL for bug reporting.

@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.configuration
 
+import com.intellij.codeInsight.completion.NewRdCompletionSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
@@ -8,6 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
@@ -17,21 +19,30 @@ import org.jetbrains.annotations.TestOnly
 /**
  * Service responsible for managing and persisting command completion settings at the application level.
  */
-@Service(Service.Level.APP)
-@ApiStatus.Internal
-@State(name = "CommandCompletion", category = SettingsCategory.UI, storages = [Storage("CommandCompletion.xml", roamingType = RoamingType.DISABLED)])
+@State(
+  name = "CommandCompletion",
+  category = SettingsCategory.UI,
+  storages = [
+    Storage(value = "CommandCompletion.xml", roamingType = RoamingType.DEFAULT)
+  ]
+)
 internal class ApplicationCommandCompletionService : PersistentStateComponent<AppCommandCompletionSettings> {
-
   companion object {
-     internal fun getInstance(): ApplicationCommandCompletionService = ApplicationManager.getApplication().getService(ApplicationCommandCompletionService::class.java)
+    fun getInstance(): ApplicationCommandCompletionService = service<ApplicationCommandCompletionService>()
+
+    private fun initialState(): AppCommandCompletionSettings = AppCommandCompletionSettings()
   }
 
-  private var myState = AppCommandCompletionSettings()
+  private var myState = initialState()
 
   override fun getState(): AppCommandCompletionSettings = myState
 
   override fun loadState(state: AppCommandCompletionSettings) {
     myState = state
+  }
+
+  override fun noStateLoaded() {
+    loadState(initialState())
   }
 
   fun commandCompletionEnabled(): Boolean {
@@ -52,7 +63,7 @@ internal class ApplicationCommandCompletionService : PersistentStateComponent<Ap
 class CommandCompletionSettingsService {
   companion object {
     @JvmStatic
-    fun getInstance(): CommandCompletionSettingsService = ApplicationManager.getApplication().getService(CommandCompletionSettingsService::class.java)
+    fun getInstance(): CommandCompletionSettingsService = service<CommandCompletionSettingsService>()
   }
 
   fun commandCompletionEnabled(): Boolean {
@@ -108,12 +119,27 @@ internal class AppCommandCompletionSettings(
   }
 
   private fun calculateFromRegistry(): Boolean {
+    // unit tests
     if (ApplicationManager.getApplication().isUnitTestMode() &&
-        Registry.`is`("ide.completion.command.force.enabled")) return true
-    if (!PlatformUtils.isIntelliJ()) return false
-    return Registry.`is`("ide.completion.command.force.enabled") ||
-           (!ApplicationManager.getApplication().isUnitTestMode() &&
-            Registry.`is`("ide.completion.command.enabled"))
+        Registry.`is`("ide.completion.command.force.enabled")) {
+      return true
+    }
+
+    // production
+    if (
+      PlatformUtils.isIntelliJ() ||
+      NewRdCompletionSupport.isFrontendRdCompletionOn() && NewRdCompletionSupport.isFrontendForIntelliJBackend()
+    ) {
+      if (Registry.`is`("ide.completion.command.force.enabled")) {
+        return true
+      }
+
+      if (Registry.`is`("ide.completion.command.enabled")) {
+        return !ApplicationManager.getApplication().isUnitTestMode()
+      }
+    }
+
+    return false
   }
 }
 

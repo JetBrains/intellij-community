@@ -103,6 +103,16 @@ internal object CodexTestAppServer {
           updateArchive(request.params.id, threads, archive = false)
           writeResponse(writer, request.id, ::writeEmptyObject)
         }
+        "turn/start" -> writeResponse(writer, request.id, resultWriter = { generator ->
+          generator.writeStartObject()
+          generator.writeFieldName("turn")
+          generator.writeStartObject()
+          generator.writeStringField("id", "turn-${System.currentTimeMillis()}")
+          generator.writeStringField("status", "completed")
+          generator.writeEndObject()
+          generator.writeEndObject()
+        })
+        "turn/interrupt" -> writeResponse(writer, request.id, ::writeEmptyObject)
         else -> writeResponse(writer, request.id, ::writeEmptyObject, errorMessage = "Unknown method: ${request.method}")
       }
     }

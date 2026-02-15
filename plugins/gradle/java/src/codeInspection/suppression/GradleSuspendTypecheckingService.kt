@@ -6,9 +6,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-internal class GradleSuspendTypecheckingService(val project: Project) : Disposable {
+@ApiStatus.Internal
+class GradleSuspendTypecheckingService(val project: Project) : Disposable {
   private val projectsFailedToImport : MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
   fun suspendHighlighting(projectPath: String) {

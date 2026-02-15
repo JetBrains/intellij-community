@@ -18,14 +18,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.CLASS_VAR
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.FINAL
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.FINAL_EXT
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getFunctionTypeAnnotation
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getReturnTypeAnnotation
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.isFinal
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.isInsideTypeHint
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.resolveToQualifiedNames
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyAugAssignmentStatement
@@ -139,14 +132,14 @@ class PyFinalInspection : PyInspection() {
         registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.final.non.method.function.could.not.be.marked.as.final"))
       }
 
-      getFunctionTypeAnnotation(node)?.let { comment ->
+      PyTypingTypeProvider.getFunctionTypeAnnotation(node)?.let { comment ->
         if (comment.parameterTypeList.parameterTypes.any { resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it) }) {
           registerProblem(node.typeComment,
                           PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotations.for.function.parameters"))
         }
       }
 
-      getReturnTypeAnnotation(node, myTypeEvalContext)?.let {
+      PyTypingTypeProvider.getReturnTypeAnnotation(node, myTypeEvalContext)?.let {
         if (resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it)) {
           registerProblem(node.typeComment ?: node.annotation,
                           PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotation.for.function.return.value"))
@@ -463,7 +456,7 @@ class PyFinalInspection : PyInspection() {
         return
       }
 
-      if (isInsideTypeHint(node, myTypeEvalContext) && resolvesToFinal(node)) {
+      if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext) && resolvesToFinal(node)) {
         registerProblem(node, PyPsiBundle.message("INSP.final.final.could.only.be.used.as.outermost.type"))
       }
     }
@@ -486,20 +479,21 @@ class PyFinalInspection : PyInspection() {
       )
     }
 
-    private fun isFinal(decoratable: PyDecoratable) = isFinal(decoratable, myTypeEvalContext)
+    private fun isFinal(decoratable: PyDecoratable) = PyTypingTypeProvider.isFinal(decoratable, myTypeEvalContext)
 
     private fun <T> isFinal(node: T): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner {
-      return isFinal(node, myTypeEvalContext)
+      return PyTypingTypeProvider.isFinal(node, myTypeEvalContext)
     }
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
       return expression is PyReferenceExpression &&
-             resolveToQualifiedNames(expression, myTypeEvalContext).any { it == FINAL || it == FINAL_EXT }
+             PyTypingTypeProvider.resolveToQualifiedNames(expression, myTypeEvalContext)
+               .any { it == PyTypingTypeProvider.FINAL || it == PyTypingTypeProvider.FINAL_EXT }
     }
 
     private fun resolvesToClassVar(expression: PyExpression): Boolean {
       return (expression is PyReferenceExpression) &&
-             resolveToQualifiedNames(expression, myTypeEvalContext).any { it == CLASS_VAR }
+             PyTypingTypeProvider.resolveToQualifiedNames(expression, myTypeEvalContext).any { it == PyTypingTypeProvider.CLASS_VAR }
     }
 
     private fun resolvesToClassVarFinal(expression: PyExpression?): Boolean {

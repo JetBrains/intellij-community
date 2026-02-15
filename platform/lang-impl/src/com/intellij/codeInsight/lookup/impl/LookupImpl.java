@@ -291,10 +291,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void setArranger(@NotNull LookupArranger arranger) {
-    Predicate<LookupElement> previousMatcher = myArranger.getAdditionalMatcher();
+    reuseAdditionalMatcher(myArranger, arranger);
     myArranger = arranger;
-    if (previousMatcher != null) {
-      myArranger.registerAdditionalMatcher(previousMatcher);
+  }
+
+  private static void reuseAdditionalMatcher(@NotNull LookupArranger oldArranger, @NotNull LookupArranger newArranger) {
+    Predicate<LookupElement> oldMatcher = oldArranger.getAdditionalMatcher();
+    if (oldMatcher != null) {
+      newArranger.setAdditionalMatcher(oldMatcher);
     }
   }
 
@@ -1265,6 +1269,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         listener.currentItemChanged(event);
       }
     }
+    cacheModCommandResult(currentItem);
+    myPreview.updatePreview(currentItem);
+  }
+
+  private void cacheModCommandResult(@Nullable LookupElement currentItem) {
     if (currentItem instanceof CompletionItemLookupElement wrapper && !PowerSaveMode.isEnabled()) {
       PsiFile file = getPsiFile();
       if (file != null) {
@@ -1280,7 +1289,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
-    myPreview.updatePreview(currentItem);
   }
 
   private void fireUiRefreshed() {
@@ -1514,11 +1522,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   public void markReused() {
     EDT.assertIsEdt();
     LookupArranger copy = myArranger.createEmptyCopy();
-    Predicate<LookupElement> additionalMatcher = myArranger.getAdditionalMatcher();
-    if (additionalMatcher != null) {
-      copy.registerAdditionalMatcher(additionalMatcher);
-    }
-    myArranger = copy;
+    setArranger(copy);
 
     requestResize();
   }

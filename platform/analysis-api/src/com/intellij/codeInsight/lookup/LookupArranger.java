@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -84,19 +84,17 @@ public abstract class LookupArranger implements WeighingContext {
   }
 
   /**
-   * Registers an additional matcher for the lookup.
+   * Sets an additional matcher for the lookup.
    * Every item is checked by this matcher.
    *
    * @param matcher an additional matcher to register
    */
   @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public void registerAdditionalMatcher(@NotNull Predicate<LookupElement> matcher) {
+  public void setAdditionalMatcher(@Nullable Predicate<LookupElement> matcher) {
     myAdditionalMatcher = matcher;
   }
 
   @ApiStatus.Internal
-  @ApiStatus.Experimental
   public @Nullable Predicate<LookupElement> getAdditionalMatcher() {
     return myAdditionalMatcher;
   }

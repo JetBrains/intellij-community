@@ -55,12 +55,17 @@ class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyTy
   val members: Set<PyType?> = LinkedHashSet(members)
     get() = Collections.unmodifiableSet<PyType?>(field)
 
-  override fun resolveMember(name: String, location: PyExpression?, direction: AccessDirection, resolveContext: PyResolveContext): List<RatedResolveResult?>? {
-    val ret = SmartList<RatedResolveResult?>()
+  override fun resolveMember(
+    name: String,
+    location: PyExpression?,
+    direction: AccessDirection,
+    resolveContext: PyResolveContext,
+  ): List<RatedResolveResult>? {
+    val ret = SmartList<RatedResolveResult>()
     var allNulls = true
     for (member in members) {
       if (member != null) {
-        val result: MutableList<out RatedResolveResult?>? = member.resolveMember(name, location, direction, resolveContext)
+        val result = member.resolveMember(name, location, direction, resolveContext)
         if (result != null) {
           allNulls = false
           ret.addAll(result)
@@ -70,19 +75,15 @@ class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyTy
     return if (allNulls) null else ret
   }
 
-  override fun getCompletionVariants(completionPrefix: String?, location: PsiElement?, context: ProcessingContext?): Array<out Any> {
+  override fun getCompletionVariants(completionPrefix: String?, location: PsiElement, context: ProcessingContext): Array<Any> {
     return members.flatMap { it?.getCompletionVariants(completionPrefix, location, context)?.asList() ?: emptyList() }
       .distinct()
       .toTypedArray()
   }
 
-  override fun getName(): @NlsSafe String? {
-    return members.joinToString(separator = " | ") { it?.name ?: "Any" }
-  }
+  override val name: @NlsSafe String = members.joinToString(separator = " | ") { it?.name ?: "Any" }
 
-  override fun isBuiltin(): Boolean {
-    return members.all { it != null && it.isBuiltin }
-  }
+  override val isBuiltin: Boolean = members.all { it != null && it.isBuiltin }
 
   override fun assertValid(message: String?) {
     for (member in members) {

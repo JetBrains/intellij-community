@@ -98,11 +98,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       System.getProperty(DistributedTestsAgentConstants.sourcePathProperty, PathManager.getHomePath()).let(::File)
     }
 
-    /**
-     * ID of the plugin which contains test code.
-     * Currently, only test code of the client part is put to a separate plugin.
-     */
-    const val TEST_PLUGIN_ID: String = "com.intellij.tests.plugin"
     const val TEST_PLUGIN_DIRECTORY_NAME: String = "tests-plugin"
   }
 

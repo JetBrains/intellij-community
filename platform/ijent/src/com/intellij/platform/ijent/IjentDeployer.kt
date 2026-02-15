@@ -4,9 +4,11 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 
 interface IjentSession<T : IjentApi> {
   val isRunning: Boolean
+  val platform: EelPlatform
   val remotePathToBinary: String  // TODO Use IjentPath.Absolute.
 
   suspend fun updateLogLevel()

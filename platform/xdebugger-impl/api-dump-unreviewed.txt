@@ -270,7 +270,7 @@ c:com.intellij.xdebugger.impl.evaluate.ExpressionInputComponent
 - getInputEditor():com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
 - getMainComponent():javax.swing.JPanel
 c:com.intellij.xdebugger.impl.evaluate.ExpressionInputForm
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - addExpressionComponent(javax.swing.JComponent):V
 - addLanguageComponent(javax.swing.JComponent):V
@@ -849,7 +849,7 @@ a:com.intellij.xdebugger.impl.ui.tree.TreeInplaceEditor
 - pa:getTree():javax.swing.JTree
 a:com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialogBase
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(java.awt.Component,java.lang.String,java.util.Collection):V
 - p:createCenterPanel():javax.swing.JComponent
 - getConfiguredMarkup():com.intellij.xdebugger.impl.ui.tree.ValueMarkup

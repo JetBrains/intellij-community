@@ -212,11 +212,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
           this@LineBookmarkProvider.afterDocumentChange(document)
         }
       }, project)
-      getInstance().addAsyncFileListener(object : AsyncFileListener {
-        override fun prepareChange(events: List<out VFileEvent>): AsyncFileListener.ChangeApplier? {
-          return this@LineBookmarkProvider.prepareChange(events)
-        }
-      }, project)
+      getInstance().addAsyncFileListenerBackgroundable({ events -> this@LineBookmarkProvider.prepareChange(events) }, project)
 
       project.messageBus.connect().subscribe<FileDocumentManagerListener>(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
         override fun beforeFileContentReload(file: VirtualFile, document: Document) {

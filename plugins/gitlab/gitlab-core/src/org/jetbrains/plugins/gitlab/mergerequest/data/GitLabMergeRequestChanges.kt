@@ -7,12 +7,14 @@ import com.intellij.collaboration.async.childScope
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.changes.filePath
+import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitCodeReviewUtils
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +40,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommitDiffs
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestCommits
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiffs
-import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 
 private val LOG = logger<GitLabMergeRequestChanges>()
 
@@ -74,26 +76,29 @@ internal suspend fun GitLabMergeRequestChanges.loadRevisionsAndParseChanges(): G
 
 class GitLabMergeRequestChangesImpl(
   parentCs: CoroutineScope,
+  private val project: Project,
+  private val projectId: String,
+  private val projectPath: GitLabProjectPath,
+  private val gitRemoteUrlCoordinates: GitRemoteUrlCoordinates,
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
-  private val projectMapping: GitLabProjectMapping,
   private val mergeRequestDetails: GitLabMergeRequestFullDetails,
 ) : GitLabMergeRequestChanges {
 
   private val cs = parentCs.childScope(this::class)
 
-  private val glProject = projectMapping.repository
-
   private val commits: Deferred<List<GitLabCommit>> = cs.async {
     if (glMetadata != null && glMetadata.version < GitLabVersion(14, 7)) {
-      val initialURI = api.getMergeRequestCommitsURI(glProject, mergeRequestDetails.iid)
+      val initialURI = api.rest.getMergeRequestCommitsURI(projectId, mergeRequestDetails.iid)
       return@async ApiPageUtil.createPagesFlowByLinkHeader(initialURI) { uri -> api.rest.loadMergeRequestCommits(uri) }
         .map { it.body() ?: emptyList() }
         .foldToList(GitLabCommit.Companion::fromRestDTO)
         .asReversed()
     }
 
-    ApiPageUtil.createGQLPagesFlow { pagination -> api.graphQL.loadMergeRequestCommits(glProject, mergeRequestDetails.iid, pagination) }
+    ApiPageUtil.createGQLPagesFlow { pagination ->
+      api.graphQL.loadMergeRequestCommits(projectPath, mergeRequestDetails.iid, pagination)
+    }
       .map { page -> page.nodes }
       .foldToList(GitLabCommit.Companion::fromGraphQLDTO)
       .asReversed()
@@ -108,7 +113,6 @@ class GitLabMergeRequestChangesImpl(
   override suspend fun getParsedChanges(): GitBranchComparisonResult = parsedChanges.await()
 
   private suspend fun loadChanges(commits: List<GitLabCommit>): GitBranchComparisonResult {
-    val repository = projectMapping.remote.repository
     val diffRefs = mergeRequestDetails.diffRefs ?: error("Missing diff refs")
     val baseSha = diffRefs.startSha
     val mergeBaseSha = diffRefs.baseSha ?: error("Missing merge base revision")
@@ -117,8 +121,8 @@ class GitLabMergeRequestChangesImpl(
       coroutineScope {
         commits.map { commit ->
           async {
-            val commitWithParents = api.rest.loadCommit(glProject, commit.sha).body()!!
-            val patches = ApiPageUtil.createPagesFlowByLinkHeader(getCommitDiffsURI(glProject, commit.sha)) {
+            val commitWithParents = api.rest.loadCommit(projectId, commit.sha).body()!!
+            val patches = ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getCommitDiffsURI(projectId, commit.sha)) {
               api.rest.loadCommitDiffs(it)
             }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
             GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
@@ -136,14 +140,14 @@ class GitLabMergeRequestChangesImpl(
     }
     val headPatches = withContext(Dispatchers.IO) {
       if (api.getMetadata().version < GitLabVersion(15, 7)) {
-        ApiPageUtil.createPagesFlowByLinkHeader(api.getMergeRequestChangesURI(glProject, mergeRequestDetails.iid)) {
+        ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getMergeRequestChangesURI(projectId, mergeRequestDetails.iid)) {
           api.rest.loadMergeRequestChanges(it)
         }.map { it.body().changes }.foldToList(GitLabDiffDTO::toPatch)
       }
       else {
         // doesn't send back Link headers...
         ApiPageUtil.createPagesFlowByPagination { page ->
-          api.rest.loadMergeRequestDiffs(api.getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid, page))
+          api.rest.loadMergeRequestDiffs(api.rest.getMergeRequestDiffsURI(projectId, mergeRequestDetails.iid, page))
         }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
       }
     }.apply {
@@ -153,7 +157,7 @@ class GitLabMergeRequestChangesImpl(
         }
       }
     }
-    return GitBranchComparisonResult.create(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
+    return GitBranchComparisonResult.create(project, gitRemoteUrlCoordinates.repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }
 
   override suspend fun ensureAllRevisionsFetched() {
@@ -162,12 +166,15 @@ class GitLabMergeRequestChangesImpl(
       revsToCheck.add(it)
     }
 
-    if (GitCodeReviewUtils.testRevisionsExist(projectMapping.gitRepository, revsToCheck)) return
+    if (GitCodeReviewUtils.testRevisionsExist(gitRemoteUrlCoordinates.repository, revsToCheck)) return
 
-    GitCodeReviewUtils.fetch(projectMapping.gitRepository, projectMapping.gitRemote, mergeRequestDetails.targetBranch)
-    GitCodeReviewUtils.fetch(projectMapping.gitRepository, projectMapping.gitRemote, """merge-requests/${mergeRequestDetails.iid}/head:""")
+    GitCodeReviewUtils.fetch(gitRemoteUrlCoordinates.repository, gitRemoteUrlCoordinates.remote, mergeRequestDetails.targetBranch)
+    GitCodeReviewUtils.fetch(gitRemoteUrlCoordinates.repository, gitRemoteUrlCoordinates.remote,
+                             """merge-requests/${mergeRequestDetails.iid}/head:""")
 
-    check(GitCodeReviewUtils.testRevisionsExist(projectMapping.gitRepository, revsToCheck)) { "Failed to fetch some revisions" }
+    check(GitCodeReviewUtils.testRevisionsExist(gitRemoteUrlCoordinates.repository, revsToCheck)) {
+      "Failed to fetch some revisions"
+    }
   }
 }
 

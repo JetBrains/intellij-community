@@ -5007,7 +5007,7 @@ c:git4idea.ui.GitReferenceValidator
 - isInvalid():Z
 c:git4idea.ui.GitResetDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.vfs.VirtualFile):V
 - p:createCenterPanel():javax.swing.JComponent
 - p:getDimensionServiceKey():java.lang.String
@@ -5017,7 +5017,7 @@ c:git4idea.ui.GitResetDialog
 - handler():git4idea.commands.GitLineHandler
 c:git4idea.ui.GitTagDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.vfs.VirtualFile):V
 - p:createCenterPanel():javax.swing.JComponent
 - p:getDimensionServiceKey():java.lang.String
@@ -5026,7 +5026,7 @@ c:git4idea.ui.GitTagDialog
 - runAction():V
 c:git4idea.ui.GitUnstashDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.vfs.VirtualFile):V
 - p:createCenterPanel():javax.swing.JComponent
 - p:doOKAction():V

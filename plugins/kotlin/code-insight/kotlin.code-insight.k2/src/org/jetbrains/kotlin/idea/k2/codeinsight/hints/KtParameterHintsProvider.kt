@@ -197,7 +197,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             collectContextParameters(callElement, sink, contextMenuPayloads, contextParameterPairs, valueParametersWithNames)
         }
 
-        val args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> = functionCall.argumentMapping
+        val args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> = functionCall.valueArgumentMapping
         val referencedName = (callElement.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
         for (indexedValue in valueParametersWithNames.withIndex()) {
             val (symbol, name) = indexedValue.value
@@ -328,7 +328,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                         (callExpression.parent as? KtLabeledExpression)?.getLabelName()
                             ?: (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
                     } else {
-                        null
+                        (psi.parent.parent as? KtLabeledExpression)?.getLabelName()
                     }
                 val owningCallableSymbol = receiverParameterSymbol.owningCallableSymbol
 

@@ -33,6 +33,7 @@ jvm_library(
     "//plugins/groovy/groovy-psi:psi",
     "//plugins/gradle/java/toml",
     "//uast/uast-common:uast",
+    "//plugins/gradle/java/groovy",
   ]
 )
 ### auto-generated section `build intellij.gradle.java.groovy.toml` end

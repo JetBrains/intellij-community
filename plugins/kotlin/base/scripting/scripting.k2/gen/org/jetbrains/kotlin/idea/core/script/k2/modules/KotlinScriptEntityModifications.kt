@@ -19,7 +19,7 @@ interface KotlinScriptEntityBuilder : WorkspaceEntityBuilder<KotlinScriptEntity>
     var virtualFileUrl: VirtualFileUrl
     var dependencies: MutableList<KotlinScriptLibraryEntityId>
     var sdkId: SdkId?
-    var configurationEntity: ScriptCompilationConfigurationEntityId?
+    var configuration: ScriptCompilationConfigurationIdentity?
     var relatedModuleIds: MutableList<ModuleId>
     var reports: MutableList<ScriptDiagnosticData>
 }

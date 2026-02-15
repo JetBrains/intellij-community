@@ -14,7 +14,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-02-11
+Date: 2026-02-13
 
 ## Summary
 Define the Agent Threads tool window as a provider-agnostic, project-scoped session browser. Threads from supported providers are aggregated per project/worktree, rendered in one tree, and opened through a shared chat routing flow.
@@ -46,6 +46,7 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
 - Resume command must be provider-specific:
   - Codex: `codex resume <sessionId>`
   - Claude: `claude --resume <sessionId>`
+- New-session action behavior (provider options, Codex/Claude command mapping, and Full Auto semantics) is defined in `spec/actions/new-thread.spec.md` and must be used by both project and worktree rows.
 - Branch mismatch between thread origin and current worktree branch must show a warning confirmation before opening chat.
 
 [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
@@ -85,3 +86,4 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
 - `spec/agent-sessions-thread-visibility.spec.md`
 - `spec/agent-dedicated-frame.spec.md`
 - `spec/agent-chat-editor.spec.md`
+- `spec/actions/new-thread.spec.md`

@@ -47,7 +47,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -561,12 +560,15 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private void addItemToLookup(@NotNull CompletionResult item) {
-    Ref<Boolean> wasAdded = new Ref<>(Boolean.FALSE);
-    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      wasAdded.set(!lookup.isLookupDisposed() && lookup.addItem(item.getLookupElement(), item.getPrefixMatcher()));
+    if (lookup.isLookupDisposed()) {
+      return;
+    }
+
+    boolean wasAdded = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      return lookup.addItem(item.getLookupElement(), item.getPrefixMatcher());
     });
 
-    if (!wasAdded.get()) {
+    if (!wasAdded) {
       return;
     }
 
@@ -643,6 +645,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     ThreadingAssertions.assertEventDispatchThread();
     Disposer.dispose(queue);
+    //noinspection removal
     LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
     CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class,
@@ -1013,7 +1016,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     try {
       calculateItems(initContext, consumer, parameters);
     }
-    catch (ProcessCanceledException ignore) {
+    catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignore) {
       cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
     }
     catch (Throwable t) {

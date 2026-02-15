@@ -11,14 +11,10 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.idea.core.script.k2.asBytes
-import org.jetbrains.kotlin.idea.core.script.k2.asEntity
-import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationEntityId
+import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationIdentity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -81,7 +77,7 @@ class DefaultKotlinScriptEntityProvider(
             storage addEntity KotlinScriptEntity(
                 scriptUrl, libraryIds.map { it.first }, DefaultScriptEntitySource
             ) {
-                this.configurationEntity = storage.getOrCreateScriptConfigurationEntityId(configuration, DefaultScriptEntitySource)
+                this.configuration = storage.getOrCreateScriptConfigurationIdentity(configuration, DefaultScriptEntitySource)
                 this.sdkId = configuration.sdkId
             }
         }

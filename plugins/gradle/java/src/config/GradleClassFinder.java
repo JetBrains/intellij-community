@@ -15,17 +15,17 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.List;
 import java.util.Map;
 
 public final class GradleClassFinder extends NonClasspathClassFinder {
 
+  private static final String GROOVY_DEFAULT_EXTENSION = "groovy";
   private static final String KOTLIN_DEFAULT_EXTENSION = "kt";
 
   public GradleClassFinder(@NotNull Project project) {
-    super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION, KOTLIN_DEFAULT_EXTENSION);
+    super(project, JavaFileType.DEFAULT_EXTENSION, GROOVY_DEFAULT_EXTENSION, KOTLIN_DEFAULT_EXTENSION);
   }
 
   @Override

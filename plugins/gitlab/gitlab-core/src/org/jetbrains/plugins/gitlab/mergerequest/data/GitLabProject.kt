@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.nullize
+import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -25,7 +26,6 @@ import kotlinx.coroutines.flow.transformWhile
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGidData
 import org.jetbrains.plugins.gitlab.api.GitLabGraphQLMutationException
-import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
@@ -43,7 +43,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.upload.markdownUploadFile
-import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.image.BufferedImage
@@ -58,7 +57,9 @@ private val LOG = logger<GitLabProject>()
 
 @CodeReviewDomainEntity
 interface GitLabProject {
-  val projectMapping: GitLabProjectMapping
+  val projectCoordinates: GitLabProjectCoordinates
+  val gitRemote: GitRemoteUrlCoordinates
+  val projectId: String
 
   val dataReloadSignal: SharedFlow<Unit>
   val mergeRequests: GitLabProjectMergeRequestsStore
@@ -69,7 +70,6 @@ interface GitLabProject {
   fun getMembersBatches(): Flow<List<GitLabUserDTO>>
 
   val defaultBranch: String?
-  val gitLabProjectId: GitLabId
   suspend fun isMultipleAssigneesAllowed(): Boolean
   suspend fun isMultipleReviewersAllowed(): Boolean
 
@@ -106,15 +106,16 @@ class GitLabLazyProject(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
-  override val projectMapping: GitLabProjectMapping,
   private val initialData: GitLabProjectDTO,
   private val currentUser: GitLabUserDTO,
   private val tokenRefreshFlow: Flow<Unit>,
+  override val projectCoordinates: GitLabProjectCoordinates,
+  override val gitRemote: GitRemoteUrlCoordinates,
 ) : GitLabProject {
 
   private val cs = parentCs.childScope(javaClass.name)
 
-  private val projectCoordinates: GitLabProjectCoordinates = projectMapping.repository
+  override val projectId: String = initialData.id.guessRestId()
 
   private val _dataReloadSignal = MutableSharedFlow<Unit>(replay = 1)
   override val dataReloadSignal: SharedFlow<Unit> = _dataReloadSignal.asSharedFlow()
@@ -126,20 +127,19 @@ class GitLabLazyProject(
     loadMultipleAssigneesAllowedFallback()
   }
 
-  override val gitLabProjectId: GitLabId = initialData.id
-
-  override val mergeRequests by lazy {
-    CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, currentUser, tokenRefreshFlow)
+  override val mergeRequests: GitLabProjectMergeRequestsStore by lazy {
+    CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, currentUser,
+                                           tokenRefreshFlow, projectCoordinates, projectId, gitRemote)
   }
 
   private val labelsLoader = BatchesLoader(cs,
-                                           api.graphQL.createAllProjectLabelsFlow(projectMapping.repository).map { labels ->
+                                           api.graphQL.createAllProjectLabelsFlow(projectCoordinates.projectPath).map { labels ->
                                              labels.map {
                                                GitLabLabel(it.title, it.color)
                                              }
                                            })
   private val membersLoader = BatchesLoader(cs,
-                                            ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) {
+                                            ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getProjectUsersURI(projectId)) {
                                               api.rest.getProjectUsers(it)
                                             }.map { response -> response.body().map(GitLabUserDTO::fromRestDTO) })
 
@@ -189,7 +189,7 @@ class GitLabLazyProject(
       val assigneeIds = assignees.nullize()?.map { GitLabGidData(it.id).guessRestId() }
       val labelTitles = labels.nullize()?.map { it.title }
       val iid = api.rest.createMergeRequest(
-        projectCoordinates,
+        projectId,
         sourceBranch,
         targetBranch,
         title,
@@ -200,7 +200,7 @@ class GitLabLazyProject(
       ).body().iid
       val attempts = GitLabRegistry.getRequestPollingAttempts()
       repeat(attempts) {
-        val data = api.graphQL.loadMergeRequest(projectCoordinates, iid).body()
+        val data = api.graphQL.loadMergeRequest(projectCoordinates.projectPath, iid).body()
         if (data?.diffRefs != null) {
           return@async data
         }
@@ -221,7 +221,7 @@ class GitLabLazyProject(
       val filename = path.fileName.toString()
       val mimeType = Files.probeContentType(path) ?: "application/octet-stream"
       Files.newInputStream(path).use {
-        api.rest.markdownUploadFile(projectCoordinates, filename, mimeType, it).body()
+        api.rest.markdownUploadFile(projectId, filename, mimeType, it).body()
       }
     }.await()
     GitLabStatistics.logFileUploadActionExecuted(project)
@@ -235,7 +235,7 @@ class GitLabLazyProject(
         outputStream.toByteArray()
       }
       ByteArrayInputStream(byteArray).use {
-        api.rest.markdownUploadFile(projectCoordinates, "image.png", "image/png", it).body()
+        api.rest.markdownUploadFile(projectId, "image.png", "image/png", it).body()
       }
     }.await()
     GitLabStatistics.logFileUploadActionExecuted(project)
@@ -247,10 +247,10 @@ class GitLabLazyProject(
   }
 
   private suspend fun getAllowsMultipleAssigneesPropertyFromNamespacePlan() = try {
-    api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()?.plan?.let {
+    api.rest.getProjectNamespace(projectCoordinates.projectPath.owner).body()?.plan?.let {
       it != GitLabPlan.FREE
     } ?: run {
-      LOG.warn("Failed to find namespace for project ${projectMapping.repository}")
+      LOG.warn("Failed to find namespace for project ${projectCoordinates.projectPath.fullPath()}")
       null
     }
   }
@@ -258,13 +258,13 @@ class GitLabLazyProject(
     throw ce
   }
   catch (e: Exception) {
-    LOG.warn("Failed to load namespace for project ${projectMapping.repository}", e)
+    LOG.warn("Failed to load namespace for project ${projectCoordinates.projectPath.fullPath()}", e)
     null
   }
 
   private suspend fun getAllowsMultipleAssigneesPropertyFromIssueWidget(): Boolean {
     val widgetAssignees: WorkItemWidgetAssignees? = try {
-      api.graphQL.createAllWorkItemsFlow(projectMapping.repository)
+      api.graphQL.createAllWorkItemsFlow(projectCoordinates.projectPath)
         .transformWhile { workItems ->
           val widget = workItems.find { workItem -> workItem.workItemType.name == WorkItemType.ISSUE_TYPE }
             ?.widgets
@@ -285,7 +285,7 @@ class GitLabLazyProject(
       throw ce
     }
     catch (e: Exception) {
-      LOG.warn("Failed to load work item widgets for project ${projectMapping.repository}", e)
+      LOG.warn("Failed to load work item widgets for project ${projectCoordinates.projectPath}", e)
       return false
     }
     return widgetAssignees?.allowsMultipleAssignees ?: false

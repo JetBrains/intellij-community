@@ -74,5 +74,9 @@
     <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting"
                                               converter="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting$Converter"
                                               descriptor="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting$Descriptor"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService"/>
+    <applicationSettings service="com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService"/>
+
   </extensions>
 </idea-plugin>

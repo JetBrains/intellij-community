@@ -3441,7 +3441,7 @@ f:com.intellij.openapi.vcs.util.paths.VirtualFileMapping
 - remove(com.intellij.openapi.vfs.VirtualFile):V
 - values():java.util.Collection
 c:com.intellij.openapi.vcs.versionBrowser.DateFilterComponent
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - <init>(Z,java.text.DateFormat):V
 - getAfter():J
@@ -3456,14 +3456,12 @@ c:com.intellij.openapi.vcs.versionBrowser.DateFilterComponent
 - withFormat(java.text.DateFormat):com.intellij.openapi.vcs.versionBrowser.DateFilterComponent
 a:com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent
 - com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor
-- b:$$$getRootComponent$$$():javax.swing.JComponent
-- <init>():V
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(Z):V
 - p:disableVersionNumbers():V
 - p:getChangeFromParseError():java.lang.String
 - p:getChangeNumberTitle():java.lang.String
 - p:getChangeToParseError():java.lang.String
-- p:getDatePanel():javax.swing.JPanel
 - getDimensionServiceKey():java.lang.String
 - getSettings():com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings
 - p:getStandardPanel():java.awt.Component

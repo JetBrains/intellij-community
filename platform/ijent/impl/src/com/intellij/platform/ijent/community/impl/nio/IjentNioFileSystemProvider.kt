@@ -54,10 +54,13 @@ import java.nio.file.StandardOpenOption.DELETE_ON_CLOSE
 import java.nio.file.StandardOpenOption.READ
 import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.nio.file.StandardOpenOption.WRITE
+import java.nio.file.attribute.AclFileAttributeView
 import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
+import java.nio.file.attribute.FileOwnerAttributeView
 import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFileAttributes
@@ -250,7 +253,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
               val childIjentPath = dir.eelPath.getChild(childName)
               val childAttrs = when (childStat) {
                 is EelPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
-                is EelWindowsFileInfo -> TODO()
+                is EelWindowsFileInfo -> IjentNioBasicFileAttributes(childStat)
               }
               AbsoluteIjentNioPath(childIjentPath, nioFs, childAttrs)
             }
@@ -288,7 +291,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     fsBlocking {
       when (val fsApi = dir.nioFs.ijentFs) {
         is IjentFileSystemPosixApi -> fsApi.createDirectory(path, emptyList()).getOrThrowFileSystemException()
-        is IjentFileSystemWindowsApi -> TODO()
+        is IjentFileSystemWindowsApi -> fsApi.createDirectory(path).getOrThrowFileSystemException()
       }
     }
   }
@@ -365,9 +368,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun isHidden(path: Path): Boolean {
     ensureAbsoluteIjentNioPath(path)
-    return when (path.nioFs.ijentFs) {
+    return when (val ijentFs = path.nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> path.normalize().fileName.toString().startsWith(".")
-      is IjentFileSystemWindowsApi -> TODO("Not implemented for Windows")
+      is IjentFileSystemWindowsApi -> fsBlocking {
+        ijentFs.stat(path.eelPath).getOrThrowFileSystemException().permissions.isHidden
+      }
     }
   }
 
@@ -392,29 +397,62 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: ${error.name}").throwFileSystemException()
           }
         }
-        is IjentFileSystemWindowsApi -> TODO()
+        is IjentFileSystemWindowsApi -> {
+          val fileInfo = ijentFs
+            // According to the Javadoc, this method must follow symlinks.
+            .stat(path.eelPath)
+            .resolveAndFollow()
+            .getOrThrowFileSystemException()
+
+          val error = EelPathUtils.checkAccess(fileInfo, *modes)
+          if (error != null) {
+            EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: ${error.name}").throwFileSystemException()
+          }
+        }
       }
     }
   }
 
   override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>?, vararg options: LinkOption): V? {
+    // TODO why link options are ignored?
     ensureAbsoluteIjentNioPath(path)
-    if (type == BasicFileAttributeView::class.java) {
-      @Suppress("UNCHECKED_CAST")
-      return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
-    }
-    val nioFs = ensureIjentNioPath(path).nioFs
-    when (nioFs.ijentFs) {
-      is IjentFileSystemPosixApi -> {
-        if (type == PosixFileAttributeView::class.java) {
-          @Suppress("UNCHECKED_CAST")
-          return IjentNioPosixFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
-        }
-        else {
-          return null
-        }
+    val ijentFs = path.nioFs.ijentFs
+    when (type) {
+      BasicFileAttributeView::class.java -> {
+        @Suppress("UNCHECKED_CAST")
+        return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
       }
-      is IjentFileSystemWindowsApi -> TODO()
+      PosixFileAttributeView::class.java -> {
+        if (ijentFs is IjentFileSystemPosixApi) {
+          @Suppress("UNCHECKED_CAST")
+          return IjentNioPosixFileAttributeView(ijentFs, path.eelPath, path) as V
+        }
+        else return null
+      }
+      AclFileAttributeView::class.java -> {
+        // TODO
+        return null
+      }
+      DosFileAttributeView::class.java -> {
+        // TODO
+        return null
+      }
+      FileOwnerAttributeView::class.java -> {
+        // TODO
+        return null
+      }
+      else -> {
+        return null
+      }
+    }
+  }
+
+  private fun Array<out LinkOption>.toLinkPolicy(): EelFileSystemApi.SymlinkPolicy {
+    return if (LinkOption.NOFOLLOW_LINKS in this) {
+      EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
+    }
+    else {
+      EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW
     }
   }
 
@@ -422,20 +460,23 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     val fs = ensureAbsoluteIjentNioPath(path).nioFs
 
-    val linkPolicy = if (LinkOption.NOFOLLOW_LINKS in options) {
-      EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
-    }
-    else {
-      EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW
-    }
+    val linkPolicy = options.toLinkPolicy()
 
-    val result = when (val ijentFs = fs.ijentFs) {
-      is IjentFileSystemPosixApi ->
-        IjentNioPosixFileAttributes(fsBlocking {
+    val ijentFs = fs.ijentFs
+    val result = when (ijentFs) {
+      is IjentFileSystemPosixApi -> {
+        val fileInfo = fsBlocking {
           ijentFs.stat(path.eelPath).symlinkPolicy(linkPolicy).getOrThrowFileSystemException()
-        })
-
-      is IjentFileSystemWindowsApi -> TODO()
+        }
+        IjentNioPosixFileAttributes(fileInfo)
+      }
+      is IjentFileSystemWindowsApi -> {
+        // TODO DosFileAttributes
+        val fileInfo = fsBlocking {
+          ijentFs.stat(path.eelPath).symlinkPolicy(linkPolicy).getOrThrowFileSystemException()
+        }
+        IjentNioBasicFileAttributes(fileInfo)
+      }
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -13,4 +13,10 @@ internal interface AgentSessionSource {
   suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread>
 
   suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread>
+
+  /**
+   * Prefetch threads for multiple paths in a single backend call.
+   * Returns a map of path to threads. Empty map means no prefetch (use per-path calls).
+   */
+  suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> = emptyMap()
 }

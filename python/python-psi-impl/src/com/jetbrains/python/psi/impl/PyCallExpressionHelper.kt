@@ -1237,7 +1237,7 @@ private fun PyFunction.matchesByArgumentTypes(callSite: PyCallSiteExpression, co
   val receiver = callSite.getReceiver(this)
   val mappedExplicitParameters = fullMapping.mappedParameters
 
-  val allMappedParameters = LinkedHashMap<PyExpression?, PyCallableParameter?>()
+  val allMappedParameters = LinkedHashMap<PyExpression, PyCallableParameter>()
   val firstImplicit = fullMapping.implicitParameters.firstOrNull()
   if (receiver != null && firstImplicit != null) {
     allMappedParameters.put(receiver, firstImplicit)

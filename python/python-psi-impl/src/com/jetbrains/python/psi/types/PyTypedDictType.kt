@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
 
 class PyTypedDictType(
-  private val name: String,
+  override val name: String,
   val fields: Map<String, FieldTypeAndTotality>,
   private val dictClass: PyClass,
   isDefinition: Boolean,
@@ -47,9 +47,7 @@ class PyTypedDictType(
       PyTypedDictType(name, fields, dictClass, true, declaration)
   }
 
-  override fun getName(): String = name
-
-  override fun isBuiltin(): Boolean = false
+  override val isBuiltin: Boolean = false
 
   override fun isCallable(): Boolean = isDefinition
 
@@ -87,7 +85,7 @@ class PyTypedDictType(
     return Objects.hash(super.hashCode(), declaration)
   }
 
-  override fun getDeclarationElement(): PyQualifiedNameOwner = declaration
+  override val declarationElement: PyQualifiedNameOwner = declaration
 
   /**
    * @isRequired is true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification
@@ -320,7 +318,7 @@ class PyTypedDictType(
     val hasErrors: Boolean get() = valueTypeErrors.isNotEmpty() || missingKeys.isNotEmpty() || extraKeys.isNotEmpty()
   }
 
-  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyTypedDictType(this)
     }

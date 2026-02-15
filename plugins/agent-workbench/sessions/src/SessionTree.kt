@@ -1,5 +1,8 @@
 package com.intellij.agent.workbench.sessions
 
+// @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
+// @spec community/plugins/agent-workbench/spec/agent-sessions-thread-visibility.spec.md
+
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -28,6 +31,8 @@ internal fun sessionTree(
   onWorktreeExpanded: (String, String) -> Unit = { _, _ -> },
   onOpenThread: (String, AgentSessionThread) -> Unit,
   onOpenSubAgent: (String, AgentSessionThread, AgentSubAgent) -> Unit,
+  onCreateSession: (String, AgentSessionProvider, Boolean) -> Unit = { _, _, _ -> },
+  lastUsedProvider: AgentSessionProvider? = null,
   nowProvider: () -> Long,
   visibleProjectCount: Int = Int.MAX_VALUE,
   onShowMoreProjects: () -> Unit = {},
@@ -47,8 +52,7 @@ internal fun sessionTree(
         it.isOpen ||
         it.errorMessage != null ||
         it.providerWarnings.isNotEmpty() ||
-        it.threads.isNotEmpty() ||
-        it.worktrees.any { wt -> wt.errorMessage != null || wt.providerWarnings.isNotEmpty() || wt.threads.isNotEmpty() }
+        it.worktrees.any { wt -> wt.isOpen }
       }
       .map { SessionTreeId.Project(it.path) }
   }
@@ -71,6 +75,7 @@ internal fun sessionTree(
   val tree = remember(projects, visibleProjectCount, visibleThreadCounts) {
     buildSessionTree(projects, visibleProjectCount, visibleThreadCounts)
   }
+
   val treeStyle = run {
     val baseStyle = JewelTheme.treeStyle
     val metrics = baseStyle.metrics
@@ -97,7 +102,9 @@ internal fun sessionTree(
       style = treeStyle,
       onElementClick = { element ->
         when (val node = element.data) {
-          is SessionTreeNode.Project -> onOpenProject(node.project.path)
+          is SessionTreeNode.Project -> {
+            onOpenProject(node.project.path)
+          }
           is SessionTreeNode.Thread -> {
             val path = when (val id = element.id) {
               is SessionTreeId.WorktreeThread -> id.worktreePath
@@ -134,6 +141,8 @@ internal fun sessionTree(
         element = element,
         onOpenProject = onOpenProject,
         onRefresh = onRefresh,
+        onCreateSession = onCreateSession,
+        lastUsedProvider = lastUsedProvider,
         nowProvider = nowProvider,
       )
     }

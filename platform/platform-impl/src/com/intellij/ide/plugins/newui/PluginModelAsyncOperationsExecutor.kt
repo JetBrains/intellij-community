@@ -45,16 +45,10 @@ internal object PluginModelAsyncOperationsExecutor {
 
   suspend fun performMarketplaceSearch(
     query: String,
-    loadUpdates: Boolean,
-  ): Pair<PluginSearchResult, List<PluginUiModel>> {
+  ): PluginSearchResult {
     return withContext(Dispatchers.IO) {
       val pluginManager = UiPluginManager.getInstance()
-      val result = pluginManager.executeMarketplaceQuery(query, 10000, true)
-      val updates = mutableListOf<PluginUiModel>()
-      if (loadUpdates) {
-        updates.addAll(pluginManager.getUpdateModels())
-      }
-      result to updates
+      pluginManager.executeMarketplaceQuery(query, 10000, true)
     }
   }
 

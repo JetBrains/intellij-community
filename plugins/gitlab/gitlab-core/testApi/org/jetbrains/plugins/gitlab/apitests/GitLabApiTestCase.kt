@@ -68,20 +68,20 @@ abstract class GitLabApiTestCase {
     val glTests2Coordinates = GitLabProjectCoordinates(server, glTests2Project)
     val glTests2Label1 = GitLabLabelGQLDTO("label1", "#FFFFFF")
     val glTests2Label2 = GitLabLabelGQLDTO("label2", "#FFFFFF")
+    val glTests2ProjectId = "6"
 
     val glTest1Project = GitLabProjectPath("root", "gl-test-1")
     val glTest1Coordinates = GitLabProjectCoordinates(server, glTest1Project)
+    val glTest1ProjectId = "2"
 
     val glTest1Mr2Iid = "2"
     val glTest1Mr2CommitShas = listOf("6a7d70b5df2d77ad792bca08c6fb14e29ae4ad04")
     val glTest1Mr2CommitShortShas = listOf("6a7d70b5")
     val glTest1Mr2ChangedFiles = listOf("a/important.txt")
 
-    val volatileProject = GitLabProjectPath("volatile", "volatile-project")
-    val volatileProjectCoordinates = GitLabProjectCoordinates(server, volatileProject)
     val volatileProjectMr1Iid = "1"
-    val volatileProjectMr1Gid = "gid://gitlab/MergeRequest/5"
     val volatileProjectMr2Iid = "2"
+    val volatileProjectId = "4"
   }
 
   companion object {

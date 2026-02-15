@@ -5,10 +5,9 @@ import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiUriQueryBuilder
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
@@ -18,25 +17,29 @@ import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 
 @SinceGitLab("15.9")
-fun getMergeRequestDraftNotesUri(project: GitLabProjectCoordinates, mrIid: String): URI =
-  project.restApiUri
+fun GitLabApi.Rest.getMergeRequestDraftNotesUri(projectId: String, mrIid: String): URI =
+  projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("draft_notes")
 
-private fun getSpecificMergeRequestDraftNoteUri(project: GitLabProjectCoordinates, mrIid: String, noteId: String): URI =
-  getMergeRequestDraftNotesUri(project, mrIid).resolveRelative(noteId)
+private fun GitLabApi.Rest.getSpecificMergeRequestDraftNoteUri(
+  projectId: String,
+  mrIid: String,
+  noteId: String,
+): URI =
+  getMergeRequestDraftNotesUri(projectId, mrIid).resolveRelative(noteId)
 
 @SinceGitLab("15.10")
 suspend fun GitLabApi.Rest.updateDraftNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   noteId: String,
   position: GitLabMergeRequestDraftNoteRestDTO.Position,
   body: String,
 )
   : HttpResponse<out Unit> {
-  val uri = getSpecificMergeRequestDraftNoteUri(project, mrIid, noteId).withQuery {
+  val uri = getSpecificMergeRequestDraftNoteUri(projectId, mrIid, noteId).withQuery {
     "note" eq body
     addDraftNotePositionParameters(position) // have to pass the existing position, otherwise it is reset to null
   }
@@ -48,12 +51,12 @@ suspend fun GitLabApi.Rest.updateDraftNote(
 
 @SinceGitLab("15.9")
 suspend fun GitLabApi.Rest.deleteDraftNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   noteId: Long,
 )
   : HttpResponse<out Unit> {
-  val uri = getSpecificMergeRequestDraftNoteUri(project, mrIid, noteId.toString())
+  val uri = getSpecificMergeRequestDraftNoteUri(projectId, mrIid, noteId.toString())
   val request = request(uri).DELETE().build()
   return withErrorStats(GitLabApiRequestName.REST_DELETE_DRAFT_NOTE) {
     sendAndAwaitCancellable(request)
@@ -62,11 +65,11 @@ suspend fun GitLabApi.Rest.deleteDraftNote(
 
 @SinceGitLab("15.11")
 suspend fun GitLabApi.Rest.submitDraftNotes(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
 )
   : HttpResponse<out Unit> {
-  val uri = getMergeRequestDraftNotesUri(project, mrIid).resolveRelative("bulk_publish")
+  val uri = getMergeRequestDraftNotesUri(projectId, mrIid).resolveRelative("bulk_publish")
   val request = request(uri).POST(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_SUBMIT_DRAFT_NOTES) {
     sendAndAwaitCancellable(request)
@@ -75,11 +78,11 @@ suspend fun GitLabApi.Rest.submitDraftNotes(
 
 @SinceGitLab("15.10")
 suspend fun GitLabApi.Rest.submitSingleDraftNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   noteId: Long,
 ): HttpResponse<out Unit> {
-  val uri = getSpecificMergeRequestDraftNoteUri(project, mrIid, noteId.toString()).resolveRelative("publish")
+  val uri = getSpecificMergeRequestDraftNoteUri(projectId, mrIid, noteId.toString()).resolveRelative("publish")
   val request = request(uri).PUT(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_SUBMIT_SINGLE_DRAFT_NOTE) {
     sendAndAwaitCancellable(request)
@@ -88,12 +91,12 @@ suspend fun GitLabApi.Rest.submitSingleDraftNote(
 
 @SinceGitLab("16.3")
 suspend fun GitLabApi.Rest.addDraftReplyNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   discussionId: String,
   body: String,
 ): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
-  val uri = getMergeRequestDraftNotesUri(project, mrIid).withQuery {
+  val uri = getMergeRequestDraftNotesUri(projectId, mrIid).withQuery {
     "note" eq body
     "in_reply_to_discussion_id" eq discussionId
   }
@@ -105,13 +108,13 @@ suspend fun GitLabApi.Rest.addDraftReplyNote(
 
 @SinceGitLab("15.10")
 suspend fun GitLabApi.Rest.addDraftNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   @SinceGitLab("16.3")
   positionOrNull: GitLabDiffPositionInput?,
   body: String,
 ): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
-  val uri = getMergeRequestDraftNotesUri(project, mrIid).withQuery {
+  val uri = getMergeRequestDraftNotesUri(projectId, mrIid).withQuery {
     "note" eq body
     positionOrNull?.let { addDiffPositionParameters(it) }
   }

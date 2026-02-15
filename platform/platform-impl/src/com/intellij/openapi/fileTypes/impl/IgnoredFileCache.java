@@ -4,7 +4,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -23,7 +23,7 @@ final class IgnoredFileCache {
   IgnoredFileCache(@NotNull Predicate<? super CharSequence> isIgnored) {
     myIsIgnored = isIgnored;
     MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
-    connect.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    connect.subscribe(VirtualFileManager.VFS_CHANGES_BG, new BulkFileListenerBackgroundable() {
       @Override
       public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         // during VFS event processing the system may be in inconsistent state, don't cache it

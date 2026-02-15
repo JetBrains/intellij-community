@@ -36,6 +36,14 @@ internal class ProjectColorInfoManager : SerializablePersistentStateComponent<Pr
       }
     }
 
+  var fromUser: Boolean?
+    get() = state.fromUser
+    set(value) {
+      updateState {
+        it.copy(fromUser = value)
+      }
+    }
+
   val recentProjectColorInfo: RecentProjectColorInfo get() = RecentProjectColorInfo().also {
     it.customColor = this.customColor
     it.associatedIndex = this.associatedIndex ?: -1
@@ -44,7 +52,8 @@ internal class ProjectColorInfoManager : SerializablePersistentStateComponent<Pr
 
 @Serializable
 internal data class ProjectColorInfo(var customColor: String? = null,
-                                     var associatedIndex: Int? = null)
+                                     var associatedIndex: Int? = null,
+                                     var fromUser: Boolean? = null)
 
 @Internal
 @Property(style = Property.Style.ATTRIBUTE)

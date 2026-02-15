@@ -412,7 +412,7 @@ f:com.intellij.application.options.GlobalOptionsApplicabilityFilter
 - isOptionApplicable(com.intellij.application.options.OptionId):Z
 f:com.intellij.application.options.ImportSchemeChooserDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,java.lang.String[],java.lang.String):V
 - getSelectedName():java.lang.String
 - getTargetName():java.lang.String
@@ -619,7 +619,7 @@ c:com.intellij.application.options.codeStyle.CodeStyleSpacesPanel
 - p:initTables():V
 f:com.intellij.application.options.codeStyle.CommenterForm
 - com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.lang.Language):V
 - <init>(com.intellij.lang.Language,java.lang.String):V
 - apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
@@ -764,7 +764,7 @@ f:com.intellij.application.options.codeStyle.OtherFileTypesCodeStyleConfigurable
 - s:getDisplayNameText():java.lang.String
 - getHelpTopic():java.lang.String
 f:com.intellij.application.options.codeStyle.RightMarginForm
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.lang.Language,com.intellij.psi.codeStyle.CodeStyleSettings):V
 - apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - getTopPanel():javax.swing.JPanel
@@ -1299,7 +1299,7 @@ f:com.intellij.codeInsight.actions.LastRunReformatCodeOptionsProvider
 - setDoNotKeepLineBreaks(Z):V
 f:com.intellij.codeInsight.actions.LayoutCodeDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,Z,java.lang.String):V
 - getRunOptions():com.intellij.codeInsight.actions.LayoutCodeOptions
 f:com.intellij.codeInsight.actions.LayoutCodeInfoCollector
@@ -6368,12 +6368,12 @@ f:com.intellij.facet.impl.invalid.InvalidFacetType
 - isSuitableModuleType(com.intellij.openapi.module.ModuleType):Z
 f:com.intellij.facet.impl.invalid.MultipleInvalidFacetEditor
 - com.intellij.facet.ui.MultipleFacetSettingsEditor
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.facet.ui.FacetEditor[]):V
 - createComponent():javax.swing.JComponent
 - disposeUIResources():V
 f:com.intellij.facet.impl.ui.FacetErrorPanel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - <init>(com.intellij.openapi.Disposable):V
 - addListener(java.lang.Runnable):V
@@ -7064,7 +7064,7 @@ a:com.intellij.framework.detection.impl.FrameworkDetectorRegistry
 - a:getFrameworkTypes():java.util.List
 - s:getInstance():com.intellij.framework.detection.impl.FrameworkDetectorRegistry
 f:com.intellij.framework.detection.impl.ui.DetectedFrameworksComponent
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.framework.detection.FrameworkDetectionContext):V
 - getMainPanel():javax.swing.JComponent
 - getSelectedFrameworks():java.util.List
@@ -7332,7 +7332,7 @@ a:com.intellij.ide.actions.CreateFileFromTemplateAction
 - s:createFileFromTemplate(java.lang.String,com.intellij.ide.fileTemplates.FileTemplate,com.intellij.psi.PsiDirectory,java.lang.String,Z,java.util.Map,java.util.Map):com.intellij.psi.PsiFile
 c:com.intellij.ide.actions.CreateFileFromTemplateDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - p:<init>(com.intellij.openapi.project.Project):V
 - p:createCenterPanel():javax.swing.JComponent
 - s:createDialog(com.intellij.openapi.project.Project):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
@@ -11183,7 +11183,7 @@ c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 f:com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider$Companion
 f:com.intellij.ide.util.scopeChooser.ScopeEditorPanel
 - com.intellij.openapi.Disposable
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.scope.packageSet.NamedScopesHolder):V
 - apply():V
 - cancelCurrentProgress():V
@@ -11375,7 +11375,7 @@ f:com.intellij.lang.javascript.boilerplate.GithubDownloadUtil
 - s:getUserCacheDir(java.lang.String):java.io.File
 f:com.intellij.lang.javascript.boilerplate.GithubProjectGeneratorPeer
 - com.intellij.platform.WebProjectGenerator$GeneratorPeer
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.lang.javascript.boilerplate.AbstractGithubTagDownloadedProjectGenerator):V
 - addSettingsStateListener(com.intellij.platform.WebProjectGenerator$SettingsStateListener):V
 - buildUI(com.intellij.ide.util.projectWizard.SettingsStep):V
@@ -14199,7 +14199,7 @@ a:com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase
 - p:performRefactoring(com.intellij.usageView.UsageInfo[]):V
 f:com.intellij.refactoring.changeSignature.DefaultValueChooser
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
 - feelLucky():Z
 - getDefaultValue():java.lang.String
@@ -14440,7 +14440,7 @@ a:com.intellij.refactoring.copy.CopyHandlerDelegateBase
 c:com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.refactoring.extractMethod.ExtractMethodSettings
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.codeInsight.codeFragment.CodeFragment,java.lang.Object[],com.intellij.refactoring.extractMethod.ExtractMethodValidator,com.intellij.refactoring.extractMethod.ExtractMethodDecorator,com.intellij.openapi.fileTypes.FileType):V
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
@@ -14694,10 +14694,10 @@ e:com.intellij.refactoring.introduce.inplace.OccurrencesChooser$ReplaceChoice
 - s:values():com.intellij.refactoring.introduce.inplace.OccurrencesChooser$ReplaceChoice[]
 a:com.intellij.refactoring.introduceParameterObject.AbstractIntroduceParameterObjectDialog
 - com.intellij.refactoring.ui.RefactoringDialog
-- p:myDelegateCheckBox:javax.swing.JCheckBox
+- pf:myDelegateCheckBox:javax.swing.JCheckBox
 - p:myParameterTablePanel:com.intellij.refactoring.util.AbstractParameterTablePanel
 - p:mySourceMethod:com.intellij.psi.PsiNamedElement
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.psi.PsiNamedElement):V
 - p:canRun():V
 - p:createCenterPanel():javax.swing.JComponent
@@ -15084,7 +15084,7 @@ f:com.intellij.refactoring.openapi.impl.SafeDeleteRefactoringImpl
 - setSearchInNonJavaFiles(Z):V
 c:com.intellij.refactoring.rename.AutomaticRenamingDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,com.intellij.refactoring.rename.naming.AutomaticRenamer):V
 - p:createCenterPanel():javax.swing.JComponent
 - p:createNorthPanel():javax.swing.JComponent

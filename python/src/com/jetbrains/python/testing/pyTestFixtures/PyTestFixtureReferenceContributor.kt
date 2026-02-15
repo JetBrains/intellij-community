@@ -20,8 +20,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.jetbrains.python.BaseReference
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.COROUTINE
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GENERATOR
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyDecorator
@@ -143,10 +142,10 @@ class PyTextFixtureTypeProvider : PyTypeProviderBase() {
     val classType = PyUtil.`as`(type, PyClassType::class.java)
     if (genericType != null && classType != null) {
       val qName = classType.getClassQName()
-      if (ArrayUtil.contains(qName, "typing.Awaitable", GENERATOR)) {
+      if (ArrayUtil.contains(qName, "typing.Awaitable", PyTypingTypeProvider.GENERATOR)) {
         return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 0, null))
       }
-      if (COROUTINE == qName) {
+      if (PyTypingTypeProvider.COROUTINE == qName) {
         return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null))
       }
     }

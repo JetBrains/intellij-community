@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.util.Ref
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getReturnTypeAnnotation
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
@@ -87,7 +86,7 @@ private fun getReturnTypeFromSupertype(function: PyFunction, context: TypeEvalCo
   val overriddenFunction = getOverriddenFunction(function, context)
 
   if (overriddenFunction != null) {
-    val superFunctionAnnotation = getReturnTypeAnnotation(overriddenFunction, context)
+    val superFunctionAnnotation = PyTypingTypeProvider.getReturnTypeAnnotation(overriddenFunction, context)
     if (superFunctionAnnotation != null) {
       val typeRef = PyTypingTypeProvider.getType(superFunctionAnnotation, context)
       if (typeRef != null && function.isAsync == overriddenFunction.isAsync) {

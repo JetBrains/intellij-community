@@ -96,7 +96,7 @@ object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 30)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 31)
 
   /**
    * Server metadata was fetched
@@ -333,6 +333,7 @@ object GitLabStatistics {
 
 enum class GitLabApiRequestName {
   REST_GET_CURRENT_USER,
+  REST_GET_PROJECT,
   REST_GET_PROJECT_IS_FORKED,
   REST_GET_PROJECT_NAMESPACE,
   REST_GET_PROJECT_USERS,
@@ -446,7 +447,7 @@ internal class GitLabMetricsLoader(private val project: Project) {
     val nonFork = withContext(Dispatchers.IO) {
       knownRepos.firstOrNull { repo ->
         val (api, _) = getApi(repo.repository.serverPath) ?: return@firstOrNull false
-        !api.isProjectForked(repo.repository)
+        !api.isProjectForked(repo.repository.projectPath)
       }
     }
     if (nonFork != null) return nonFork
@@ -460,7 +461,7 @@ internal class GitLabMetricsLoader(private val project: Project) {
       val chosenRepoMapping = chooseRepo() ?: return null
 
       val (api, account) = getApi(chosenRepoMapping.repository.serverPath) ?: return null
-      return api.graphQL.getMergeRequestMetrics(chosenRepoMapping.repository, account.name).body()
+      return api.graphQL.getMergeRequestMetrics(chosenRepoMapping.repository.projectPath, account.name).body()
     }
     catch (e: Exception) {
       LOG.warn("Failed to load metrics", e)

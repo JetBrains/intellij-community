@@ -174,7 +174,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
   @Nullable
   static Ref<PyType> getMemberType(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-    List<PyTypeMember> members = type.findMember(name, resolveContext);
+    var members = type.findMember(name, resolveContext);
     if (members.isEmpty()) return null;
     return Ref.create(PyUnionType.union(ContainerUtil.map(members, PyTypeMember::getType)));
   }

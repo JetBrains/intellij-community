@@ -14,8 +14,7 @@ import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderIm
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.REVEAL_TYPE
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.REVEAL_TYPE_EXT
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyFunction
@@ -55,7 +54,8 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val callable = element.multiResolveCalleeFunction(resolveContext).singleOrNull()
       val typeEvalContext = resolveContext.typeEvalContext
 
-      if (callable is PyFunction && callable.qualifiedName in listOf(REVEAL_TYPE, REVEAL_TYPE_EXT)) {
+      if (callable is PyFunction && callable.qualifiedName in listOf(PyTypingTypeProvider.REVEAL_TYPE,
+                                                                     PyTypingTypeProvider.REVEAL_TYPE_EXT)) {
         val args = element.getArguments()
 
         if (args.size != 1) return

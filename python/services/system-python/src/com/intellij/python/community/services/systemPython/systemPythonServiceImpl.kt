@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
@@ -20,7 +21,9 @@ import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
+import com.intellij.python.community.services.systemPython.impl.EelDescriptorFilter.Companion.isEphemeral
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
+import com.intellij.python.community.services.systemPython.impl.UpdateCacheDelayer
 import com.intellij.python.community.services.systemPython.impl.asSysPythonRegisterError
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyToolUIInfo
@@ -29,6 +32,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.installer.installBinary
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,16 +62,24 @@ internal suspend fun getCacheTimeout(): Duration? =
 @State(name = "SystemPythonService", storages = [Storage("systemPythonService.xml", roamingType = RoamingType.LOCAL)],
        allowLoadInTests = true)
 @Internal
-class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService,
-                                                       SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
+class SystemPythonServiceImpl internal constructor(
+  scope: CoroutineScope,
+  createUpdateCacheDelayer: suspend () -> UpdateCacheDelayer?,
+) : SystemPythonService,
+    SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
+  constructor(scope: CoroutineScope) : this(scope, {
+    val duration = getCacheTimeout()
+    if (duration != null) UpdateCacheDelayer.TimeBased(duration) else null
+  })
+
   private val findPythonsMutex = Mutex()
   private val _cacheImpl: CompletableDeferred<Cache<EelDescriptor, SystemPython>?> = CompletableDeferred()
   private suspend fun cache() = _cacheImpl.await()
 
   init {
     scope.launch {
-      _cacheImpl.complete(getCacheTimeout()?.let { interval ->
-        Cache<EelDescriptor, SystemPython>(scope, interval) { eelDescriptor ->
+      _cacheImpl.complete(createUpdateCacheDelayer()?.let { delayer ->
+        Cache(scope, delayer) { eelDescriptor ->
           withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
             searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
           }
@@ -81,26 +93,34 @@ class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService,
       .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken",
                                           pythonPath)) { return Result.failure(it.error.asSysPythonRegisterError()) }
     val systemPython = SystemPython.create(pythonWithLangLevel, null).getOr { return it }
-    state.userProvidedPythons.add(pythonPath.pathString)
-    cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)
+
+    val eelDescriptor = pythonPath.getEelDescriptor()
+    if (!eelDescriptor.isEphemeral) {
+      state.userProvidedPythons.add(pythonPath.pathString)
+      logger.debug("Registering $pythonPath")
+      cache()?.get(eelDescriptor)?.add(systemPython)
+    }
     return Result.success(systemPython)
   }
 
   override fun getInstaller(eelApi: EelApi): PythonInstallerService? =
     if (eelApi == localEel) LocalPythonInstaller else null
 
-  override suspend fun findSystemPythons(eelApi: EelApi, forceRefresh: Boolean): List<SystemPython> =
-    cache()?.let { cache ->
+  override suspend fun findSystemPythons(eelApi: EelApi, forceRefresh: Boolean): List<SystemPython> {
+    val eelDescriptor = eelApi.descriptor
+    val cache = if (!eelDescriptor.isEphemeral) cache() else null
+    return cache?.let { cache ->
       // Cache enabled
       cache.startUpdate()
       if (forceRefresh) {
         logger.info("pythons refresh requested")
-        cache.updateCache(eelApi.descriptor) // Update cache and suspend till update finished
+        cache.updateCache(eelDescriptor) // Update cache and suspend till update finished
       }
       else {
-        cache.get(eelApi.descriptor)
+        cache.get(eelDescriptor)
       }.sortedSystemPythons()
     } ?: searchPythonsPhysicallyNoCache(eelApi).sortedSystemPythons()
+  }
 
   private fun Iterable<SystemPython>.sortedSystemPythons(): List<SystemPython> =
     sortedWith(
