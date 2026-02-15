@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -11,9 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.application
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.groovy.ext.spock.isSpockSpecification
+import org.jetbrains.plugins.gradle.groovy.LegacyGroovyService
 
 /**
  * Repairs and converts test event data.
@@ -76,7 +78,8 @@ internal class GradleTestEventConverter(
           val scope = GlobalSearchScope.allScope(project)
           val psiFacade = JavaPsiFacade.getInstance(project)
           val psiClass = psiFacade.findClass(convertedClassName, scope)
-          psiClass != null && psiClass.isSpockSpecification()
+          val legacyGroovyService = application.serviceOrNull<LegacyGroovyService>()
+          psiClass != null && legacyGroovyService != null && legacyGroovyService.isSpockSpecification(psiClass)
         }
       }
     }

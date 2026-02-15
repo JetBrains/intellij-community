@@ -1,5 +1,9 @@
 package com.intellij.agent.workbench.sessions
 
+// @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
+// @spec community/plugins/agent-workbench/spec/agent-sessions-thread-visibility.spec.md
+// @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
+
 import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -46,6 +50,8 @@ internal fun SelectableLazyItemScope.sessionTreeNodeContent(
   element: Tree.Element<SessionTreeNode>,
   onOpenProject: (String) -> Unit,
   onRefresh: () -> Unit,
+  onCreateSession: (String, AgentSessionProvider, Boolean) -> Unit = { _, _, _ -> },
+  lastUsedProvider: AgentSessionProvider? = null,
   nowProvider: () -> Long,
 ) {
   val node = element.data
@@ -53,6 +59,8 @@ internal fun SelectableLazyItemScope.sessionTreeNodeContent(
     is SessionTreeNode.Project -> projectNodeRow(
       project = node.project,
       onOpenProject = onOpenProject,
+      onCreateSession = onCreateSession,
+      lastUsedProvider = lastUsedProvider,
     )
     is SessionTreeNode.Thread -> threadNodeRow(
       thread = node.thread,
@@ -80,12 +88,15 @@ internal fun SelectableLazyItemScope.sessionTreeNodeContent(
     )
     is SessionTreeNode.Worktree -> worktreeNodeRow(
       worktree = node.worktree,
+      onCreateSession = onCreateSession,
+      lastUsedProvider = lastUsedProvider,
     )
   }
 }
 
 private data class TreeRowChrome(
   val interactionSource: MutableInteractionSource,
+  val isHovered: Boolean,
   val background: Color,
   val shape: Shape,
   val spacing: Dp,
@@ -111,6 +122,7 @@ private fun rememberTreeRowChrome(
   val indicatorPadding = spacing * 0.4f
   return TreeRowChrome(
     interactionSource = interactionSource,
+    isHovered = isHovered,
     background = background,
     shape = shape,
     spacing = spacing,
@@ -123,6 +135,8 @@ private fun rememberTreeRowChrome(
 private fun SelectableLazyItemScope.projectNodeRow(
   project: AgentProjectSessions,
   onOpenProject: (String) -> Unit,
+  onCreateSession: (String, AgentSessionProvider, Boolean) -> Unit,
+  lastUsedProvider: AgentSessionProvider?,
 ) {
   val chrome = rememberTreeRowChrome(
     isSelected = isSelected,
@@ -176,8 +190,18 @@ private fun SelectableLazyItemScope.projectNodeRow(
           maxLines = 1,
         )
       }
+      var newSessionPopupVisible by remember { mutableStateOf(false) }
       if (project.isLoading) {
         CircularProgressIndicator(Modifier.size(loadingIndicatorSize()))
+      }
+      else if (chrome.isHovered || newSessionPopupVisible) {
+        NewSessionHoverActions(
+          path = project.path,
+          lastUsedProvider = lastUsedProvider,
+          onCreateSession = onCreateSession,
+          popupVisible = newSessionPopupVisible,
+          onPopupVisibleChange = { newSessionPopupVisible = it },
+        )
       }
     }
   }
@@ -292,6 +316,8 @@ private fun SelectableLazyItemScope.subAgentNodeRow(
 @Composable
 private fun SelectableLazyItemScope.worktreeNodeRow(
   worktree: AgentWorktree,
+  onCreateSession: (String, AgentSessionProvider, Boolean) -> Unit,
+  lastUsedProvider: AgentSessionProvider?,
 ) {
   val chrome = rememberTreeRowChrome(isSelected = isSelected, isActive = isActive)
   val titleColor = if (isSelected || isActive) Color.Unspecified else {
@@ -327,7 +353,18 @@ private fun SelectableLazyItemScope.worktreeNodeRow(
       style = AgentSessionsTextStyles.threadTime(),
       maxLines = 1,
     )
-    if (worktree.isLoading) {
+    var newSessionPopupVisible by remember { mutableStateOf(false) }
+    val isHovered by chrome.interactionSource.collectIsHoveredAsState()
+    if ((isHovered || newSessionPopupVisible) && !worktree.isLoading) {
+      NewSessionHoverActions(
+        path = worktree.path,
+        lastUsedProvider = lastUsedProvider,
+        onCreateSession = onCreateSession,
+        popupVisible = newSessionPopupVisible,
+        onPopupVisibleChange = { newSessionPopupVisible = it },
+      )
+    }
+    else if (worktree.isLoading) {
       CircularProgressIndicator(Modifier.size(loadingIndicatorSize()))
     }
   }

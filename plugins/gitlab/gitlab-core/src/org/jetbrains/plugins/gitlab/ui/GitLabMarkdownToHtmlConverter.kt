@@ -44,9 +44,8 @@ import org.intellij.markdown.parser.sequentialparsers.impl.MathParser
 import org.intellij.markdown.parser.sequentialparsers.impl.ReferenceLinkParser
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.projectApiUri
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.nio.file.InvalidPathException
@@ -59,8 +58,9 @@ import java.nio.file.InvalidPathException
 class GitLabMarkdownToHtmlConverter(
   private val project: Project,
   private val repository: GitRepository,
-  projectCoordinates: GitLabProjectCoordinates,
-  projectId: GitLabId,
+  serverPath: GitLabServerPath,
+  projectId: String,
+  private val projectPath: GitLabProjectPath,
 ) {
 
   companion object {
@@ -70,9 +70,8 @@ class GitLabMarkdownToHtmlConverter(
     internal const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
   }
 
-  private val projectWebUrlBase: String = projectCoordinates.serverPath.toString() + "/-/project/" + projectId.guessRestId()
-  private val projectApiUri: URI = projectCoordinates.restApiUri
-  private val projectPath: GitLabProjectPath = projectCoordinates.projectPath
+  private val projectWebUrlBase: String = "$serverPath/-/project/$projectId"
+  private val projectApiUri: URI = serverPath.projectApiUri(projectId)
 
   /**
    * Makes file links relative to the git repository root or to the external root.

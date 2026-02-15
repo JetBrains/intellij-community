@@ -28,6 +28,7 @@ import git4idea.GitRemoteBranch
 import git4idea.config.GitSharedSettings
 import git4idea.history.GitLogUtil
 import git4idea.remote.hosting.changesSignalFlow
+import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
@@ -61,8 +61,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 internal interface GitLabMergeRequestCreateViewModel : CodeReviewTitleDescriptionViewModel {
-  val projectsManager: GitLabProjectsManager
-  val projectData: GitLabProject
+  val projectMapping: GitLabProjectMapping
   val avatarIconProvider: IconsProvider<GitLabUserDTO>
 
   val titleGenerationVm: StateFlow<GitLabMergeRequestCreateTitleGenerationViewModel?>
@@ -91,6 +90,8 @@ internal interface GitLabMergeRequestCreateViewModel : CodeReviewTitleDescriptio
 
   fun updateBranchState(state: BranchState?)
 
+  fun getAllKnownProjects(): List<GitLabProjectMapping>
+
   fun setReviewers(reviewers: List<GitLabUserDTO>)
   fun setAssignees(assignees: List<GitLabUserDTO>)
   fun setLabels(labels: List<GitLabLabel>)
@@ -102,8 +103,8 @@ internal interface GitLabMergeRequestCreateViewModel : CodeReviewTitleDescriptio
 internal class GitLabMergeRequestCreateViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
-  override val projectsManager: GitLabProjectsManager,
-  override val projectData: GitLabProject,
+  private val projectsManager: GitLabProjectsManager,
+  private val projectData: GitLabProject,
   override val avatarIconProvider: IconsProvider<GitLabUserDTO>,
   override val openReviewTabAction: suspend (mrIid: String) -> Unit,
   private val onReviewCreated: () -> Unit,
@@ -158,7 +159,9 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     }?.iid
   }
 
-  private val gitRepository: GitRepository = projectData.projectMapping.gitRepository
+  private val gitRepository: GitRepository = projectData.gitRemote.repository
+  override val projectMapping: GitLabProjectMapping = GitLabProjectMapping(projectData.projectCoordinates, projectData.gitRemote)
+
   private val commitRevisionComparisonFlow: Flow<CommitRevisionComparison?> =
     combine(gitRepository.changesSignalFlow().withInitial(Unit), branchState) { _, state -> state }
       .map { state ->
@@ -240,7 +243,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
   init {
     cs.launch {
-      val baseRepo = projectData.projectMapping
+      val baseRepo = GitLabProjectMapping(projectData.projectCoordinates, projectData.gitRemote)
       val baseGitRepo = baseRepo.gitRepository
       val defaultBranch = projectData.defaultBranch ?: return@launch
       val baseBranch = baseGitRepo.getBranchTrackInfo(defaultBranch)?.remoteBranch ?: return@launch
@@ -276,6 +279,8 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   override fun updateBranchState(state: BranchState?) {
     _branchState.value = state
   }
+
+  override fun getAllKnownProjects(): List<GitLabProjectMapping> = projectsManager.knownRepositories.toList()
 
   override fun setReviewers(reviewers: List<GitLabUserDTO>) {
     _reviewers.value = reviewers

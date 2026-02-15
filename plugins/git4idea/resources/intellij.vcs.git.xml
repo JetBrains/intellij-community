@@ -964,6 +964,7 @@
 
   <extensions defaultExtensionNs="Git4Idea">
     <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
+    <gitFetchHandler implementation="git4idea.branch.GitBranchIncomingOutgoingManager$IncomingOutgoingRefreshFetchHandler"/>
   </extensions>
 
   <extensionPoints>

@@ -59,6 +59,9 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -67,13 +70,16 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -81,11 +87,17 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
 /**
@@ -103,7 +115,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     new IntArrayList(new int[]{1, 2}),
     new IntArrayList(new int[]{6}),
     new IntArrayList(new int[]{1, 2})
-    );
+  );
   private static final String[] FORK_MODE_ALL =
     {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
   private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
@@ -112,39 +124,294 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private final LabeledComponent[] myTestLocations = new LabeledComponent[6];
   private final JUnitConfigurationModel myModel;
   private final BrowseModuleValueActionListener[] myBrowsers;
-  private JComponent myPackagePanel;
-  private LabeledComponent<EditorTextFieldWithBrowseButton> myPackage;
-  private LabeledComponentNoThrow<TextFieldWithBrowseButton> myDir;
-  private LabeledComponentNoThrow<JPanel> myPattern;
-  private LabeledComponent<EditorTextFieldWithBrowseButton> myClass;
-  private LabeledComponent<EditorTextFieldWithBrowseButton> myMethod;
-  private LabeledComponent<EditorTextFieldWithBrowseButton> myCategory;
+  private final JComponent myPackagePanel;
+  private final LabeledComponent<EditorTextFieldWithBrowseButton> myPackage;
+  private final LabeledComponentNoThrow<TextFieldWithBrowseButton> myDir;
+  private final LabeledComponentNoThrow<JPanel> myPattern;
+  private final LabeledComponent<EditorTextFieldWithBrowseButton> myClass;
+  private final LabeledComponent<EditorTextFieldWithBrowseButton> myMethod;
+  private final LabeledComponent<EditorTextFieldWithBrowseButton> myCategory;
   // Fields
-  private JPanel myWholePanel;
-  private LabeledComponentNoThrow<ModuleDescriptionsComboBox> myModule;
-  private LabeledComponentNoThrow<JCheckBox> myUseModulePath;
-  private CommonJavaParametersPanel myCommonJavaParameters;
-  private JRadioButton myWholeProjectScope;
-  private JRadioButton mySingleModuleScope;
-  private JRadioButton myModuleWDScope;
+  private final JPanel myWholePanel;
+  private final LabeledComponentNoThrow<ModuleDescriptionsComboBox> myModule;
+  private final LabeledComponentNoThrow<JCheckBox> myUseModulePath;
+  private final CommonJavaParametersPanel myCommonJavaParameters;
+  private final JRadioButton myWholeProjectScope;
+  private final JRadioButton mySingleModuleScope;
+  private final JRadioButton myModuleWDScope;
   private final TextFieldWithBrowseButton myPatternTextField;
-  private JrePathEditor myJrePathEditor;
-  private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
-  private JComboBox<String> myForkCb;
-  private JBLabel myTestLabel;
-  private JComboBox<Integer> myTypeChooser;
-  private JBLabel mySearchForTestsLabel;
-  private JPanel myScopesPanel;
-  private JComboBox<String> myRepeatCb;
-  private JTextField myRepeatCountField;
-  private LabeledComponentNoThrow<JComboBox<String>> myChangeListLabeledComponent;
-  private LabeledComponentNoThrow<RawCommandLineEditor> myUniqueIdField;
-  private LabeledComponentNoThrow<RawCommandLineEditor> myTagsField;
+  private final JrePathEditor myJrePathEditor;
+  private final LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
+  private final JComboBox<String> myForkCb;
+  private final JBLabel myTestLabel;
+  private final JComboBox<Integer> myTypeChooser;
+  private final JBLabel mySearchForTestsLabel;
+  private final JPanel myScopesPanel;
+  private final JComboBox<String> myRepeatCb;
+  private final JTextField myRepeatCountField;
+  private final LabeledComponentNoThrow<JComboBox<String>> myChangeListLabeledComponent;
+  private final LabeledComponentNoThrow<RawCommandLineEditor> myUniqueIdField;
+  private final LabeledComponentNoThrow<RawCommandLineEditor> myTagsField;
   private final Project myProject;
   private JComponent anchor;
 
   public JUnitConfigurable(final Project project) {
     myProject = project;
+    {
+      myPackage = new LabeledComponent<>();
+      myPackage.setComponent(new EditorTextFieldWithBrowseButton(myProject, false));
+
+      myCategory = new LabeledComponent<>();
+      myCategory.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
+        @Override
+        public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
+          if (declaration instanceof PsiClass) {
+            return Visibility.VISIBLE;
+          }
+          return Visibility.NOT_VISIBLE;
+        }
+      }));
+
+      myMethod = new LabeledComponent<>();
+      myMethod.setComponent(new EditorTextFieldWithBrowseButton(myProject, true,
+                                                                JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
+                                                                PlainTextLanguage.INSTANCE.getAssociatedFileType()));
+
+      myShortenClasspathModeCombo = new LabeledComponent<>();
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myWholePanel = new JPanel();
+      myWholePanel.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridBagLayout());
+      myWholePanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTestLabel = new JBLabel();
+      myTestLabel.setHorizontalAlignment(2);
+      myTestLabel.setHorizontalTextPosition(2);
+      myTestLabel.setIconTextGap(4);
+      this.$$$loadLabelText$$$(myTestLabel, this.$$$getMessageFromBundle$$$("messages/ExecutionBundle",
+                                                                            "junit.configuration.configure.junit.test.kind.label"));
+      GridBagConstraints gbc;
+      gbc = new GridBagConstraints();
+      gbc.gridx = 0;
+      gbc.gridy = 0;
+      gbc.weighty = 1.0;
+      gbc.anchor = GridBagConstraints.WEST;
+      panel1.add(myTestLabel, gbc);
+      myTypeChooser = new JComboBox();
+      gbc = new GridBagConstraints();
+      gbc.gridx = 1;
+      gbc.gridy = 0;
+      gbc.weighty = 1.0;
+      gbc.anchor = GridBagConstraints.WEST;
+      gbc.fill = GridBagConstraints.HORIZONTAL;
+      gbc.insets = new Insets(0, 10, 0, 0);
+      panel1.add(myTypeChooser, gbc);
+      final JPanel spacer1 = new JPanel();
+      gbc = new GridBagConstraints();
+      gbc.gridx = 2;
+      gbc.gridy = 0;
+      gbc.weightx = 1.0;
+      gbc.fill = GridBagConstraints.HORIZONTAL;
+      panel1.add(spacer1, gbc);
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(7, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myWholePanel.add(panel2, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                   null, 0, false));
+      myCommonJavaParameters = new CommonJavaParametersPanel();
+      panel2.add(myCommonJavaParameters, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myModule = new LabeledComponentNoThrow();
+      myModule.setComponentClass("com.intellij.application.options.ModuleDescriptionsComboBox");
+      myModule.setEnabled(true);
+      myModule.setLabelLocation("West");
+      myModule.setText(
+        this.$$$getMessageFromBundle$$$("messages/ExecutionBundle", "application.configuration.use.classpath.and.jdk.of.module.label"));
+      panel2.add(myModule, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUseModulePath = new LabeledComponentNoThrow();
+      myUseModulePath.setComponentClass("javax.swing.JCheckBox");
+      myUseModulePath.setEnabled(true);
+      myUseModulePath.setLabelLocation("West");
+      myUseModulePath.setText("");
+      panel2.add(myUseModulePath, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myShortenClasspathModeCombo.setEnabled(true);
+      myShortenClasspathModeCombo.setLabelLocation("West");
+      myShortenClasspathModeCombo.setText(
+        this.$$$getMessageFromBundle$$$("messages/ExecutionBundle", "application.configuration.shorten.command.line.label"));
+      panel2.add(myShortenClasspathModeCombo,
+                 new GridConstraints(5, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      panel2.add(spacer2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 10), null, 0, false));
+      final Spacer spacer3 = new Spacer();
+      panel2.add(spacer3, new GridConstraints(6, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null,
+                                              null, 0, false));
+      myJrePathEditor = new JrePathEditor();
+      panel2.add(myJrePathEditor, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null, null, 0, false));
+      final JPanel panel3 = new JPanel();
+      panel3.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), -1, -1));
+      myWholePanel.add(panel3, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer4 = new Spacer();
+      panel3.add(spacer4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "repeat.label"));
+      panel3.add(label1,
+                 new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JBLabel jBLabel1 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "fork.mode.label"));
+      panel3.add(jBLabel1,
+                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myForkCb = new JComboBox();
+      panel3.add(myForkCb, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                               GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                               false));
+      myRepeatCountField = new JTextField();
+      myRepeatCountField.setColumns(3);
+      panel3.add(myRepeatCountField, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                         GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                         new Dimension(150, -1), null, 0, false));
+      myRepeatCb = new JComboBox();
+      panel3.add(myRepeatCb, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                 GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                                 false));
+      final JSeparator separator1 = new JSeparator();
+      myWholePanel.add(separator1, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                       0, false));
+      final JPanel panel4 = new JPanel();
+      panel4.setLayout(new GridLayoutManager(10, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myWholePanel.add(panel4, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                   null, 0, false));
+      myMethod.setEnabled(true);
+      myMethod.setLabelLocation("West");
+      myMethod.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "junit.configuration.method.label"));
+      panel4.add(myMethod, new GridConstraints(8, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPackagePanel = new JPanel();
+      myPackagePanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      panel4.add(myPackagePanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                     null, null, 0, false));
+      myPackage.setEnabled(true);
+      myPackage.setLabelLocation("West");
+      myPackage.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "junit.configuration.package.label"));
+      myPackage.setVisible(true);
+      myPackagePanel.add(myPackage, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPattern = new LabeledComponentNoThrow();
+      myPattern.setComponentClass("javax.swing.JPanel");
+      myPattern.setLabelLocation("West");
+      myPattern.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "pattern.label"));
+      myPattern.setVisible(true);
+      panel4.add(myPattern, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myClass = new LabeledComponentNoThrow();
+      myClass.setLabelLocation("West");
+      myClass.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "junit.configuration.class.label"));
+      panel4.add(myClass, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myCategory.setLabelLocation("West");
+      myCategory.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "category.label"));
+      panel4.add(myCategory, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                 GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUniqueIdField = new LabeledComponentNoThrow();
+      myUniqueIdField.setComponentClass("com.intellij.ui.RawCommandLineEditor");
+      myUniqueIdField.setLabelLocation("West");
+      myUniqueIdField.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "uniqueid.label"));
+      panel4.add(myUniqueIdField, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myDir = new LabeledComponentNoThrow();
+      myDir.setComponentClass("com.intellij.openapi.ui.TextFieldWithBrowseButton");
+      myDir.setLabelLocation("West");
+      myDir.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "directory.label"));
+      panel4.add(myDir, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myChangeListLabeledComponent = new LabeledComponentNoThrow();
+      myChangeListLabeledComponent.setComponentClass("javax.swing.JComboBox");
+      myChangeListLabeledComponent.setLabelLocation("West");
+      myChangeListLabeledComponent.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "change.list.label"));
+      panel4.add(myChangeListLabeledComponent,
+                 new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myScopesPanel = new JPanel();
+      myScopesPanel.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
+      panel4.add(myScopesPanel, new GridConstraints(9, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      mySearchForTestsLabel = new JBLabel();
+      this.$$$loadLabelText$$$(mySearchForTestsLabel,
+                               this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "junit.configuration.search.for.tests.label"));
+      myScopesPanel.add(mySearchForTestsLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                   null, null, 0, false));
+      myWholeProjectScope = new JRadioButton();
+      this.$$$loadButtonText$$$(myWholeProjectScope,
+                                this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "junit.configuration.in.whole.project.radio"));
+      myScopesPanel.add(myWholeProjectScope, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                 GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                 null, null, null, 0, false));
+      final Spacer spacer5 = new Spacer();
+      myScopesPanel.add(spacer5, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      mySingleModuleScope = new JRadioButton();
+      this.$$$loadButtonText$$$(mySingleModuleScope,
+                                this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "junit.configuration.in.single.module.radio"));
+      myScopesPanel.add(mySingleModuleScope, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                 GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                 null, null, null, 0, false));
+      myModuleWDScope = new JRadioButton();
+      this.$$$loadButtonText$$$(myModuleWDScope, this.$$$getMessageFromBundle$$$("messages/JUnitBundle",
+                                                                                 "junit.configuration.across.module.dependencies.radio"));
+      myScopesPanel.add(myModuleWDScope, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTagsField = new LabeledComponentNoThrow();
+      myTagsField.setComponentClass("com.intellij.ui.RawCommandLineEditor");
+      myTagsField.setLabelLocation("West");
+      myTagsField.setText(this.$$$getMessageFromBundle$$$("messages/JUnitBundle", "tag.expression.label"));
+      panel4.add(myTagsField, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTestLabel.setLabelFor(myTypeChooser);
+      label1.setLabelFor(myRepeatCb);
+    }
     myModel = new JUnitConfigurationModel(project);
     myModuleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModulesComponent(), false));
@@ -198,19 +465,20 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     FileChooserFactory.getInstance().installFileCompletion(textField, dirFileChooser, true, null);
     // Done
 
-    myBrowsers = createBrowsers(project, myModuleSelector, myPackage.getComponent(), myPatternTextField, myCategory.getComponent(), () -> getClassName());
+    myBrowsers = createBrowsers(project, myModuleSelector, myPackage.getComponent(), myPatternTextField, myCategory.getComponent(),
+                                () -> getClassName());
     myModel.setListener((oldType, newType) -> onTypeChanged(newType));
 
     myTypeChooser.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Integer item = (Integer)myTypeChooser.getSelectedItem();
-        if (item != null) {
-          myModel.setType(item);
-          changePanel();
-        }
-      }
-    }
+                                      @Override
+                                      public void actionPerformed(ActionEvent e) {
+                                        Integer item = (Integer)myTypeChooser.getSelectedItem();
+                                        if (item != null) {
+                                          myModel.setType(item);
+                                          changePanel();
+                                        }
+                                      }
+                                    }
     );
 
     myModel.setType(JUnitConfigurationModel.CLASS);
@@ -243,6 +511,78 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
   }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myWholePanel; }
 
   private void addListeners() {
     myRepeatCb.addActionListener(new ActionListener() {
@@ -397,15 +737,18 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myUseModulePath.getComponent().setSelected(configuration.isUseModulePath());
     if (!myProject.isDefault()) {
-      SwingUtilities.invokeLater(() -> 
-         ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(myProject, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(myProject)).length > 0)
-                   .expireWith(this)
-                   .finishOnUiThread(ModalityState.stateForComponent(myUseModulePath), visible -> myUseModulePath.setVisible(visible))
-                   .submit(NonUrgentExecutor.getInstance()));
+      SwingUtilities.invokeLater(() ->
+                                   ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(myProject, PsiJavaModule.MODULE_INFO_FILE,
+                                                                                             GlobalSearchScope.projectScope(
+                                                                                               myProject)).length > 0)
+                                     .expireWith(this)
+                                     .finishOnUiThread(ModalityState.stateForComponent(myUseModulePath),
+                                                       visible -> myUseModulePath.setVisible(visible))
+                                     .submit(NonUrgentExecutor.getInstance()));
     }
   }
 
-  private void changePanel () {
+  private void changePanel() {
     final Integer selectedType = (Integer)myTypeChooser.getSelectedItem();
     if (selectedType == null) return;
     myPackagePanel.setVisible(selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE);
@@ -488,7 +831,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         field = myPatternTextField;
         document = new PlainDocument();
         ((TextFieldWithBrowseButton)field).getTextField().setDocument((Document)document);
-
       }
       myBrowsers[i].setField(field);
       if (myBrowsers[i] instanceof MethodBrowser) {
@@ -502,29 +844,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
   public LabeledComponent getTestLocation(final int index) {
     return myTestLocations[index];
-  }
-
-  private void createUIComponents() {
-    myPackage = new LabeledComponent<>();
-    myPackage.setComponent(new EditorTextFieldWithBrowseButton(myProject, false));
-
-    myCategory = new LabeledComponent<>();
-    myCategory.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
-      @Override
-      public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
-        if (declaration instanceof PsiClass) {
-          return Visibility.VISIBLE;
-        }
-        return Visibility.NOT_VISIBLE;
-      }
-    }));
-
-    myMethod = new LabeledComponent<>();
-    myMethod.setComponent(new EditorTextFieldWithBrowseButton(myProject, true,
-                                                              JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
-                                                              PlainTextLanguage.INSTANCE.getAssociatedFileType()));
-
-    myShortenClasspathModeCombo = new LabeledComponent<>();
   }
 
   public static @NotNull JavaCodeFragment.VisibilityChecker createClassVisibilityChecker(TestClassBrowser classBrowser) {
@@ -570,15 +889,17 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   public void onTypeChanged(final int newType) {
     myTypeChooser.setSelectedItem(newType);
     final IntList enabledFields = ourEnabledFields.size() > newType ? ourEnabledFields.get(newType) : null;
-    for (int i = 0; i < myTestLocations.length; i++)
+    for (int i = 0; i < myTestLocations.length; i++) {
       getTestLocation(i).setEnabled(enabledFields != null && enabledFields.contains(i));
+    }
     /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
-    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE &&
-                 newType != JUnitConfigurationModel.PATTERN &&
-                 newType != JUnitConfigurationModel.CATEGORY &&
-                 newType != JUnitConfigurationModel.TAGS &&
-                 newType != JUnitConfigurationModel.UNIQUE_ID) {
+    } else */
+    if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE &&
+        newType != JUnitConfigurationModel.PATTERN &&
+        newType != JUnitConfigurationModel.CATEGORY &&
+        newType != JUnitConfigurationModel.TAGS &&
+        newType != JUnitConfigurationModel.UNIQUE_ID) {
       myModule.setEnabled(true);
     }
     else {
@@ -692,7 +1013,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       }
       final ClassFilter.ClassFilterWithScope classFilter;
       try {
-        final JUnitConfiguration configurationCopy = new JUnitConfiguration(JUnitBundle.message("default.junit.configuration.name"), getProject());
+        final JUnitConfiguration configurationCopy =
+          new JUnitConfiguration(JUnitBundle.message("default.junit.configuration.name"), getProject());
         myModuleSelector.applyTo(configurationCopy);
         SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
         GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
@@ -705,7 +1027,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
             @Override
             public boolean isAccepted(PsiClass aClass) {
-              return JUnitUtil.isTestClass(aClass,true, true);
+              return JUnitUtil.isTestClass(aClass, true, true);
             }
           };
         }

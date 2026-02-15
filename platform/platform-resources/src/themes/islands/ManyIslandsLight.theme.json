@@ -137,6 +137,13 @@
     "teal-150": "#152624",
     "teal-160": "#111C1B",
 
+    "transparent": "#FFFFFF00",
+    "transparent-black-10": "#00000008",
+    "transparent-black-20": "#00000012",
+    "transparent-black-30":  "#00000020",
+    "transparent-black-40": "#00000030",
+    "transparent-black-50":  "#00000045",
+
     "text-default": "black",
     "text-muted": "gray-100",
     "text-secondary": "gray-90",
@@ -160,6 +167,7 @@
     "layer-2-bg": "white",
     "layer-2-bg-inline": "gray-10",
     "layer-2-border": "gray-20",
+    "layer-2-border-inline": "gray-20",
 
     "accent-brand-bg": "blue-90",
     "accent-brand-border": "blue-90",
@@ -181,25 +189,28 @@
     "accent-success-border-muted": "green-40",
     "accent-neutral-bg": "gray-80",
 
-    "transparent": "#FFFFFF00",
-    "core-bg-transparent": "#00000012",
-    "core-bg-transparent-muted": "#00000008",
-    "core-bg-transparent-bright": "#00000020",
-    "core-border-transparent": "#00000020",
+    "core-bg-transparent-hovered": "transparent-black-20",
+    "core-bg-transparent-pressed": "transparent-black-30",
+    "core-border-transparent": "transparent-black-30",
 
     "container-dialog-bg": "layer-1-bg",
+    "container-dialog-bg-inline": "layer-1-bg-inline",
     "container-dialog-border": "layer-1-border-inline",
     "container-popup-bg": "layer-2-bg",
-    "container-popup-border": "layer-2-border",
     "container-popup-bg-inline": "layer-2-bg-inline",
+    "container-popup-border": "layer-2-border",
     "container-popup-border-inline": "layer-2-border",
     "container-popup-border-windows": "gray-40",
     "container-editor-bg": "layer-2-bg",
+    "container-editor-bg-inline": "layer-2-bg-inline",
     "container-editor-border": "layer-2-border",
+    "container-editor-border-inline": "layer-2-border-inline",
     "container-editor-border-alt": "#E8E9ED",
     "container-tool-window-bg": "layer-2-bg",
+    "container-tool-window-bg-inline": "layer-2-bg-inline",
     "container-tool-window-bg-alt": "#F7F6F8",
     "container-tool-window-border": "layer-2-border",
+    "container-tool-window-border-inline": "layer-2-border-inline",
     "container-main-window-bg": "layer-0-bg",
     "container-main-window-bg-alt": "#E8E8EB",
     "container-main-window-border": "layer-0-border",
@@ -214,30 +225,36 @@
     "control-border-raised": "gray-60",
     "control-border-small": "gray-60",
     "control-brand-bg": "accent-brand-bg",
+
+    "control-border-transparent": "transparent-black-50",
+
     "control-selected-bg": "blue-30",
     "control-selected-bg-hovered": "blue-40",
 
-    "toolbar-bg-hovered": "core-bg-transparent",
-    "toolbar-bg-pressed": "core-bg-transparent-bright",
+    "toolbar-bg-hovered": "core-bg-transparent-hovered",
+    "toolbar-bg-pressed": "core-bg-transparent-pressed",
     "toolbar-border": "core-border-transparent",
 
     "selection-bg-active": "blue-30",
     "selection-bg-muted": "blue-20",
     "selection-bg-inactive": "gray-20",
-    "selection-bg-hovered": "core-bg-transparent-muted",
+    "selection-bg-hovered": "transparent-black-10",
 
     "feedback-bg": "layer-2-bg",
     "feedback-border": "layer-0-border",
+    "feedback-bg-inline": "layer-1-bg",
 
     "tab-selected-bg-active": "blue-20",
     "tab-selected-bg-inactive": "gray-20",
     "tab-selected-border-active": "blue-50",
     "tab-selected-border-inactive": "gray-40",
-    "tab-bg-hovered": "core-bg-transparent",
+    "tab-bg-hovered": "core-bg-transparent-hovered",
     "tab-file-color-mask-bg": "#FFFFFF80",
 
+    "editor-floating-toolbar-bg": "layer-0-bg",
     "search-match-bg": "#FEE6B1",
     "presentation-assistant-bg": "gray-140",
+    "tree-indent-guide-border": "gray-30",
 
     "icon-default-stroke": "gray-90",
     "icon-default-over-accent": "white",
@@ -488,7 +505,7 @@
 
     "Abbreviation": {
       "foreground": "text-muted",
-      "background": "core-bg-transparent"
+      "background": "core-bg-transparent-hovered"
     },
 
     "ComboPopup.border": {
@@ -562,11 +579,11 @@
 
     "Editor": {
       "SearchField" : {
-        "background": "container-dialog-bg",
-        "borderColor": "container-dialog-border"
+        "background": "container-editor-bg-inline",
+        "borderColor": "container-editor-border-inline"
       },
       "Toolbar" : {
-        "borderColor" : "container-editor-border"
+        "borderColor" : "container-editor-border-inline"
       },
       "ToolTip": {
         "foreground": "text-default",
@@ -726,8 +743,8 @@
         "foreground": "text-default"
       },
       "MoreButton": {
-        "background": "layer-1-bg",
-        "innerBorderColor": "layer-1-border",
+        "background": "feedback-bg-inline",
+        "innerBorderColor": "feedback-border",
         "foreground": "text-muted"
       },
       "ToolWindow": {
@@ -745,9 +762,9 @@
     },
 
     "NotificationsToolwindow": {
-      "newNotification.background": "layer-1-bg",
-      "newNotification.hoverBackground": "layer-0-bg",
-      "Notification.hoverBackground": "layer-1-bg"
+      "newNotification.background": "container-tool-window-bg-inline",
+      "newNotification.hoverBackground": "toolbar-bg-hovered",
+      "Notification.hoverBackground": "container-tool-window-bg-inline"
     },
 
     "PasswordField": {
@@ -922,7 +939,8 @@
       "minimumSize": "49,28"
     },
 
-    "ToolBar.separatorColor": "layer-1-border",
+    "ToolBar.separatorColor": "toolbar-border",
+    "Toolbar.Floating.background": "editor-floating-toolbar-bg",
 
     "ToolTip":{
       "background": "feedback-bg",
@@ -1512,9 +1530,9 @@
           "border": "control-border-default",
           "MoreLines": {
             "foreground": "text-secondary",
-            "background": "transparent",
+            "background": "container-tool-window-bg",
             "hoverForeground": "text-muted",
-            "hoverBackground": "core-bg-transparent-muted"
+            "hoverBackground": "gray-10"
           }
         }
       },
@@ -1523,9 +1541,9 @@
           "border": "control-border-default",
           "MoreLines": {
             "foreground": "text-secondary",
-            "background": "transparent",
+            "background": "container-tool-window-bg",
             "hoverForeground": "text-muted",
-            "hoverBackground": "core-bg-transparent-muted"
+            "hoverBackground": "gray-10"
           }
         }
       }

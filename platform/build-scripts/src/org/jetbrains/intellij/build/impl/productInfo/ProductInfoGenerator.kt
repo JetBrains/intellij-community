@@ -16,8 +16,8 @@ import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.Git
-import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
+import org.jetbrains.intellij.build.impl.client.getAdditionalEmbeddedClientVmOptions
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Files
 import java.nio.file.Path
@@ -135,7 +135,7 @@ internal suspend fun generateEmbeddedFrontendLaunchData(
     commands = listOf("thinClient", "thinClient-headless", "installFrontendPlugins"),
     vmOptionsFilePath = vmOptionsFilePath(clientContext),
     bootClassPathJarNames = clientContext.bootClassPathJarNames,
-    additionalJvmArguments = clientContext.getAdditionalJvmArguments(os, arch) + ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
+    additionalJvmArguments = clientContext.getAdditionalJvmArguments(os, arch) + getAdditionalEmbeddedClientVmOptions(os, ideContext),
     mainClass = clientContext.ideMainClassName,
     envVarBaseName = "JETBRAINS_CLIENT",
     dataDirectoryName = clientContext.systemSelector,

@@ -118,6 +118,7 @@ enum class State(val state: String) {
     }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Please use CoroutineInfoData API instead.")
 class CompleteCoroutineInfoData(
     descriptor: CoroutineDescriptor,

@@ -29,7 +29,7 @@ internal fun locateIcoFileForWindowsLauncher(customizer: WindowsDistributionCust
 
 internal fun locateIcnsForMacApp(customizer: MacDistributionCustomizer, context: BuildContext): Path {
   if (context.productProperties.productMode == ProductMode.FRONTEND) {
-    val frontendIcnsPath = locateFrontendImageFile(filePath = MAC_ICNS_FRONTEND_PATH, eapFilePath = MAC_ICNS_FRONTEND_EAP_PATH, context = context)
+    val frontendIcnsPath = locateIcnsForFrontendMacApp(context)
     if (frontendIcnsPath != null) {
       return frontendIcnsPath
     }
@@ -41,6 +41,10 @@ internal fun locateIcnsForMacApp(customizer: MacDistributionCustomizer, context:
     }
   }
   return customizer.icnsPath ?: context.productProperties.imagesDirectoryPath?.resolve(MAC_ICNS_PATH) ?: error("Path to icns file is not specified")
+}
+
+internal fun locateIcnsForFrontendMacApp(context: BuildContext): Path? {
+  return locateFrontendImageFile(filePath = MAC_ICNS_FRONTEND_PATH, eapFilePath = MAC_ICNS_FRONTEND_EAP_PATH, context = context)
 }
 
 internal fun locateDmgImageForMacApp(customizer: MacDistributionCustomizer, context: BuildContext): Path {

@@ -4,6 +4,7 @@
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.application.readActionUndispatched
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -214,13 +215,16 @@ class IndexUpdateRunner(
 
                 ensureActive()
               }
+              LOG.debug("Coroutine $workerNo has finished gracefully")
             }
             catch (e: Throwable) {
-              LOG.warn("Coroutine $workerNo finished exceptionally", e)
+              if (e !is ControlFlowException) {
+                LOG.warn("Coroutine $workerNo finished exceptionally", e)
+              }
+              else {
+                LOG.warn("Coroutine $workerNo finished exceptionally: ${e.message}")
+              }
               throw e
-            }
-            finally {
-              LOG.debug("Coroutine $workerNo finished gracefully")
             }
           }
         }
@@ -297,7 +301,7 @@ class IndexUpdateRunner(
       statistics: IndexingFileSetStatistics,
     ) {
       val file = fileIndexingRequest.file
-      if( !fileIndexingRequest.isDeleteRequest && !file.isValid ){
+      if (!fileIndexingRequest.isDeleteRequest && !file.isValid) {
         //this is a bandage for the annoying 'Alien file...' errors in tests: in real life it shouldn't be possible to come
         //  here with an invalid file, but in a (badly isolated) tests it could happen
         LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
@@ -314,7 +318,14 @@ class IndexUpdateRunner(
         val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
         val excluded = readActionUndispatched {
           val isIndexable = workspaceFileIndex.isIndexable(file)
-          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, includeExternalNonIndexableSets = true, false) != null
+          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file,
+                                                                     true,
+                                                                     false,
+                                                                     includeContentNonIndexableSets = true,
+                                                                     false,
+                                                                     false,
+                                                                     includeExternalNonIndexableSets = true,
+                                                                     false) != null
           // We don't want to just exclude all !isIndexable,
           // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
           // We only want to exclude the files that are explicitly registered as non indexable.

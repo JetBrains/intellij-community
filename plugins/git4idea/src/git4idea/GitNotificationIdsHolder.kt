@@ -2,7 +2,9 @@
 package git4idea
 
 import com.intellij.notification.impl.NotificationIdsHolder
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class GitNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
     return listOf(

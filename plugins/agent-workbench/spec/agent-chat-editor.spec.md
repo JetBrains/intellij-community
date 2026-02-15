@@ -40,6 +40,7 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 - The shell command used to start chat sessions is provider-specific:
   - Codex: `codex resume <threadId>`
   - Claude: `claude --resume <threadId>`
+- Codex fresh-thread opens (project-row `New Thread`) use `codex` without `resume`.
 
 [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt

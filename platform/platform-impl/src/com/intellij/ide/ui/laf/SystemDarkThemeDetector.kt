@@ -35,6 +35,7 @@ sealed class SystemDarkThemeDetector {
       return when {
         SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
+        SystemInfoRt.isLinux -> LinuxThemeDetector(syncFunction)
         else -> EmptyDetector
       }
     }
@@ -156,6 +157,31 @@ private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boo
     }
     catch (_: Throwable) {}
     return false
+  }
+}
+
+private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
+
+  private val service: DBusSettingsMonitorService
+    get() = service()
+
+  override val detectionSupported: Boolean
+    get() {
+      return service.isServiceAllowed && isDarkScheme() != null
+    }
+
+  init {
+    service.runSchemeCollector {
+      syncFunction.accept(it, null)
+    }
+  }
+
+  override fun isDark(): Boolean {
+    return isDarkScheme() == true
+  }
+
+  private fun isDarkScheme(): Boolean? {
+    return service.darkScheme.value
   }
 }
 

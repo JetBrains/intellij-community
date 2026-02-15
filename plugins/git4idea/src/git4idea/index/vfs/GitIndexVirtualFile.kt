@@ -26,7 +26,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.Objects
 
-class GitIndexVirtualFile(
+internal class GitIndexVirtualFile(
   private val project: Project,
   val root: VirtualFile,
   val filePath: FilePath,

@@ -93,7 +93,7 @@ a:com.intellij.application.options.colors.ColorAndFontDescription
 f:com.intellij.application.options.colors.ColorAndFontDescriptionPanel
 - javax.swing.JPanel
 - com.intellij.application.options.colors.OptionsPanelImpl$ColorDescriptionPanel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - addListener(com.intellij.application.options.colors.OptionsPanelImpl$ColorDescriptionPanel$Listener):V
 - apply(com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor,com.intellij.openapi.editor.colors.EditorColorsScheme):V
@@ -2442,7 +2442,7 @@ e:com.intellij.ide.browsers.DefaultBrowserPolicy
 - s:valueOf(java.lang.String):com.intellij.ide.browsers.DefaultBrowserPolicy
 - s:values():com.intellij.ide.browsers.DefaultBrowserPolicy[]
 f:com.intellij.ide.browsers.StartBrowserPanel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - createSettings():com.intellij.ide.browsers.StartBrowserSettings
 - getBrowserSelector():com.intellij.ide.browsers.BrowserSelector
@@ -3026,7 +3026,7 @@ f:com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
 - s:hash(B[][]):B[]
 - s:rawKey(com.intellij.credentialStore.CredentialAttributes):B[]
 f:com.intellij.ide.passwordSafe.ui.PasswordPromptComponent
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(Z,java.lang.String):V
 - <init>(Z,java.lang.String,Z,java.lang.String):V
 - getComponent():javax.swing.JComponent
@@ -7620,7 +7620,7 @@ f:com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
 f:com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager$Companion
 f:com.intellij.openapi.fileTypes.ex.FileTypeChooser
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - s:associateFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
 - s:getKnownFileTypeOrAssociate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.fileTypes.FileType
 - s:getKnownFileTypeOrAssociate(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.fileTypes.FileType
@@ -14315,9 +14315,9 @@ c:com.intellij.util.ui.LocalPathCellEditor
 - normalizePath(Z):com.intellij.util.ui.LocalPathCellEditor
 a:com.intellij.util.ui.ReloadableComboBoxPanel
 - com.intellij.util.ui.ReloadablePanel
-- p:myActionPanel:javax.swing.JPanel
-- p:myComboBox:javax.swing.JComboBox
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- pf:myActionPanel:javax.swing.JPanel
+- pf:myComboBox:javax.swing.JComboBox
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - p:createValuesComboBox():javax.swing.JComboBox
 - getMainPanel():javax.swing.JPanel
@@ -14415,7 +14415,7 @@ c:com.intellij.util.ui.TextTransferable$ColoredStringBuilder
 - getBuilder():java.lang.StringBuilder
 a:com.intellij.util.ui.ValidatingTableEditor
 - com.intellij.util.ui.ComponentWithEmptyText
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - p:<init>():V
 - p:<init>(com.intellij.openapi.actionSystem.AnAction[]):V
 - p:addItem():V

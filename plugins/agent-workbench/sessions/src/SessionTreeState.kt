@@ -14,7 +14,7 @@ import org.jetbrains.jewel.foundation.lazy.tree.rememberTreeState
 /**
  * Tracks tree open nodes and auto-open behavior for on-demand project loading.
  *
- * Spec: `community/plugins/agent-workbench/spec/agent-sessions.spec.md`
+ * @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
  */
 @Stable
 internal class SessionTreeStateHolder(

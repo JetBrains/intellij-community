@@ -20,11 +20,14 @@ import java.util.UUID
 
 /**
  * A low-level helper representing a GitLab project, to which the app was authorized to connect
+ *
+ * @param actualProjectCoordinates coordinates of the project e.g., after rename
  */
 class GitLabProjectConnection(
   project: Project,
   private val scope: CoroutineScope,
   override val repo: GitLabProjectMapping,
+  actualProjectCoordinates: GitLabProjectCoordinates,
   glProject: GitLabProjectDTO,
   override val account: GitLabAccount,
   val currentUser: GitLabUserDTO,
@@ -36,9 +39,17 @@ class GitLabProjectConnection(
 
   val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
-  val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient, repo.repository)
+  val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient)
 
-  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, glProject, currentUser, tokenRefreshFlow)
+  val projectData: GitLabProject = GitLabLazyProject(project,
+                                                     scope,
+                                                     apiClient,
+                                                     glMetadata,
+                                                     glProject,
+                                                     currentUser,
+                                                     tokenRefreshFlow,
+                                                     actualProjectCoordinates,
+                                                     repo.remote)
 
   val serverVersion: GitLabVersion? = glMetadata?.version
 

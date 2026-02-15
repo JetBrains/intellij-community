@@ -69,11 +69,11 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
       persistentChangesViewedState.updatesFlow.withInitial(Unit),
     ) { discPos, draftsPos, _ ->
       changes.associateWith { change ->
-        val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRepository, change.filePath)
+        val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, change.filePath)
         val isRead = !isOnLatest || sha?.let {
           persistentChangesViewedState.isViewed(
-            mergeRequest.glProject, mergeRequest.iid,
-            mergeRequest.gitRepository,
+            mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
+            mergeRequest.gitRemote.repository,
             change.filePath, it
           )
         } ?: false
@@ -104,13 +104,13 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
     val filePathsWithShas = changes.mapNotNull { change ->
       val path = change.filePath
-      parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRepository, path)?.let {
+      parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, path)?.let {
         path to it
       }
     }
     persistentChangesViewedState.markViewed(
-      mergeRequest.glProject, mergeRequest.iid,
-      mergeRequest.gitRepository,
+      mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
+      mergeRequest.gitRemote.repository,
       filePathsWithShas,
       viewed
     )

@@ -34,7 +34,6 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import fleet.rpc.client.durable
@@ -68,7 +67,6 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
-import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
 import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -80,8 +78,6 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   override val tabs: List<TerminalToolWindowTab>
     get() = mutableTabs.toList()
-
-  private val listeners = DisposableWrapperList<TerminalTabsManagerListener>()
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
 
@@ -116,6 +112,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     if (toolWindow.contentManager.isEmpty) {
       toolWindow.hide()
     }
+
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabDetached(tab)
     return tab.view
   }
 
@@ -126,8 +124,9 @@ internal class TerminalToolWindowTabsManagerImpl(
     return tab
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener) {
-    listeners.add(listener, parentDisposable)
+    project.messageBus.connect(parentDisposable).subscribe(TerminalTabsManagerListener.TOPIC, listener)
   }
 
   private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
@@ -230,9 +229,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       selectTab()
     }
 
-    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling tab created event: $tab") {
-      it.tabAdded(tab)
-    }
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabAdded(tab)
   }
 
   private fun addToTabsList(tab: TerminalToolWindowTab) {
@@ -247,6 +244,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
     terminal.title.change { defaultTitle = tabName }
     createBackendTabAndStartSession(terminal, builder)
+
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
     return terminal
   }
 

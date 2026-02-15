@@ -1,6 +1,12 @@
 <idea-plugin visibility="public">
   <dependencies>
-     <module name="intellij.grid.types"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.grid.types"/>
+    <module name="intellij.libraries.automaton"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

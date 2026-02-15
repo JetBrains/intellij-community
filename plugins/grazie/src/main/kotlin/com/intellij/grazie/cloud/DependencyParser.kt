@@ -38,7 +38,7 @@ import org.languagetool.language.English
 
 object DependencyParser {
   private val LOG = Logger.getInstance(DependencyParser::class.java)
-  private val cachedTrees: MutableMap<String, Tree> = createConcurrentSoftKeySoftValueMap()
+  private val cachedTrees: MutableMap<SentenceWithLanguage, Tree> = createConcurrentSoftKeySoftValueMap()
 
   @JvmStatic
   fun getParser(context: ProofreadingContext, minimal: Boolean): AsyncBatchParser<Tree>? {
@@ -75,7 +75,7 @@ object DependencyParser {
           (ltLanguage?.disambiguator as? LazyCachingConcurrentDisambiguator)?.ensureInitializedAsync()
           @Suppress("UNCHECKED_CAST")
           return sentences.associateWith {
-            cachedTrees.getOrPut(it.sentence) {
+            cachedTrees.getOrPut(SentenceWithLanguage(it.sentence, language)) {
               ensureActive()
               Tree.createFlatTree(support, it.sentence)
             }
@@ -172,3 +172,5 @@ object DependencyParser {
     }
   }
 }
+
+private data class SentenceWithLanguage(val sentence: String, val language: Language)

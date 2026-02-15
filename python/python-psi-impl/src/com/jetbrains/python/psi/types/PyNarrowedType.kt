@@ -88,7 +88,7 @@ class PyNarrowedType private constructor(
     }
   }
 
-  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyNarrowedType(this)
     }

@@ -4,7 +4,7 @@ package com.intellij.platform.eel.tcp
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
-import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
+import com.intellij.platform.ijent.community.impl.ijentFailSafeFileSystemApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +14,7 @@ import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.pathString
 
 
 class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSystemBackend {
@@ -24,10 +25,10 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
   private val cache = ConcurrentHashMap<String, FileSystem>()
 
   override fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem? {
-    val internalName = TcpEelPathParser.extractInternalMachineId(sanitizedPath) ?: return null
-    val descriptor = TcpEelPathParser.toDescriptor(internalName) ?: return null
+    val (internalName, osFamily) = TcpEelPathParser.extractInternalMachineId(sanitizedPath) ?: return null
+    val descriptor = TcpEelPathParser.toDescriptor(internalName, osFamily) ?: return null
 
-    return cache.computeIfAbsent(internalName) { createFilesystem(internalName, localFS, descriptor) }
+    return cache.computeIfAbsent("$internalName-${osFamily.name.lowercase()}") { createFilesystem(internalName, localFS, descriptor) }
   }
 
   private fun createFilesystem(internalName: String, localFS: FileSystem, descriptor: TcpEelDescriptor): FileSystem {
@@ -40,7 +41,7 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
     val ijentDefaultProvider = IjentNioFileSystemProvider.getInstance()
 
     try {
-      val ijentFs = IjentFailSafeFileSystemPosixApi(scope, descriptor, checkIsIjentInitialized = null)
+      val ijentFs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = null)
       ijentDefaultProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
     }
     catch (_: FileSystemAlreadyExistsException) {
@@ -51,12 +52,13 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
       root = localPath,
       ijentFsProvider = ijentDefaultProvider,
       originalFsProvider = localFS.provider(),
-      useRootDirectoriesFromOriginalFs = false
+      useRootDirectoriesFromOriginalFs = false,
+      eelDescriptor = descriptor,
     ).getFileSystem(ijentUri)
   }
 
   override fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String> {
-    return cache.keys.map { "${TcpEelConstants.TCP_PROTOCOL_PREFIX}$it" }
+    return cache.values.flatMap { it.rootDirectories }.map { it.pathString }
   }
 
   override fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> {

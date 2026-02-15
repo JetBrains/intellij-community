@@ -192,13 +192,11 @@ internal class InstalledPluginsTabSearchResultPanel(
       coroutineScope.launch {
         PluginModelAsyncOperationsExecutor.loadUpdates().let { updates ->
           if (!ContainerUtil.isEmpty(updates)) {
-            myPostFillGroupCallback = Runnable {
+            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
               PluginManagerConfigurablePanel.applyUpdates(myPanel, updates)
               mySelectionListener.accept(myInstalledPanelSupplier.get())
               mySelectionListener.accept(panel)
-            }
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-              updatePanel()
+              fullRepaint()
             }
           }
         }

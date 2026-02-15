@@ -258,9 +258,9 @@ a:com.intellij.remote.ui.CreateRemoteSdkForm
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
 - com.intellij.remote.ui.RemoteSdkEditorForm
-- p:myHelpersPathField:com.intellij.openapi.ui.TextFieldWithBrowseButton
-- p:myInterpreterPathField:com.intellij.openapi.ui.TextFieldWithBrowseButton
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- pf:myHelpersPathField:com.intellij.openapi.ui.TextFieldWithBrowseButton
+- pf:myInterpreterPathField:com.intellij.openapi.ui.TextFieldWithBrowseButton
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,com.intellij.remote.ui.RemoteSdkEditorContainer,com.intellij.remote.ui.SdkScopeController,java.lang.Runnable,com.intellij.remote.ui.BundleAccessor):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.remote.ui.RemoteSdkEditorContainer,java.lang.Runnable,com.intellij.remote.ui.BundleAccessor):V
 - createSdkData():com.intellij.remote.RemoteSdkAdditionalData

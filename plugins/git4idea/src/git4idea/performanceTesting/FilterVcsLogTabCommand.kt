@@ -33,7 +33,7 @@ import kotlin.io.path.exists
  * %filterVcsLogTab -name <user_name> -path<slash/divided/path>
  * Example - '%filterVcsLogTab -name "Alexander Kass -path 'srs/SomeImpl.java'"
  */
-class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val NAME = "filterVcsLogTab"

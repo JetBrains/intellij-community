@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -19,6 +19,7 @@ import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiTypeElement;
@@ -151,11 +152,13 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
     }
 
-    List<IntentionAction> createFieldFixes = CreateFieldFromUsage.generateActions(refExpr);
-    if (kind == VariableKind.FIELD) {
-      createFieldFixes = ContainerUtil.map(createFieldFixes, fix -> PriorityIntentionActionWrapper.highPriority(fix));
+    if (!(refExpr instanceof PsiMethodReferenceExpression)) {
+      List<IntentionAction> createFieldFixes = CreateFieldFromUsage.generateActions(refExpr);
+      if (kind == VariableKind.FIELD) {
+        createFieldFixes = ContainerUtil.map(createFieldFixes, fix -> PriorityIntentionActionWrapper.highPriority(fix));
+      }
+      result.addAll(createFieldFixes);
     }
-    result.addAll(createFieldFixes);
 
     if (!isQualified) {
       IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);

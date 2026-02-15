@@ -1,5 +1,4 @@
-<idea-plugin>
-
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.java.guiForms.compiler" />
     <module name="intellij.platform.jps.build.javac.rt" />

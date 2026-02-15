@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.properties.service
 
+import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil
+import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil.Companion.PROPERTIES_FILE_ORIGINAL_INFO
+import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil.Companion.getExtensionsFor
+import com.intellij.gradle.java.groovy.service.resolve.GradleGroovyProperty
 import com.intellij.gradle.java.properties.util.gradlePropertiesStream
 import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.IProperty
@@ -15,10 +19,6 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributorUtil
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributorUtil.Companion.PROPERTIES_FILE_ORIGINAL_INFO
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributorUtil.Companion.getExtensionsFor
-import org.jetbrains.plugins.gradle.service.resolve.GradleGroovyProperty
 import org.jetbrains.plugins.gradle.service.resolve.GradleProjectAwareType
 import org.jetbrains.plugins.gradle.service.resolve.getAccessorsForAllCatalogs
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogAccessor

@@ -43,7 +43,7 @@ public interface PyClassStub extends NamedStub<PyClass>, PyVersionSpecificStub {
    * @return literal text of expressions in the base classes list.
    */
   @NotNull
-  List<String> getSuperClassesText();
+  List<@NotNull String> getSuperClassesText();
 
 
   @ApiStatus.Internal

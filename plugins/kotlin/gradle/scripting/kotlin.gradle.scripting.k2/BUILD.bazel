@@ -81,6 +81,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
     "//plugins/gradle/java/toml",
+    "//plugins/gradle/java/groovy",
   ]
 )
 
@@ -170,6 +171,7 @@ jvm_library(
     "//plugins/gradle/completion:completion_test_lib",
     "//plugins/gradle/java/toml",
     "//plugins/gradle/java/properties",
+    "//plugins/gradle/java/groovy",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

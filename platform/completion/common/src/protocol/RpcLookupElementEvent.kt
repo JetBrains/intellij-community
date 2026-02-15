@@ -11,34 +11,20 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface RpcLookupElementEvent {
   /**
-   * the current item changed in the current lookup
+   * The lookup state changed. Only changed properties are included (null means not changed).
    */
   @Serializable
-  data class CurrentItemChanged(
+  data class LookupStateChanged(
     val requestId: RpcCompletionRequestId,
-    val itemId: RpcCompletionItemId?,
-    val focusDegree: LookupFocusDegree,
+    val selectedItemId: RpcSelectedItem? = null,
+    val focusDegree: LookupFocusDegree? = null,
+    val sortedItemIds: List<RpcCompletionItemId>? = null,
   ) : RpcLookupElementEvent {
-    override fun toString(): String = buildToString("SelectedItem") {
+    override fun toString(): String = buildToString("LookupStateChanged") {
       field("requestId", requestId)
-      field("itemId", itemId)
-      field("focusDegree", focusDegree)
-    }
-  }
-
-  /**
-   * the arrangement changed in the current lookup
-   */
-  @Serializable
-  data class ArrangementChanged(
-    val requestId: RpcCompletionRequestId,
-    val arrangementId: RpcCompletionArrangementId,
-    val focusDegree: LookupFocusDegree,
-  ) : RpcLookupElementEvent {
-    override fun toString(): String = buildToString("ArrangementChanged") {
-      field("requestId", requestId)
-      field("arrangementId", arrangementId)
-      field("focusDegree", focusDegree)
+      fieldWithNullDefault("selectedItemId", selectedItemId)
+      fieldWithNullDefault("focusDegree", focusDegree)
+      fieldWithNullDefault("sortedItemIds", sortedItemIds)
     }
   }
 
@@ -64,3 +50,10 @@ sealed interface RpcLookupElementEvent {
 
 }
 
+
+@Serializable
+data class RpcSelectedItem(val value: RpcCompletionItemId? = null) {
+  override fun toString(): String = buildToString("RpcSelectedItem") {
+    fieldWithNullDefault("value", value)
+  }
+}

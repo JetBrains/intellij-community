@@ -1,8 +1,11 @@
 <idea-plugin>
   <dependencies>
     <plugin id="org.jetbrains.idea.reposearch"/>
-    <plugin id="org.jetbrains.idea.maven"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.intellij.groovy"/>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.gradle.java.groovy"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

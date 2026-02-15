@@ -474,7 +474,7 @@ abstract class PosixNioBasedEelFileSystemApi(
   override suspend fun createDirectory(
     path: EelPath,
     attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>,
-  ): EelResult<Unit, EelFileSystemPosixApi.CreateDirectoryError> =
+  ): EelResult<Unit, EelFileSystemApi.CreateDirectoryError> =
     wrapIntoEelResult {
       Files.createDirectory(path.toNioPath())
     }
@@ -545,6 +545,13 @@ abstract class WindowsNioBasedEelFileSystemApi(
   override suspend fun getRootDirectories(): Collection<EelPath> =
     FileSystems.getDefault().rootDirectories.map { path ->
       EelPath.parse(path.toString(), LocalEelDescriptor)
+    }
+
+  override suspend fun createDirectory(
+    path: EelPath,
+  ): EelResult<Unit, EelFileSystemApi.CreateDirectoryError> =
+    wrapIntoEelResult {
+      Files.createDirectory(path.toNioPath())
     }
 
   override suspend fun listDirectoryWithAttrs(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<

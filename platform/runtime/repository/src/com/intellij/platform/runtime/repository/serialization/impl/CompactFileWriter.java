@@ -21,7 +21,7 @@ import java.util.Map;
 
 public final class CompactFileWriter {
   public static void saveToFile(@NotNull Collection<RawRuntimeModuleDescriptor> originalDescriptors,
-                                @Nullable String bootstrapModuleName, @Nullable String mainPluginModuleId,
+                                @Nullable String bootstrapModuleName,
                                 int generatorVersion,
                                 @NotNull Path outputFile) throws IOException {
     try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(outputFile)))) {
@@ -39,12 +39,8 @@ public final class CompactFileWriter {
         }
       }
       
-      boolean hasMainPluginModule = mainPluginModuleId != null;
-      out.writeBoolean(hasMainPluginModule);
-      if (hasMainPluginModule) {
-        out.writeUTF(mainPluginModuleId);
-      }
-      
+      out.writeBoolean(false);//hasMainPluginModule
+
       List<RawRuntimeModuleDescriptor> descriptors = new ArrayList<>(originalDescriptors);
       Collections.sort(descriptors, Comparator.comparing(descriptor -> descriptor.getModuleId().getStringId()));
       Map<RuntimeModuleId, Integer> indexes = new HashMap<>(descriptors.size());

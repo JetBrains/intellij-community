@@ -54,6 +54,7 @@ Define dedicated-frame behavior for Agent chat opening. By default, chat opens i
 - Chat resume command remains provider-specific in dedicated mode as in current-project mode:
   - Codex: `codex resume <threadId>`
   - Claude: `claude --resume <threadId>`
+- New-session action semantics (including Codex `Codex (Full Auto)` mapping) are defined in `spec/actions/new-thread.spec.md` and do not change between dedicated/current-project modes.
 
 [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
@@ -93,4 +94,5 @@ Define dedicated-frame behavior for Agent chat opening. By default, chat opens i
 ## References
 - `spec/agent-chat-editor.spec.md`
 - `spec/agent-sessions.spec.md`
+- `spec/actions/new-thread.spec.md`
 - `community/platform/platform-impl/src/com/intellij/openapi/wm/ex/WelcomeScreenProjectProvider.kt`

@@ -209,7 +209,9 @@ class BundledRuntimeImpl(
       @Override
       override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
         if (dir != destinationDir && SystemInfoRt.isUnix) {
-          Files.setPosixFilePermissions(dir, exeOrDir)
+          if (Files.getPosixFilePermissions(dir) != exeOrDir) {
+            Files.setPosixFilePermissions(dir, exeOrDir)
+          }
         }
         return FileVisitResult.CONTINUE
       }
@@ -217,7 +219,10 @@ class BundledRuntimeImpl(
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         if (SystemInfoRt.isUnix) {
           val noExec = forWin || OWNER_EXECUTE !in Files.getPosixFilePermissions(file)
-          Files.setPosixFilePermissions(file, if (noExec) regular else exeOrDir)
+          val expected = if (noExec) regular else exeOrDir
+          if (Files.getPosixFilePermissions(file) != expected) {
+            Files.setPosixFilePermissions(file, expected)
+          }
         }
         else {
           Files.getFileAttributeView(file, DosFileAttributeView::class.java).setReadOnly(false)

@@ -264,9 +264,15 @@ public final class PythonSdkUpdater {
       if (isSdkDisposed()) {
         return;
       }
-      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress
+      // Cancel the indicator when the SDK is disposed to terminate any running processes (e.g., skeleton generation).
+      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress.
       Disposable indicatorDisposable = getIndicatorDisposable(indicator);
-      Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
+      if (mySdk instanceof Disposable sdkDisposable) {
+        Disposer.register(sdkDisposable, indicatorDisposable);
+      }
+      else {
+        Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
+      }
       if (Trigger.LOG.isDebugEnabled()) {
         Trigger.LOG.debug(
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
@@ -294,7 +300,9 @@ public final class PythonSdkUpdater {
       }
       finally {
         ApplicationManager.getApplication().invokeLater(() -> {
-          Disposer.dispose(indicatorDisposable);
+          if (!isSdkDisposed()) {
+            Disposer.dispose(indicatorDisposable);
+          }
           // restart code analysis
           DaemonCodeAnalyzer.getInstance(myProject).restart(this);
         }, myProject.getDisposed());

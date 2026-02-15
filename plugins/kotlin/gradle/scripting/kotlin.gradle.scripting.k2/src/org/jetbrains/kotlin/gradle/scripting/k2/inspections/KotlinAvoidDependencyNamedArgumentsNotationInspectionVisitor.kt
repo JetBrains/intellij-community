@@ -5,6 +5,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.gradle.java.groovy.codeInspection.fix.GradleDependencyNamedArgumentsFix.Companion.buildSingleStringDependencyNotation
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import org.jetbrains.plugins.gradle.codeInspection.fix.GradleDependencyNamedArgumentsFix.Companion.buildSingleStringDependencyNotation
 
 class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
     override fun visitCallExpression(expression: KtCallExpression) {

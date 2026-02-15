@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.util.graph.Graph
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * [Graph.getIn] returns [ModuleEntity] which depend on the given module taking into account exported dependencies.
@@ -42,7 +41,6 @@ class ModuleExportedDependenciesGraph(project: Project) {
     fun buildGraph(storage: EntityStorage): Graph<ModuleEntity> {
       return object : Graph<ModuleEntity> {
         private val directDependents: Map<ModuleId, List<DependencyEdge>>
-        private val cache = ConcurrentHashMap<ModuleEntity, Set<ModuleEntity>>()
 
         init {
           val dependentsMap = HashMap<ModuleId, MutableList<DependencyEdge>>()
@@ -65,23 +63,21 @@ class ModuleExportedDependenciesGraph(project: Project) {
         }
 
         override fun getIn(node: ModuleEntity): Iterator<ModuleEntity> {
-          return cache.computeIfAbsent(node) {
-            val result = HashSet<ModuleEntity>()
-            val queue = ArrayDeque<ModuleEntity>()
-            queue.add(node)
+          val result = HashSet<ModuleEntity>()
+          val queue = ArrayDeque<ModuleEntity>()
+          queue.add(node)
 
-            while (queue.isNotEmpty()) {
-              val current = queue.removeFirst()
-              val edges = directDependents[current.symbolicId] ?: emptyList()
+          while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            val edges = directDependents[current.symbolicId] ?: emptyList()
 
-              for (edge in edges) {
-                if (result.add(edge.dependent) && edge.exported) {
-                  queue.add(edge.dependent)
-                }
+            for (edge in edges) {
+              if (result.add(edge.dependent) && edge.exported) {
+                queue.add(edge.dependent)
               }
             }
-            result
-          }.iterator()
+          }
+          return result.iterator()
         }
 
         override fun getOut(node: ModuleEntity): Iterator<ModuleEntity> {

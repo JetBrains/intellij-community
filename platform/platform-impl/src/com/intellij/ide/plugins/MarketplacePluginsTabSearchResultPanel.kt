@@ -23,7 +23,9 @@ import com.intellij.ide.plugins.newui.getPluginsViewCustomizer
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -35,6 +37,9 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
@@ -174,15 +179,23 @@ internal class MarketplacePluginsTabSearchResultPanel(
       }
       else {
         PluginModelAsyncOperationsExecutor
-          .performMarketplaceSearch(
-            parser.urlQuery,
-            !result.getModels().isEmpty()
-          ).let { (searchResult, updates) ->
+          .performMarketplaceSearch(parser.urlQuery).let { searchResult ->
             applySearchResult(
-              result, searchResult, updates, customRepositoriesMap,
+              result, searchResult, customRepositoriesMap,
               parser, searchIndex
             )
             updatePanel()
+            coroutineScope.launch(Dispatchers.IO) {
+              val updates = PluginModelAsyncOperationsExecutor.loadUpdates()
+              if (updates.isNotEmpty()) {
+                withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                  PluginManagerConfigurablePanel.applyUpdates(myPanel, updates)
+                  mySelectionListener.accept(myMarketplacePanelSupplier.get())
+                  mySelectionListener.accept(panel)
+                  fullRepaint()
+                }
+              }
+            }
           }
       }
     }
@@ -198,7 +211,6 @@ internal class MarketplacePluginsTabSearchResultPanel(
   private fun applySearchResult(
     result: PluginsGroup,
     searchResult: PluginSearchResult,
-    updates: List<PluginUiModel?>,
     customRepositoriesMap: Map<String, List<PluginUiModel>>,
     parser: SearchQueryParser.Marketplace,
     searchIndex: Int,
@@ -259,14 +271,6 @@ internal class MarketplacePluginsTabSearchResultPanel(
 
       myMarketplaceSortByAction.setText(title)
       result.addSecondaryAction(myMarketplaceSortByAction)
-
-      if (!ContainerUtil.isEmpty<PluginUiModel?>(updates)) {
-        myPostFillGroupCallback = Runnable {
-          PluginManagerConfigurablePanel.applyUpdates(myPanel, updates)
-          mySelectionListener.accept(myMarketplacePanelSupplier.get())
-          mySelectionListener.accept(panel)
-        }
-      }
     }
     val ids = result.getModels().mapTo(LinkedHashSet()) { it.pluginId }
     result.getPreloadedModel().setInstalledPlugins(getInstance().findInstalledPluginsSync(ids))

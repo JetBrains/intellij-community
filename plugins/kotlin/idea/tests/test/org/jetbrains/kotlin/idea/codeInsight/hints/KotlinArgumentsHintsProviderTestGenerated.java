@@ -75,6 +75,11 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         runTest("testData/codeInsight/hints/arguments/contextParametersUnusedMultipleWithArgument.kt");
     }
 
+    @TestMetadata("contextParametersWithLabeledLambda.kt")
+    public void testContextParametersWithLabeledLambda() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/contextParametersWithLabeledLambda.kt");
+    }
+
     @TestMetadata("contextParametersWithNested.kt")
     public void testContextParametersWithNested() throws Exception {
         runTest("testData/codeInsight/hints/arguments/contextParametersWithNested.kt");

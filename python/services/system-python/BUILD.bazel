@@ -47,6 +47,7 @@ jvm_library(
   resources = [":system-python_test_resources"],
   associates = [":system-python"],
   deps = [
+    "//platform/util/coroutines",
     "@lib//:kotlin-stdlib",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
@@ -75,6 +76,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//python/python-psi-impl:psi-impl",
     "//python/python-exec-service/execService.python",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
   ],
   exports = [
     "//python/services/shared",

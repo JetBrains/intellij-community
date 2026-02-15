@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.impl.EditorSkeleton.Companion.ANIMATION_DURATION_MS
 import com.intellij.openapi.fileEditor.impl.EditorSkeleton.Companion.TICK_MS
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth
@@ -240,8 +241,10 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong) :
       get() = 6
     private val ANIMATION_DURATION_MS
       get() = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong()
-    private val BACKGROUND_COLOR
-      get() = JBUI.CurrentTheme.Editor.BORDER_COLOR
+    private val BACKGROUND_COLOR: Color get() {
+      val color = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      return if (ColorUtil.isDark(color)) ColorUtil.brighter(color, 10) else ColorUtil.darker(color, 1)
+    }
   }
 }
 

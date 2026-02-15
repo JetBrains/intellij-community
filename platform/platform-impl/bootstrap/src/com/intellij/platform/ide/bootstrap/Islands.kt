@@ -132,7 +132,14 @@ private suspend fun changeColorSchemeForRiderIslandsDarkTheme(afterImportSetting
 
 private fun resetLafSettingsToDefault(lafManager: LafManager, themeManager: UiThemeProviderListManager) {
   val defaultLightLaf = themeManager.findThemeById("Islands Light") ?: return
-  val defaultDarkLaf = themeManager.findThemeById("Islands Dark") ?: return
+  var defaultDarkLaf = themeManager.findThemeById("Islands Dark") ?: return
+
+  if (lafManager.autodetect && JBColor.isBright() && lafManager.preferredDarkThemeId == "Darcula") {
+    val newDarcula = themeManager.findThemeById("Islands Darcula")
+    if (newDarcula != null) {
+      defaultDarkLaf = newDarcula
+    }
+  }
 
   lafManager.setPreferredLightLaf(defaultLightLaf)
   lafManager.setPreferredDarkLaf(defaultDarkLaf)

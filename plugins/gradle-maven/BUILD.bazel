@@ -26,6 +26,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
     "//plugins/repository-search/common",
+    "//plugins/gradle/java/groovy",
   ]
 )
 
@@ -51,6 +52,7 @@ jvm_library(
     "//plugins/repository-search/common:common_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/gradle/java/groovy",
   ]
 )
 ### auto-generated section `build intellij.gradle.java.maven` end

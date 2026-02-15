@@ -13,8 +13,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 interface ScriptCompilationConfigurationEntityBuilder : WorkspaceEntityBuilder<ScriptCompilationConfigurationEntity> {
     override var entitySource: EntitySource
     var data: ByteArray
-    var hash: ScriptCompilationConfigurationHash
-    var tag: Int
+    var identity: ScriptCompilationConfigurationIdentity
 }
 
 internal object ScriptCompilationConfigurationEntityType :
@@ -22,15 +21,13 @@ internal object ScriptCompilationConfigurationEntityType :
     override val entityClass: Class<ScriptCompilationConfigurationEntity> get() = ScriptCompilationConfigurationEntity::class.java
     operator fun invoke(
         data: ByteArray,
-        hash: ScriptCompilationConfigurationHash,
-        tag: Int,
+        identity: ScriptCompilationConfigurationIdentity,
         entitySource: EntitySource,
         init: (ScriptCompilationConfigurationEntityBuilder.() -> Unit)? = null,
     ): ScriptCompilationConfigurationEntityBuilder {
         val builder = builder()
         builder.data = data
-        builder.hash = hash
-        builder.tag = tag
+        builder.identity = identity
         builder.entitySource = entitySource
         init?.invoke(builder)
         return builder
@@ -46,8 +43,7 @@ fun MutableEntityStorage.modifyScriptCompilationConfigurationEntity(
 @JvmName("createScriptCompilationConfigurationEntity")
 fun ScriptCompilationConfigurationEntity(
     data: ByteArray,
-    hash: ScriptCompilationConfigurationHash,
-    tag: Int,
+    identity: ScriptCompilationConfigurationIdentity,
     entitySource: EntitySource,
     init: (ScriptCompilationConfigurationEntityBuilder.() -> Unit)? = null,
-): ScriptCompilationConfigurationEntityBuilder = ScriptCompilationConfigurationEntityType(data, hash, tag, entitySource, init)
+): ScriptCompilationConfigurationEntityBuilder = ScriptCompilationConfigurationEntityType(data, identity, entitySource, init)

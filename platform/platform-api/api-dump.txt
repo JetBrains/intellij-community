@@ -938,7 +938,7 @@ f:com.intellij.ide.browsers.chrome.ChromeSettings
 - setUserDataDirectoryPath(java.lang.String):V
 c:com.intellij.ide.browsers.chrome.ChromeSettingsConfigurable
 - com.intellij.openapi.options.Configurable
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.ide.browsers.chrome.ChromeSettings):V
 - apply():V
 - createComponent():javax.swing.JComponent
@@ -969,7 +969,7 @@ f:com.intellij.ide.browsers.firefox.FirefoxSettings
 - setProfilesIniPath(java.lang.String):V
 c:com.intellij.ide.browsers.firefox.FirefoxSettingsConfigurable
 - com.intellij.openapi.options.Configurable
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.ide.browsers.firefox.FirefoxSettings):V
 - apply():V
 - createComponent():javax.swing.JComponent
@@ -4097,7 +4097,7 @@ c:com.intellij.openapi.ui.MultiLineLabelUI
 - splitStringByLines(java.lang.String):java.lang.String[]
 a:com.intellij.openapi.ui.NamedConfigurable
 - com.intellij.openapi.options.Configurable
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - p:<init>():V
 - p:<init>(Z,java.lang.Runnable):V
 - p:checkName(java.lang.String):V
@@ -5391,7 +5391,7 @@ com.intellij.openapi.wm.ext.LibrarySearchHelper
 - a:isLibraryExists(com.intellij.openapi.project.Project):Z
 com.intellij.platform.ide.customization.ExternalProductResourceUrls
 - sf:Companion:com.intellij.platform.ide.customization.ExternalProductResourceUrls$Companion
-- a:computePatchUrl(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.util.BuildNumber):com.intellij.util.Url
+- computePatchUrl(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.util.BuildNumber):com.intellij.util.Url
 - getBugReportUrl():kotlin.jvm.functions.Function1
 - getDownloadPageUrl():com.intellij.util.Url
 - getFeedbackReporter():com.intellij.platform.ide.customization.FeedbackReporter
@@ -5400,7 +5400,7 @@ com.intellij.platform.ide.customization.ExternalProductResourceUrls
 - s:getInstance():com.intellij.platform.ide.customization.ExternalProductResourceUrls
 - getKeyboardShortcutsPdfUrl():com.intellij.util.Url
 - getTechnicalSupportUrl():kotlin.jvm.functions.Function1
-- a:getUpdateMetadataUrl():com.intellij.util.Url
+- getUpdateMetadataUrl():com.intellij.util.Url
 - getWhatIsNewPageUrl():com.intellij.util.Url
 - getYouTubeChannelUrl():com.intellij.util.Url
 f:com.intellij.platform.ide.customization.ExternalProductResourceUrls$Companion
@@ -6716,7 +6716,7 @@ c:com.intellij.ui.OptionGroup
 a:com.intellij.ui.OptionalChooserComponent
 - com.intellij.ui.CheckBoxListListener
 - com.intellij.util.ui.ComponentWithEmptyText
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(java.util.List):V
 - apply():V
 - checkBoxSelectionChanged(I,Z):V
@@ -10530,7 +10530,7 @@ c:com.intellij.util.net.AuthenticationDialog
 - getPreferredFocusedComponent():javax.swing.JComponent
 c:com.intellij.util.net.AuthenticationPanel
 - javax.swing.JPanel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.Boolean):V
 - getLogin():java.lang.String
 - getPassword():C[]
@@ -10774,7 +10774,7 @@ f:com.intellij.util.net.ssl.CertificateUtil
 - s:loadX509Certificate(java.lang.String):java.security.cert.X509Certificate
 c:com.intellij.util.net.ssl.CertificateWarningDialog
 - com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(java.security.cert.X509Certificate,java.lang.String,java.lang.String,java.lang.String):V
 - p:createCenterPanel():javax.swing.JComponent
 - s:createExpiredCertificateWarning(java.security.cert.X509Certificate):com.intellij.util.net.ssl.CertificateWarningDialog

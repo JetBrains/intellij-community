@@ -1558,7 +1558,7 @@
     <config.codeVisionGroupSettingProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionSettingProvider"/>
 
     <statistics.validation.customValidationRule implementation="com.intellij.ide.ColorValidationRule"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ProjectWindowCustimizerUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.ide.ProjectWindowCustomizerUsagesCollector"/>
 
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 

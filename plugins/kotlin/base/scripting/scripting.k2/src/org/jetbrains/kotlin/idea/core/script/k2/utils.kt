@@ -6,10 +6,10 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.lang.Xxh3
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationData
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityId
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationHash
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
@@ -113,30 +113,27 @@ fun ScriptingHostConfigurationEntity.deserialize(): ScriptingHostConfiguration? 
  * @throws IllegalStateException if all tags (0..[Short.MAX_VALUE]) are exhausted for the given hash
  *         (extremely unlikely in practice)
  */
-fun MutableEntityStorage.getOrCreateScriptConfigurationEntityId(
+fun MutableEntityStorage.getOrCreateScriptConfigurationIdentity(
     configuration: ScriptCompilationConfiguration,
     entitySource: EntitySource
-): ScriptCompilationConfigurationEntityId {
+): ScriptCompilationConfigurationIdentity {
     val data = configuration.asBytes()
-    val hash = ScriptCompilationConfigurationHash(Xxh3.hash(data))
+    val hash = Xxh3.hash(data)
 
-    for (tag in 0..Short.MAX_VALUE) {
-        val candidateId = ScriptCompilationConfigurationEntityId(hash = hash, tag = tag)
-        val existingEntity = this.resolve(candidateId)
+    for (tagInt in 0..<Short.MAX_VALUE) {
+        val tag = tagInt.toByte()
+        val identity = ScriptCompilationConfigurationIdentity(hash = hash, tag = tag)
+        val existingEntity = this.resolve(identity)
         if (existingEntity == null) {
-            try {
-                this addEntity ScriptCompilationConfigurationEntity(data, hash, tag, entitySource)
-            } catch (e: Exception) {
-                println(e)
-            }
-            return candidateId
+            this addEntity ScriptCompilationConfigurationEntity(data, identity, entitySource)
+            return identity
         } else {
             val existingBytes = existingEntity.data
             if (existingBytes.contentEquals(data)) {
-                return candidateId
+                return identity
             }
         }
     }
 
-    error("Exhausted tags for configuration=$configuration")
+    errorWithAttachment("Exhausted tags for configuration=$configuration")
 }

@@ -17,34 +17,30 @@ import java.util.stream.Collectors;
  * get information about modules in IDE, use {@link com.intellij.platform.runtime.repository.RuntimeModuleRepository} instead.
  */
 public final class RawRuntimeModuleRepositoryData {
-  private final Map<RuntimeModuleId, RawRuntimeModuleDescriptor> myDescriptors;
+  private final Map<RuntimeModuleId, RawRuntimeModuleDescriptor> myModuleDescriptors;
   private final Path myBasePath;
-  private final RuntimeModuleId myMainPluginModuleId;
 
-  private RawRuntimeModuleRepositoryData(@NotNull Map<RuntimeModuleId, RawRuntimeModuleDescriptor> descriptors,
-                                         @NotNull Path basePath,
-                                         @Nullable RuntimeModuleId mainPluginModuleId) {
-    myDescriptors = descriptors;
+  private RawRuntimeModuleRepositoryData(@NotNull Map<RuntimeModuleId, RawRuntimeModuleDescriptor> moduleDescriptors,
+                                         @NotNull Path basePath) {
+    myModuleDescriptors = moduleDescriptors;
     myBasePath = basePath;
-    myMainPluginModuleId = mainPluginModuleId;
   }
 
   /**
-   * @deprecated use {@link RuntimeModuleRepositorySerialization#loadFromJar(Path)} or {@link #create(Map, Path, RuntimeModuleId)} instead
+   * @deprecated use {@link RuntimeModuleRepositorySerialization#loadFromJar(Path)} or {@link #create(Map, Path)} instead
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal
-  public RawRuntimeModuleRepositoryData(@NotNull Map<String, RawRuntimeModuleDescriptor> descriptors, @NotNull Path basePath, @Nullable String mainPluginModuleId) {
-    myDescriptors = new LinkedHashMap<>(descriptors.size());
-    for (Map.Entry<String, RawRuntimeModuleDescriptor> entry : descriptors.entrySet()) {
-      myDescriptors.put(RuntimeModuleId.raw(entry.getKey()), entry.getValue());
+  public RawRuntimeModuleRepositoryData(@NotNull Map<String, RawRuntimeModuleDescriptor> moduleDescriptors, @NotNull Path basePath, @Nullable String mainPluginModuleId) {
+    myModuleDescriptors = new LinkedHashMap<>(moduleDescriptors.size());
+    for (Map.Entry<String, RawRuntimeModuleDescriptor> entry : moduleDescriptors.entrySet()) {
+      myModuleDescriptors.put(RuntimeModuleId.raw(entry.getKey()), entry.getValue());
     }
     myBasePath = basePath;
-    myMainPluginModuleId = mainPluginModuleId != null ? RuntimeModuleId.raw(mainPluginModuleId) : null;
   }
 
   public @Nullable RawRuntimeModuleDescriptor findDescriptor(@NotNull RuntimeModuleId id) {
-    return myDescriptors.get(id);
+    return myModuleDescriptors.get(id);
   }
 
   /**
@@ -52,7 +48,7 @@ public final class RawRuntimeModuleRepositoryData {
    */
   @Deprecated(forRemoval = true)
   public @Nullable RawRuntimeModuleDescriptor findDescriptor(@NotNull String id) {
-    return myDescriptors.get(RuntimeModuleId.raw(id));
+    return myModuleDescriptors.get(RuntimeModuleId.raw(id));
   }
 
   public @NotNull Path getBasePath() {
@@ -60,7 +56,7 @@ public final class RawRuntimeModuleRepositoryData {
   }
 
   public @NotNull Set<RuntimeModuleId> getAllModuleIds() {
-    return myDescriptors.keySet();
+    return myModuleDescriptors.keySet();
   }
 
   /**
@@ -68,15 +64,17 @@ public final class RawRuntimeModuleRepositoryData {
    */
   @Deprecated(forRemoval = true)
   public @NotNull Set<String> getAllIds() {
-    return myDescriptors.keySet().stream().map(RuntimeModuleId::getStringId).collect(Collectors.toSet());
+    return myModuleDescriptors.keySet().stream().map(RuntimeModuleId::getStringId).collect(Collectors.toSet());
   }
 
   /**
    * Returns ID of the main plugin module for an additional module repository describing a custom plugin. 
-   * For the main module repository (describing the IDE distribution) it returns {@code null}. 
+   * For the main module repository (describing the IDE distribution) it returns {@code null}.
+   * @deprecated isn't supported anymore, always returns {@code null}
    */
+  @Deprecated(forRemoval = true)
   public @Nullable String getMainPluginModuleId() {
-    return myMainPluginModuleId != null ? myMainPluginModuleId.getStringId() : null;
+    return null;
   }
 
   /**
@@ -84,10 +82,9 @@ public final class RawRuntimeModuleRepositoryData {
    */
   @ApiStatus.Internal
   public static @NotNull RawRuntimeModuleRepositoryData create(
-    @NotNull Map<RuntimeModuleId, RawRuntimeModuleDescriptor> descriptors,
-    @NotNull Path basePath,
-    @Nullable RuntimeModuleId mainPluginModuleId
+    @NotNull Map<RuntimeModuleId, RawRuntimeModuleDescriptor> moduleDescriptors,
+    @NotNull Path basePath
   ) {
-    return new RawRuntimeModuleRepositoryData(descriptors, basePath, mainPluginModuleId);
+    return new RawRuntimeModuleRepositoryData(moduleDescriptors, basePath);
   }
 }

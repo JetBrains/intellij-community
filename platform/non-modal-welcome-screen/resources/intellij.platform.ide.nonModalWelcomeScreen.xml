@@ -41,6 +41,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector"/>
 
     <internalFileTemplate name="Generic Empty File"/>
+    <editorSkeletonPolicy implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenEditorSkeletonPolicy"/>
   </extensions>
 
   <actions resource-bundle="messages.NonModalWelcomeScreenBundle">

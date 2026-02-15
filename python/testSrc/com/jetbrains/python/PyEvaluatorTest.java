@@ -254,6 +254,12 @@ public class PyEvaluatorTest extends PyTestCase {
     assertTrue(byExpression("2 != 1", Boolean.class));
   }
 
+  public void testPositiveNumberLiteral() {
+    assertEquals(Integer.valueOf(5), byExpression("+5", Integer.class));
+    assertEquals(Long.valueOf(Long.MAX_VALUE), byExpression("+" + Long.MAX_VALUE, Long.class));
+    assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression("+" + BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), BigInteger.class));
+  }
+
   public void testBooleanOperators() {
     assertTrue(byExpression("True and True", Boolean.class));
     assertTrue(byExpression("True or False", Boolean.class));

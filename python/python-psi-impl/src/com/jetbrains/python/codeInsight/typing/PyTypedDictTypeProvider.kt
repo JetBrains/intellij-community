@@ -6,17 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.MAPPING_GET
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.NOT_REQUIRED
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.NOT_REQUIRED_EXT
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.READONLY
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.READONLY_EXT
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.REQUIRED
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.REQUIRED_EXT
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.TYPED_DICT
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.TYPED_DICT_EXT
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getType
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.resolveToQualifiedNames
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyBoolLiteralExpression
 import com.jetbrains.python.psi.PyCallExpression
@@ -72,15 +61,16 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
   }
 
   companion object {
-    val nameIsTypedDict = { name: String? -> name == TYPED_DICT || name == TYPED_DICT_EXT }
+    val nameIsTypedDict = { name: String? -> name == PyTypingTypeProvider.TYPED_DICT || name == PyTypingTypeProvider.TYPED_DICT_EXT }
 
     fun isGetMethodToOverride(call: PyCallExpression, context: TypeEvalContext): Boolean {
       val callee = call.callee
-      return callee != null && resolveToQualifiedNames(callee, context).any { it == "dict.get" /* py3 */ || it == MAPPING_GET /* py2 */ }
+      return callee != null && PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+        .any { it == "dict.get" /* py3 */ || it == PyTypingTypeProvider.MAPPING_GET /* py2 */ }
     }
 
     fun isTypedDict(expression: PyExpression, context: TypeEvalContext): Boolean {
-      return resolveToQualifiedNames(expression, context).any(nameIsTypedDict)
+      return PyTypingTypeProvider.resolveToQualifiedNames(expression, context).any(nameIsTypedDict)
     }
 
     fun isTypingTypedDictInheritor(cls: PyClass, context: TypeEvalContext): Boolean {
@@ -266,14 +256,14 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       val result = mutableListOf<TypedDictFieldQualifier>()
       expression.accept(object : PyRecursiveElementVisitor() {
         override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-          val resolvedNames = resolveToQualifiedNames(node.operand, context)
-          if (resolvedNames.any { name -> REQUIRED == name || REQUIRED_EXT == name }) {
+          val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(node.operand, context)
+          if (resolvedNames.any { name -> PyTypingTypeProvider.REQUIRED == name || PyTypingTypeProvider.REQUIRED_EXT == name }) {
             result.add(TypedDictFieldQualifier.REQUIRED)
           }
-          else if (resolvedNames.any { name -> NOT_REQUIRED == name || NOT_REQUIRED_EXT == name }) {
+          else if (resolvedNames.any { name -> PyTypingTypeProvider.NOT_REQUIRED == name || PyTypingTypeProvider.NOT_REQUIRED_EXT == name }) {
             result.add(TypedDictFieldQualifier.NOT_REQUIRED)
           }
-          else if (resolvedNames.any { name -> READONLY == name || READONLY_EXT == name }) {
+          else if (resolvedNames.any { name -> PyTypingTypeProvider.READONLY == name || PyTypingTypeProvider.READONLY_EXT == name }) {
             result.add(TypedDictFieldQualifier.READ_ONLY)
           }
           super.visitPySubscriptionExpression(node)
@@ -367,7 +357,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       if (expr is PySubscriptionExpression) {
         qualifiers = parseTypedDictFieldQualifiers(expr, context)
       }
-      return if (expr != null) Pair(getType(expr, context), qualifiers) else null
+      return if (expr != null) Pair(PyTypingTypeProvider.getType(expr, context), qualifiers) else null
     }
   }
 }

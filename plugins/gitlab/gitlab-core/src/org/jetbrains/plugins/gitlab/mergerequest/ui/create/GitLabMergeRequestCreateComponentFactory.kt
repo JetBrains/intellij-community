@@ -32,7 +32,7 @@ import javax.swing.JComponent
 
 internal object GitLabMergeRequestCreateComponentFactory {
   fun create(project: Project, cs: CoroutineScope, createVm: GitLabMergeRequestCreateViewModel): JComponent {
-    val directionModel = GitLabMergeRequestCreateDirectionModel(createVm.projectsManager, createVm.projectData.projectMapping)
+    val directionModel = GitLabMergeRequestCreateDirectionModel(createVm)
     cs.launchNow {
       createVm.branchState.filterNotNull().collect { branchState ->
         directionModel.baseBranch = branchState.baseBranch

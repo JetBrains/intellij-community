@@ -13,12 +13,14 @@ import com.intellij.openapi.util.text.StringUtilRt
 import git4idea.http.GitAskPassApp
 import git4idea.http.GitAskPassAppHandler
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.UUID
 
 /**
  * Provides the authentication mechanism for Git HTTP connections.
  */
+@ApiStatus.Internal
 abstract class GitHttpAuthService(coroutineScope: CoroutineScope) : ExternalProcessHandlerService<GitAskPassAppHandler>(
   "intellij-git-askpass",
   GitAskPassApp::class.java,

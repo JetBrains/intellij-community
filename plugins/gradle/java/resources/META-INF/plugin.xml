@@ -9,6 +9,10 @@
   </description>
 
   <dependencies>
+    <plugin id="org.intellij.groovy"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.platform.jps.build"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.gradle"/>
     <!-- endregion -->
@@ -16,8 +20,6 @@
 
   <module value="com.intellij.modules.gradle.java"/>
   <module value="org.jetbrains.plugins.gradle.java"/>
-
-  <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
 
   <content namespace="jetbrains">
     <module name="intellij.gradle.profiler"/>
@@ -82,8 +84,6 @@
     <compileServer.plugin classpath="gradle-jps.jar"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.startup.GradleJvmStartupActivity"/>
     <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
-    <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
-    <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationJavaExtension"/>
     <externalSystem.debuggerBackend implementation="org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend" />
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>

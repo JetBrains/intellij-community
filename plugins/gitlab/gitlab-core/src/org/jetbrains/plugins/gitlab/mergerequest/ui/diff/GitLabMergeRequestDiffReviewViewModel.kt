@@ -119,8 +119,8 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   override fun markViewed() {
     val sha = mergeRequest.details.value.diffRefs?.headSha ?: return
     persistentChangesViewedState.markViewed(
-      mergeRequest.glProject, mergeRequest.iid,
-      mergeRequest.gitRepository,
+      mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
+      mergeRequest.gitRemote.repository,
       listOf(change.filePath to sha),
       true
     )

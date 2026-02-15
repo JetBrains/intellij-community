@@ -24,6 +24,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDi
 import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
+import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.StreamingWriteResult
 import com.intellij.platform.eel.fs.WalkDirectoryEntry
 import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
@@ -1685,6 +1686,21 @@ object EelPathUtils {
       }
       if (!canExecute) {
         return AccessMode.EXECUTE
+      }
+    }
+    return null
+  }
+
+  /**
+   * returns one of [modes] which is not satisfied, or `null` if all modes are satisfied
+   */
+  @ApiStatus.Internal
+  fun checkAccess(fileInfo: EelWindowsFileInfo, vararg modes: AccessMode): AccessMode? {
+    // TODO check other permissions
+    if (AccessMode.WRITE in modes) {
+      val canWrite = !fileInfo.permissions.isReadOnly
+      if (!canWrite) {
+        return AccessMode.WRITE
       }
     }
     return null

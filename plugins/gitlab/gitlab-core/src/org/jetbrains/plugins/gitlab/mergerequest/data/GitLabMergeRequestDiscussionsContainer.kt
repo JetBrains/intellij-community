@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
@@ -73,7 +72,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private val project: Project,
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
-  private val glProject: GitLabProjectCoordinates,
+  private val projectId: String,
   private val currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest,
 ) : GitLabMergeRequestDiscussionsContainer {
@@ -96,7 +95,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionRestDTO>>> by lazy {
     startGitLabRestETagListLoaderIn(
       cs,
-      getMergeRequestDiscussionsUri(glProject, mr.iid),
+      api.rest.getMergeRequestDiscussionsUri(projectId, mr.iid),
       { it.id },
 
       requestReloadFlow = reloadRequests,
@@ -121,7 +120,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
             GitLabDiscussionRestDTO::id,
             { disc ->
               LoadedGitLabDiscussion(this,
-                                     api, glMetadata, glProject, currentUser,
+                                     api, glMetadata, projectId, currentUser,
                                      { discussionEvents.emit(it) }, { draftNotesEvents.emit(it) },
                                      mr, disc, getDiscussionDraftNotes(disc.id).throwFailure())
             },
@@ -155,7 +154,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     else {
       startGitLabRestETagListLoaderIn(
         cs,
-        getMergeRequestDraftNotesUri(glProject, mr.iid),
+        api.rest.getMergeRequestDraftNotesUri(projectId, mr.iid),
         { it.id },
 
         requestReloadFlow = reloadRequests,
@@ -182,7 +181,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
           mapDataToModel(
             GitLabMergeRequestDraftNoteRestDTO::id,
             {
-              GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, glProject, mr, { draftNotesEvents.emit(it) }, it, currentUser)
+              GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, projectId, mr, { draftNotesEvents.emit(it) }, it, currentUser)
             },
             { update(it) }
           )
@@ -204,7 +203,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       val newDiscussion = withContext(Dispatchers.IO) {
-        api.rest.addNote(glProject, mr.iid, body).body()
+        api.rest.addNote(projectId, mr.iid, body).body()
       }
 
       withContext(NonCancellable) {
@@ -216,7 +215,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) {
     withContext(cs.coroutineContext) {
       val newDiscussion = withContext(Dispatchers.IO) {
-        api.rest.addDiffNote(glProject, mr.iid, GitLabDiffPositionInput.from(position), body).body()
+        api.rest.addDiffNote(projectId, mr.iid, GitLabDiffPositionInput.from(position), body).body()
       }
 
       withContext(NonCancellable) {
@@ -228,7 +227,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addDraftNote(body: String) {
     withContext(cs.coroutineContext) {
       val newNote = withContext(Dispatchers.IO) {
-        api.rest.addDraftNote(glProject, mr.iid, null, body).body()
+        api.rest.addDraftNote(projectId, mr.iid, null, body).body()
       }
 
       withContext(NonCancellable) {
@@ -240,7 +239,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addDraftNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) {
     withContext(cs.coroutineContext) {
       val newNote = withContext(Dispatchers.IO) {
-        api.rest.addDraftNote(glProject, mr.iid, GitLabDiffPositionInput.from(position), body).body()
+        api.rest.addDraftNote(projectId, mr.iid, GitLabDiffPositionInput.from(position), body).body()
       }
 
       withContext(NonCancellable) {
@@ -257,7 +256,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
 
       withContext(Dispatchers.IO) {
-        api.rest.submitDraftNotes(glProject, mr.iid)
+        api.rest.submitDraftNotes(projectId, mr.iid)
       }
       withContext(NonCancellable) {
         draftNotesEvents.emit(AllDeleted())

@@ -402,7 +402,7 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
     private val LOG = logger<GitLogProvider>()
 
     @JvmField
-    val DONT_CONSIDER_SHA: it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> = object : it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> {
+    internal val DONT_CONSIDER_SHA: it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> = object : it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> {
       override fun hashCode(ref: VcsRef?): Int {
         if (ref == null) return 0
         return 31 * ref.name.hashCode() + ref.type.hashCode()

@@ -162,8 +162,9 @@ private fun createProductionPartDescriptor(module: JpsModule, runtimeModuleNameG
 
 /**
  * Generates a descriptor for [module]'s tests.
- * In JPS, tests are added to classpath transitively. For example, if module 'a' depends on 'b', and 'b' depends on 'c', then tests of
- * module 'c' will be added to test classpath of module 'a', even if module 'b' has no test sources.
+ * In JPS, tests are added to the classpath transitively (see also MRI-2851).
+ * For example, if module 'a' depends on 'b', and 'b' depends on 'c', then tests of module 'c' will be added to the test classpath of
+ * module 'a', even if module 'b' has no test sources.
  * If we generate synthetic descriptors for tests of each module, even if it doesn't have test sources, the size of the module repository
  * will increase a lot. So here we add such transitive test dependencies directly to the module descriptors.
  */

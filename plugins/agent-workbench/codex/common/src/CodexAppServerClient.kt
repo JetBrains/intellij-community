@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
-private const val CODEX_COMMAND = "codex"
 private const val REQUEST_TIMEOUT_MS = 30_000L
 private const val PROCESS_TERMINATION_TIMEOUT_MS = 2_000L
 private const val MAX_PAGES = 10
@@ -42,7 +41,7 @@ private val LOG = logger<CodexAppServerClient>()
 
 class CodexAppServerClient(
   private val coroutineScope: CoroutineScope,
-  private val executablePathProvider: () -> String? = { null },
+  private val executablePathProvider: () -> String? = { CodexCliUtils.findExecutable() },
   private val environmentOverrides: Map<String, String> = emptyMap(),
   workingDirectory: Path? = null,
 ) {
@@ -52,7 +51,7 @@ class CodexAppServerClient(
   private val startMutex = Mutex()
   private val initMutex = Mutex()
   private val workingDirectoryPath = workingDirectory
-  private val protocol = CodexAppServerProtocol(workingDirectoryPath)
+  private val protocol = CodexAppServerProtocol()
 
   @Volatile
   private var process: Process? = null
@@ -69,6 +68,7 @@ class CodexAppServerClient(
     archived: Boolean,
     cursor: String? = null,
     limit: Int = PAGE_LIMIT,
+    cwdFilter: String? = null,
   ): CodexThreadPage {
     val resolvedLimit = limit.coerceAtLeast(1)
     val response = request(
@@ -82,7 +82,7 @@ class CodexAppServerClient(
         cursor?.let { generator.writeStringField("cursor", it) }
         generator.writeEndObject()
       },
-      resultParser = { parser -> protocol.parseThreadListResult(parser, archived) },
+      resultParser = { parser -> protocol.parseThreadListResult(parser, archived, cwdFilter) },
       defaultResult = ThreadListResult(emptyList(), null),
     )
     return CodexThreadPage(
@@ -91,7 +91,7 @@ class CodexAppServerClient(
     )
   }
 
-  suspend fun listThreads(archived: Boolean): List<CodexThread> {
+  suspend fun listThreads(archived: Boolean, cwdFilter: String? = null): List<CodexThread> {
     val threads = mutableListOf<CodexThread>()
     var cursor: String? = null
     var pages = 0
@@ -100,6 +100,7 @@ class CodexAppServerClient(
         archived = archived,
         cursor = cursor,
         limit = PAGE_LIMIT,
+        cwdFilter = cwdFilter,
       )
       threads.addAll(response.threads)
       cursor = response.nextCursor
@@ -108,11 +109,18 @@ class CodexAppServerClient(
     return threads.sortedByDescending { it.updatedAt }
   }
 
-  suspend fun createThread(): CodexThread {
+  suspend fun createThread(
+    cwd: String? = null,
+    approvalPolicy: String? = null,
+    sandbox: String? = null,
+  ): CodexThread {
     val thread = request(
       method = "thread/start",
       paramsWriter = { generator ->
         generator.writeStartObject()
+        cwd?.let { generator.writeStringField("cwd", it) }
+        approvalPolicy?.let { generator.writeStringField("approvalPolicy", it) }
+        sandbox?.let { generator.writeStringField("sandbox", it) }
         generator.writeEndObject()
       },
       resultParser = { parser -> protocol.parseThreadStartResult(parser) },
@@ -121,22 +129,40 @@ class CodexAppServerClient(
     return thread ?: throw CodexAppServerException("Codex app-server returned empty thread/start result")
   }
 
-  @Suppress("unused")
-  suspend fun archiveThread(id: String) {
-    requestUnit(method = "thread/archive", paramsWriter = { generator ->
-      generator.writeStartObject()
-      generator.writeStringField("id", id)
-      generator.writeEndObject()
-    })
-  }
-
-  @Suppress("unused")
-  suspend fun unarchiveThread(id: String) {
-    requestUnit(method = "thread/unarchive", paramsWriter = { generator ->
-      generator.writeStartObject()
-      generator.writeStringField("id", id)
-      generator.writeEndObject()
-    })
+  /**
+   * Sends a minimal [turn/start] followed by an immediate [turn/interrupt] for the given thread.
+   * This forces the Codex app-server to flush the session to disk so that `codex resume <id>` can find it.
+   * Without this step, [thread/start] only creates the thread in-memory.
+   */
+  suspend fun persistThread(threadId: String) {
+    val turnId = request(
+      method = "turn/start",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("threadId", threadId)
+        generator.writeFieldName("input")
+        generator.writeStartArray()
+        generator.writeStartObject()
+        generator.writeStringField("type", "text")
+        generator.writeStringField("text", "")
+        generator.writeEndObject()
+        generator.writeEndArray()
+        generator.writeEndObject()
+      },
+      resultParser = { parser -> protocol.parseTurnStartTurnId(parser) },
+      defaultResult = null,
+    )
+    if (turnId != null) {
+      requestUnit(
+        method = "turn/interrupt",
+        paramsWriter = { generator ->
+          generator.writeStartObject()
+          generator.writeStringField("threadId", threadId)
+          generator.writeStringField("turnId", turnId)
+          generator.writeEndObject()
+        },
+      )
+    }
   }
 
   fun shutdown() {
@@ -257,7 +283,7 @@ class CodexAppServerClient(
     val configuredExecutable = executablePathProvider()
       ?.trim()
       ?.takeIf { it.isNotEmpty() }
-    val executable = configuredExecutable ?: CODEX_COMMAND
+    val executable = configuredExecutable ?: CodexCliUtils.CODEX_COMMAND
     val process = try {
       GeneralCommandLine(executable, "app-server")
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)

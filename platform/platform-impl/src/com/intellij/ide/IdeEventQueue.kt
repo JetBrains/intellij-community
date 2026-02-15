@@ -1287,7 +1287,9 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
     if (uiSettings == null ||
         !SystemInfoRt.isWindows ||
         !Registry.`is`("actionSystem.win.suppressAlt", true) ||
-        !(uiSettings.hideToolStripes || uiSettings.presentationMode)) {
+        // Need to handle Alt to show hidden tool stripes by double Alt or to focus the main menu
+        !(uiSettings.hideToolStripes || uiSettings.presentationMode) &&
+        !Registry.`is`("ide.windows.main.menu.focus.on.alt", false)) {
       return false
     }
 

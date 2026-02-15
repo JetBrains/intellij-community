@@ -109,6 +109,14 @@ interface EelFileSystemApi {
     interface Other : ListDirectoryError, EelFsError.Other
   }
 
+  sealed interface CreateDirectoryError : EelFsError {
+    interface DirAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
+    interface FileAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
+    interface ParentNotFound : CreateDirectoryError, EelFsError.DoesNotExist
+    interface PermissionDenied : CreateDirectoryError, EelFsError.PermissionDenied
+    interface Other : CreateDirectoryError, EelFsError.Other
+  }
+
   /**
    * Resolves all symlinks in the path. Corresponds to realpath(3) on Unix and GetFinalPathNameByHandle on Windows.
    */
@@ -1025,15 +1033,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
   }
 
   @CheckReturnValue
-  suspend fun createDirectory(path: EelPath, attributes: List<CreateDirAttributePosix>): EelResult<Unit, CreateDirectoryError>
-
-  sealed interface CreateDirectoryError : EelFsError {
-    interface DirAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
-    interface FileAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
-    interface ParentNotFound : CreateDirectoryError, EelFsError.DoesNotExist
-    interface PermissionDenied : CreateDirectoryError, EelFsError.PermissionDenied
-    interface Other : CreateDirectoryError, EelFsError.Other
-  }
+  suspend fun createDirectory(path: EelPath, attributes: List<CreateDirAttributePosix>): EelResult<Unit, EelFileSystemApi.CreateDirectoryError>
 
   @Deprecated("Use the method with the builder")
   @CheckReturnValue
@@ -1160,6 +1160,9 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
   override val user: EelUserWindowsInfo
 
   suspend fun getRootDirectories(): Collection<EelPath>
+
+  @CheckReturnValue
+  suspend fun createDirectory(path: EelPath): EelResult<Unit, EelFileSystemApi.CreateDirectoryError>
 
   @Deprecated("Use the method with the builder")
   @CheckReturnValue

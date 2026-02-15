@@ -27,28 +27,36 @@ public final class RuntimeModuleRepositorySerialization {
 
   public static void saveToCompactFile(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName,
                                        @NotNull Path filePath, int generatorVersion) throws IOException {
-    saveToCompactFile(descriptors, bootstrapModuleName, filePath, null, generatorVersion);
+    CompactFileWriter.saveToFile(descriptors, bootstrapModuleName, generatorVersion, filePath);
   }
 
+  /**
+   * @deprecated {@code mainPluginModuleId} is not used anymore, use {@link #saveToCompactFile(Collection, String, Path, int)} instead
+   */
+  @Deprecated(forRemoval = true)
   public static void saveToCompactFile(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName,
                                        @NotNull Path filePath, @Nullable String mainPluginModuleId, int generatorVersion) throws IOException {
-    CompactFileWriter.saveToFile(descriptors, bootstrapModuleName, mainPluginModuleId, generatorVersion, filePath);
+    saveToCompactFile(descriptors, bootstrapModuleName, filePath, generatorVersion);
   }
 
   public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName,
                                @NotNull Path jarPath, int generatorVersion) throws IOException {
-    saveToJar(descriptors, bootstrapModuleName, jarPath, null, generatorVersion);
-  }
-
-  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName,
-                               @NotNull Path jarPath, @Nullable String mainPluginModuleId, int generatorVersion)
-    throws IOException {
     try {
-      JarFileSerializer.saveToJar(descriptors, bootstrapModuleName, jarPath, mainPluginModuleId, generatorVersion);
+      JarFileSerializer.saveToJar(descriptors, bootstrapModuleName, jarPath, generatorVersion);
     }
     catch (XMLStreamException e) {
       throw new IOException(e);
     }
+  }
+
+  /**
+   * @deprecated {@code mainPluginModuleId} is not used anymore, use {@link #saveToJar(Collection, String, Path, int)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName,
+                               @NotNull Path jarPath, @Nullable String mainPluginModuleId, int generatorVersion)
+    throws IOException {
+    saveToJar(descriptors, bootstrapModuleName, jarPath, generatorVersion);
   }
   
   public static @NotNull RawRuntimeModuleRepositoryData loadFromCompactFile(@NotNull Path filePath) throws MalformedRepositoryException {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -20,19 +19,15 @@ import javax.swing.JFrame;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @ApiStatus.Internal
@@ -54,7 +49,7 @@ public final class X11UiUtil {
   public static final String KDE_LAF_PROPERTY = "LookAndFeelPackage=";
 
   /**
-   * List of all known tile WM in lower case, can be updated later
+   * The list of all known tile WM in the lower case can be updated later
    */
   @SuppressWarnings("SpellCheckingInspection")
   public static final Set<String> TILE_WM = Set.of(
@@ -64,8 +59,6 @@ public final class X11UiUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final String GSETTINGS_COMMAND = "gsettings";
-
-  private static final ConcurrentHashMap<String, Boolean> unsupportedCommands = new ConcurrentHashMap<>();
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final class Xlib {
@@ -527,42 +520,8 @@ public final class X11UiUtil {
   }
 
   private static @Nullable String exec(String errorMessage, String... command) {
-    if (command.length == 0) {
-      LOG.error(errorMessage, "No command provided");
-      return null;
-    }
-
-    if (unsupportedCommands.containsKey(command[0])) {
-      // Avoid running and logging unsupported commands
-      return null;
-    }
-
-    try {
-      var process = new ProcessBuilder(command).start();
-      if (!process.waitFor(5, TimeUnit.SECONDS)) {
-        LOG.info(errorMessage + ": timeout");
-        process.destroyForcibly();
-        return null;
-      }
-      if (process.exitValue() != 0) {
-        LOG.info(errorMessage + ": exit code " + process.exitValue());
-        return null;
-      }
-      return StreamUtil.readText(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)).trim();
-    }
-    catch (Exception e) {
-      var exceptionMessage = e.getMessage();
-      if (exceptionMessage.contains("No such file or directory")) {
-        unsupportedCommands.put(command[0], true);
-        LOG.info(errorMessage + ": " + exceptionMessage);
-        LOG.trace(e);
-      }
-      else {
-        LOG.info(errorMessage, e);
-      }
-
-      return null;
-    }
+    var execResult = X11UiUtilKt.exec(errorMessage, command);
+    return X11UiUtilKtKt.output(execResult);
   }
 
   private static List<String> grepFile(@SuppressWarnings("SameParameterValue") String errorMessage, Path file, Pattern pattern) {

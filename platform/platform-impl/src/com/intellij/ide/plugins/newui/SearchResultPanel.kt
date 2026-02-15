@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.newui.PluginLogo.endBatchMode
 import com.intellij.ide.plugins.newui.PluginLogo.startBatchMode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -24,7 +23,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
@@ -44,8 +42,6 @@ abstract class SearchResultPanel(
   private var myQueryJob: Job? = null
   private var isLoading = false
   private var myAnnounceSearchResultsAlarm: SingleAlarm? = null
-
-  @JvmField protected var myPostFillGroupCallback: Runnable? = null
 
   init {
     myPanel.getAccessibleContext().setAccessibleName(IdeBundle.message("title.search.results"))
@@ -138,19 +134,11 @@ abstract class SearchResultPanel(
 
       announceSearchResultsWithDelay()
       myPanel.initialSelection(false)
-      runPostFillGroupCallback()
       fullRepaint()
     }
   }
 
   protected abstract suspend fun handleQuery(query: String, result: PluginsGroup)
-
-  private fun runPostFillGroupCallback() {
-    if (myPostFillGroupCallback != null) {
-      myPostFillGroupCallback!!.run()
-      myPostFillGroupCallback = null
-    }
-  }
 
   private fun loading(start: Boolean) {
     val panel = myPanel

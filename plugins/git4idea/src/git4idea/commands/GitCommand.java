@@ -148,6 +148,7 @@ public final class GitCommand {
     return myName;
   }
 
+  @ApiStatus.Internal
   public @NotNull LockingPolicy lockingPolicy() {
     return myLocking;
   }

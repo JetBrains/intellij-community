@@ -8,8 +8,10 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @State(name = "WindowButtonsConfiguration", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 class WindowButtonsConfiguration(private val scope: CoroutineScope) : PersistentStateComponent<WindowButtonsConfiguration.State?> {
+
   enum class WindowButton {
     MINIMIZE,
     MAXIMIZE,
@@ -32,12 +35,18 @@ class WindowButtonsConfiguration(private val scope: CoroutineScope) : Persistent
   companion object {
     fun getInstance(): WindowButtonsConfiguration? = if (isSupported()) service<WindowButtonsConfiguration>() else null
 
+    private val log = thisLogger()
+
     private fun isSupported(): Boolean {
       return SystemInfoRt.isLinux
     }
   }
 
   private var mutableStateFlow = MutableStateFlow<State?>(null)
+
+  @Volatile
+  private var userCustomizedState: State? = null
+
   val stateFlow: StateFlow<State?> = mutableStateFlow.asStateFlow()
 
   override fun getState(): State? {
@@ -53,21 +62,53 @@ class WindowButtonsConfiguration(private val scope: CoroutineScope) : Persistent
     scheduleUpdateFromOs()
   }
 
-  fun scheduleUpdateFromOs(customConfig: String? = null) {
+  fun setCustomizedState(state: String?) {
+    val newState: State?
+    if (state.isNullOrEmpty()) {
+      newState = null
+    }
+    else {
+      newState = parseFromString(state)
+      if (newState == null) {
+        log.warn("Failed to parse custom user window buttons config: $state")
+      }
+    }
+
+    if (userCustomizedState == null && newState == null) {
+      // Avoid unnecessary X11UiUtil.getWindowButtonsConfig invocation
+      return
+    }
+
+    userCustomizedState = newState
+    scheduleUpdateFromOs()
+  }
+
+  private fun scheduleUpdateFromOs() {
     scope.launch {
-      loadStateFromOs(customConfig)
+      loadStateFromOs()
     }
   }
 
-  private fun loadStateFromOs(customConfig: String?) {
-    var windowButtonsState: State? = null
+  private fun loadStateFromOs() {
+    if (!isSupported()) {
+      return
+    }
 
-    if (isSupported()) {
-      val config = if (customConfig.isNullOrBlank()) X11UiUtil.getWindowButtonsConfig() else customConfig
+    ThreadingAssertions.assertBackgroundThread()
+
+    var windowButtonsState: State? = userCustomizedState
+
+    if (windowButtonsState == null) {
+      val config = X11UiUtil.getWindowButtonsConfig()
       if (config != null) {
         windowButtonsState = parseFromString(config)
+
+        if (windowButtonsState == null) {
+          log.warn("Failed to parse OS window buttons config: $config")
+        }
       }
     }
+
     mutableStateFlow.value = windowButtonsState
   }
 
@@ -117,6 +158,6 @@ private fun stringsToWindowButtons(strings: List<String>): List<WindowButtonsCon
 internal class WindowButtonsAppLifecycleListener : AppLifecycleListener {
 
   override fun appStarted() {
-    WindowButtonsConfiguration.getInstance()?.scheduleUpdateFromOs(Registry.stringValue("ide.linux.window.buttons.config"))
+    WindowButtonsConfiguration.getInstance()?.setCustomizedState(Registry.stringValue("ide.linux.window.buttons.config"))
   }
 }

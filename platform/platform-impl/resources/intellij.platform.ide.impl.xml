@@ -70,5 +70,11 @@
       defaultValue="60"
       description="The interval between too-small window size checks on Windows and attempts to restore the size. Set to zero to disable"
     />
+    <registryKey
+      key="ide.windows.main.menu.focus.on.alt"
+      defaultValue="false"
+      description="Enable Alt key to focus the main menu bar on Windows"
+      restartRequired="true"
+    />
   </extensions>
 </idea-plugin>

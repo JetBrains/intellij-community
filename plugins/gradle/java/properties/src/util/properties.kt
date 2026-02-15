@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
-import org.jetbrains.plugins.gradle.service.resolve.module
+import com.intellij.gradle.java.groovy.service.resolve.module
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_NAME
 import java.nio.file.Path
 

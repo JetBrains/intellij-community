@@ -12,7 +12,7 @@ interface KotlinScriptEntity : WorkspaceEntity {
     val virtualFileUrl: VirtualFileUrl
     val dependencies: List<KotlinScriptLibraryEntityId>
     val sdkId: SdkId?
-    val configurationEntity: ScriptCompilationConfigurationEntityId?
+    val configuration: ScriptCompilationConfigurationIdentity?
 
     @Suppress("RemoveExplicitTypeArguments")
     val relatedModuleIds: List<ModuleId>

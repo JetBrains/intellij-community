@@ -12,13 +12,12 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabGidData
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.gitLabQuery
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBranchDTO
@@ -29,6 +28,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShort
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.asApiParameter
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -42,7 +42,7 @@ import java.net.http.HttpResponse
  */
 @SinceGitLab("14.0", note = "No exact version, but definitely exists in minimal")
 suspend fun GitLabApi.Rest.createMergeRequest(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   sourceBranch: String,
   targetBranch: String,
   title: String,
@@ -51,7 +51,7 @@ suspend fun GitLabApi.Rest.createMergeRequest(
   assigneeIds: List<String>? = null,
   labels: List<String>? = null
 ): HttpResponse<out GitLabMergeRequestShortRestDTO> {
-  val uri = project.restApiUri
+  val uri = projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .withQuery {
       "source_branch" eq sourceBranch
@@ -69,17 +69,19 @@ suspend fun GitLabApi.Rest.createMergeRequest(
 }
 
 @SinceGitLab("7.0", note = "?search available since 10.4, ?scope since 9.5")
-fun getMergeRequestListURI(project: GitLabProjectCoordinates,
-                           searchQuery: String): URI =
-  project.restApiUri.resolveRelative("merge_requests").withQuery(searchQuery)
+fun GitLabApi.Rest.getMergeRequestListURI(
+  projectId: String,
+  searchQuery: String
+): URI =
+  projectApiUrl(projectId).resolveRelative("merge_requests").withQuery(searchQuery)
 
 @SinceGitLab("12.0")
 suspend fun GitLabApi.GraphQL.loadMergeRequest(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   mrIid: String
 ): HttpResponse<out GitLabMergeRequestDTO?> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "mergeRequestId" to mrIid
   )
   val request = gitLabQuery(GitLabGQLQuery.GET_MERGE_REQUEST, parameters)
@@ -91,11 +93,11 @@ suspend fun GitLabApi.GraphQL.loadMergeRequest(
 @ApiStatus.Internal
 @SinceGitLab("14.0", note = "No exact version")
 suspend fun GitLabApi.GraphQL.getMergeRequestMetrics(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   username: String,
 ): HttpResponse<out GitLabMergeRequestMetricsDTO?> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "username" to username
   )
   val request = gitLabQuery(GitLabGQLQuery.GET_MERGE_REQUEST_METRICS, parameters)
@@ -106,13 +108,13 @@ suspend fun GitLabApi.GraphQL.getMergeRequestMetrics(
 
 @SinceGitLab("13.1")
 suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   state: GitLabMergeRequestState,
   sourceBranch: String,
   targetBranch: String? = null
 ): HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestByBranchDTO>?> {
   val parameters = mutableMapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "state" to state.asApiParameter(),
     "sourceBranches" to listOf(sourceBranch),
     "targetBranches" to targetBranch?.let { listOf(it) }
@@ -127,24 +129,33 @@ private class MergeRequestsByBranchConnection(pageInfo: GraphQLCursorPageInfoDTO
   : GraphQLConnectionDTO<GitLabMergeRequestByBranchDTO>(pageInfo, nodes)
 
 @SinceGitLab("13.2")
-fun getMergeRequestStateEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
-  project.restApiUri.resolveRelative("merge_requests").resolveRelative(mrIid).resolveRelative("resource_state_events")
+fun GitLabApi.Rest.getMergeRequestStateEventsUri(projectId: String, mrIid: String): URI =
+  projectApiUrl(projectId)
+    .resolveRelative("merge_requests")
+    .resolveRelative(mrIid)
+    .resolveRelative("resource_state_events")
 
 @SinceGitLab("11.4", note = "Maybe released in 11.3-rc5")
-fun getMergeRequestLabelEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
-  project.restApiUri.resolveRelative("merge_requests").resolveRelative(mrIid).resolveRelative("resource_label_events")
+fun GitLabApi.Rest.getMergeRequestLabelEventsUri(projectId: String, mrIid: String): URI =
+  projectApiUrl(projectId)
+    .resolveRelative("merge_requests")
+    .resolveRelative(mrIid)
+    .resolveRelative("resource_label_events")
 
 @SinceGitLab("13.1")
-fun getMergeRequestMilestoneEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
-  project.restApiUri.resolveRelative("merge_requests").resolveRelative(mrIid).resolveRelative("resource_milestone_events")
+fun GitLabApi.Rest.getMergeRequestMilestoneEventsUri(projectId: String, mrIid: String): URI =
+  projectApiUrl(projectId)
+    .resolveRelative("merge_requests")
+    .resolveRelative(mrIid)
+    .resolveRelative("resource_milestone_events")
 
 @SinceGitLab("10.6", editions = [GitLabEdition.Enterprise])
 @SinceGitLab("13.3", editions = [GitLabEdition.Community], note = "Maybe released in 13.2-rc42 or so")
 suspend fun GitLabApi.Rest.mergeRequestApprove(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String
 ): HttpResponse<out Unit> {
-  val uri = project.restApiUri
+  val uri = projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("approve")
@@ -157,10 +168,10 @@ suspend fun GitLabApi.Rest.mergeRequestApprove(
 @SinceGitLab("10.6", editions = [GitLabEdition.Enterprise])
 @SinceGitLab("13.3", editions = [GitLabEdition.Community], note = "Maybe released in 13.2-rc42 or so")
 suspend fun GitLabApi.Rest.mergeRequestUnApprove(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String
 ): HttpResponse<out Unit> {
-  val uri = project.restApiUri
+  val uri = projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("unapprove")
@@ -172,10 +183,10 @@ suspend fun GitLabApi.Rest.mergeRequestUnApprove(
 
 @SinceGitLab("11.6")
 suspend fun GitLabApi.Rest.mergeRequestRebase(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String
 ): HttpResponse<out GitLabMergeRequestRebaseDTO> {
-  val uri = project.restApiUri
+  val uri = projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("rebase")
@@ -187,12 +198,12 @@ suspend fun GitLabApi.Rest.mergeRequestRebase(
 
 @SinceGitLab("13.9")
 suspend fun GitLabApi.GraphQL.mergeRequestUpdate(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   mrIid: String,
   state: GitLabMergeRequestNewState,
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "mergeRequestId" to mrIid,
     "state" to state
   )
@@ -211,12 +222,12 @@ suspend fun GitLabApi.GraphQL.mergeRequestUpdate(
  */
 @SinceGitLab("13.8")
 suspend fun GitLabApi.Rest.mergeRequestSetReviewers(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   reviewers: List<GitLabUserDTO>
 ): HttpResponse<out Unit> {
   val reviewerIds = reviewers.map { GitLabGidData(it.id).guessRestId() }
-  val uri = project.restApiUri
+  val uri = projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .withQuery {
@@ -238,12 +249,12 @@ suspend fun GitLabApi.Rest.mergeRequestSetReviewers(
  */
 @SinceGitLab("15.3")
 suspend fun GitLabApi.GraphQL.mergeRequestSetReviewers(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   mrIid: String,
   reviewers: List<GitLabUserDTO>
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "mergeRequestId" to mrIid,
     "reviewerUsernames" to reviewers.map { it.username }
   )
@@ -255,7 +266,7 @@ suspend fun GitLabApi.GraphQL.mergeRequestSetReviewers(
 
 @SinceGitLab("13.10")
 suspend fun GitLabApi.GraphQL.mergeRequestAccept(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   mrIid: String,
   commitMessage: String,
   sha: String,
@@ -263,7 +274,7 @@ suspend fun GitLabApi.GraphQL.mergeRequestAccept(
   shouldRemoveSourceBranch: Boolean
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "mergeRequestId" to mrIid,
     "commitMessage" to commitMessage,
     "sha" to sha,
@@ -278,12 +289,12 @@ suspend fun GitLabApi.GraphQL.mergeRequestAccept(
 
 @SinceGitLab("13.12")
 suspend fun GitLabApi.GraphQL.mergeRequestSetDraft(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   mrIid: String,
   isDraft: Boolean
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "mergeRequestId" to mrIid,
     "isDraft" to isDraft
   )
@@ -295,12 +306,12 @@ suspend fun GitLabApi.GraphQL.mergeRequestSetDraft(
 
 @SinceGitLab("13.9")
 suspend fun GitLabApi.GraphQL.mergeRequestReviewerRereview(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   mrIid: String,
   reviewer: GitLabReviewerDTO
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "mergeRequestId" to mrIid,
     "userId" to reviewer.id
   )

@@ -6,14 +6,14 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.gradle.java.groovy.service.resolve.GradleArtifactHandlerContributor
+import com.intellij.gradle.java.groovy.service.resolve.GradleDependencyHandlerContributor
+import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionProperty
+import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil
+import com.intellij.gradle.java.groovy.service.resolve.GradleGroovyProperty
+import com.intellij.gradle.java.groovy.service.resolve.GradleNamedDomainCollectionContributor
+import com.intellij.gradle.java.groovy.service.resolve.GradleTaskContainerContributor
 import com.intellij.psi.OriginInfoAwareElement
-import org.jetbrains.plugins.gradle.service.resolve.GradleArtifactHandlerContributor
-import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributorUtil
-import org.jetbrains.plugins.gradle.service.resolve.GradleGroovyProperty
-import org.jetbrains.plugins.gradle.service.resolve.GradleNamedDomainCollectionContributor
-import org.jetbrains.plugins.gradle.service.resolve.GradleTaskContainerContributor
 
 class GradleGroovyElementFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "gradleGroovy"

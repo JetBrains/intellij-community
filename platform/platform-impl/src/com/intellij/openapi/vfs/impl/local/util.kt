@@ -16,7 +16,9 @@ import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
+import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.listDirectoryWithAttrs
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.fs.stat
@@ -167,14 +169,22 @@ internal fun readAttributesUsingEel(nioPath: Path): FileAttributes {
       return FileAttributes.fromNio(directAccessNioPath, nioAttributes)
     }
     return fsBlocking {
-      when (val eelFsApi = eelPath.descriptor.toEelApi().fs) {
-        is EelFileSystemPosixApi -> {
-          val fileInfo = eelFsApi.stat(eelPath).eelIt().getOrThrowFileSystemException()
-          fileInfo.toVfs(fileInfo.isWritable(eelFsApi))
-        }
-        else -> TODO()
-      }
+      val eelFsApi = eelPath.descriptor.toEelApi().fs
+      val fileInfo = eelFsApi.stat(eelPath).eelIt().getOrThrowFileSystemException()
+      toVfs(fileInfo, eelFsApi)
     }
+  }
+}
+
+private fun toVfs(eelFileInfo: EelFileInfo, eelFsApi: EelFileSystemApi): FileAttributes {
+  return when {
+    eelFsApi is EelFileSystemPosixApi && eelFileInfo is EelPosixFileInfo -> {
+      eelFileInfo.toVfs(eelFileInfo.isWritable(eelFsApi))
+    }
+    eelFsApi is EelFileSystemWindowsApi && eelFileInfo is EelWindowsFileInfo -> {
+      eelFileInfo.toVfs(!eelFileInfo.permissions.isReadOnly)
+    }
+    else -> error("EelFileInfo ${eelFileInfo} does not belong to EelFileSystemApi ${eelFsApi}")
   }
 }
 
@@ -205,10 +215,10 @@ internal fun listWithAttributesUsingEel(
     //We must return a 'normal' (=case-sensitive) map from this method, see BatchingFileSystem.listWithAttributes() contract:
     val childrenWithAttributes = CollectionFactory.createFilePathMap<FileAttributes>(expectedSize,  /*caseSensitive: */true)
 
-    visitDirectory(eelPath, filter) { file: EelPath, attributes: EelPosixFileInfo, eelFsApi: EelFileSystemPosixApi ->
+    visitDirectory(eelPath, filter) { file: EelPath, attributes: EelFileInfo, eelFsApi: EelFileSystemApi ->
       try {
         //val attributes = amendAttributes(file, fromNio(file, attributes))
-        childrenWithAttributes[file.fileName] = attributes.toVfs(attributes.isWritable(eelFsApi))
+        childrenWithAttributes[file.fileName] = toVfs(attributes, eelFsApi)
       }
       catch (e: Exception) {
         LOG.debug(e)
@@ -237,28 +247,24 @@ internal fun listWithAttributesUsingEel(
 private fun visitDirectory(
   directory: EelPath,
   filter: Set<String>?,
-  consumer: (EelPath, EelPosixFileInfo, EelFileSystemPosixApi) -> Boolean,
+  consumer: (EelPath, EelFileInfo, EelFileSystemApi) -> Boolean,
 ) {
   if (filter != null && filter.isEmpty()) {
     return  //nothing to read
   }
   fsBlocking {
-    return@fsBlocking when (val eelFsApi = directory.descriptor.toEelApi().fs) {
-      is EelFileSystemPosixApi -> {
-        val directoryList =
-          eelFsApi.listDirectoryWithAttrs(directory).symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW).eelIt()
-            .getOrThrowFileSystemException()
-        for ((childName, childStat) in directoryList) {
-          val childIjentPath = directory.getChild(childName)
-          if (filter != null && !filter.contains(childIjentPath.fileName)) {
-            continue
-          }
-          if (!consumer(childIjentPath, childStat, eelFsApi)) {
-            break
-          }
-        }
+    val eelFsApi = directory.descriptor.toEelApi().fs
+    val directoryList =
+      eelFsApi.listDirectoryWithAttrs(directory).symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW).eelIt()
+        .getOrThrowFileSystemException()
+    for ((childName, childStat) in directoryList) {
+      val childIjentPath = directory.getChild(childName)
+      if (filter != null && !filter.contains(childIjentPath.fileName)) {
+        continue
       }
-      else -> TODO()
+      if (!consumer(childIjentPath, childStat, eelFsApi)) {
+        break
+      }
     }
   }
 }

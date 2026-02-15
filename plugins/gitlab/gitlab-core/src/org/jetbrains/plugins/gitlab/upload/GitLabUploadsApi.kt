@@ -4,10 +4,9 @@ package org.jetbrains.plugins.gitlab.upload
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUploadRestDTO
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import java.io.InputStream
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
@@ -16,10 +15,10 @@ import java.util.UUID
 
 @SinceGitLab("15.10")
 internal suspend fun GitLabApi.Rest.markdownUploadFile(
-  project: GitLabProjectCoordinates,
-  filename: String,
-  mimeType: String,
-  fileInputStream: InputStream,
+    projectId: String,
+    filename: String,
+    mimeType: String,
+    fileInputStream: InputStream,
 ): HttpResponse<out GitLabUploadRestDTO> {
   val boundary = "FormBoundary" + UUID.randomUUID()
   val boundaryStart = "--$boundary\r\n" +
@@ -33,7 +32,7 @@ internal suspend fun GitLabApi.Rest.markdownUploadFile(
     BodyPublishers.ofString(boundaryEnd)
   )
 
-  val uri = project.restApiUri.resolveRelative("uploads")
+  val uri = projectApiUrl(projectId).resolveRelative("uploads")
   val httpRequest = request(uri)
     .POST(bodyPublisher)
     .header("Content-Type", "multipart/form-data; boundary=$boundary")

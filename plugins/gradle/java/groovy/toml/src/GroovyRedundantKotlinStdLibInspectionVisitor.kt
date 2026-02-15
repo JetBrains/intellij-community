@@ -5,6 +5,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.gradle.java.groovy.service.resolve.GradleDependencyHandlerContributor.Companion.dependencyMethodKind
 import com.intellij.gradle.java.toml.getResolvedDependency
 import com.intellij.gradle.java.toml.getResolvedPlugin
 import com.intellij.modcommand.ModPsiUpdater
@@ -17,7 +18,6 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER
-import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor.Companion.dependencyMethodKind
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile

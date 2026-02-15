@@ -200,7 +200,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     /**
      * Setting this [client property][JComponent.putClientProperty] allows specifying 'effective' parent for a component which will be used
      * to find a tool window to which component belongs (if any). This can prevent tool windows in non-default view modes (e.g. 'Undock')
-     * to close when focus is transferred to a component not in tool window hierarchy, but logically belonging to it (e.g., when component
+     *  from closing when focus is transferred to a component not in tool window hierarchy, but logically belonging to it (e.g., when component
      * is added to the window's layered pane).
      *
      * @see ComponentUtil.putClientProperty
@@ -300,6 +300,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun updateToolWindowHeaders() {
+    @Suppress("DEPRECATION")
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
       for (entry in idToEntry.values) {
         if (entry.readOnlyWindowInfo.isVisible) {
@@ -424,8 +425,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        if (!ClientId.isCurrentlyUnderLocalId) return
+        if (!ClientId.isCurrentlyUnderLocalId) {
+          return
+        }
+
         coroutineScope.launch(Dispatchers.EDT) {
+          @Suppress("DEPRECATION")
           focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
             if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
               focusToolWindowByDefault()
@@ -841,8 +846,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           }
 
           val currentInfo = getRegisteredMutableInfoOrLogError(storedInfo.id!!)
-          // SideStack contains copies of real WindowInfos. It means that
-          // these stored info can be invalid. The following loop removes invalid WindowInfos.
+          // SideStack contains copies of real WindowInfos.
+          // It means that this stored info can be invalid. The following loop removes invalid WindowInfos.
           if (storedInfo.safeToolWindowPaneId == currentInfo.safeToolWindowPaneId && storedInfo.anchor == currentInfo.anchor
               && storedInfo.type == currentInfo.type && storedInfo.isAutoHide == currentInfo.isAutoHide) {
             info2 = storedInfo
@@ -919,7 +924,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           otherEntry.applyWindowInfo(otherInfoCopy)
           otherEntry.toolWindow.decoratorComponent?.let { decorator ->
             val toolWindowPane = getToolWindowPane(otherInfoCopy.safeToolWindowPaneId)
-            toolWindowPane.removeDecorator(otherInfoCopy, decorator, false, this)
+            toolWindowPane.removeDecorator(info = otherInfoCopy, component = decorator, dirtyMode = false, manager = this)
           }
 
           // store WindowInfo into the SideStack
@@ -932,7 +937,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       // This check is for testability. The tests don't create UI, so there are no actual panes
       if (toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)) {
         val toolWindowPane = getToolWindowPane(info.safeToolWindowPaneId)
-        toolWindowPane.addDecorator(entry.toolWindow.getOrCreateDecoratorComponent(), info, dirtyMode, this)
+        toolWindowPane.addDecorator(
+          decorator = entry.toolWindow.getOrCreateDecoratorComponent(),
+          info = info,
+          dirtyMode = dirtyMode,
+          manager = this,
+        )
       }
 
       // remove a tool window from the SideStack
@@ -943,7 +953,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     if (entry.stripeButton == null) {
       val buttonManager = getButtonManager(entry.toolWindow)
-      entry.stripeButton = buttonManager.createStripeButton(entry.toolWindow, info, task = null)
+      entry.stripeButton = buttonManager.createStripeButton(toolWindow = entry.toolWindow, info = info, task = null)
     }
 
     entry.toolWindow.scheduleContentInitializationIfNeeded()
@@ -977,7 +987,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       // not used by registerToolWindow - makes sense only for `registerToolWindows` in ToolWindowSetInitializer
       paneId = existingInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
     )
-    val result = registerToolWindow(preparedTask = preparedTask, buttonManager = buttonManager, layout = layout, ensureToolWindowActionRegistered = true)
+    val result = registerToolWindow(
+      preparedTask = preparedTask,
+      buttonManager = buttonManager,
+      layout = layout,
+      ensureToolWindowActionRegistered = true,
+    )
     result.postTask?.invoke()
     return result.entry
   }
@@ -1029,7 +1044,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       windowInfo = infoSnapshot,
       contentFactory = factory,
       isAvailable = task.shouldBeAvailable,
-      stripeTitleProvider = task.stripeTitle ?: Supplier { task.id },
+      stripeTitleProvider = task.stripeTitle ?: Supplier {
+        @Suppress("HardCodedStringLiteral")
+        task.id
+      },
     )
     if (task.hideOnEmptyContent) {
       toolWindow.setToHideOnEmptyContent(true)
@@ -1079,7 +1097,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     // If preloaded info is visible or active, then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
-    // mode. But if a tool window was active but its mode doesn't allow to activate it again
+    // mode. But if a tool window was active but its mode doesn't allow activating it again
     // (for example, a tool window is in auto hide mode), then we just activate an editor component.
     if (stripeButton != null && factory != null /* not null on an init tool window from EP */ && infoSnapshot.isVisible) {
       val postTask = {
@@ -1273,7 +1291,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (item.old.isSplit != item.new.isSplit && item.old.type.isInternal && item.new.type.isInternal) {
         val wasVisible = item.old.isVisible
         // we should hide the window and show it in a 'new place'
-        // to automatically hide a possible window that is already located in a 'new place'
+        // to automatically hide a possible window already located in a 'new place'
         if (wasVisible) {
           LOG.debug {
             "Temporarily hiding the tool window ${item.entry.id} because one of the following is changed:" +
@@ -1570,7 +1588,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     // we should hide the window and show it in a 'new place'
-    // to automatically hide a possible window that is already located in a 'new place'
+    // to automatically hide a possible window already located in a 'new place'
     hideIfNeededAndShowAfterTask(entry, info) {
       info.isSplit = isSplit
       for (otherEntry in idToEntry.values) {

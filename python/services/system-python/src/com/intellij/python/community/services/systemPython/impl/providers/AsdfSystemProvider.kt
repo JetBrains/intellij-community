@@ -44,7 +44,7 @@ internal class AsdfSystemPythonProvider : SystemPythonProvider {
         val paths = entries
           .map { versionsDir.resolve(it).resolve("bin").asNioPath() }
 
-        return@withContext collectPythonsInPaths(eelApi, paths, listOf(python3NamePattern))
+        return@withContext collectPythonsInPaths( paths, listOf(python3NamePattern))
       }
       catch (e: RuntimeException) {
         if (Logger.shouldRethrow(e)) throw e

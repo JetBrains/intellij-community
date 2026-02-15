@@ -2,16 +2,16 @@
 package com.intellij.gradle.java.groovy.toml
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor
+import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyConfigurationAvoidanceVisitor
+import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyDeprecatedConfigurationInspectionVisitor
+import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyForeignDelegateInspectionVisitor
+import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyIncorrectDependencyNotationArgumentInspectionVisitor
+import com.intellij.gradle.java.groovy.codeInspection.groovy.GroovyPluginDslStructureInspectionVisitor
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider
-import org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor
-import org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyConfigurationAvoidanceVisitor
-import org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyDeprecatedConfigurationInspectionVisitor
-import org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyForeignDelegateInspectionVisitor
-import org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyIncorrectDependencyNotationArgumentInspectionVisitor
-import org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyPluginDslStructureInspectionVisitor
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
 

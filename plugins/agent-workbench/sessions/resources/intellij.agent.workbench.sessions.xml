@@ -3,8 +3,9 @@
 
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.agent.workbench.claude.common"/>
+    <module name="intellij.agent.workbench.claude.sessions"/>
     <module name="intellij.agent.workbench.codex.common"/>
+    <module name="intellij.agent.workbench.codex.sessions"/>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.platform.compose"/>
     <!-- endregion -->
@@ -24,6 +25,9 @@
       groupKey="advanced.settings.agent.workbench"/>
     <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
     <toolWindowLayoutProfileProvider implementation="com.intellij.agent.workbench.sessions.AgentWorkbenchToolWindowLayoutProfileProvider"/>
+    <statusBarWidgetFactory
+      id="claude.quota"
+      implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentSessionsBundle">

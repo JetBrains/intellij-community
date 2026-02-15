@@ -20,7 +20,7 @@ c:com.intellij.diagnostic.logging.DefaultLogFormatter
 - formatPrefix(java.lang.String):java.lang.String
 f:com.intellij.diagnostic.logging.LogConfigurationPanel
 - com.intellij.openapi.options.SettingsEditor
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
 - refreshPredefinedLogFiles(com.intellij.execution.configurations.RunConfigurationBase):V
 a:com.intellij.diagnostic.logging.LogConsoleBase

@@ -5,6 +5,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.attribute.BasicFileAttributes
@@ -38,7 +39,7 @@ internal open class IjentNioBasicFileAttributeView(val api: IjentFileSystemApi, 
   }
 }
 
-internal class IjentNioPosixFileAttributeView(api: IjentFileSystemApi, path: EelPath, nioPath: IjentNioPath) : IjentNioBasicFileAttributeView(api, path, nioPath), PosixFileAttributeView {
+internal class IjentNioPosixFileAttributeView(api: IjentFileSystemPosixApi, path: EelPath, nioPath: IjentNioPath) : IjentNioBasicFileAttributeView(api, path, nioPath), PosixFileAttributeView {
   override fun name(): String? {
     return "posix"
   }

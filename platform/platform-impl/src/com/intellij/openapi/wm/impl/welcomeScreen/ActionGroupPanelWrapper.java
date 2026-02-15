@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -180,7 +181,9 @@ public final class ActionGroupPanelWrapper {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          backAction.run();
+          if (!PopupUtil.handleEscKeyEvent()) {
+            backAction.run();
+          }
         }
       }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, main, parentDisposable);
     }

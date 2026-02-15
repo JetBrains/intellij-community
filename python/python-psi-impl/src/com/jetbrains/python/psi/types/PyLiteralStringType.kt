@@ -15,9 +15,7 @@ import java.util.Objects
  */
 class PyLiteralStringType private constructor(val cls: PyClass) : PyClassTypeImpl(cls, false) {
 
-  override fun getName(): String {
-    return "LiteralString"
-  }
+  override val name: String = "LiteralString"
 
   override fun toString(): String {
     return "PyLiteralStringType"
@@ -35,7 +33,7 @@ class PyLiteralStringType private constructor(val cls: PyClass) : PyClassTypeImp
     return Objects.hash(super.hashCode(), cls)
   }
 
-  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyLiteralStringType(this)
     }

@@ -22,6 +22,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitSingleCommitEditingAction;
 import git4idea.repo.GitRepository;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import static git4idea.GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT
 import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonMap;
 
+@ApiStatus.Internal
 public class GitUncommitAction extends GitSingleCommitEditingAction {
   private static final Logger LOG = Logger.getInstance(GitUncommitAction.class);
 

@@ -4,6 +4,7 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="intellij.gradle"/>
+    <module name="intellij.gradle.java.groovy"/>
     <module name="intellij.gradle.java.toml"/>
     <module name="intellij.kotlin.base.scripting"/>
     <module name="intellij.kotlin.base.scripting.shared"/>

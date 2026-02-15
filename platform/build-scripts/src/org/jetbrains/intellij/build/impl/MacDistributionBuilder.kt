@@ -58,7 +58,6 @@ import java.util.zip.Deflater
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
-import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -285,6 +284,13 @@ class MacDistributionBuilder(
     val alternativeIcon = customizer.icnsPathForAlternativeIconForEAP?.takeIf { context.applicationInfo.isEAP } ?: customizer.icnsPathForAlternativeIcon
     if (alternativeIcon != null) {
       copyFile(alternativeIcon, resourcesDistDir.resolve("custom.icns"))
+    }
+    if (context.isEmbeddedFrontendEnabled) {
+      val icnsForFrontendApp = locateIcnsForFrontendMacApp(context)
+      if (icnsForFrontendApp != null) {
+        //path to the copied file will be passed as the value of `apple.awt.application.icon` property in `getAdditionalEmbeddedClientVmOptions`
+        copyFile(icnsForFrontendApp, resourcesDistDir.resolve("frontend.icns"))
+      }
     }
 
     for (fileAssociation in customizer.fileAssociations) {

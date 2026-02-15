@@ -25,13 +25,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 enum class ResolveConflictsMethod {
   REBASE,
   MERGE;
 }
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface ResolveConflictsLocallyViewModel<Error : Any> {
   /**
    * Whether there are conflicts that need to be resolved before merging.

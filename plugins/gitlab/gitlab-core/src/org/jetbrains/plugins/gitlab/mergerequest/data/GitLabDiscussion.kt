@@ -33,7 +33,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabRestId
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
@@ -77,7 +76,7 @@ class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   glMetadata: GitLabServerMetadata?,
-  private val glProject: GitLabProjectCoordinates,
+  private val projectId: String,
   private val currentUser: GitLabUserDTO,
   private val eventSink: suspend (Change<GitLabDiscussionRestDTO>) -> Unit,
   private val draftNotesEventSink: suspend (Change<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
@@ -131,7 +130,7 @@ class LoadedGitLabDiscussion(
       .mapDataToModel(
         GitLabNoteRestDTO::id,
         { note ->
-          MutableGitLabMergeRequestNote(this, api, glProject, mr, id, currentUser, noteEvents::emit, note)
+          MutableGitLabMergeRequestNote(this, api, projectId, mr, id, currentUser, noteEvents::emit, note)
         },
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
@@ -160,7 +159,7 @@ class LoadedGitLabDiscussion(
       operationsGuard.withLock {
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
-          api.rest.changeMergeRequestDiscussionResolve(glProject, mr.iid, id.restId, !resolved).body()
+          api.rest.changeMergeRequestDiscussionResolve(projectId, mr.iid, id.restId, !resolved).body()
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
         if (mr.details.value.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved) {
@@ -173,7 +172,7 @@ class LoadedGitLabDiscussion(
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       val note = withContext(Dispatchers.IO) {
-        api.rest.createReplyNote(glProject, mr.iid, id.restId, body).body()
+        api.rest.createReplyNote(projectId, mr.iid, id.restId, body).body()
       }
 
       withContext(NonCancellable) {
@@ -185,7 +184,7 @@ class LoadedGitLabDiscussion(
   override suspend fun addDraftNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.rest.addDraftReplyNote(glProject, mr.iid, id.restId, body).body()
+        api.rest.addDraftReplyNote(projectId, mr.iid, id.restId, body).body()
       }?.also {
         withContext(NonCancellable) {
           draftNotesEventSink(AddedLast(it))

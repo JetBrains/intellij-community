@@ -61,4 +61,46 @@ class AgentSessionsTreeUiStateServiceTest {
     assertTrue(uiState.retainOpenProjectThreadPreviews(setOf("/work/project-b")))
     assertNull(uiState.getOpenProjectThreadPreviews("/work/project-a"))
   }
+
+  @Test
+  fun lastUsedProviderDefaultsToNull() {
+    val uiState = AgentSessionsTreeUiStateService()
+    assertNull(uiState.getLastUsedProvider())
+  }
+
+  @Test
+  fun setAndGetLastUsedProvider() {
+    val uiState = AgentSessionsTreeUiStateService()
+
+    uiState.setLastUsedProvider(AgentSessionProvider.CLAUDE)
+    assertEquals(AgentSessionProvider.CLAUDE, uiState.getLastUsedProvider())
+
+    uiState.setLastUsedProvider(AgentSessionProvider.CODEX)
+    assertEquals(AgentSessionProvider.CODEX, uiState.getLastUsedProvider())
+  }
+
+  @Test
+  fun lastUsedProviderFlowUpdatesOnSet() {
+    val uiState = AgentSessionsTreeUiStateService()
+
+    assertNull(uiState.lastUsedProviderFlow.value)
+
+    uiState.setLastUsedProvider(AgentSessionProvider.CLAUDE)
+    assertEquals(AgentSessionProvider.CLAUDE, uiState.lastUsedProviderFlow.value)
+
+    uiState.setLastUsedProvider(AgentSessionProvider.CODEX)
+    assertEquals(AgentSessionProvider.CODEX, uiState.lastUsedProviderFlow.value)
+  }
+
+  @Test
+  fun lastUsedProviderSurvivesRoundTrip() {
+    val uiState = AgentSessionsTreeUiStateService()
+
+    uiState.setLastUsedProvider(AgentSessionProvider.CLAUDE)
+    val storedName = uiState.state.lastUsedProvider
+    assertEquals("CLAUDE", storedName)
+
+    // Verify the provider can be reconstructed from stored name
+    assertEquals(AgentSessionProvider.CLAUDE, uiState.getLastUsedProvider())
+  }
 }

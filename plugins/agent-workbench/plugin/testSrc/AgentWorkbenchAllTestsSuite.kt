@@ -7,6 +7,8 @@ import org.junit.platform.suite.api.Suite
 @Suite
 @SelectPackages(
   "com.intellij.agent.workbench.chat",
+  "com.intellij.agent.workbench.claude.sessions",
+  "com.intellij.agent.workbench.codex.sessions",
   "com.intellij.agent.workbench.sessions",
 )
 class AgentWorkbenchAllTestsSuite

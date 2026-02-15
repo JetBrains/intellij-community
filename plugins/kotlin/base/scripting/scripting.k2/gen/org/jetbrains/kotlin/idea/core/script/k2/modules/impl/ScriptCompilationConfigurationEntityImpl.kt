@@ -6,19 +6,21 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityBuilder
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntityId
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationHash
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -32,22 +34,17 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
 
     }
 
-    override val symbolicId: ScriptCompilationConfigurationEntityId = super.symbolicId
+    override val symbolicId: ScriptCompilationConfigurationIdentity = super.symbolicId
 
     override val data: ByteArray
         get() {
             readField("data")
             return dataSource.data
         }
-    override val hash: ScriptCompilationConfigurationHash
+    override val identity: ScriptCompilationConfigurationIdentity
         get() {
-            readField("hash")
-            return dataSource.hash
-        }
-    override val tag: Int
-        get() {
-            readField("tag")
-            return dataSource.tag
+            readField("identity")
+            return dataSource.identity
         }
 
     override val entitySource: EntitySource
@@ -94,8 +91,8 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
             if (!getEntityData().isDataInitialized()) {
                 error("Field ScriptCompilationConfigurationEntity#data should be initialized")
             }
-            if (!getEntityData().isHashInitialized()) {
-                error("Field ScriptCompilationConfigurationEntity#hash should be initialized")
+            if (!getEntityData().isIdentityInitialized()) {
+                error("Field ScriptCompilationConfigurationEntity#identity should be initialized")
             }
         }
 
@@ -108,8 +105,7 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
             dataSource as ScriptCompilationConfigurationEntity
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
             if (this.data != dataSource.data) this.data = dataSource.data
-            if (this.hash != dataSource.hash) this.hash = dataSource.hash
-            if (this.tag != dataSource.tag) this.tag = dataSource.tag
+            if (this.identity != dataSource.identity) this.identity = dataSource.identity
             updateChildToParentReferences(parents)
         }
 
@@ -130,20 +126,13 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
                 changedProperty.add("data")
 
             }
-        override var hash: ScriptCompilationConfigurationHash
-            get() = getEntityData().hash
+        override var identity: ScriptCompilationConfigurationIdentity
+            get() = getEntityData().identity
             set(value) {
                 checkModificationAllowed()
-                getEntityData(true).hash = value
-                changedProperty.add("hash")
+                getEntityData(true).identity = value
+                changedProperty.add("identity")
 
-            }
-        override var tag: Int
-            get() = getEntityData().tag
-            set(value) {
-                checkModificationAllowed()
-                getEntityData(true).tag = value
-                changedProperty.add("tag")
             }
 
         override fun getEntityClass(): Class<ScriptCompilationConfigurationEntity> = ScriptCompilationConfigurationEntity::class.java
@@ -152,14 +141,48 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<ScriptCompilationConfigurationEntity>() {
+internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<ScriptCompilationConfigurationEntity>(), SoftLinkable {
     lateinit var data: ByteArray
-    lateinit var hash: ScriptCompilationConfigurationHash
-    var tag: Int = 0
+    lateinit var identity: ScriptCompilationConfigurationIdentity
 
     internal fun isDataInitialized(): Boolean = ::data.isInitialized
-    internal fun isHashInitialized(): Boolean = ::hash.isInitialized
+    internal fun isIdentityInitialized(): Boolean = ::identity.isInitialized
 
+    override fun getLinks(): Set<SymbolicEntityId<*>> {
+        val result = HashSet<SymbolicEntityId<*>>()
+        result.add(identity)
+        return result
+    }
+
+    override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+        index.index(this, identity)
+    }
+
+    override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+// TODO verify logic
+        val mutablePreviousSet = HashSet(prev)
+        val removedItem_identity = mutablePreviousSet.remove(identity)
+        if (!removedItem_identity) {
+            index.index(this, identity)
+        }
+        for (removed in mutablePreviousSet) {
+            index.remove(this, removed)
+        }
+    }
+
+    override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+        var changed = false
+        val identity_data = if (identity == oldLink) {
+            changed = true
+            newLink as ScriptCompilationConfigurationIdentity
+        } else {
+            null
+        }
+        if (identity_data != null) {
+            identity = identity_data
+        }
+        return changed
+    }
 
     override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ScriptCompilationConfigurationEntity> {
         val modifiable = ScriptCompilationConfigurationEntityImpl.Builder(null)
@@ -188,7 +211,7 @@ internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<Sc
     }
 
     override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-        return ScriptCompilationConfigurationEntity(data, hash, tag, entitySource)
+        return ScriptCompilationConfigurationEntity(data, identity, entitySource)
     }
 
     override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -202,8 +225,7 @@ internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<Sc
         other as ScriptCompilationConfigurationEntityData
         if (this.entitySource != other.entitySource) return false
         if (this.data != other.data) return false
-        if (this.hash != other.hash) return false
-        if (this.tag != other.tag) return false
+        if (this.identity != other.identity) return false
         return true
     }
 
@@ -212,24 +234,21 @@ internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<Sc
         if (this.javaClass != other.javaClass) return false
         other as ScriptCompilationConfigurationEntityData
         if (this.data != other.data) return false
-        if (this.hash != other.hash) return false
-        if (this.tag != other.tag) return false
+        if (this.identity != other.identity) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
         result = 31 * result + data.hashCode()
-        result = 31 * result + hash.hashCode()
-        result = 31 * result + tag.hashCode()
+        result = 31 * result + identity.hashCode()
         return result
     }
 
     override fun hashCodeIgnoringEntitySource(): Int {
         var result = javaClass.hashCode()
         result = 31 * result + data.hashCode()
-        result = 31 * result + hash.hashCode()
-        result = 31 * result + tag.hashCode()
+        result = 31 * result + identity.hashCode()
         return result
     }
 }

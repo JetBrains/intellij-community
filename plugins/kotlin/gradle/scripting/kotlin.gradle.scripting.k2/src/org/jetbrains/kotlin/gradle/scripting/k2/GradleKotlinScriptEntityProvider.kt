@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.asEntity
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.sdkId
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
-import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationEntityId
+import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationIdentity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
@@ -198,7 +198,7 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
         storage addEntity KotlinScriptEntity(
             scriptUrl, dependencies, KotlinGradleScriptEntitySource
         ) {
-            this.configurationEntity = configurationWrapper.configuration?.let { storage.getOrCreateScriptConfigurationEntityId(it, KotlinGradleScriptEntitySource) }
+            this.configuration = configurationWrapper.configuration?.let { storage.getOrCreateScriptConfigurationIdentity(it, KotlinGradleScriptEntitySource) }
             this.reports = configurationResult.reports.map(ScriptDiagnostic::map).toMutableList()
             this.sdkId = configurationWrapper.configuration?.sdkId
             this.relatedModuleIds = classpathModel?.let { getRelatedModules(storage, it) }.orEmpty().toMutableList()

@@ -44,7 +44,7 @@ internal class PyenvSystemPythonProvider : SystemPythonProvider {
         val paths = entries
           .map { versionsDir.resolve(it).resolve("bin").asNioPath() }
 
-        return@withContext collectPythonsInPaths(eelApi, paths, listOf(python3NamePattern))
+        return@withContext collectPythonsInPaths( paths, listOf(python3NamePattern))
       }
       catch (e: RuntimeException) {
         LOGGER.error("failed to discover pyenv pythons", e)

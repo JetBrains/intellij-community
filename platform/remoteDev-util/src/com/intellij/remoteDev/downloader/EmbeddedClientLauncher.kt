@@ -98,7 +98,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(url: String, extraArguments: List<String>, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
-    val launcherData = createLauncherViaIdeExecutable() ?: findOldJetBrainsClientLauncher()
+    val launcherData = findCustomClientLauncher() ?: createLauncherViaIdeExecutable() ?: findOldJetBrainsClientLauncher()
     if (launcherData != null) {
       LOG.debug("Start embedded client using launcher")
       val workingDirectory = Path(PathManager.getHomePath())
@@ -178,12 +178,22 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     return JetBrainsClientLauncherData(executable, listOf(executable.pathString))
   }
   
+  private fun findCustomClientLauncher(): JetBrainsClientLauncherData? {
+    if (OS.CURRENT == OS.Windows && Registry.`is`("rdct.embedded.client.prefer.jetrains_client64.exe")) {
+      //prefer a special launcher for JetBrains Client if it exists to ensure that the special 'remote' icon will be used for the application
+      return PathManager.findBinFile("jetbrains_client64.exe")?.let {
+        JetBrainsClientLauncherData(it, listOf(it.pathString))
+      }
+    }
+    return null
+  }
+
   private fun findOldJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
     return when (OS.CURRENT) {
       OS.macOS -> {
-        return null
+        null
       }
-      OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let { 
+      OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let {
         JetBrainsClientLauncherData(it, listOf(it.pathString))
       }
       else -> PathManager.findBinFile("jetbrains_client.sh")?.let {

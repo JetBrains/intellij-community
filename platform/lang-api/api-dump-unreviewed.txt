@@ -2228,7 +2228,7 @@ a:com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable
 c:com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableBase
 - com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable
 - pf:myFrameworkSupportModel:com.intellij.ide.util.frameworkSupport.FrameworkSupportModel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.ide.util.frameworkSupport.FrameworkSupportProviderBase,com.intellij.ide.util.frameworkSupport.FrameworkSupportModel):V
 - <init>(com.intellij.ide.util.frameworkSupport.FrameworkSupportProviderBase,com.intellij.ide.util.frameworkSupport.FrameworkSupportModel,java.util.List,java.lang.String):V
 - addSupport(com.intellij.openapi.module.Module,com.intellij.openapi.roots.ModifiableRootModel,com.intellij.openapi.roots.libraries.Library):V

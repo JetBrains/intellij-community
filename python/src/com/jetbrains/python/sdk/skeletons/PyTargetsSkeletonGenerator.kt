@@ -13,6 +13,7 @@ import com.intellij.execution.target.value.getTargetDownloadPath
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -128,7 +129,13 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
         val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
         val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
         listener?.let { capturingProcessHandler.addProcessListener(LineWiseProcessOutputListener.Adapter(it)) }
-        val result = capturingProcessHandler.runProcess()
+        val indicator = ProgressManager.getInstance().progressIndicator
+        val result = if (indicator != null) {
+          capturingProcessHandler.runProcessWithProgressIndicator(indicator)
+        }
+        else {
+          capturingProcessHandler.runProcess()
+        }
 
         // XXX Make it automatic
         targetEnvironment.downloadVolumes.values.forEach { it.download(".", EmptyProgressIndicator()) }

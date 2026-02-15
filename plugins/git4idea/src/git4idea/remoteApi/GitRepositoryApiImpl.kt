@@ -36,7 +36,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private typealias SharedRefUtil = GitRefUtil
 
-class GitRepositoryApiImpl : GitRepositoryApi {
+internal class GitRepositoryApiImpl : GitRepositoryApi {
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> =
     projectScopedCallbackFlow(projectId) { project, messageBusConnection ->
       val synchronizer = Synchronizer(project, this)

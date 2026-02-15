@@ -11,7 +11,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitVcs;
-import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.fetch.GitFetchResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,6 @@ public class GitFetch extends DumbAwareAction {
   @RequiresEdt
   protected void onFetchFinished(@NotNull Project project, @NotNull GitFetchResult result) {
     ActivityTracker.getInstance().inc();
-    GitBranchIncomingOutgoingManager.getInstance(project).updateAfterFetch();
     result.showNotification();
   }
 
