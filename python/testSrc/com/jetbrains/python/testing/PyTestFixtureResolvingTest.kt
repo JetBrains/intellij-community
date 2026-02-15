@@ -5,8 +5,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.ResolveResult
+import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
 import com.jetbrains.python.fixture.PythonCommonTestCase
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -112,6 +114,9 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
     const val PARAMETRIZED_DIR = "/testParameters"
     const val TEST_PARAMETER_TYPES = "/test_parameter_types.py"
+
+    const val GOTO_TYPE_DECLARATION_DIR = "/testGotoTypeDeclaration"
+    const val TEST_GOTO_TYPE_DECLARATION = "/test_goto_type_declaration.py"
 
   }
 
@@ -359,5 +364,14 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
   fun testNamedParameterTypes() {
     assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, INT_STR_UNION)
+  }
+
+  fun testGotoTypeDeclarationForFixtureParameter() {
+    myFixture.configureByFile(GOTO_TYPE_DECLARATION_DIR + TEST_GOTO_TYPE_DECLARATION)
+    val types = GotoTypeDeclarationAction.findSymbolTypes(myFixture.editor, myFixture.caretOffset)
+    assertNotNull("Go to Type Declaration should resolve the fixture parameter type", types)
+    assertEquals(1, types!!.size)
+    val pyClass = types.single() as PyClass
+    assertEquals("A", pyClass.name)
   }
 }
