@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.RecursionManager
@@ -25,11 +26,13 @@ import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.engine.PyTypeEngine
+import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider.Companion.createTypeResolver
 import com.jetbrains.python.pyi.PyiLanguageDialect
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentMap
 import kotlin.concurrent.Volatile
+import kotlin.time.measureTimedValue
 
 sealed class TypeEvalContext(
   /**
@@ -52,20 +55,19 @@ sealed class TypeEvalContext(
 
   private val myProcessingContext = ThreadLocal.withInitial { ProcessingContext() }
 
-  private var typeEngine: PyTypeEngine? = null
+  private val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
+    ModuleUtilCore.findModuleForFile(it)
+  }?.let { module ->
+    createTypeResolver(module)
+  }
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCaching()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCaching()
   protected val contextTypeCache: ConcurrentMap<Pair<PyExpression?, Any?>, PyType> = getConcurrentMapForCaching()
 
-  private constructor(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, origin: PsiFile?) : this(
-    TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin)
+  private constructor(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, isExternal: Boolean, origin: PsiFile?) : this(
+    TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, isExternal, origin)
   )
 
-  init {
-    if (constraints.myOrigin != null) {
-      typeEngine = createTypeResolver(constraints.myOrigin.project)
-    }
-  }
 
   override fun toString(): String {
     return "TypeEvalContext(${constraints.myAllowDataFlow}, ${constraints.myAllowStubToAST}, ${constraints.myOrigin})"
@@ -170,6 +172,7 @@ sealed class TypeEvalContext(
       constraints.myAllowDataFlow,
       constraints.myAllowStubToAST,
       constraints.myAllowCallContext,
+      constraints.myIsExternal,
       origin,
     )
     return project.service<TypeEvalContextCache>()
@@ -195,12 +198,20 @@ sealed class TypeEvalContext(
     }
 
     return RecursionManager.doPreventingRecursion(element to this, false) {
-      val type: PyType?
-      if (typeEngine != null && typeEngine!!.isSupportedForResolve(element)) {
-        type = Ref.deref(typeEngine!!.resolveType(element, this is LibraryTypeEvalContext))
+      val type = if (typeEngine != null && typeEngine.isSupportedForResolve(element)) {
+        val (result, duration) = measureTimedValue {
+          val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
+          typeEngine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get()
+        }
+        //PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(typeEngine.name, duration.inWholeMilliseconds)
+        result
       }
       else {
-        type = element.getType(this, KeyImpl)
+        val (result, duration) = measureTimedValue {
+          element.getType(this, KeyImpl)
+        }
+        //PyTypeEvaluationAggregatesCollector.recordPyCharmTypeEngineTime(duration.inWholeMilliseconds)
+        result
       }
 
       assertValid(type, element)
@@ -245,6 +256,9 @@ sealed class TypeEvalContext(
 
   val usesExternalTypeProvider: Boolean
     get() = typeEngine != null
+
+  @ApiStatus.Internal
+  open fun isExternal(): Boolean = false
 
   @ApiStatus.Internal
   fun getContextTypeCache(): MutableMap<Pair<PyExpression?, Any?>, PyType?> {
@@ -295,8 +309,11 @@ sealed class TypeEvalContext(
     }
   }
 
-  private class TypeEvalContextImpl(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, origin: PsiFile?) :
-    TypeEvalContext(allowDataFlow, allowStubToAST, allowCallContext, origin)
+  private class TypeEvalContextImpl(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, isExternal: Boolean, origin: PsiFile?) :
+    TypeEvalContext(allowDataFlow, allowStubToAST, allowCallContext, isExternal, origin) {
+
+    override fun isExternal(): Boolean = constraints.myIsExternal
+  }
 
   private class AssumptionContext(val myParent: TypeEvalContext, element: PyTypedElement, type: PyType?) :
     TypeEvalContext(myParent.constraints) {
@@ -337,8 +354,8 @@ sealed class TypeEvalContext(
     }
   }
 
-  private class OptimizedTypeEvalContext(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, origin: PsiFile?) :
-    TypeEvalContext(allowDataFlow, allowStubToAST, allowCallContext, origin) {
+  private class OptimizedTypeEvalContext(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, isExternal: Boolean, origin: PsiFile?) :
+    TypeEvalContext(allowDataFlow, allowStubToAST, allowCallContext, isExternal, origin) {
     @Volatile
     private var codeInsightFallback: TypeEvalContext? = null
 
@@ -426,7 +443,7 @@ sealed class TypeEvalContext(
      */
     @JvmStatic
     fun codeCompletion(project: Project, origin: PsiFile?): TypeEvalContext {
-      return getContextFromCache(project, TypeEvalContextImpl(true, true, true, origin))
+      return getContextFromCache(project, TypeEvalContextImpl(true, true, true, false, origin))
     }
 
     /**
@@ -440,7 +457,7 @@ sealed class TypeEvalContext(
      */
     @JvmStatic
     fun userInitiated(project: Project, origin: PsiFile?): TypeEvalContext {
-      return getContextFromCache(project, TypeEvalContextImpl(true, true, false, origin))
+      return getContextFromCache(project, TypeEvalContextImpl(true, true, false, false, origin))
     }
 
     /**
@@ -464,7 +481,7 @@ sealed class TypeEvalContext(
      */
     @JvmStatic
     fun codeInsightFallback(project: Project?): TypeEvalContext {
-      val anchor = TypeEvalContextImpl(false, false, false, null)
+      val anchor = TypeEvalContextImpl(false, false, false, false, null)
       if (project != null) {
         return getContextFromCache(project, anchor)
       }
@@ -479,14 +496,25 @@ sealed class TypeEvalContext(
      */
     @JvmStatic
     fun deepCodeInsight(project: Project): TypeEvalContext {
-      return getContextFromCache(project, TypeEvalContextImpl(false, true, false, null))
+      return getContextFromCache(project, TypeEvalContextImpl(false, true, false, false, null))
+    }
+
+    /**
+     * Special context for converting types from an external type checker.
+     * More aggressive assumptions can be made.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun externalContext(project: Project): TypeEvalContext {
+      val anchor = TypeEvalContextImpl(false, false, false, true, null)
+      return getContextFromCache(project, anchor)
     }
 
     private fun buildCodeAnalysisContext(origin: PsiFile?): TypeEvalContext {
       if (Registry.`is`("python.optimized.type.eval.context")) {
-        return OptimizedTypeEvalContext(false, false, false, origin)
+        return OptimizedTypeEvalContext(false, false, false, false, origin)
       }
-      return TypeEvalContextImpl(false, false, false, origin)
+      return TypeEvalContextImpl(false, false, false, false, origin)
     }
 
     /**
