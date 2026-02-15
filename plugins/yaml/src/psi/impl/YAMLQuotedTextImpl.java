@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText {
+public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText {
   private final boolean myIsSingleQuoted;
 
   public YAMLQuotedTextImpl(@NotNull ASTNode node) {

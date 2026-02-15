@@ -8,12 +8,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 
-public final class YAMLFileType extends LanguageFileType {
+public class YAMLFileType extends LanguageFileType {
   public static final YAMLFileType YML = new YAMLFileType();
   public static final @NonNls String DEFAULT_EXTENSION = "yml";
 
-  private YAMLFileType() {
+  protected YAMLFileType() {
     super(YAMLLanguage.INSTANCE);
+  }
+
+  protected YAMLFileType(@NotNull Language language) {
+    super(language);
   }
 
   @Override

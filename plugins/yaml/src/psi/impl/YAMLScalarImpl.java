@@ -45,11 +45,11 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
   }
 
   @Override
-  public final @NotNull String getTextValue() {
+  public @NotNull String getTextValue() {
     return getTextEvaluator().getTextValue(null);
   }
 
-  public final @NotNull String getTextValue(@Nullable TextRange rangeInHost) {
+  public @NotNull String getTextValue(@Nullable TextRange rangeInHost) {
     return getTextEvaluator().getTextValue(rangeInHost);
   }
 
@@ -97,7 +97,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
            && (pos + 1 >= text.length() || !YAMLGrammarCharUtil.isSpaceLike(text.charAt(pos + 1)));
   }
 
-  protected final @Nullable ASTNode getFirstContentNode() {
+  protected @Nullable ASTNode getFirstContentNode() {
     ASTNode node = getNode().getFirstChildNode();
     while (node != null && (
       node.getElementType() == YAMLTokenTypes.TAG || YAMLElementTypes.BLANK_ELEMENTS.contains(node.getElementType()))) {
