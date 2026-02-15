@@ -45,6 +45,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.indexing.StorageException
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -58,6 +59,7 @@ import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.search.refIndex.bta.BtaFileWatcher
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -74,8 +76,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.idea.search.refIndex.bta.BtaFileWatcher
-import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.atomic.LongAdder
@@ -162,7 +162,9 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         })
 
         if (BtaFileWatcher.isApplicable(project)) {
-            BtaFileWatcher(project, coroutineScope, ::onExternalCompilationDetected)
+            BtaFileWatcher(project).watchIn(coroutineScope) { upToDateModules ->
+                onExternalCompilationDetected(upToDateModules)
+            }
         }
     }
 
