@@ -2,9 +2,10 @@
 package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.engine.JavaDebugProcess
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.withDebugContext
+import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.memory.utils.InstanceJavaValue
+import com.intellij.debugger.streams.core.StreamDebuggerBundle
 import com.intellij.debugger.streams.core.trace.AbstractStreamTracer
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.TraceResultInterpreter
@@ -12,10 +13,7 @@ import com.intellij.debugger.streams.core.trace.XValueInterpreter
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.ui.impl.PrimitiveValueDescriptor
-import com.intellij.debugger.ui.impl.watch.NodeManagerImpl
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue
 import com.sun.jdi.Value
 
@@ -28,52 +26,43 @@ private val LOG = logger<BreakpointBasedStreamTracer>()
  * Uses JDI breakpoints instead of peek-based injection to avoid double side effects.
  */
 internal class BreakpointBasedStreamTracer(
-  private val session: XDebugSession,
+  private val xDebugProcess: JavaDebugProcess,
   private val librarySupport: BreakpointBasedLibrarySupport,
   xValueInterpreter: XValueInterpreter,
   resultInterpreter: TraceResultInterpreter,
-) : AbstractStreamTracer(session, xValueInterpreter, resultInterpreter) {
+) : AbstractStreamTracer(xDebugProcess.session, xValueInterpreter, resultInterpreter) {
   override suspend fun trace(chain: StreamChain): StreamTracer.Result {
-    val xDebugProcess = session.debugProcess as? JavaDebugProcess ?: return StreamTracer.Result.Unknown
-    val suspendContext = xDebugProcess.session.suspendContext as? SuspendContextImpl
-    val suspendManager = xDebugProcess.debuggerSession.process.suspendManager
-    if (suspendContext == null) {
-      LOG.error("SuspendContext is not available, probably tracer was executed when the program is not suspended")
-      return StreamTracer.Result.Unknown
-    }
-    // TODO: maybe we need to use withAutoLoadClasses
-    val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
-
-    //val stackDepthBeforeTracing = suspendContext.cachedThreadFrameCount
+    val debuggerContext = xDebugProcess.debuggerSession.contextManager.context
 
     val breakpointPositionResolver = JavaBreakpointPositionResolver()
+    val positions = breakpointPositionResolver
+      .findBreakpointPositions(chain) as? BreakpointResolveResult.Found
+                    ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("could.not.find.breakpoint.positions"))
+
     val breakpointFactory = BreakpointFactory()
-    val positions =
-      breakpointPositionResolver.findBreakpointPositions(chain) as? BreakpointResolveResult.Found ?: return StreamTracer.Result.Unknown
+    val manager = StreamTracingManager(debuggerContext, breakpointFactory, librarySupport.createRuntimeHandlerFactory())
 
-    val manager = StreamTracingManager(breakpointFactory, librarySupport.createRuntimeHandlerFactory())
+    val result = manager.evaluateChain(positions, chain)
+    return when (result) {
+      is EvaluationResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
+      is EvaluationResult.Success -> {
+        val xValue = createXValue(
+          debuggerContext,
+          result.rawTrace,
+        ) ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("program.is.not.suspended"))
 
-    val result = manager.evaluateChain(positions, evaluationContext, chain)
-    // TODO: we resumed execution above, so we must obtain a fresh suspend context
-
-    val nodeManager = xDebugProcess.nodeManager
-    val xValue = createXValue(
-      session.project,
-      nodeManager,
-      evaluationContext,
-      result,
-    )
-
-    return interpretStreamResult(xValue, chain, streamTraceExpression = "")
+        interpretStreamResult(xValue, chain, streamTraceExpression = "")
+      }
+    }
   }
 
-  private fun createXValue(
-    project: Project,
-    nodeManager: NodeManagerImpl,
-    evaluationContext: EvaluationContextImpl,
+  private suspend fun createXValue(
+    debuggerContext: DebuggerContextImpl,
     jvmValue: Value,
-  ): XValue {
-    val valueDescriptor = PrimitiveValueDescriptor(project, jvmValue)
-    return InstanceJavaValue(valueDescriptor, evaluationContext, nodeManager)
+  ): XValue? = withDebugContext(debuggerContext.managerThread!!) {
+    val evaluationContext = debuggerContext.createEvaluationContext() ?: return@withDebugContext null
+    val nodeManager = xDebugProcess.nodeManager
+    val valueDescriptor = PrimitiveValueDescriptor(xDebugProcess.session.project, jvmValue)
+    InstanceJavaValue(valueDescriptor, evaluationContext, nodeManager)
   }
 }

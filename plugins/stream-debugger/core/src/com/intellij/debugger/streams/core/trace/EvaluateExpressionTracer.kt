@@ -21,9 +21,10 @@ class EvaluateExpressionTracer(
   private val expressionBuilder: TraceExpressionBuilder,
   xValueInterpreter: XValueInterpreter,
   resultInterpreter: TraceResultInterpreter,
+  private val debuggerCommandLauncher: DebuggerCommandLauncher,
 ) : AbstractStreamTracer(debugSession, xValueInterpreter, resultInterpreter) {
 
-  override suspend fun trace(chain: StreamChain) : StreamTracer.Result {
+  override suspend fun trace(chain: StreamChain) : StreamTracer.Result = debuggerCommandLauncher.computeInDebuggerContext {
     val streamTraceExpression = withContext(Dispatchers.Default) { expressionBuilder.createTraceExpression(chain) }
 
     val stackFrame = debugSession.getCurrentStackFrame()
@@ -33,16 +34,16 @@ class EvaluateExpressionTracer(
       val deferredResult = evaluateStreamExpression(evaluator, chain, streamTraceExpression, stackFrame)
 
       if (deferredResult.error == null) {
-        val xValue = deferredResult.xValue ?: return StreamTracer.Result.Unknown
+        val xValue = deferredResult.xValue ?: return@computeInDebuggerContext StreamTracer.Result.Unknown
 
-        return interpretStreamResult(xValue, chain, streamTraceExpression)
+        interpretStreamResult(xValue, chain, streamTraceExpression)
       }
       else {
-        return StreamTracer.Result.CompilationFailed(streamTraceExpression, deferredResult.error)
+        StreamTracer.Result.CompilationFailed(streamTraceExpression, deferredResult.error)
       }
+    } else {
+      StreamTracer.Result.Unknown
     }
-
-    return StreamTracer.Result.Unknown
   }
 
   data class EvaluationResult(val xValue: XValue?, @NlsSafe val error: String?)

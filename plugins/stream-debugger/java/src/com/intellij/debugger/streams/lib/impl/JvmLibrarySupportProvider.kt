@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
@@ -30,24 +31,28 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
     return JavaDebuggerCommandLauncher(session)
   }
 
-  override fun getTracerFor(chain: StreamChain, session: XDebugSession): StreamTracer {
-    DebuggerManagerThreadImpl.assertIsManagerThread()
+  override suspend fun getTracerFor(chain: StreamChain, session: XDebugSession): StreamTracer {
+    val support = getLibrarySupport()
+    val debugProcess = session.debugProcess
 
-    val support = librarySupport // for smartcast
-    if (support !is BreakpointBasedLibrarySupport) {
+    if (support !is BreakpointBasedLibrarySupport || debugProcess !is JavaDebugProcess) {
       return super.getTracerFor(chain, session)
     }
 
-    val vm = VirtualMachineProxyImpl.getCurrent()
-    if (!isSupportedVm(vm)) {
+    val isSupportedVm = withDebugContext(debugProcess.debuggerSession.contextManager.context) {
+      val vm = VirtualMachineProxyImpl.getCurrent()
+      isSupportedVm(vm)
+    }
+
+    if (!isSupportedVm) {
       return super.getTracerFor(chain, session)
     }
 
     return BreakpointBasedStreamTracer(
-      session,
+      debugProcess,
       support,
       getXValueInterpreter(session.project),
-      TraceResultInterpreterImpl(getLibrarySupport().interpreterFactory)
+      TraceResultInterpreterImpl(support.interpreterFactory)
     )
   }
 

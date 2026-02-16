@@ -88,7 +88,14 @@ abstract class TraceExecutionTestHelper(
       return
     }
 
-    val tracer = EvaluateExpressionTracer(session, createExpressionBuilder(), createXValueInterpreter(), createResultInterpreter())
+    val commandLauncher = librarySupportProvider.getDebuggerCommandLauncher(session)
+    val tracer = EvaluateExpressionTracer(
+      session,
+      createExpressionBuilder(),
+      createXValueInterpreter(),
+      createResultInterpreter(),
+      commandLauncher
+    )
     val trace = tracer.trace(chain)
     when (trace) {
       is StreamTracer.Result.Evaluated -> complete(chain, trace.result, resultMustBeNull, null, null)

@@ -150,10 +150,6 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         }
       }
 
-      awaitCancellationAndInvoke(Dispatchers.EDT) {
-        window.close(DialogWrapper.CANCEL_EXIT_CODE)
-      }
-
       withContext(Dispatchers.EDT) {
         yield()
         window.show()
@@ -169,27 +165,26 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         val project = session.getProject()
         val debuggerLauncher = provider.getDebuggerCommandLauncher(session)
 
-        debuggerLauncher.launchDebuggerCommand {
-          val tracer: StreamTracer = provider.getTracerFor(chain, session)
-          val result = tracer.trace(chain)
-          when (result) {
-            is StreamTracer.Result.Evaluated -> {
-              val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
-              withContext(Dispatchers.EDT) {
-                window.setTrace(resolvedTrace, debuggerLauncher, result.evaluationContext, provider.getCollectionTreeBuilder(project))
-              }
+        val tracer: StreamTracer = provider.getTracerFor(chain, session)
+        val result = tracer.trace(chain)
+
+        when (result) {
+          is StreamTracer.Result.Evaluated -> {
+            val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
+            withContext(Dispatchers.EDT) {
+              window.setTrace(resolvedTrace, debuggerLauncher, result.evaluationContext, provider.getCollectionTreeBuilder(project))
             }
-            is StreamTracer.Result.EvaluationFailed -> {
-              showError(result.message)
-              throw TraceEvaluationException(result.message, result.traceExpression)
-            }
-            is StreamTracer.Result.CompilationFailed -> {
-              showError(result.message)
-              throw TraceCompilationException(result.message, result.traceExpression)
-            }
-            StreamTracer.Result.Unknown -> {
-              LOG.error("Unknown result")
-            }
+          }
+          is StreamTracer.Result.EvaluationFailed -> {
+            showError(result.message)
+            throw TraceEvaluationException(result.message, result.traceExpression)
+          }
+          is StreamTracer.Result.CompilationFailed -> {
+            showError(result.message)
+            throw TraceCompilationException(result.message, result.traceExpression)
+          }
+          StreamTracer.Result.Unknown -> {
+            LOG.error("Unknown result")
           }
         }
       }

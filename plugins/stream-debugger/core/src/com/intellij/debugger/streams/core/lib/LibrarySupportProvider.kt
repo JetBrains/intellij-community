@@ -50,7 +50,7 @@ interface LibrarySupportProvider {
    * @param session the debug session
    * @return a tracer suitable for this chain
    */
-  fun getTracerFor(chain: StreamChain, session: XDebugSession): StreamTracer {
+  suspend fun getTracerFor(chain: StreamChain, session: XDebugSession): StreamTracer {
     val project = session.getProject()
     return EvaluateExpressionTracer(
       session,
