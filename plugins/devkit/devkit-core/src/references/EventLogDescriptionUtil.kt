@@ -21,16 +21,16 @@ import org.jetbrains.uast.toUElementOfType
 
 internal const val EVENT_LOG_GROUP_FQN = "com.intellij.internal.statistic.eventLog.EventLogGroup"
 internal const val EVENT_LOG_PROPERTIES_DIR = "build/events"
-
-private const val REGISTER_EVENT_NAME = "registerEvent"
-private const val REGISTER_VARARG_EVENT_NAME = "registerVarargEvent"
+internal const val REGISTER_EVENT_NAME = "registerEvent"
+internal const val REGISTER_VARARG_EVENT_NAME = "registerVarargEvent"
+internal const val REGISTER_ACTIVITY_NAME = "registerIdeActivity"
 
 private const val FUS_RECORDER = "FUS"
 
 internal fun eventLogGroupCall(): ElementPattern<UCallExpression> = callExpression().andOr(
   callExpression().constructor(EVENT_LOG_GROUP_FQN),
   callExpression().withAnyResolvedMethod(
-    psiMethod().withName(REGISTER_EVENT_NAME, REGISTER_VARARG_EVENT_NAME).definedInClass(EVENT_LOG_GROUP_FQN)
+    psiMethod().withName(REGISTER_EVENT_NAME, REGISTER_VARARG_EVENT_NAME, REGISTER_ACTIVITY_NAME).definedInClass(EVENT_LOG_GROUP_FQN)
   )
 )
 

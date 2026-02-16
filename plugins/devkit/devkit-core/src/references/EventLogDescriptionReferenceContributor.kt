@@ -44,7 +44,10 @@ private class EventLogDescriptionReferenceProvider : UastInjectionHostReferenceP
       val eventId = uExpression.evaluateString() ?: return PsiReference.EMPTY_ARRAY
       val receiver = call.receiver ?: return PsiReference.EMPTY_ARRAY
       val (groupId, recorder) = findGroupIdAndRecorderName(receiver) ?: return PsiReference.EMPTY_ARRAY
-      return arrayOf(EventLogDescriptionReference("${groupId}.${eventId}", host, recorder))
+      return if (call.methodName == REGISTER_ACTIVITY_NAME) arrayOf(
+        EventLogDescriptionReference("${groupId}.${eventId}.started", host, recorder),
+        EventLogDescriptionReference("${groupId}.${eventId}.finished", host, recorder)
+      ) else arrayOf(EventLogDescriptionReference("${groupId}.${eventId}", host, recorder))
     }
   }
 }

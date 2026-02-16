@@ -3,6 +3,8 @@ package org.jetbrains.idea.devkit.references
 
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
 import org.jetbrains.idea.devkit.inspections.EventLogDescriptionInspection
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,6 +24,7 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
         public EventLogGroup(String id, int version, String recorder) {}
         public EventId registerEvent(String id) {}
         public EventId registerVarargEvent(String id, Object... fields) {}
+        public EventId registerIdeActivity(String name, Object... fields) {}
         public static class EventId {}
       }""".trimIndent()
     )
@@ -29,6 +32,8 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
       my.group=FUS group
       my.group.event=FUS event
       my.group.var.event=FUS vararg event
+      my.group.activity.started=FUS activity started
+      my.group.activity.finished=FUS activity ended
       empty.group=
       my.group.empty.event=
     """.trimIndent())
@@ -74,6 +79,19 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
   }
 
   @Test
+  fun `activity in default recorder - Java`() {
+    fixture.configureByText("Foo.java", """
+      import com.intellij.internal.statistic.eventLog.EventLogGroup;
+      class Foo {
+        private static final EventLogGroup GROUP = new EventLogGroup("my.group", 1);
+        private static final EventLogGroup.EventId ACTIVITY = GROUP.registerIdeActivity("activity<caret>", "whatever");
+      }
+      """.trimIndent()
+    )
+    testMultiResolve("FUS.properties", "FUS activity started", "FUS activity ended")
+  }
+
+  @Test
   fun `group in default recorder - Kotlin`() {
     fixture.configureByText("Foo.kt", """
       import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -109,6 +127,19 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
       """.trimIndent()
     )
     testResolve("FUS.properties", "FUS vararg event")
+  }
+
+  @Test
+  fun `activity in default recorder - Kotlin`() {
+    fixture.configureByText("Foo.kt", """
+      import com.intellij.internal.statistic.eventLog.EventLogGroup
+      object Foo {
+        private val GROUP = EventLogGroup("my.group", 1)
+        private val ACTIVITY = GROUP.registerIdeActivity("activity<caret>", "whatever")
+      }
+      """.trimIndent()
+    )
+    testMultiResolve("FUS.properties", "FUS activity started", "FUS activity ended")
   }
 
   @Test
@@ -166,6 +197,8 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
           GROUP.registerEvent(<error descr="Event 'my.group.missing.event' description is missing from 'FUS.properties'">"missing.event"</error>);
         private static final EventLogGroup.EventId E4 =
           GROUP.registerEvent(<error descr="Event 'my.group.empty.event' description is empty">"empty.event"</error>);
+        private static final EventLogGroup.EventId E5 =
+          GROUP.registerIdeActivity(<error descr="Event 'my.group.missing.activity.finished' description is missing from 'FUS.properties'"><error descr="Event 'my.group.missing.activity.started' description is missing from 'FUS.properties'">"missing.activity"</error></error>);
       }""".trimIndent()
     )
     fixture.checkHighlighting()
@@ -192,6 +225,7 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
         private val E2 = GROUP.registerEvent(<warning descr="Cannot evaluate the event ID; consider using a constant expression">System.getProperty("event")</warning>)
         private val E3 = GROUP.registerEvent(<error descr="Event 'my.group.missing.event' description is missing from 'FUS.properties'">"missing.event"</error>)
         private val E4 = GROUP.registerEvent(<error descr="Event 'my.group.empty.event' description is empty">"empty.event"</error>)
+        private val E5 = GROUP.registerIdeActivity(<error descr="Event 'my.group.missing.activity.finished' description is missing from 'FUS.properties'"><error descr="Event 'my.group.missing.activity.started' description is missing from 'FUS.properties'">"missing.activity"</error></error>)
       }""".trimIndent()
     )
     fixture.checkHighlighting()
@@ -200,6 +234,21 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
   private fun testResolve(expectedFile: String, expectedText: String) = runReadAction {
     val reference = fixture.getReferenceAtCaretPosition()
     assertNotNull(reference)
+    assertEventDescriptionReference(reference, expectedFile, expectedText)
+  }
+
+  @Suppress("SameParameterValue")
+  private fun testMultiResolve(expectedFile: String, vararg expectedTexts: String) = runReadAction {
+    val reference = fixture.getReferenceAtCaretPosition()
+    val multiReference = assertInstanceOf<PsiMultiReference>(reference)
+    val references = multiReference.references
+    assertEquals(expectedTexts.size, references.size, "Wrong number of references")
+    references.forEachIndexed { i, ref ->
+      assertEventDescriptionReference(ref, expectedFile, expectedTexts[i])
+    }
+  }
+
+  private fun assertEventDescriptionReference(reference: PsiReference, expectedFile: String, expectedText: String) {
     assertEquals("EventLogDescriptionReference", reference.javaClass.simpleName)
     val property = assertInstanceOf<Property>(reference.resolve())
     assertEquals(expectedFile, property.containingFile.name)

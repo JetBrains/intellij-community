@@ -17,6 +17,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.references.EVENT_LOG_GROUP_FQN
 import org.jetbrains.idea.devkit.references.EVENT_LOG_PROPERTIES_DIR
+import org.jetbrains.idea.devkit.references.REGISTER_ACTIVITY_NAME
 import org.jetbrains.idea.devkit.references.eventLogGroupCall
 import org.jetbrains.idea.devkit.references.findEventLogPropertiesFile
 import org.jetbrains.idea.devkit.references.findGroupIdAndRecorderName
@@ -77,11 +78,15 @@ private class EventLogDescriptionInspectionVisitor(private val holder: ProblemsH
         val eventId = argument.evaluateString()?.takeIf { it.isNotBlank() }
           ?: return warn(argument, "inspections.event.log.event.id.not.evaluable")
         findEventLogPropertiesFile(holder.project, recorder)?.let { file ->
-          val key = "${groupId}.${eventId}"
-          val description = file.findPropertyByKey(key)?.value
-            ?: return error(argument, "inspections.event.log.event.description.missing", key, file.name)
-          if (description.isBlank())
-            error(argument, "inspections.event.log.event.description.empty", key)
+          val base = "${groupId}.${eventId}"
+          val keys = if (node.methodName == REGISTER_ACTIVITY_NAME) sequenceOf("${base}.started", "${base}.finished") else sequenceOf(base)
+          keys.forEach { key ->
+            val description = file.findPropertyByKey(key)?.value
+            when {
+              description == null -> error(argument, "inspections.event.log.event.description.missing", key, file.name)
+              description.isBlank() -> error(argument, "inspections.event.log.event.description.empty", key)
+            }
+          }
         }
       }
     }
