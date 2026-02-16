@@ -11,13 +11,12 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.project.stateStore
-import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
+import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemWithTomlContent
@@ -40,7 +39,7 @@ class PyExternalSystemProjectAware private constructor(
   private val project: Project,
   private val projectRootDir: Path,
 ) : ExternalSystemProjectAware {
-  override val projectId: ExternalSystemProjectId = ExternalSystemProjectId(SYSTEM_ID, projectRootDir.pathString)
+  override val projectId: ExternalSystemProjectId = ExternalSystemProjectId(PY_PROJECT_SYSTEM_ID, projectRootDir.pathString)
 
 
   @get:RequiresBackgroundThread
@@ -123,9 +122,6 @@ class PyExternalSystemProjectAware private constructor(
       }
       return PyExternalSystemProjectAware(project, baseDir)
     }
-
-    @Suppress("DialogTitleCapitalization") //pyproject.toml can't be capitalized
-    private val SYSTEM_ID = ProjectSystemId("pyproject.toml", PyProjectTomlBundle.message("intellij.python.pyproject.system.name"))
   }
 }
 
