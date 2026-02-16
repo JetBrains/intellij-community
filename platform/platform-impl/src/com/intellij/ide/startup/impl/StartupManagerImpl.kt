@@ -250,7 +250,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
             idString != "com.intellij.clion.performanceTesting" &&
             idString != "com.intellij.appcode" &&
             idString != "com.jetbrains.kmm" &&
-            idString != "com.jetbrains.codeWithMe" &&
+            idString != "com.jetbrains.remote.development" &&
             idString != "intellij.rider.plugins.cwm" &&
             idString != "org.jetbrains.plugins.clion.radler") {
           if (!(idString == "com.intellij.ml.llm" && adapter.assignableToClassName.endsWith("XNextRootPaneCustomizer"))) {

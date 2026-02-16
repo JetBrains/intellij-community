@@ -83,7 +83,7 @@ internal class IDEBackendHandler(
   }
 
   @Remote(value = "com.jetbrains.rdserver.unattendedHost.connection.UnattendedModeManagerImpl",
-          plugin = "com.jetbrains.codeWithMe")
+          plugin = "com.jetbrains.remote.development")
   interface UnattendedModeManagerImpl {
     fun remoteDevDirectLink(): String?
   }
