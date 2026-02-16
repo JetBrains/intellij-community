@@ -172,11 +172,17 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     }
 
     private fun onExternalCompilationDetected(compiledModules: List<Module>) {
+        val allModules = if (!initialized) allModules() else null
         compilationCounter.increment()
         val projectPath = runReadAction { projectIfNotDisposed?.basePath }
         withDirtyScopeUnderWriteLock {
-            compilerActivityFinished(compiledModules)
             openStorage(projectPath)
+
+            if (!initialized) {
+                initialize(allModules, compiledModules)
+            } else {
+                compilerActivityFinished(compiledModules)
+            }
         }
     }
 
