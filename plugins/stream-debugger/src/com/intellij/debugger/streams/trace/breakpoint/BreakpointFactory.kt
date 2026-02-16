@@ -39,24 +39,16 @@ typealias ExceptionHandler = (SuspendContext, Location?, ObjectReference) -> Boo
 internal class BreakpointFactory {
   fun createMethodEntryBreakpoint(evaluationContext: EvaluationContextImpl,
                                   signature: JvmMethodSignature,
-                                  transformer: ArgumentsTransformer): MethodEntryRequest {
+                                  onMethodEntry: ArgumentsTransformer): MethodEntryRequest {
     val vmMethod = findVmMethod(evaluationContext, signature) ?: throw MethodNotFoundException(signature)
     // There is no need to request a hit because we just need to replace arguments on the fly
     val requestor = MethodEntryRequestor(evaluationContext.project, vmMethod, false) { requestor, suspendContext, event ->
       event.request().disable()
       suspendContext.debugProcess.requestsManager.deleteRequest(requestor)
 
-      val argumentValues = try {
-        getMethodArguments(suspendContext, event.method())
-      }
-      catch (e: UnsupportedOperationException) {
-        val vm = event.virtualMachine()
-        LOG.warn("Method arguments interception is not supported in ${vm.name()} ${vm.version()}", e)
-        return@MethodEntryRequestor
-      }
-
+      val argumentValues = getMethodArguments(suspendContext, event.method())
       val newArgumentsList = try {
-        transformer(suspendContext, event.method(), argumentValues)
+        onMethodEntry(suspendContext, event.method(), argumentValues)
       }
       catch (e: Throwable) {
         LOG.warn("Error occurred during ${signature} method arguments modification", e)
@@ -84,7 +76,7 @@ internal class BreakpointFactory {
 
   fun createMethodExitBreakpoint(evaluationContext: EvaluationContextImpl,
                                  signature: JvmMethodSignature,
-                                 transformer: ReturnValueTransformer): MethodExitRequest {
+                                 onMethodExit: ReturnValueTransformer): MethodExitRequest {
     val vmMethod = findVmMethod(evaluationContext, signature) ?: throw MethodNotFoundException(signature)
     val requestor = MethodExitRequestor(evaluationContext.project, vmMethod, false) { requestor, suspendContext, event ->
       event.request().disable()
@@ -102,7 +94,7 @@ internal class BreakpointFactory {
       }
 
       val replacedReturnValue = try {
-        transformer(suspendContext, event.method(), originalReturnValue)
+        onMethodExit(suspendContext, event.method(), originalReturnValue)
       }
       catch (e: Throwable) {
         LOG.warn("Error occurred during ${signature} method return value modification", e)

@@ -5,13 +5,15 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.util.TypeConversionUtil
 import com.sun.jdi.Method
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Language agnostic representation of a method.
  * The method signature description reflects Java runtime semantics,
  * so function on any JVM language can be represented.
  */
-internal data class JvmMethodSignature(
+@ApiStatus.Internal
+data class JvmMethodSignature(
   val classFqn: String,
   val name: String,
   val argumentTypes: List<String>,

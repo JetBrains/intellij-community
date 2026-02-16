@@ -3,7 +3,7 @@ package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 
-internal interface BreakpointPositionResolver {
+interface BreakpointPositionResolver {
   /**
    * Searches breakpoint places for [StreamChain] operations.
    * If any intermediate or terminal call cannot be resolved should return [BreakpointResolveResult.NotFound]
@@ -11,7 +11,7 @@ internal interface BreakpointPositionResolver {
   suspend fun findBreakpointPositions(chain: StreamChain): BreakpointResolveResult
 }
 
-internal sealed class BreakpointResolveResult {
+sealed class BreakpointResolveResult {
   object NotFound : BreakpointResolveResult()
   /**
    * @param qualifierExpressionMethod null if a qualified expression is not a function call
