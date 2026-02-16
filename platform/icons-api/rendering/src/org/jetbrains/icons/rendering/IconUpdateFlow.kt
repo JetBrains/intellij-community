@@ -3,12 +3,11 @@ package org.jetbrains.icons.rendering
 
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.icons.Icon
-import org.jetbrains.icons.InternalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
-@InternalIconsApi
 typealias IconUpdateFlow = Flow<Int>
 
-@InternalIconsApi
+@ApiStatus.Internal
 interface MutableIconUpdateFlow: IconUpdateFlow {
   fun triggerUpdate()
   fun triggerDelayedUpdate(delay: Long)

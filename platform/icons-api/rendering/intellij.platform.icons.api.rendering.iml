@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.icons.api.ExperimentalIconsApi -opt-in=org.jetbrains.icons.api.InternalIconsApi -opt-in=org.jetbrains.icons.ExperimentalIconsApi" />
+          <option name="additionalArguments" value="-Xjvm-default=all" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -27,5 +27,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.platform.icons.api" exported="" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
 </module>

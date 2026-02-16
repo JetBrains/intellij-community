@@ -1,22 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.rendering
 
-import org.jetbrains.icons.ExperimentalIconsApi
-import org.jetbrains.icons.InternalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
-@OptIn(ExperimentalIconsApi::class)
-@InternalIconsApi
+@ApiStatus.Internal
 interface RescalableImageResource : ImageResource {
   fun scale(scale: ImageScale): BitmapImageResource
   fun calculateExpectedDimensions(scale: ImageScale): Bounds
 }
 
-@InternalIconsApi
+@ApiStatus.Internal
 sealed interface ImageScale {
   fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int): Float
 }
 
-@InternalIconsApi
+@ApiStatus.Internal
 class FixedScale(val scale: Float) : ImageScale {
   override fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int): Float = scale
 
@@ -34,7 +32,7 @@ class FixedScale(val scale: Float) : ImageScale {
   }
 }
 
-@InternalIconsApi
+@ApiStatus.Internal
 class FitAreaScale(val width: Int, val height: Int) : ImageScale {
   override fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int): Float {
     val wscale = this.width / width.toFloat()

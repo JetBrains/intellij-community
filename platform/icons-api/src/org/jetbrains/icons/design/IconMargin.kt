@@ -2,10 +2,10 @@
 package org.jetbrains.icons.design
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class IconMargin(
   val top: IconUnit,
   val left: IconUnit,

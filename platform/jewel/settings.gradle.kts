@@ -53,18 +53,12 @@ include(
     ":ui-tests",
     ":jb-icons-api",
     ":jb-icons-api-rendering",
-    ":jb-icons-api-rendering-lowlevel",
-    ":jb-icons-impl",
-    ":jb-icons-impl-rendering",
-    ":jb-icons-legacy-icon-support"
+    ":jb-icons-impl"
 )
 
 project(":jb-icons-api").projectDir = file("../icons-api")
 project(":jb-icons-api-rendering").projectDir = file("../icons-api/rendering")
-project(":jb-icons-api-rendering-lowlevel").projectDir = file("../icons-api/rendering/lowlevel")
-project(":jb-icons-legacy-icon-support").projectDir = file("../icons-api/legacy-icon-support")
 project(":jb-icons-impl").projectDir = file("../icons-impl")
-project(":jb-icons-impl-rendering").projectDir = file("../icons-impl/rendering")
 
 
 develocity {

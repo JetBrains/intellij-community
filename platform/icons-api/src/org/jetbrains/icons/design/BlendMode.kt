@@ -2,9 +2,9 @@
 package org.jetbrains.icons.design
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 enum class BlendMode {
   SrcIn,

@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.rendering
 
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Rendering context affects the behavior of the actual renderers and can be used to, for example, pass update callbacks.
  */
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class RenderingContext(
   /**
    * Update flow notifies the Icon renderer user about the need to force-rerender the Icon if necessary. (for example on animation frame)

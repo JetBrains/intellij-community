@@ -20,9 +20,9 @@ sourceSets {
 }
 
 dependencies {
+  api("org.jetbrains:annotations:26.0.2")
   api(project(":jb-icons-api"))
   api(project(":jb-icons-api-rendering"))
-  api(project(":jb-icons-api-rendering-lowlevel"))
   api(libs.kotlinx.serialization.core)
   api(libs.kotlinx.coroutines.core)
 }

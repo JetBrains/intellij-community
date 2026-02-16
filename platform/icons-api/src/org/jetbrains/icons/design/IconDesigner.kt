@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.design
 
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.Icon
 import org.jetbrains.icons.ImageResourceLocation
 import org.jetbrains.icons.layers.IconLayer
@@ -15,7 +15,7 @@ import org.jetbrains.icons.modifiers.size
  *
  * @param IconModifier Modifications that should be performed on the Layer, like sizing, margin, color filters etc. (order-dependant)
  */
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 interface IconDesigner {
   fun image(resourceLoader: ImageResourceLocation, modifier: IconModifier = IconModifier)
   fun image(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier)
@@ -43,7 +43,7 @@ fun IconDesigner.badge(
   shape(color, shape, modifier.size(size).align(align).cutoutMargin(cutout))
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 interface IconAnimationDesigner {
   fun frame(duration: Long, builder: IconDesigner.() -> Unit)
 }

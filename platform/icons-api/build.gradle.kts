@@ -20,6 +20,7 @@ sourceSets {
 }
 
 dependencies {
+  api("org.jetbrains:annotations:26.0.2")
   api(libs.kotlinx.serialization.core)
   api(libs.kotlinx.coroutines.core)
 }

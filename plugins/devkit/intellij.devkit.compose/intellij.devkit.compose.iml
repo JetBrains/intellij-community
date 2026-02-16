@@ -68,7 +68,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.gradle" />
-    <orderEntry type="module" module-name="intellij.platform.icons.api.legacyIconSupport" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="fleet.util.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />

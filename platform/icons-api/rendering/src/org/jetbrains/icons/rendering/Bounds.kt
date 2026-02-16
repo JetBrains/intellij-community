@@ -1,10 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.rendering
 
-import org.jetbrains.icons.ExperimentalIconsApi
-import org.jetbrains.icons.InternalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
-@InternalIconsApi
+@ApiStatus.Internal
 class Bounds(
   val x: Int,
   val y: Int,
@@ -56,7 +55,7 @@ class Bounds(
 
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 open class Dimensions(
   val width: Int,
   val height: Int

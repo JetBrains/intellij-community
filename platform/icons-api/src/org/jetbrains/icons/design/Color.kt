@@ -2,10 +2,10 @@
 package org.jetbrains.icons.design
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.roundToInt
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 sealed interface Color {
   fun toHex(): String
@@ -15,8 +15,7 @@ sealed interface Color {
   }
 }
 
-
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 class RGBA(
     val red: Float,

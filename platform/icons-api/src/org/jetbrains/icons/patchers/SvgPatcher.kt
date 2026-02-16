@@ -2,9 +2,9 @@
 package org.jetbrains.icons.patchers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 public class SvgPatcher(
   val operations: List<SvgPatchOperation>,
@@ -34,7 +34,7 @@ public class SvgPatcher(
 
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 infix fun SvgPatcher?.combineWith(other: SvgPatcher?): SvgPatcher? {
   if (this == null && other == null) return null
   if (this == null) return other!!
@@ -42,7 +42,7 @@ infix fun SvgPatcher?.combineWith(other: SvgPatcher?): SvgPatcher? {
   return SvgPatcher(operations + other.operations, filteredOperations + other.filteredOperations)
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 public class SvgPathFilteredOperations(
   val path: String,
@@ -72,7 +72,7 @@ public class SvgPathFilteredOperations(
 
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 public class SvgPatchOperation(
   val attributeName: String,

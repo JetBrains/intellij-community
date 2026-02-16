@@ -2,10 +2,10 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class CombinedIconModifier(
   val root: IconModifier,
   val other: IconModifier,

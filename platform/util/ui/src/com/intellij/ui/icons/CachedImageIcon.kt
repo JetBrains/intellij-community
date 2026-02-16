@@ -172,8 +172,7 @@ open class CachedImageIcon private constructor(
     return (image as? JBHiDPIScaledImage)?.delegate ?: image
   }
 
-  @Internal
-  fun resolveImage(scaleContext: ScaleContext?): Image? {
+  internal fun resolveImage(scaleContext: ScaleContext?): Image? {
     val icon = if (scaleContext == null) resolveActualIcon() else resolveActualIcon(scaleContext)
     return if (icon is ScaledResultIcon) icon.image else null
   }

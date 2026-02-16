@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.rendering
 
-import org.jetbrains.icons.ExperimentalIconsApi
-import org.jetbrains.icons.InternalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.Color
 import org.jetbrains.icons.filters.ColorFilter
 
@@ -10,11 +9,10 @@ import org.jetbrains.icons.filters.ColorFilter
  * Abstraction of painting API, this is used to define icons or graphics that are customizable
  * but also reusable between different environments, where graphic api differ.
  */
-@InternalIconsApi
+@ApiStatus.Internal
 interface PaintingApi {
   val bounds: Bounds
   val scaling: ScalingContext
-  @OptIn(ExperimentalIconsApi::class)
   fun drawImage(
     image: ImageResource,
     x: Int = 0,
@@ -34,14 +32,14 @@ interface PaintingApi {
   fun withCustomContext(bounds: Bounds, overrideColorFilter: ColorFilter? = null): PaintingApi
 }
 
-@InternalIconsApi
+@ApiStatus.Internal
 enum class DrawMode {
   Fill,
   Clear,
   Stroke
 }
 
-@InternalIconsApi
+@ApiStatus.Internal
 interface ScalingContext {
   val display: Float
 }

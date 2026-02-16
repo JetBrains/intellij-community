@@ -48,8 +48,6 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/icons-impl",
     "//platform/icons-impl/intellij",
-    "//platform/icons-impl/rendering",
-    "//platform/icons-impl/intellij/rendering",
   ]
 )
 

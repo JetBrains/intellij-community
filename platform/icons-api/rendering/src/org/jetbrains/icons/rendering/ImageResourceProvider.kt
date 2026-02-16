@@ -2,10 +2,10 @@
 package org.jetbrains.icons.rendering
 
 import org.jetbrains.icons.ImageResourceLocation
-import org.jetbrains.icons.InternalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import java.util.ServiceLoader
 
-@InternalIconsApi
+@ApiStatus.Internal
 interface ImageResourceProvider {
   fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers? = null): ImageResource
 

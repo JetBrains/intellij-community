@@ -2,12 +2,12 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.SvgPatcherDesigner
 import org.jetbrains.icons.patchers.SvgPatcher
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class SvgPatcherModifier(
   val svgPatcher: SvgPatcher
 ): IconModifier {
@@ -30,15 +30,15 @@ class SvgPatcherModifier(
 
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun IconModifier.patchSvg(svgPatcher: SvgPatcher): IconModifier {
   return this then SvgPatcherModifier(svgPatcher)
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun IconModifier.patchSvg(svgPatcherBuilder: SvgPatcherDesigner.() -> Unit): IconModifier {
   return this.patchSvg(svgPatcher(svgPatcherBuilder))
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun svgPatcher(svgPatcherBuilder: SvgPatcherDesigner.() -> Unit): SvgPatcher = SvgPatcherDesigner().apply(svgPatcherBuilder).build()

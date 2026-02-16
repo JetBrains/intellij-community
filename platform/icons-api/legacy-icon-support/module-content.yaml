@@ -1,3 +1,0 @@
- - name: dist.all/lib/intellij.platform.icons.api.legacyIconSupport.jar
-  modules:
-  - name: intellij.platform.icons.api.legacyIconSupport

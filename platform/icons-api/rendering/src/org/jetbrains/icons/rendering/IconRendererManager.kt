@@ -2,14 +2,14 @@
 package org.jetbrains.icons.rendering
 
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.Icon
 import java.util.ServiceLoader
 
 /**
  * Manager for Icon renderers, use convenience methods instead (like Icon.createRenderer())
  */
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 interface IconRendererManager {
   /**
    * This method will create renderer for specific icon, keep in mind that this might be an expensive operation.
@@ -17,7 +17,7 @@ interface IconRendererManager {
    * @param context General render context, this can be used to watch for Icon updates, or set defaults for color filters etc.
    * @param loadingStrategy Dictates how the Icon loading should be performed, like block thread, show placeholder, or render blank area
    */
-  @ExperimentalIconsApi
+  @ApiStatus.Experimental
   fun createRenderer(icon: Icon, context: RenderingContext, loadingStrategy: LoadingStrategy = LoadingStrategy.BlockThread): IconRenderer
 
   fun createUpdateFlow(scope: CoroutineScope?, updateCallback: (Int) -> Unit): MutableIconUpdateFlow
@@ -53,7 +53,7 @@ interface IconRendererManager {
  * @param context General render context, this can be used to watch for Icon updates, or set defaults for color filters etc.
  * @param loadingStrategy Dictates how the Icon loading should be performed, like block thread, show placeholder, or render blank area
  */
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun Icon.createRenderer(context: RenderingContext, loadingStrategy: LoadingStrategy = LoadingStrategy.BlockThread): IconRenderer {
   return IconRendererManager.getInstance().createRenderer(this, context, loadingStrategy)
 }

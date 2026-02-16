@@ -56,7 +56,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.icons.api" exported="" />
     <orderEntry type="module" module-name="intellij.platform.icons.api.rendering" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.icons.api.legacyIconSupport" exported="" />
   </component>
   <component name="copyright">
     <Base>

@@ -15,9 +15,7 @@ dependencies {
     api(projects.foundation)
     api(project(":jb-icons-api"))
     api(project(":jb-icons-api-rendering"))
-    api(project(":jb-icons-api-rendering-lowlevel"))
     api(project(":jb-icons-impl"))
-    api(project(":jb-icons-impl-rendering"))
     implementation(compose.components.resources)
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }

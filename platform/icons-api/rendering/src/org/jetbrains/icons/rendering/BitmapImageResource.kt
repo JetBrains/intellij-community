@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.rendering
 
-import org.jetbrains.icons.InternalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
-@InternalIconsApi
+@ApiStatus.Internal
 interface BitmapImageResource : ImageResource {
   fun getRGBPixels(): IntArray
   fun readPrefetchedPixel(pixels: IntArray, x: Int, y: Int): Int?
@@ -13,7 +13,7 @@ interface BitmapImageResource : ImageResource {
   override val height: Int
 }
 
-@InternalIconsApi
+@ApiStatus.Internal
 object EmptyBitmapImageResource : BitmapImageResource {
   override fun getRGBPixels(): IntArray = intArrayOf()
   override fun readPrefetchedPixel(pixels: IntArray, x: Int, y: Int): Int = 0

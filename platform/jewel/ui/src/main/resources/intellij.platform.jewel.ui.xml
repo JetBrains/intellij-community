@@ -1,7 +1,13 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.platform.jewel.foundation" />
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.compose.foundation.desktop"/>
     <module name="intellij.libraries.compose.runtime.desktop"/>
+    <module name="intellij.platform.icons.api"/>
+    <module name="intellij.platform.icons.api.rendering"/>
+    <module name="intellij.platform.icons.impl"/>
+    <module name="intellij.platform.icons.impl.rendering"/>
+    <module name="intellij.platform.jewel.foundation"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

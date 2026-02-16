@@ -2,11 +2,11 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.IconUnit
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 /**
  * Add cutout margin to the specific layer, which will clear the surrounding area
  * Currently supported only by shape and image layers, image layer will not consider

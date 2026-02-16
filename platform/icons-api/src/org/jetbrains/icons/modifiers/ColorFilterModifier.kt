@@ -2,14 +2,14 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.BlendMode
 import org.jetbrains.icons.design.Color
 import org.jetbrains.icons.filters.ColorFilter
 import org.jetbrains.icons.filters.TintColorFilter
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class ColorFilterModifier(
   val colorFilter: ColorFilter
 ): IconModifier {

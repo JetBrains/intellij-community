@@ -9,9 +9,6 @@ create_kotlinc_options(
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
-    "org.jetbrains.icons.api.InternalIconsApi",
-    "org.jetbrains.icons.InternalIconsApi",
-    "org.jetbrains.icons.ExperimentalIconsApi",
   ],
   x_context_parameters = True,
   x_explicit_api_mode = "strict"
@@ -43,7 +40,6 @@ jvm_library(
     "@lib//:jna",
     "//platform/icons-api",
     "//platform/icons-impl",
-    "//platform/icons-impl/rendering",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

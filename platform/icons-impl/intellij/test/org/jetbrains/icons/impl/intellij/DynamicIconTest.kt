@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.icons.DynamicIcon
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.Icon
 import org.jetbrains.icons.IconManager
 import org.jetbrains.icons.dynamicIcon

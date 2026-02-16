@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * This is universal Icon interface that can be used across different environments with different graphics api.
@@ -14,5 +15,5 @@ import kotlinx.serialization.encoding.Encoder
  *
  * For serialization, use getSerializersModule() on IconManager
  */
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 interface Icon

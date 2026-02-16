@@ -2,11 +2,11 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.Color
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class StrokeModifier(
   val color: Color
 ): IconModifier {
@@ -29,7 +29,7 @@ class StrokeModifier(
 
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun IconModifier.stroke(color: Color): IconModifier {
   return this then StrokeModifier(color)
 }

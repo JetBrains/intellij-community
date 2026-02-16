@@ -2,16 +2,16 @@
 package org.jetbrains.icons.design
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 sealed interface Shape {
   companion object {
   }
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 object Circle: Shape {
   override fun toString(): String {
@@ -20,7 +20,7 @@ object Circle: Shape {
 
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 object Rectangle: Shape {
 

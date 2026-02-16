@@ -2,10 +2,10 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class AlphaIconModifier(
   val alpha: Float
 ): IconModifier {

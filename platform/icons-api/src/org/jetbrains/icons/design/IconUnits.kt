@@ -2,7 +2,7 @@
 package org.jetbrains.icons.design
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Samples:
@@ -15,7 +15,7 @@ import org.jetbrains.icons.ExperimentalIconsApi
  * </pre>
  */
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 sealed interface IconUnit {
   companion object {
     val Zero: IconUnit = 0.dp
@@ -24,7 +24,7 @@ sealed interface IconUnit {
 }
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class DisplayPointIconUnit(val value: Double) : IconUnit {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -46,7 +46,7 @@ class DisplayPointIconUnit(val value: Double) : IconUnit {
 }
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class PixelIconUnit(val value: Int) : IconUnit {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -67,7 +67,7 @@ class PixelIconUnit(val value: Int) : IconUnit {
 }
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class PercentIconUnit(val value: Double) : IconUnit {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -88,7 +88,7 @@ class PercentIconUnit(val value: Double) : IconUnit {
 }
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 object MaxIconUnit : IconUnit
 
 val Int.dp: DisplayPointIconUnit

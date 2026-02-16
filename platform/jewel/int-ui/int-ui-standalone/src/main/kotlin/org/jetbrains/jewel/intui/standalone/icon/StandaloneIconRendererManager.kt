@@ -1,12 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalIconsApi::class)
 
 package org.jetbrains.jewel.intui.standalone.icon
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
-import org.jetbrains.icons.ExperimentalIconsApi
 import org.jetbrains.icons.Icon
 import org.jetbrains.icons.impl.rendering.CoroutineBasedMutableIconUpdateFlow
 import org.jetbrains.icons.impl.rendering.DefaultIconRendererManager
@@ -14,7 +12,6 @@ import org.jetbrains.icons.rendering.ImageModifiers
 import org.jetbrains.icons.rendering.MutableIconUpdateFlow
 import org.jetbrains.icons.rendering.RenderingContext
 
-@OptIn(ExperimentalIconsApi::class)
 internal class StandaloneIconRendererManager : DefaultIconRendererManager() {
     override fun createUpdateFlow(scope: CoroutineScope?, updateCallback: (Int) -> Unit): MutableIconUpdateFlow {
         if (scope == null) return EmptyMutableIconUpdateFlow()

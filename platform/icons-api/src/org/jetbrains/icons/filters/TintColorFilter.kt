@@ -2,11 +2,11 @@
 package org.jetbrains.icons.filters
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.BlendMode
 import org.jetbrains.icons.design.Color
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 @Serializable
 class TintColorFilter(
   val color: Color,

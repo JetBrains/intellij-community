@@ -43,8 +43,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import org.jetbrains.icons.ExperimentalIconsApi
-import org.jetbrains.icons.legacyIconSupport.toNewIcon
+import org.jetbrains.icons.swing.toNewIcon
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.ui.component.Checkbox
 import org.jetbrains.jewel.ui.component.Icon
@@ -169,7 +168,6 @@ private class MyDialog(project: Project?, dialogTitle: String) :
   }
 }
 
-@OptIn(ExperimentalIconsApi::class)
 private fun createIconsComponent(): JComponent {
   return compose {
     var minFps by remember { mutableStateOf(Int.MAX_VALUE) }

@@ -10,8 +10,6 @@ import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.resources.decodeToSvgPainter
-import org.jetbrains.icons.ExperimentalIconsApi
-import org.jetbrains.icons.InternalIconsApi
 import org.jetbrains.icons.modifiers.svgPatcher
 import org.jetbrains.icons.patchers.SvgPatchOperation
 import org.jetbrains.icons.patchers.SvgPatcher
@@ -25,10 +23,8 @@ import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.ui.painter.writeToString
 import org.w3c.dom.Element
 
-@OptIn(ExperimentalIconsApi::class)
 @InternalJewelApi
 @ApiStatus.Internal
-@InternalIconsApi
 public class ComposeImageResourceProvider : ImageResourceProvider {
     override fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource {
         // TODO Support image modifiers
@@ -50,7 +46,6 @@ public class ComposeImageResourceProvider : ImageResourceProvider {
 private val documentBuilderFactory =
     DocumentBuilderFactory.newDefaultInstance().apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
 
-@InternalIconsApi
 private fun patchSvg(modifiers: ImageModifiers?, inputStream: InputStream): ByteArray {
 val builder = documentBuilderFactory.newDocumentBuilder()
     val document = builder.parse(inputStream)

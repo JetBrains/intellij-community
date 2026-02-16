@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.IconDesigner
 import org.jetbrains.icons.modifiers.IconModifier
 import java.util.ServiceLoader
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 interface IconManager {
   /**
    * Creates new Icon "description", this is a cheap operation, to render the Icon, use Icon.createRenderer() function.
@@ -16,10 +16,20 @@ interface IconManager {
   fun icon(designer: IconDesigner.() -> Unit): Icon
 
   /**
-   * Dynamic icon allows dynamic icon swapping after the Icon model was created, the renderers created from such
-   * icon should be able to listen to these changes and swap the actual rendered icon on-the-fly.
+   * @see org.jetbrains.icons.deferredIcon
    */
-  fun dynamicIcon(icon: Icon): DynamicIcon
+  fun deferredIcon(placeholder: Icon?, identifier: String? = null, preventClashes: Boolean = true, evaluator: (String) -> Icon?): Icon
+
+  /**
+   * @see org.jetbrains.icons.deferredIconAsync
+   */
+  fun deferredIconAsync(placeholder: Icon?, identifier: String? = null, preventClashes: Boolean = true, evaluator: suspend (String) -> Icon?): Icon
+
+  /**
+   * Converts specific Icon to swing Icon.
+   * ! This is an expensive operation and can include image loading, reuse the instance if possible. !
+   */
+  fun toSwingIcon(icon: Icon): javax.swing.Icon
 
   fun getSerializersModule(): SerializersModule
 
@@ -47,7 +57,7 @@ interface IconManager {
  *
  * To render the Icon, renderer has to be obtained first using createRenderer(), however this should be only done
  * from inside components. (check intellij.platform.icons.api.rendering module), for usage inside swing,
- * check intellij.platform.icons.api.legacyIconSupport module.
+ * use toSwingIcon method.
  *
  * Usage:
  * '''
@@ -58,11 +68,30 @@ interface IconManager {
  *
  * Check the designer interface for layer options. Also check intellij.platform.icons.api.legacyIconSupport module
  * to find out how to convert old icons and new icons.
+ *
+ * @see IconManager.toSwingIcon
  */
 fun icon(designer: IconDesigner.() -> Unit): Icon = IconManager.getInstance().icon(designer)
 
-fun dynamicIcon(designer: IconDesigner.() -> Unit): DynamicIcon = IconManager.getInstance().dynamicIcon(icon(designer))
+/**
+ * Deferred icon allows apis to return an Icon that takes some time to compute;
+ * optional placeholder can be included to allow rendering it before the actual icon is ready.
+ *
+ * To cache such icons and synchronize them over the network, some identifier should be given.
+ * Implementations might try to prefix the identifier with the source pluginId/moduleId to avoid clashes.
+ * If the identifier should be global, preventClashes can be set to false to disable this.
+ *
+ * If the identifier is not passed, an automatic one is created, however, this will prevent the result
+ * from being cached, as a new one is generated per each deferredIcon() call.
+ */
+fun deferredIcon(placeholder: Icon?, identifier: String? = null, preventClashes: Boolean = true, evaluator: (String) -> Icon?): Icon =
+  IconManager.getInstance().deferredIcon(placeholder, identifier, preventClashes, evaluator)
 
-fun dynamicIcon(icon: Icon): DynamicIcon = IconManager.getInstance().dynamicIcon(icon)
+/**
+ * Alternative for deferredIcon that accepts suspending functions.
+ * @see deferredIcon
+ */
+fun deferredIconAsync(placeholder: Icon?, identifier: String? = null, preventClashes: Boolean = true, evaluator: suspend (String) -> Icon?): Icon =
+  IconManager.getInstance().deferredIconAsync(placeholder, identifier, preventClashes, evaluator)
 
 fun imageIcon(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier): Icon = icon { image(path, classLoader, modifier) }

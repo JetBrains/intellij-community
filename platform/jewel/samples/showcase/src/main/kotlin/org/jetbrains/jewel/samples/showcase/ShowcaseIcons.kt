@@ -15,22 +15,10 @@ import org.jetbrains.jewel.ui.icon.PathIconKey
 
 public object ShowcaseIcons {
     public val componentsMenu: PathIconKey = PathIconKey("icons/structure.svg", ShowcaseIcons::class.java)
-    public val gitHub: Icon = imageIcon("icons/github.svg", ShowcaseIcons::class.java.classLoader, modifier = IconModifier.fillMaxSize())
-    public val themeDark: Icon = imageIcon("icons/darkTheme.svg", ShowcaseIcons::class.java.classLoader)
-    public val jewelLogo: Icon = imageIcon("icons/systemTheme.svg", ShowcaseIcons::class.java.classLoader, modifier = IconModifier.fillMaxSize())
-    public val layeredIcon: Icon = icon {
-        icon(gitHub, IconModifier.fillMaxSize())
-        icon(
-            jewelLogo,
-            modifier = IconModifier.align(IconAlign.BottomRight)
-                .size(40.percent)
-                .margin(25.percent, 0.percent, 0.percent, 0.percent)
-        )
-    }
-    public val gitHubKey: PathIconKey = PathIconKey("icons/github.svg", ShowcaseIcons::class.java)
-    public val jewelLogoKey: PathIconKey = PathIconKey("icons/jewel-logo.svg", ShowcaseIcons::class.java)
+    public val jewelLogo: PathIconKey = PathIconKey("icons/jewel-logo.svg", ShowcaseIcons::class.java)
+    public val gitHub: PathIconKey = PathIconKey("icons/github.svg", ShowcaseIcons::class.java)
     public val markdown: PathIconKey = PathIconKey("icons/markdown.svg", ShowcaseIcons::class.java)
-    public val themeDarkKey: PathIconKey = PathIconKey("icons/darkTheme.svg", ShowcaseIcons::class.java)
+    public val themeDark: PathIconKey = PathIconKey("icons/darkTheme.svg", ShowcaseIcons::class.java)
     public val themeLight: PathIconKey = PathIconKey("icons/lightTheme.svg", ShowcaseIcons::class.java)
     public val themeLightWithLightHeader: PathIconKey =
         PathIconKey("icons/lightWithLightHeaderTheme.svg", ShowcaseIcons::class.java)

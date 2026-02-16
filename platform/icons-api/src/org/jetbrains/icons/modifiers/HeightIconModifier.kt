@@ -2,12 +2,12 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.MaxIconUnit
 import org.jetbrains.icons.design.IconUnit
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class HeightIconModifier(
   val height: IconUnit
 ): IconModifier {

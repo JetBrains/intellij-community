@@ -6,11 +6,6 @@ create_kotlinc_options(
   name = "custom_icons-api",
   api_version = "2.2",
   language_version = "2.2",
-  opt_in = [
-    "org.jetbrains.icons.api.ExperimentalIconsApi",
-    "org.jetbrains.icons.api.InternalIconsApi",
-    "org.jetbrains.icons.ExperimentalIconsApi",
-  ],
   progressive = False,
   x_x_language = []
 )
@@ -32,6 +27,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
+    "@lib//:jetbrains-annotations",
   ]
 )
 ### auto-generated section `build intellij.platform.icons.api` end

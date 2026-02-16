@@ -2,11 +2,11 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.IconUnit
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class WidthIconModifier(
   val width: IconUnit
 ): IconModifier {
@@ -28,7 +28,7 @@ class WidthIconModifier(
   }
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun IconModifier.width(width: IconUnit): IconModifier {
   return this then WidthIconModifier(width)
 }

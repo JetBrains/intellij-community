@@ -64,7 +64,6 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/external-system-impl:externalSystem-impl",
     "//plugins/gradle",
-    "//platform/icons-api/legacy-icon-support",
     "//platform/platform-impl/rpc",
     "//fleet/util/core",
     "//libraries/kotlinx/serialization/json",

@@ -6,12 +6,6 @@ create_kotlinc_options(
   name = "custom_intellij",
   api_version = "2.2",
   language_version = "2.2",
-  opt_in = [
-    "org.jetbrains.icons.api.ExperimentalIconsApi",
-    "org.jetbrains.icons.api.InternalIconsApi",
-    "org.jetbrains.icons.ExperimentalIconsApi",
-    "org.jetbrains.icons.InternalIconsApi",
-  ],
   progressive = False,
   x_x_language = []
 )
@@ -33,6 +27,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//platform/icons-api",
+    "//platform/icons-api/rendering",
     "//platform/icons-impl",
     "//platform/util",
     "//platform/util:util-ui",
@@ -43,6 +38,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//libraries/kotlinx/serialization/core",
+    "@lib//:jetbrains-annotations",
   ]
 )
 
@@ -56,6 +52,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//platform/icons-api",
+    "//platform/icons-api/rendering",
     "//platform/icons-impl",
     "//platform/util",
     "//platform/util:util-ui",
@@ -73,6 +70,7 @@ jvm_library(
     "@lib//:junit5Jupiter",
     "@lib//:assert_j",
     "//libraries/kotlinx/serialization/core",
+    "@lib//:jetbrains-annotations",
   ]
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij` end

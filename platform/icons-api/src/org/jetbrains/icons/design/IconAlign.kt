@@ -2,11 +2,11 @@
 package org.jetbrains.icons.design
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 
 @Suppress("unused")
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class IconAlign(
   val verticalAlign: IconVerticalAlign,
   val horizontalAlign: IconHorizontalAlign

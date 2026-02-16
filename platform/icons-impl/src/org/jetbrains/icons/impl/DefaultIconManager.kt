@@ -2,8 +2,6 @@
 package org.jetbrains.icons.impl
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.serialDescriptor
@@ -14,24 +12,23 @@ import kotlinx.serialization.encoding.decodeStructure
 import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.SerializersModuleBuilder
-import org.jetbrains.icons.DynamicIcon
+import org.jetbrains.icons.DeferredIcon
 import org.jetbrains.icons.Icon
 import org.jetbrains.icons.IconManager
 import org.jetbrains.icons.impl.layers.AnimatedIconLayer
 import org.jetbrains.icons.impl.layers.IconIconLayer
-import org.jetbrains.icons.layers.IconLayer
 import org.jetbrains.icons.impl.layers.ImageIconLayer
 import org.jetbrains.icons.impl.layers.LayoutIconLayer
 import org.jetbrains.icons.impl.layers.ShapeIconLayer
 import org.jetbrains.icons.modifiers.IconModifier
 
 abstract class DefaultIconManager: IconManager {
-  override fun dynamicIcon(icon: Icon): DynamicIcon {
-    return DefaultDynamicIcon("dynamic_" + dynamicIconNextId++, icon as DefaultLayeredIcon)
+  override fun deferredIcon(placeholder: Icon?, identifier: String?, preventClashes: Boolean, evaluator: (String) -> Icon?): Icon {
+    return DefaultDeferredIcon(identifier, placeholder)
   }
 
-  protected fun createDynamicIcon(icon: Icon, updateListener: (DynamicIcon, Icon) -> Unit): DynamicIcon {
-    return DefaultDynamicIcon("dynamic?" + dynamicIconNextId++, icon as DefaultLayeredIcon, updateListener)
+  override fun deferredIconAsync(placeholder: Icon?, identifier: String?, preventClashes: Boolean, evaluator: suspend (String) -> Icon?): Icon {
+    return DefaultDeferredIcon(identifier,  placeholder)
   }
 
   protected open fun SerializersModuleBuilder.buildCustomSerializers() {
@@ -41,8 +38,8 @@ abstract class DefaultIconManager: IconManager {
   override fun getSerializersModule(): SerializersModule {
     return SerializersModule {
       polymorphic(Icon::class, DefaultLayeredIcon::class, DefaultLayeredIcon.serializer())
-      polymorphic(Icon::class, DefaultDynamicIcon::class, DefaultDynamicIcon.serializer())
-      polymorphic(DynamicIcon::class, DefaultDynamicIcon::class, DefaultDynamicIcon.serializer())
+      polymorphic(Icon::class, DefaultDeferredIcon::class, DefaultDeferredIcon.serializer())
+      polymorphic(DeferredIcon::class, DefaultDeferredIcon::class, DefaultDeferredIcon.serializer())
       polymorphic(
         IconModifier::class,
         IconModifier.Companion::class,
@@ -57,6 +54,10 @@ abstract class DefaultIconManager: IconManager {
 
       buildCustomSerializers()
     }
+  }
+
+  override fun toSwingIcon(icon: Icon): javax.swing.Icon {
+    error("Swing Icons are not supported.")
   }
 
   private var dynamicIconNextId = 0

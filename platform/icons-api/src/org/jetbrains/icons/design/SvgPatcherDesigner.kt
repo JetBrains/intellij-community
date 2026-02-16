@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.design
 
-import org.jetbrains.icons.ExperimentalIconsApi
-import org.jetbrains.icons.InternalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.patchers.SvgPatchOperation
 import org.jetbrains.icons.patchers.SvgPatcher
 import org.jetbrains.icons.patchers.SvgPathFilteredOperations
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 public class SvgPatcherDesigner {
   private val operations = mutableListOf<SvgPatchOperation>()
   private val filteredOperations = mutableListOf<SvgPathFilteredOperations>()
@@ -51,6 +50,6 @@ public class SvgPatcherDesigner {
     filteredOperations.add(SvgPathFilteredOperations(path, designer.build().operations))
   }
 
-  @InternalIconsApi
+  @ApiStatus.Internal
   internal fun build(): SvgPatcher = SvgPatcher(operations, filteredOperations)
 }

@@ -2,11 +2,11 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.IconUnit
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class MarginIconModifier(
   val left: IconUnit,
   val top: IconUnit,
@@ -40,17 +40,17 @@ class MarginIconModifier(
   }
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun IconModifier.margin(left: IconUnit, top: IconUnit, right: IconUnit, bottom: IconUnit): IconModifier {
   return this then MarginIconModifier(left, top, right, bottom)
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun IconModifier.margin(all: IconUnit): IconModifier {
   return margin(all, all, all, all)
 }
 
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 fun IconModifier.margin(vertical: IconUnit, horizontal: IconUnit): IconModifier {
   return margin(horizontal, vertical, horizontal, vertical)
 }

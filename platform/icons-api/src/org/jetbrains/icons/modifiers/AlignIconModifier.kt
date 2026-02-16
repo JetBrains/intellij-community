@@ -2,11 +2,11 @@
 package org.jetbrains.icons.modifiers
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.design.IconAlign
 
 @Serializable
-@ExperimentalIconsApi
+@ApiStatus.Experimental
 class AlignIconModifier(
   val align: IconAlign
 ): IconModifier {

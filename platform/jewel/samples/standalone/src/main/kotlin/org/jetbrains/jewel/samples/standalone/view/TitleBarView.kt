@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.awt.Desktop
 import java.net.URI
-import org.jetbrains.icons.ExperimentalIconsApi
 import org.jetbrains.icons.design.px
 import org.jetbrains.icons.icon
 import org.jetbrains.icons.modifiers.IconModifier
@@ -31,7 +30,6 @@ import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
 
-@OptIn(ExperimentalIconsApi::class)
 @ExperimentalLayoutApi
 @Composable
 internal fun DecoratedWindowScope.TitleBarView() {
@@ -81,7 +79,7 @@ internal fun DecoratedWindowScope.TitleBarView() {
                     { Desktop.getDesktop().browse(URI.create(jewelGithubLink)) },
                     Modifier.size(40.dp).padding(5.dp),
                 ) {
-                    Icon(ShowcaseIcons.gitHub, "Github")
+                    Icon(ShowcaseIcons.gitHubKey, "Github")
                 }
             }
 
@@ -123,9 +121,7 @@ internal fun DecoratedWindowScope.TitleBarView() {
                             )
 
                         IntUiThemes.Dark ->
-                            Icon(icon {
-                                icon(ShowcaseIcons.themeDark, modifier = IconModifier.size(20.px))
-                            }, contentDescription = "Dark")
+                            Icon(ShowcaseIcons.themeDarkKey, contentDescription = "Dark")
 
                         IntUiThemes.System ->
                             Icon(
