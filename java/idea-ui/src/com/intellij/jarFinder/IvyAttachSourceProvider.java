@@ -12,10 +12,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -30,6 +36,26 @@ final class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
   @Override
   public @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
                                                                        @NotNull PsiFile psiFile) {
+    Library library = getLibraryFromOrderEntriesList(orderEntries);
+    if (library == null) return List.of();
+
+    return getActionsForLibrary(psiFile, library);
+  }
+
+  @Override
+  public @NotNull @Unmodifiable Collection<? extends AttachSourcesAction> getLibrariesActions(@NotNull Collection<LibraryEntity> libraryEntities,
+                                                                                              @NotNull PsiFile psiFile) {
+    ImmutableEntityStorage snapshot = WorkspaceModel.getInstance(psiFile.getProject()).getCurrentSnapshot();
+    Library library = ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(libraryEntities, entity -> {
+      return LibraryBridgesKt.findLibraryBridge(entity, snapshot);
+    }));
+
+    if (library == null) return List.of();
+
+    return getActionsForLibrary(psiFile, library);
+  }
+
+  private @NotNull Collection<? extends AttachSourcesAction> getActionsForLibrary(@NotNull PsiFile psiFile, @NotNull Library library) {
     VirtualFile jar = getJarByPsiFile(psiFile);
     if (jar == null) return List.of();
 
@@ -52,9 +78,15 @@ final class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
     VirtualFile propertiesFile = artifactDir.findChild("ivydata-" + version + ".properties");
     if (propertiesFile == null) return List.of();
 
-    Library library = getLibraryFromOrderEntriesList(orderEntries);
-    if (library == null) return List.of();
+    return getActionsInternal(psiFile, artifactName, version, artifactDir, library, propertiesFile);
+  }
 
+  private @NotNull List<? extends AttachSourcesAction> getActionsInternal(@NotNull PsiFile psiFile,
+                                                                          String artifactName,
+                                                                          String version,
+                                                                          VirtualFile artifactDir,
+                                                                          Library library,
+                                                                          VirtualFile propertiesFile) {
     String sourceFileName = artifactName + '-' + version + "-sources.jar";
 
     VirtualFile sources = artifactDir.findChild("sources");

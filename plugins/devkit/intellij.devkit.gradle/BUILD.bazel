@@ -37,6 +37,10 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//java/openapi:java",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
+    "//platform/projectModel-impl",
   ]
 )
 
@@ -92,6 +96,14 @@ jvm_library(
     "//java/testFramework:testFramework_test_lib",
     "//java/openapi:java",
     "//java/openapi:java_test_lib",
+    "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/workspace/storage",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/backend/workspace",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-util-io:ide-util-io_test_lib",

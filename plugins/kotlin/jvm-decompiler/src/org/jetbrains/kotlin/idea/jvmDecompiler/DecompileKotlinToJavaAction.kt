@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.jvm.shared.internal.KotlinJvmDecompilerFacade
@@ -49,12 +51,28 @@ internal class DecompileKotlinToJavaActionProvider : AttachSourcesProvider {
         orderEntries: List<LibraryOrderEntry>,
         psiFile: PsiFile
     ): Collection<AttachSourcesProvider.AttachSourcesAction> {
+        return getActionsInternal(psiFile)
+    }
+
+    override fun getLibrariesActions(
+        libraryEntities: Collection<LibraryEntity>,
+        psiFile: PsiFile
+    ): Collection<AttachSourcesProvider.AttachSourcesAction> {
+        return getActionsInternal(psiFile)
+    }
+
+    private fun getActionsInternal(psiFile: PsiFile): Collection<AttachSourcesProvider.AttachSourcesAction> {
         if (psiFile !is KtFile || !psiFile.canBeDecompiledToJava()) return emptyList()
 
         return listOf(object : AttachSourcesProvider.LightAttachSourcesAction {
             override fun getName() = KotlinJvmDecompilerBundle.message("action.DecompileKotlinToJava.text")
 
             override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
+                KotlinJvmDecompilerFacade.getInstance()?.showDecompiledCode(psiFile)
+                return ActionCallback.DONE
+            }
+
+            override fun perform(libraryEntities: Collection<LibraryEntity>, project: Project): ActionCallback {
                 KotlinJvmDecompilerFacade.getInstance()?.showDecompiledCode(psiFile)
                 return ActionCallback.DONE
             }

@@ -1,15 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -19,9 +22,19 @@ import java.util.List;
  */
 public interface AttachSourcesProvider {
 
+  /**
+   * @deprecated Use {@link #getLibrariesActions(Collection, PsiFile)}
+   */
   @NotNull @Unmodifiable
+  @Deprecated
   Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
                                                        @NotNull PsiFile psiFile);
+
+  @NotNull @Unmodifiable
+  default Collection<? extends AttachSourcesAction> getLibrariesActions(@NotNull Collection<LibraryEntity> libraryEntities,
+                                                       @NotNull PsiFile psiFile) {
+    return Collections.emptyList();
+  }
 
   interface AttachSourcesAction {
 
@@ -29,7 +42,16 @@ public interface AttachSourcesProvider {
 
     @NlsContexts.LinkLabel String getBusyText();
 
-    @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile);
+    /**
+     * @deprecated Use {@link #perform(Collection, Project)}
+     */
+    @NotNull
+    @Deprecated
+    ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile);
+
+    default @NotNull ActionCallback perform(@NotNull Collection<LibraryEntity> libraryEntities, @NotNull Project project) {
+      return ActionCallback.REJECTED;
+    }
   }
 
   default boolean isApplicable(@NotNull List<? extends LibraryOrderEntry> orderEntries, PsiFile psiFile) {

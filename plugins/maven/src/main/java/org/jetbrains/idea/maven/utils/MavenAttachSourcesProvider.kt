@@ -13,14 +13,17 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.PsiFile
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,14 +46,34 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
 
   override fun getActions(orderEntries: List<LibraryOrderEntry>,
                           psiFile: PsiFile): Collection<AttachSourcesAction> {
+    return getActionsInternal(orderEntries.mapNotNull { it.library }, psiFile)
+  }
+
+  override fun getLibrariesActions(
+    libraryEntities: Collection<LibraryEntity>,
+    psiFile: PsiFile
+  ): Collection<AttachSourcesAction> {
+    val currentSnapshot = WorkspaceModel.getInstance(psiFile.project).currentSnapshot
+    return getActionsInternal(libraryEntities.mapNotNull { it.findLibraryBridge(currentSnapshot) }, psiFile)
+  }
+
+  private fun getActionsInternal(libraries: List<Library>, psiFile: PsiFile): Collection<AttachSourcesAction> {
     val projects = getMavenProjects(psiFile)
     if (projects.isEmpty()) return listOf()
-    return if (findArtifacts(projects, orderEntries).isEmpty()) listOf()
+    return if (findArtifacts(projects, libraries).isEmpty()) listOf()
     else listOf(object : AttachSourcesAction {
       override fun getName() = MavenProjectBundle.message("maven.action.download.sources")
       override fun getBusyText() = MavenProjectBundle.message("maven.action.download.sources.busy.text")
 
       override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
+        return performInternal()
+      }
+
+      override fun perform(libraryEntities: Collection<LibraryEntity>, project: Project): ActionCallback {
+        return performInternal()
+      }
+
+      private fun performInternal(): ActionCallback {
         val project = psiFile.getProject()
         val cs = project.service<CoroutineService>().coroutineScope
         val resultWrapper = ActionCallback()
@@ -63,7 +86,7 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
           }
 
           val manager = MavenProjectsManager.getInstance(project)
-          val artifacts = findArtifacts(mavenProjects, orderEntries)
+          val artifacts = findArtifacts(mavenProjects, libraries)
           if (artifacts.isEmpty()) {
             resultWrapper.setRejected()
             return@launch
@@ -137,11 +160,11 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
   }
 
   private fun findArtifacts(mavenProjects: Collection<MavenProject>,
-                            orderEntries: List<LibraryOrderEntry>): Collection<MavenArtifact> {
+                            libraries: List<Library>): Collection<MavenArtifact> {
     val artifacts: MutableCollection<MavenArtifact> = HashSet()
     for (each in mavenProjects) {
-      for (entry in orderEntries) {
-        val artifact = MavenRootModelAdapter.findArtifact(each, entry.getLibrary())
+      for (library in libraries) {
+        val artifact = MavenRootModelAdapter.findArtifact(each, library)
         if (artifact != null && "system" != artifact.scope) {
           artifacts.add(artifact)
         }

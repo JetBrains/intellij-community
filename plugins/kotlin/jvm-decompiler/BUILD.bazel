@@ -32,6 +32,7 @@ jvm_library(
     "//plugins/java-decompiler/plugin:java-decompiler",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/analysis-impl",
+    "//platform/workspace/jps",
   ]
 )
 
@@ -57,6 +58,7 @@ jvm_library(
     "//plugins/java-decompiler/plugin:java-decompiler_test_lib",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.decompiler` end
