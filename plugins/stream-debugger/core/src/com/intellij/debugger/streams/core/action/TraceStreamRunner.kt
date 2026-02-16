@@ -7,9 +7,7 @@ import com.intellij.debugger.streams.core.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
 import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
-import com.intellij.debugger.streams.core.trace.EvaluateExpressionTracer
 import com.intellij.debugger.streams.core.trace.StreamTracer
-import com.intellij.debugger.streams.core.trace.impl.TraceResultInterpreterImpl
 import com.intellij.debugger.streams.core.ui.ChooserOption
 import com.intellij.debugger.streams.core.ui.ElementChooser
 import com.intellij.debugger.streams.core.ui.impl.ElementChooserImpl
@@ -26,15 +24,19 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.cancelOnDispose
 import com.intellij.xdebugger.XDebugSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
@@ -75,11 +77,11 @@ class TraceStreamRunner(val cs: CoroutineScope) {
       return
     }
 
-    withContext(Dispatchers.EDT) {
-      if (chains.size == 1) {
-        runTrace(chains.first().chain, chains.first().provider, session)
-      }
-      else {
+    if (chains.size == 1) {
+      runTrace(chains.first().chain, chains.first().provider, session)
+    }
+    else {
+      withContext(Dispatchers.EDT) {
         val project = session.getProject()
         val file = chains.first().chain.context.containingFile.virtualFile
         val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
@@ -140,20 +142,29 @@ class TraceStreamRunner(val cs: CoroutineScope) {
 
     private val CHAIN_RESOLVER = ChainResolver()
 
+    @OptIn(AwaitCancellationAndInvoke::class)
     private suspend fun runTrace(chain: StreamChain, provider: LibrarySupportProvider, session: XDebugSession) = coroutineScope {
-      val window = EvaluationAwareTraceWindow(session, chain)
-      Disposer.register(window.disposable) {
-        cancel()
+      val window = withContext(Dispatchers.EDT) {
+        EvaluationAwareTraceWindow(session, chain).also {
+          coroutineContext.job.cancelOnDispose(it.disposable)
+        }
       }
+
+      awaitCancellationAndInvoke(Dispatchers.EDT) {
+        window.close(DialogWrapper.CANCEL_EXIT_CODE)
+      }
+
+      withContext(Dispatchers.EDT) {
+        yield()
+        window.show()
+      }
+
       suspend fun showError(message: @Nls String) {
         withContext(Dispatchers.EDT) {
           window.setFailMessage(message)
         }
       }
-      withContext(Dispatchers.EDT) {
-        yield()
-        window.show()
-      }
+
       withContext(Dispatchers.Default + TraceStreamUIScope(window.disposable)) {
         val project = session.getProject()
         val debuggerLauncher = provider.getDebuggerCommandLauncher(session)
