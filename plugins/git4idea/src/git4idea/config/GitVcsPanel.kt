@@ -51,6 +51,7 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.layout.AdvancedSettingsPredicate
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
@@ -66,6 +67,7 @@ import git4idea.cherrypick.settingsMessage
 import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
 import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.fetch.GitFetchTagsMode
+import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundle.message
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
@@ -84,7 +86,6 @@ private fun projectSettings(project: Project) = GitVcsSettings.getInstance(proje
 private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
 private val gitOptionGroupName get() = message("settings.git.option.group")
 
-// @formatter:off
 private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(DvcsBundle.message("sync.setting"), { projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }, groupName = gitOptionGroupName)
 private fun cdAddCherryPickSuffix(project: Project)                           = CheckboxDescriptor(message("settings.add.suffix"), { projectSettings(project).shouldAddSuffixToCherryPicksOfPublishedCommits() }, { projectSettings(project).setAddSuffixToCherryPicks(it) }, groupName = gitOptionGroupName)
 private fun cdWarnAboutCrlf(project: Project)                                 = CheckboxDescriptor(message("settings.crlf"), { projectSettings(project).warnAboutCrlf() }, { projectSettings(project).setWarnAboutCrlf(it) }, groupName = gitOptionGroupName)
@@ -101,6 +102,20 @@ private val cdCombineStashesAndShelves                                  get() = 
 private fun cdExcludeIgnored(project: Project)                                = CheckboxDescriptor(VcsBundle.message("ignored.file.ignored.to.excluded.label"), { VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED }, { VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = it }, groupName = gitOptionGroupName)
 // @formatter:on
 
+private fun cdAutoFetch(project: Project) = CheckboxDescriptor(
+  message("settings.git.auto.fetch.text"),
+  { projectSettings(project).incomingCommitsCheckStrategy == GitIncomingRemoteCheckStrategy.FETCH },
+  projectSettings(project)::setAutoFetch,
+  groupName = gitOptionGroupName,
+)
+
+private fun cdCheckRemoteForIncoming(project: Project) = CheckboxDescriptor(
+  message("settings.git.check.remote.text"),
+  { projectSettings(project).incomingCommitsCheckStrategy != GitIncomingRemoteCheckStrategy.NONE },
+  projectSettings(project)::setCheckRemote,
+  groupName = gitOptionGroupName,
+)
+
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
   val list = mutableListOf(
     cdAutoUpdateOnPush(project),
@@ -110,6 +125,7 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
     cdWarnAboutBadFileNames(project),
     cdEnableStagingArea,
     cdExcludeIgnored(project),
+    cdAutoFetch(project),
   )
   val manager = GitRepositoryManager.getInstance(project)
   if (manager.moreThanOneRoot()) {
@@ -134,22 +150,15 @@ internal class GitVcsPanel(private val project: Project) :
   private val projectSettings get() = GitVcsSettings.getInstance(project)
 
   private fun Panel.checkIncomingChangesRows() {
-    val predicate = AdvancedSettingsPredicate("git.update.incoming.outgoing.info", disposable!!)
-    row(message("settings.git.incoming.change.strategy.text")) {
-      comboBox(EnumComboBoxModel(GitIncomingRemoteCheckStrategy::class.java), listCellRenderer("") {
-        text(value.text)
-        value.description?.let { description ->
-          text(description) {
-            foreground = greyForeground
-          }
-        }
-      }).bindItem(projectSettings::getIncomingCommitsCheckStrategy, projectSettings::setIncomingCommitsCheckStrategy)
-    }.enabledIf(predicate)
+    val advancedSettingsPredicate = AdvancedSettingsPredicate("git.update.incoming.outgoing.info", disposable!!)
+    lateinit var autoFetchCheckBox: Cell<JBCheckBox>
+    row { autoFetchCheckBox = checkBox(cdAutoFetch(project)) }.enabledIf(advancedSettingsPredicate)
+    row { checkBox(cdCheckRemoteForIncoming(project)) }.enabledIf(autoFetchCheckBox.selected.not().and(advancedSettingsPredicate))
     indent {
       row {
         comment(
           message("settings.git.incoming.change.strategy.condition.comment", message("advanced.setting.git.update.incoming.outgoing.info")))
-          .visibleIf(predicate.not())
+          .visibleIf(advancedSettingsPredicate.not())
           .applyToComponent {
             putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(top = false))
           }

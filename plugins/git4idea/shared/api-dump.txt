@@ -132,9 +132,7 @@ e:git4idea.config.GitIncomingRemoteCheckStrategy
 - sf:FETCH:git4idea.config.GitIncomingRemoteCheckStrategy
 - sf:LS_REMOTE:git4idea.config.GitIncomingRemoteCheckStrategy
 - sf:NONE:git4idea.config.GitIncomingRemoteCheckStrategy
-- f:getDescription():java.lang.String
 - s:getEntries():kotlin.enums.EnumEntries
-- f:getText():java.lang.String
 - s:valueOf(java.lang.String):git4idea.config.GitIncomingRemoteCheckStrategy
 - s:values():git4idea.config.GitIncomingRemoteCheckStrategy[]
 e:git4idea.config.GitSaveChangesPolicy
@@ -245,8 +243,10 @@ f:git4idea.config.GitVcsSettings
 - noStateLoaded():V
 - saveCommitAuthor(java.lang.String):V
 - setAddSuffixToCherryPicks(Z):V
+- setAutoFetch(Z):V
 - setAutoUpdateIfPushRejected(Z):V
 - setBranchGroupingSettings(com.intellij.dvcs.branch.GroupingKey,Z):V
+- setCheckRemote(Z):V
 - setCommitRenamesSeparately(Z):V
 - setFetchTagsMode(git4idea.fetch.GitFetchTagsMode):V
 - setFilterByActionInPopup(Z):V

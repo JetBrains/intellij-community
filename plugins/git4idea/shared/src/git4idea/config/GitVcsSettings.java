@@ -267,6 +267,14 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     return getState().getIncomingCommitsCheckStrategy();
   }
 
+  public void setAutoFetch(boolean value) {
+    setIncomingCommitsCheckStrategy(value ? GitIncomingRemoteCheckStrategy.FETCH : GitIncomingRemoteCheckStrategy.LS_REMOTE);
+  }
+
+  public void setCheckRemote(boolean value) {
+    setIncomingCommitsCheckStrategy(value ? GitIncomingRemoteCheckStrategy.LS_REMOTE : GitIncomingRemoteCheckStrategy.NONE);
+  }
+
   public void setIncomingCommitsCheckStrategy(@Nullable GitIncomingRemoteCheckStrategy strategy) {
     GitIncomingRemoteCheckStrategy strategyToSet = strategy != null ? strategy : GitIncomingRemoteCheckStrategy.LS_REMOTE;
     getState().setIncomingCommitsCheckStrategy(strategyToSet);
