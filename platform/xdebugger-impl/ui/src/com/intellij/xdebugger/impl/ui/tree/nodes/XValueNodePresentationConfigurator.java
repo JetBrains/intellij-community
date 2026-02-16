@@ -39,6 +39,22 @@ public final class XValueNodePresentationConfigurator {
     }
   }
 
+  public abstract static class ConfigurableXValueNodeExImpl implements ConfigurableXValueNode, XValueNodeEx {
+    @Override
+    public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
+      XValueNodePresentationConfigurator.setPresentation(icon, type, value, hasChildren, this);
+    }
+
+    @Override
+    public void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren) {
+      XValueNodePresentationConfigurator.setPresentation(icon, presentation, hasChildren, this);
+    }
+
+    @Override
+    public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
+    }
+  }
+
   public static void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren,
                                      ConfigurableXValueNode node) {
     doSetPresentation(icon, presentation, hasChildren, node);
