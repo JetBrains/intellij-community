@@ -18,29 +18,25 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSug
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsComputer
 import com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressStateSupplier
+import com.intellij.codeInsight.inline.edit.InlineEditDocumentUtils
 import com.intellij.codeInsight.inline.edit.InlineEditRequestExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -52,7 +48,6 @@ import kotlinx.coroutines.flow.onEmpty
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -60,8 +55,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 /**
  * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
@@ -261,7 +254,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 
     val context = session.context
     val result = Result.runCatching {
-      ensureDocumentAndFileSynced(request.file.project, request.document)
+      InlineEditDocumentUtils.awaitDocumentIsCommitted(request.file.project, request.document)
       var variants = request(session.provider, request).getVariants()
       if (variants.size > InlineCompletionSuggestion.MAX_VARIANTS_NUMBER) {
         val provider = session.provider
@@ -406,28 +399,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
       return false
     }
     return isEnabled(event)
-  }
-
-  private suspend fun ensureDocumentAndFileSynced(project: Project, document: Document) {
-    val documentManager = PsiDocumentManager.getInstance(project)
-    val isCommitted = readAction { documentManager.isCommitted(document) }
-    if (isCommitted) {
-      // We do not need one big readAction: it's enough to have them synced at this moment
-      return
-    }
-
-    suspendCancellableCoroutine { continuation ->
-      application.invokeLater {
-        if (project.isDisposed) {
-          continuation.resumeWithException(CancellationException())
-        }
-        else {
-          documentManager.performWhenAllCommitted {
-            continuation.resume(Unit)
-          }
-        }
-      }
-    }
   }
 
   @RequiresEdt
