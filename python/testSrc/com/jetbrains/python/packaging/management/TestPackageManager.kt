@@ -126,9 +126,7 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   }
 
   private suspend fun extractFromEnvironmentYml(file: VirtualFile): PyResult<List<PythonPackage>>? {
-    val requirements = readAction {
-      CondaEnvironmentYmlParser.fromFile(file)
-    } ?: return null
+    val requirements = CondaEnvironmentYmlParser.fromFile(file) ?: return null
     return PyResult.success(requirements.toPythonPackages())
   }
 

@@ -25,10 +25,8 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipPackageManagerEngine
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
@@ -152,9 +150,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
 
   override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
     val envFile = getDependencyFile() ?: return null
-    val requirements = withContext(Dispatchers.IO) {
-      CondaEnvironmentYmlParser.fromFile (envFile)
-    }  ?: return null
+    val requirements = CondaEnvironmentYmlParser.fromFile(envFile) ?: return null
     return PyResult.success(requirements.toPythonPackages())
   }
 
