@@ -44,6 +44,7 @@ a:com.intellij.openapi.vcs.VcsRootChecker
 - a:addAmendCommitModeListener(com.intellij.vcs.commit.AmendCommitModeListener,com.intellij.openapi.Disposable):V
 - getAmendSpecificCommitTargets(I,kotlin.coroutines.Continuation):java.lang.Object
 - a:getCommitToAmend():com.intellij.vcs.commit.CommitToAmend
+- isAmendCommitMode():Z
 - a:isAmendCommitModeSupported():Z
 - a:isAmendCommitModeTogglingEnabled():Z
 - a:isAmendSpecificCommitSupported():Z

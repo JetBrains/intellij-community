@@ -10,6 +10,9 @@ import java.util.EventListener
 @ApiStatus.Experimental
 interface AmendCommitHandler {
   var commitToAmend: CommitToAmend
+  val isAmendCommitMode: Boolean
+    get() = commitToAmend !is CommitToAmend.None
+
   var isAmendCommitModeTogglingEnabled: Boolean
   fun isAmendCommitModeSupported(): Boolean
   fun isAmendSpecificCommitSupported(): Boolean
