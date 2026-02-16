@@ -79,6 +79,9 @@ internal class BtaFileWatcher(private val project: Project) {
         private val POLLING_INTERVAL = 10.seconds
         private const val CRI_PROPERTY = "kotlin.compiler.generateCompilerRefIndex"
 
+        /**
+         * Returns `true` when the project uses a BTA-based build system (Gradle or Maven) with CRI generation enabled.
+         */
         internal fun isApplicable(project: Project): Boolean = isGradleCriEnabled(project) || isMavenCriEnabled(project)
 
         private fun isGradleCriEnabled(project: Project): Boolean = runReadAction {

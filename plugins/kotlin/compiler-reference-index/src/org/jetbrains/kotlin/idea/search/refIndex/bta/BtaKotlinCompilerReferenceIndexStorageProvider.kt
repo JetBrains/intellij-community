@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
 import com.intellij.openapi.module.ModuleManager
@@ -17,7 +17,7 @@ import kotlin.io.path.exists
  * Specific filenames and paths are provided by the [org.jetbrains.kotlin.buildtools.api.cri.CriToolchain].
  */
 internal class BtaKotlinCompilerReferenceIndexStorageProvider : KotlinCompilerReferenceIndexStorageProvider {
-    override fun isApplicable(project: Project): Boolean = project.getCriPaths().isNotEmpty()
+    override fun isApplicable(project: Project): Boolean = BtaFileWatcher.isApplicable(project)
 
     override fun hasIndex(project: Project): Boolean = project.getCriPaths().any { it.hasLookupData() || it.hasSubtypeData() }
 
