@@ -5,10 +5,10 @@ import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.externalProcessAuthHelper.AuthenticationGate
-import com.intellij.externalProcessAuthHelper.AuthenticationMode
 import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -354,10 +354,22 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
     private fun showSuccessNotification() {
       val title = GitBundle.message("notification.title.fetch.success")
-      val message = buildMessage(null)
+      val autoFetchService = project.service<GitAutoFetchNotificationsService>()
+      val shouldShowAutoFetchNotification = autoFetchService.shouldShow()
+      val message = if (shouldShowAutoFetchNotification) {
+        autoFetchService.getSuggestionMessage()
+      } else {
+        buildMessage(null)
+      }
       val notification = VcsNotifier.standardNotification()
         .createNotification(title, message, NotificationType.INFORMATION)
       notification.setDisplayId(GitNotificationIdsHolder.FETCH_RESULT)
+
+      if (shouldShowAutoFetchNotification) {
+        autoFetchService.createActions().forEach { notification.addAction(it) }
+        notification.setSuggestionType(true)
+      }
+
       vcsNotifier.notify(notification)
     }
 

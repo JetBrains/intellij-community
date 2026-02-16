@@ -137,6 +137,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       WORKING_TREE_COULD_NOT_DELETE,
       ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT,
       ADD_COMMIT_TO_REMOTE_BRANCH_FAILED,
+      AUTOFETCH_ENABLED,
     )
   }
 
@@ -271,5 +272,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val WORKING_TREE_COULD_NOT_DELETE: String = "git.working.tree.not.deleted"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT: String = "git.add.commit.to.remote.branch.conflict"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_FAILED: String = "git.add.commit.to.remote.branch.failed"
+    const val AUTOFETCH_ENABLED: String = "git.autofetch.enabled"
   }
 }
