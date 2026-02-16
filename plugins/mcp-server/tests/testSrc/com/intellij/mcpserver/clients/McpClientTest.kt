@@ -4,6 +4,7 @@ import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.clients.configs.VSCodeNetworkConfig
 import com.intellij.mcpserver.clients.impl.VSCodeClient
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
+@TestApplication
 class McpClientTest {
 
   @AfterEach
