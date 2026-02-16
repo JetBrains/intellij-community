@@ -29,14 +29,13 @@ import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
-import kotlin.collections.plusAssign
 import kotlin.random.Random
 
-class TerminalGenericFileFilterTest {
+internal class TerminalGenericFileFilterAbsolutePathTest {
 
   private val localFileSystem = mock(LocalFileSystem::class.java)
   private val project = mock(Project::class.java)
-  private val filter = TerminalGenericFileFilter(project, localFileSystem)
+  private val filter = TerminalGenericFileFilter(project, null, localFileSystem)
 
   @Before
   fun setUp() {

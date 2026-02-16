@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
+import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
@@ -61,10 +62,11 @@ internal class BackendTerminalHyperlinkHighlighter(
   coroutineScope: CoroutineScope,
   private val outputModel: TerminalOutputModel,
   private val isInAlternateBuffer: Boolean,
+  filterContext: TerminalHyperlinkFilterContext?,
 ) {
 
   private val hyperlinkId = AtomicLong()
-  private val filterWrapper = CompositeFilterWrapper(project, coroutineScope)
+  private val filterWrapper = CompositeFilterWrapper(project, coroutineScope, filterContext)
 
   // The state is only modified from the model coroutine but can be read concurrently.
   private val currentTaskState = MutableStateFlow(TaskState(null, null))

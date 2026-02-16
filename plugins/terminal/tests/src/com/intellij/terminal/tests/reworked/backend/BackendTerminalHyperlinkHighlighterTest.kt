@@ -481,7 +481,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     suspend fun run(test: suspend Fixture.() -> Unit) {
       coroutineScope {
         val hyperlinkScope = childScope("BackendTerminalHyperlinkHighlighterTest hyperlink scope")
-        backendFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, false)
+        backendFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, false, null)
 
         // Do what StateAwareTerminalSession does, but with less infrastructure around.
         // Note: do NOT use MutableSharedFlow with UNDISPATCHED,

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.EelExecApiHelpers
 import com.intellij.platform.eel.EelPathBoundDescriptor
@@ -32,10 +33,13 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.ui.EDT
+import com.jediterm.terminal.TtyConnector
 import com.pty4j.PtyProcess
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
+import org.jetbrains.plugins.terminal.original
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -198,6 +202,10 @@ class ShellEelProcess(val eelProcess: EelProcess, val eelApi: EelApi, val proces
     return "descriptor=${eelApi.descriptor}$root, platform=${eelApi.platform}, process=${process::class.java.name})"
   }
 }
+
+val TtyConnector.eelDescriptor: EelDescriptor?
+  @ApiStatus.Internal
+  get() = (this.original as? LocalTerminalTtyConnector)?.eelDescriptor
 
 private val LOG: Logger = fileLogger()
 

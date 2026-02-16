@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
@@ -31,9 +32,10 @@ class BackendTerminalHyperlinkFacade(
   coroutineScope: CoroutineScope,
   outputModel: TerminalOutputModel,
   isInAlternateBuffer: Boolean,
+  filterContext: TerminalHyperlinkFilterContext?,
 ) {
 
-  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, outputModel, isInAlternateBuffer)
+  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, outputModel, isInAlternateBuffer, filterContext)
   private val model = TerminalHyperlinksModel(if (isInAlternateBuffer) "Backend AltBuf" else "Backend Output", outputModel)
 
   val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> get() = highlighter.heartbeatFlow

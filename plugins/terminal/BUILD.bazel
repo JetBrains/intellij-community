@@ -66,6 +66,7 @@ jvm_library(
     "//platform/execution",
     "//platform/observable",
     "//platform/remote-topics/shared:rpc-topics",
+    "//libraries/fastutil",
   ]
 )
 ### auto-generated section `build intellij.terminal` end

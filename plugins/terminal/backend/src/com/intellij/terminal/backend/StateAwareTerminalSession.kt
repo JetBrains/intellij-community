@@ -3,10 +3,12 @@ package com.intellij.terminal.backend
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
+import com.intellij.terminal.backend.hyperlinks.TerminalHyperlinkFilterContextImpl
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -67,6 +69,7 @@ import kotlin.time.TimeSource
 internal class StateAwareTerminalSession(
   project: Project,
   private val delegate: BackendTerminalSession,
+  eelDescriptor: EelDescriptor?,
   private val startupOptions: TerminalStartupOptions,
   override val coroutineScope: CoroutineScope,
 ) : BackendTerminalSession {
@@ -104,11 +107,14 @@ internal class StateAwareTerminalSession(
     // It is OK here to handle synchronization manually, because this document will be used only in our services.
     val outputDocument = DocumentImpl("", true)
     outputModel = MutableTerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
-    outputHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, isInAlternateBuffer = false)
+    val filterContext = eelDescriptor?.let {
+      TerminalHyperlinkFilterContextImpl(sessionModel, eelDescriptor, coroutineScope)
+    }
+    outputHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, isInAlternateBuffer = false, filterContext)
 
     val alternateBufferDocument = DocumentImpl("", true)
     alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
-    alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
+    alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true, filterContext)
 
     blocksModel = TerminalBlocksModelImpl(outputModel, sessionModel, coroutineScope.asDisposable())
 
