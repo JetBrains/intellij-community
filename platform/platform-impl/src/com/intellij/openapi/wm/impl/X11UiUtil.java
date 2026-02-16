@@ -520,8 +520,8 @@ public final class X11UiUtil {
   }
 
   private static @Nullable String exec(String errorMessage, String... command) {
-    var execResult = X11UiUtilKt.exec(errorMessage, command);
-    return X11UiUtilKtKt.output(execResult);
+    var execResult = LinuxUiUtil.exec(errorMessage, command);
+    return LinuxUiUtilKt.output(execResult);
   }
 
   private static List<String> grepFile(@SuppressWarnings("SameParameterValue") String errorMessage, Path file, Pattern pattern) {

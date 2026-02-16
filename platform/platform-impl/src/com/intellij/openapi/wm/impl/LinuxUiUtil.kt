@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessNotCreatedException
+import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
 sealed interface ExecResult {
@@ -20,12 +22,16 @@ sealed interface ExecResult {
 }
 
 @ApiStatus.Internal
-internal object X11UiUtilKt {
+object LinuxUiUtil {
 
-  private val LOG = logger<X11UiUtilKt>()
+  private val LOG = logger<LinuxUiUtil>()
 
   private val unsupportedCommands = ConcurrentHashMap<String, Boolean>()
 
+  /**
+   * Executes the command and returns its output. If the command is unsupported by OS, returns [ExecResult.Failure] and doesn't
+   * try to execute/log the problem anymore
+   */
   @JvmStatic
   fun exec(errorMessage: String, vararg command: String): ExecResult {
     ThreadingAssertions.assertBackgroundThread()
@@ -41,34 +47,36 @@ internal object X11UiUtilKt {
     }
 
     try {
-      val process = ProcessBuilder(*command).start()
-      if (!process.waitFor(5, TimeUnit.SECONDS)) {
-        LOG.info("$errorMessage: timeout")
-        process.destroyForcibly()
-        return ExecResult.Failure()
+      val processOutput = ExecUtil.execAndGetOutput(GeneralCommandLine(*command), 5000)
+      val exitCode = processOutput.exitCode
+      if (exitCode != 0) {
+        LOG.debug("$errorMessage: exit code $exitCode")
+        return ExecResult.ExitValue(exitCode)
       }
 
-      if (process.exitValue() != 0) {
-        LOG.info(errorMessage + ": exit code " + process.exitValue())
-        return ExecResult.ExitValue(process.exitValue())
-      }
-      val output = process.inputReader(StandardCharsets.UTF_8).readText().trim { it <= ' ' }
+      val output = processOutput.stdout.trim { it <= ' ' }
       return ExecResult.Success(output)
     }
-    catch (e: Exception) {
-      val exceptionMessage = e.message
-      if (exceptionMessage?.contains("No such file or directory") == true) {
+    catch (e: ExecutionException) {
+      if (e is ProcessNotCreatedException && isNoFileOrDirectory(e.cause)) {
         unsupportedCommands[command[0]] = true
-        LOG.info("$errorMessage: $exceptionMessage")
+        LOG.info("$errorMessage: ${e.message}")
         LOG.trace(e)
       }
       else {
         LOG.info(errorMessage, e)
       }
-
       return ExecResult.Failure()
     }
   }
+}
+
+/**
+ * There is no good API in jdk for such a check. The string comes from the JDK and is not localizable
+ * (see os.cpp: `X(ENOENT, "No such file or directory")`), therefore, this solution should work on different OS-s and locales.
+ */
+private fun isNoFileOrDirectory(e: Throwable?): Boolean {
+  return e?.message?.contains("No such file or directory") == true
 }
 
 @ApiStatus.Internal
