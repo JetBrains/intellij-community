@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
@@ -109,10 +110,9 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   @Override
   public @Nullable PyType getIteratedItemType() {
     if (myElementTypes.size() >= 2) {
-      String iterableName = "typing.Iterable";
-      if (!iterableName.equals(getClassQName())) {
+      if (!PyTypingTypeProvider.ITERABLE.equals(getClassQName())) {
         TypeEvalContext context = TypeEvalContext.codeInsightFallback(getPyClass().getProject());
-        PyType asIterable = PyTypeUtil.convertToType(this, iterableName, getPyClass(), context);
+        PyType asIterable = PyTypeUtil.convertToType(this, PyTypingTypeProvider.ITERABLE, getPyClass(), context);
         if (asIterable instanceof PyCollectionType collectionType) {
           return collectionType.getIteratedItemType();
         }

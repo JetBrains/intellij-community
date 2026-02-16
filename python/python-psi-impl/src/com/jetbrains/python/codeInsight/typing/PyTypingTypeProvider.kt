@@ -733,6 +733,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     const val NOT_REQUIRED_EXT: String = "typing_extensions.NotRequired"
     const val READONLY: String = "typing.ReadOnly"
     const val READONLY_EXT: String = "typing_extensions.ReadOnly"
+    const val ITERABLE: String = "typing.Iterable"
 
     val TYPE_PARAMETER_FACTORIES: Set<String> = setOf(
       TYPE_VAR, TYPE_VAR_EXT,
