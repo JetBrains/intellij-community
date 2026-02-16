@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.references
 
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.assertNotNull
 class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureTestCase5() {
   @BeforeEach
   fun setUp() {
+    fixture.enableInspections(EventLogDescriptionInspection::class.java)
     fixture.addClass("""
       package com.intellij.internal.statistic.eventLog;
       public class EventLogGroup {
@@ -169,7 +171,6 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
 
   @Test
   fun `problem highlighting - Java`() {
-    fixture.enableInspections(EventLogDescriptionInspection::class.java)
     fixture.configureByText("Foo.java", """
       import com.intellij.internal.statistic.eventLog.EventLogGroup;
       class Foo {
@@ -206,7 +207,6 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
 
   @Test
   fun `problem highlighting - Kotlin`() {
-    fixture.enableInspections(EventLogDescriptionInspection::class.java)
     fixture.configureByText("Foo.kt", """
       import com.intellij.internal.statistic.eventLog.EventLogGroup
       object Foo {
@@ -229,6 +229,34 @@ class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureT
       }""".trimIndent()
     )
     fixture.checkHighlighting()
+  }
+
+  @Test
+  fun `missing description quick fix`() {
+    val propertiesFile = fixture.addFileToProject("build/events/SORTED.properties", """
+      a.group=first
+      c.group=third
+      """.trimIndent()
+    )
+    fixture.configureByText("Foo.java", """
+      import com.intellij.internal.statistic.eventLog.EventLogGroup;
+      class Foo {
+        private static final EventLogGroup GROUP = new EventLogGroup("b.group<caret>", 1, "SORTED");
+      }
+      """.trimIndent()
+    )
+    fixture.doHighlighting()
+
+    val action = fixture.getAvailableIntention("Add 'b.group' to 'SORTED.properties'")
+    assertNotNull(action)
+    fixture.launchAction(action)
+    assertEquals("""
+      a.group=first
+      b.group=
+      c.group=third
+      """.trimIndent(),
+      PsiDocumentManager.getInstance(fixture.project).getDocument(propertiesFile)!!.text
+    )
   }
 
   private fun testResolve(expectedFile: String, expectedText: String) = runReadActionBlocking {

@@ -1,11 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.impl.TextExpression
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.lang.properties.IProperty
 import com.intellij.lang.properties.PropertiesFileType
+import com.intellij.lang.properties.psi.PropertiesFile
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElementVisitor
@@ -66,8 +78,11 @@ private class EventLogDescriptionInspectionVisitor(private val holder: ProblemsH
           ?: return error(recorderArg ?: node, "inspections.event.log.recorder.unknown", "${EVENT_LOG_PROPERTIES_DIR}/${recorder}.properties")
         val groupId = argument.evaluateString()?.takeIf { it.isNotBlank() }
           ?: return warn(argument, "inspections.event.log.group.id.not.evaluable")
-        val description = file.findPropertyByKey(groupId)?.value
-          ?: return error(argument, "inspections.event.log.group.description.missing", groupId, file.name)
+        val description = file.findPropertyByKey(groupId)?.value ?: return errorWithFix(
+          argument,
+          "inspections.event.log.group.description.missing", arrayOf(groupId, file.name),
+          AddEventLogDescriptionQuickFix(file, groupId)
+        )
         if (description.isBlank())
           error(argument, "inspections.event.log.group.description.empty", groupId)
       }
@@ -83,7 +98,11 @@ private class EventLogDescriptionInspectionVisitor(private val holder: ProblemsH
           keys.forEach { key ->
             val description = file.findPropertyByKey(key)?.value
             when {
-              description == null -> error(argument, "inspections.event.log.event.description.missing", key, file.name)
+              description == null -> errorWithFix(
+                argument,
+                "inspections.event.log.event.description.missing", arrayOf(key, file.name),
+                AddEventLogDescriptionQuickFix(file, key)
+              )
               description.isBlank() -> error(argument, "inspections.event.log.event.description.empty", key)
             }
           }
@@ -106,5 +125,53 @@ private class EventLogDescriptionInspectionVisitor(private val holder: ProblemsH
       holder.registerProblem(it, DevKitBundle.message(messageKey, *params), ProblemHighlightType.GENERIC_ERROR)
     }
     return true
+  }
+
+  private fun errorWithFix(
+    element: UElement,
+    messageKey: @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String,
+    params: Array<out Any>,
+    fix: LocalQuickFix,
+  ): Boolean {
+    element.sourcePsi?.let {
+      holder.registerProblem(it, DevKitBundle.message(messageKey, *params), ProblemHighlightType.GENERIC_ERROR, fix)
+    }
+    return true
+  }
+}
+
+private class AddEventLogDescriptionQuickFix(propertiesFile: PropertiesFile, private val key: String) : LocalQuickFix {
+  private val file = propertiesFile.virtualFile!!
+
+  override fun getFamilyName(): String = DevKitBundle.message("inspections.event.log.description.fix.family.name")
+  override fun getName(): String = DevKitBundle.message("inspections.event.log.description.fix.name", key, file.name)
+  override fun startInWriteAction(): Boolean = false
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    val propertiesFile = PsiManager.getInstance(project).findFile(file) as? PropertiesFile ?: return
+    if (!FileModificationService.getInstance().prepareFileForWrite(propertiesFile.containingFile)) return
+
+    var anchor = null as IProperty?
+    for (property in propertiesFile.properties) {
+      val nextKey = property.key
+      if (nextKey != null && nextKey > key) break
+      anchor = property
+    }
+
+    val property = WriteCommandAction.writeCommandAction(project, propertiesFile.containingFile)
+      .withName(DevKitBundle.message("inspections.event.log.description.fix.command.name"))
+      .compute<IProperty, RuntimeException> {
+        propertiesFile.findPropertyByKey(key) ?: propertiesFile.addPropertyAfter(key, "", anchor)
+      }
+
+    val valueOffset = property.psiElement.textRange.endOffset
+    val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file, valueOffset), true) ?: return
+
+    val template = TemplateManager.getInstance(project).createTemplate("", "")
+    template.addVariable("VALUE", TextExpression(""), true)
+    template.addEndVariable()
+    template.isToReformat = false
+    TemplateManager.getInstance(project).startTemplate(editor, template)
   }
 }
