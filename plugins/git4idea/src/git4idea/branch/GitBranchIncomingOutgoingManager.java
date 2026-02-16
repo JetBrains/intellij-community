@@ -63,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -76,6 +77,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.intellij.externalProcessAuthHelper.AuthenticationMode.NONE;
@@ -111,6 +113,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private @Nullable ScheduledFuture<?> myPeriodicalUpdater;
   private @Nullable MessageBusConnection myConnection;
   private final @NotNull MultiMap<GitRepository, GitRemote> myAuthSuccessMap = MultiMap.createConcurrentSet();
+  private final @NotNull AtomicReference<@Nullable Instant> myLastFetchTime = new AtomicReference<>(null);
 
   GitBranchIncomingOutgoingManager(@NotNull Project project) {
     myProject = project;
@@ -210,6 +213,10 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
   public static @NotNull GitBranchIncomingOutgoingManager getInstance(@NotNull Project project) {
     return project.getService(GitBranchIncomingOutgoingManager.class);
+  }
+
+  public @Nullable Instant getLastFetchTime() {
+    return myLastFetchTime.get();
   }
 
   public boolean supportsIncomingOutgoing() {
@@ -327,9 +334,9 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
   @ApiStatus.Internal
   public @NotNull GitInOutProjectState getState() {
-    return !shouldShow()
-           ? GitInOutProjectState.EMPTY
-           : new GitInOutProjectState(mapState(myLocalBranchesWithIncoming), mapState(myLocalBranchesWithOutgoing));
+    return shouldShow()
+           ? new GitInOutProjectState(mapState(myLocalBranchesWithIncoming), mapState(myLocalBranchesWithOutgoing), myLastFetchTime.get())
+           : GitInOutProjectState.EMPTY;
   }
 
   private static @NotNull Map<RepositoryId, Map<String, Integer>> mapState(@NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> projectState) {
@@ -581,7 +588,11 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       Set<GitRepository> updatedRepos = fetches.keySet();
       if (updatedRepos.isEmpty()) return;
 
-      getInstance(project).markDirty(updatedRepos, updatedRepos, false);
+      GitBranchIncomingOutgoingManager manager = getInstance(project);
+      if (GitRepositoryManager.getInstance(project).getRepositories().size() == 1) {
+        manager.myLastFetchTime.set(Instant.now());
+      }
+      manager.markDirty(updatedRepos, updatedRepos, false);
     }
   }
 }

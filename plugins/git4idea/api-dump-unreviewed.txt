@@ -648,6 +648,7 @@ f:git4idea.branch.GitBranchIncomingOutgoingManager
 - getBranchesWithIncoming(git4idea.repo.GitRepository):java.util.Collection
 - getBranchesWithOutgoing(git4idea.repo.GitRepository):java.util.Collection
 - s:getInstance(com.intellij.openapi.project.Project):git4idea.branch.GitBranchIncomingOutgoingManager
+- getLastFetchTime():java.time.Instant
 - hasIncomingFor(git4idea.repo.GitRepository,java.lang.String):Z
 - hasOutgoingFor(git4idea.repo.GitRepository,java.lang.String):Z
 - repositoryChanged(git4idea.repo.GitRepository):V

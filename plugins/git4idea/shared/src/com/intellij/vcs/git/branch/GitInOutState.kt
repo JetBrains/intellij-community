@@ -4,19 +4,31 @@ package com.intellij.vcs.git.branch
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.platform.vcs.impl.shared.RepositoryId
+import com.intellij.util.text.DateFormatUtil
 import git4idea.i18n.GitBundle.message
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import java.time.Instant
 
 @ApiStatus.Internal
 @Serializable
 data class GitInOutProjectState(
   val incoming: Map<RepositoryId, Map<String, Int>>,
   val outgoing: Map<RepositoryId, Map<String, Int>>,
+  private val lastFetchTimeMillis: Long? = null,
 ) {
+  constructor(
+    incoming: Map<RepositoryId, Map<String, Int>>,
+    outgoing: Map<RepositoryId, Map<String, Int>>,
+    lastFetchTime: Instant?,
+  ) : this(incoming, outgoing, lastFetchTime?.toEpochMilli())
+
+  val lastFetchTime: Instant?
+    get() = lastFetchTimeMillis?.let { Instant.ofEpochMilli(it) }
+
   companion object {
     @JvmField
-    val EMPTY: GitInOutProjectState = GitInOutProjectState(emptyMap(), emptyMap())
+    val EMPTY: GitInOutProjectState = GitInOutProjectState(emptyMap(), emptyMap(), null as Long?)
   }
 }
 
@@ -52,7 +64,10 @@ data class GitInOutCountersInRepo(
 }
 
 @ApiStatus.Internal
-fun GitInOutCountersInProject.calcTooltip(): @NlsContexts.Tooltip String? {
+fun GitInOutCountersInProject.calcTooltip(): @NlsContexts.Tooltip String? = calcTooltip(lastFetchTime = null)
+
+@ApiStatus.Internal
+fun GitInOutCountersInProject.calcTooltip(lastFetchTime: Instant?): @NlsContexts.Tooltip String? {
   if (this == GitInOutCountersInProject.EMPTY) return null
 
   val repositories = repositories()
@@ -73,6 +88,10 @@ fun GitInOutCountersInProject.calcTooltip(): @NlsContexts.Tooltip String? {
     if (totalOutgoing != 0) {
       html.append(message("branches.tooltip.number.outgoing.commits", totalOutgoing)).br()
     }
+
+    if (lastFetchTime != null) {
+      html.append(message("branches.tooltip.last.fetch", DateFormatUtil.formatPrettyDateTime(lastFetchTime.toEpochMilli()))).br()
+    }
   }
   else {
     if (totalIncoming != 0) {
@@ -86,6 +105,7 @@ fun GitInOutCountersInProject.calcTooltip(): @NlsContexts.Tooltip String? {
       html.append(message("branches.tooltip.number.outgoing.commits.in.repositories", totalOutgoing(), reposWithOutgoing())).br()
     }
   }
-  return html.toString()
+
+  return html.toString().ifEmpty { null }
 }
 
