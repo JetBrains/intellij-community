@@ -5,8 +5,8 @@ package com.intellij.agent.workbench.sessions
 // @spec community/plugins/agent-workbench/spec/agent-dedicated-frame.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
 
-import com.intellij.agent.workbench.chat.AgentChatEditorService
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
+import com.intellij.agent.workbench.chat.openChat
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
 import com.intellij.ide.RecentProjectsManager
@@ -16,6 +16,7 @@ import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -187,7 +188,7 @@ internal class AgentSessionsService private constructor(
         }
         if (!proceed) return@launch
       }
-      openChat(path, thread, subAgent = null)
+      openChat(path = path, thread = thread, subAgent = null, serviceScope = serviceScope)
     }
   }
 
@@ -204,7 +205,7 @@ internal class AgentSessionsService private constructor(
         LOG.debug("Dropped duplicate open sub-agent action for $normalized:${thread.provider}:${thread.id}:${subAgent.id}")
       },
     ) {
-      openChat(path, thread, subAgent)
+      openChat(path = path, thread = thread, subAgent = subAgent, serviceScope = serviceScope)
     }
   }
 
@@ -245,7 +246,7 @@ internal class AgentSessionsService private constructor(
         buildAgentSessionIdentity(provider, sessionId)
       } ?: buildAgentSessionNewIdentity(provider)
 
-      openNewChat(normalized, identity, launchSpec.command)
+      openNewChat(path = normalized, identity = identity, command = launchSpec.command, serviceScope = serviceScope)
     }
   }
 
@@ -256,174 +257,178 @@ internal class AgentSessionsService private constructor(
   fun loadWorktreeThreadsOnDemand(projectPath: String, worktreePath: String) {
     loadingCoordinator.loadWorktreeThreadsOnDemand(projectPath, worktreePath)
   }
+}
 
-  private suspend fun openOrFocusProjectInternal(path: String) {
-    val normalized = normalizePath(path)
-    val openProject = findOpenProject(normalized)
-    if (openProject != null) {
-      withContext(Dispatchers.EDT) {
-        ProjectUtilService.getInstance(openProject).focusProjectWindow()
-      }
-      return
+private suspend fun openOrFocusProjectInternal(path: String) {
+  val normalized = normalizePath(path)
+  val openProject = findOpenProject(normalized)
+  if (openProject != null) {
+    withContext(Dispatchers.EDT) {
+      ProjectUtilService.getInstance(openProject).focusProjectWindow()
     }
-    val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return
-    val projectPath = try {
-      Path.of(path)
-    }
-    catch (_: InvalidPathException) {
-      return
-    }
-    manager.openProject(projectFile = projectPath, options = OpenProjectTask())
+    return
   }
-
-  private suspend fun openChat(
-    path: String,
-    thread: AgentSessionThread,
-    subAgent: AgentSubAgent?,
-    shellCommandOverride: List<String>? = null,
-  ) {
-    val normalized = normalizePath(path)
-    if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
-      openChatInDedicatedFrame(
-        path = normalized,
-        thread = thread,
-        subAgent = subAgent,
-        shellCommandOverride = shellCommandOverride,
-        serviceScope = serviceScope,
-      )
-      return
-    }
-    val openProject = findOpenProject(normalized)
-    if (openProject != null) {
-      openChatInProject(openProject, normalized, thread, subAgent, shellCommandOverride)
-      return
-    }
-    val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return
-    val projectPath = try {
-      Path.of(path)
-    }
-    catch (_: InvalidPathException) {
-      return
-    }
-    val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-      @Deprecated("Deprecated in Java")
-      @Suppress("removal")
-      override fun projectOpened(project: Project) {
-        if (resolveProjectPath(manager, project) != normalized) return
-        serviceScope.launch {
-          openChatInProject(project, normalized, thread, subAgent, shellCommandOverride)
-          connection.disconnect()
-        }
-      }
-    })
-    manager.openProject(projectFile = projectPath, options = OpenProjectTask())
+  val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return
+  val projectPath = try {
+    Path.of(path)
   }
-
-  private fun buildOpenProjectActionKey(path: String): String {
-    return "$OPEN_PROJECT_ACTION_KEY_PREFIX:$path"
+  catch (_: InvalidPathException) {
+    return
   }
+  manager.openProject(projectFile = projectPath, options = OpenProjectTask())
+}
 
-  private fun markClaudeQuotaHintEligible(provider: AgentSessionProvider) {
-    if (provider != AgentSessionProvider.CLAUDE) {
-      return
-    }
-    service<AgentSessionsTreeUiStateService>().markClaudeQuotaHintEligible()
-  }
-
-  private fun buildCreateSessionActionKey(path: String, provider: AgentSessionProvider, mode: AgentSessionLaunchMode): String {
-    return "$CREATE_SESSION_ACTION_KEY_PREFIX:$path:$provider:mode=$mode"
-  }
-
-  private fun buildOpenThreadActionKey(path: String, thread: AgentSessionThread): String {
-    return "$OPEN_THREAD_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}"
-  }
-
-  private fun buildOpenSubAgentActionKey(path: String, thread: AgentSessionThread, subAgent: AgentSubAgent): String {
-    return "$OPEN_SUB_AGENT_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}:${subAgent.id}"
-  }
-
-  private fun dedicatedFrameOpenProgressRequest(currentProject: Project?): SingleFlightProgressRequest? {
-    if (!AgentChatOpenModeSettings.openInDedicatedFrame()) return null
-    return SingleFlightProgressRequest(
-      project = currentOrDefaultProject(currentProject),
-      title = AgentSessionsBundle.message("toolwindow.progress.opening.dedicated.frame"),
+private suspend fun openChat(
+  path: String,
+  thread: AgentSessionThread,
+  subAgent: AgentSubAgent?,
+  shellCommandOverride: List<String>? = null,
+  serviceScope: CoroutineScope,
+) {
+  val normalized = normalizePath(path)
+  if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
+    openChatInDedicatedFrame(
+      path = normalized,
+      thread = thread,
+      subAgent = subAgent,
+      shellCommandOverride = shellCommandOverride,
+      serviceScope = serviceScope,
     )
+    return
   }
-
-  private suspend fun openNewChat(path: String, identity: String, command: List<String>) {
-    val title = AgentSessionsBundle.message("toolwindow.action.new.thread")
-    val dedicatedFrame = AgentChatOpenModeSettings.openInDedicatedFrame()
-    if (dedicatedFrame) {
-      openNewChatInDedicatedFrame(path, identity, command, title)
-      return
-    }
-    val openProject = findOpenProject(path)
-    if (openProject != null) {
-      openNewChatInProject(openProject, path, identity, command, title)
-      return
-    }
-    val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return
-    val projectPath = try {
-      Path.of(path)
-    }
-    catch (_: InvalidPathException) {
-      return
-    }
-    val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-      @Deprecated("Deprecated in Java")
-      @Suppress("removal")
-      override fun projectOpened(project: Project) {
-        if (resolveProjectPath(manager, project) != path) return
-        serviceScope.launch {
-          openNewChatInProject(project, path, identity, command, title)
-          connection.disconnect()
-        }
+  val openProject = findOpenProject(normalized)
+  if (openProject != null) {
+    openChatInProject(openProject, normalized, thread, subAgent, shellCommandOverride)
+    return
+  }
+  val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return
+  val projectPath = try {
+    Path.of(path)
+  }
+  catch (_: InvalidPathException) {
+    return
+  }
+  val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)
+  connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    @Deprecated("Deprecated in Java")
+    @Suppress("removal")
+    override fun projectOpened(project: Project) {
+      if (resolveProjectPath(manager, project) != normalized) return
+      serviceScope.launch {
+        openChatInProject(project, normalized, thread, subAgent, shellCommandOverride)
+        connection.disconnect()
       }
-    })
-    manager.openProject(projectFile = projectPath, options = OpenProjectTask())
+    }
+  })
+  manager.openProject(projectFile = projectPath, options = OpenProjectTask())
+}
+
+private fun buildOpenProjectActionKey(path: String): String {
+  return "$OPEN_PROJECT_ACTION_KEY_PREFIX:$path"
+}
+
+private fun markClaudeQuotaHintEligible(provider: AgentSessionProvider) {
+  if (provider != AgentSessionProvider.CLAUDE) {
+    return
   }
+  service<AgentSessionsTreeUiStateService>().markClaudeQuotaHintEligible()
+}
 
-  private suspend fun openNewChatInDedicatedFrame(
-    path: String,
-    identity: String,
-    command: List<String>,
-    title: String,
-  ) {
-    val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
-    val openProject = findOpenProject(dedicatedProjectPath)
-    if (openProject != null) {
-      AgentWorkbenchDedicatedFrameProjectManager.configureProject(openProject)
-      openNewChatInProject(openProject, path, identity, command, title)
-      return
-    }
+private fun buildCreateSessionActionKey(path: String, provider: AgentSessionProvider, mode: AgentSessionLaunchMode): String {
+  return "$CREATE_SESSION_ACTION_KEY_PREFIX:$path:$provider:mode=$mode"
+}
 
-    val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return
-    val dedicatedProjectDir = try {
-      AgentWorkbenchDedicatedFrameProjectManager.ensureProjectPath()
-    }
-    catch (e: Throwable) {
-      LOG.warn("Failed to prepare dedicated chat frame project", e)
-      return
-    }
+private fun buildOpenThreadActionKey(path: String, thread: AgentSessionThread): String {
+  return "$OPEN_THREAD_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}"
+}
 
-    val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-      @Deprecated("Deprecated in Java")
-      @Suppress("removal")
-      override fun projectOpened(project: Project) {
-        val projectPath2 = resolveProjectPath(manager, project)
-        if (projectPath2 != dedicatedProjectPath) return
-        serviceScope.launch {
-          AgentWorkbenchDedicatedFrameProjectManager.configureProject(project)
-          openNewChatInProject(project, path, identity, command, title)
-          connection.disconnect()
-        }
+private fun buildOpenSubAgentActionKey(path: String, thread: AgentSessionThread, subAgent: AgentSubAgent): String {
+  return "$OPEN_SUB_AGENT_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}:${subAgent.id}"
+}
+
+private fun dedicatedFrameOpenProgressRequest(currentProject: Project?): SingleFlightProgressRequest? {
+  if (!AgentChatOpenModeSettings.openInDedicatedFrame()) return null
+  return SingleFlightProgressRequest(
+    project = currentOrDefaultProject(currentProject),
+    title = AgentSessionsBundle.message("toolwindow.progress.opening.dedicated.frame"),
+  )
+}
+
+private suspend fun openNewChat(path: String, identity: String, command: List<String>, serviceScope: CoroutineScope) {
+  val title = AgentSessionsBundle.message("toolwindow.action.new.thread")
+  val dedicatedFrame = AgentChatOpenModeSettings.openInDedicatedFrame()
+  if (dedicatedFrame) {
+    openNewChatInDedicatedFrame(path = path, identity = identity, command = command, title = title, serviceScope = serviceScope)
+    return
+  }
+  val openProject = findOpenProject(path)
+  if (openProject != null) {
+    openNewChatInProject(project = openProject, projectPath = path, identity = identity, command = command, title = title)
+    return
+  }
+  val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return
+  val projectPath = try {
+    Path.of(path)
+  }
+  catch (_: InvalidPathException) {
+    return
+  }
+  val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)
+  connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    @Deprecated("Deprecated in Java")
+    @Suppress("removal")
+    override fun projectOpened(project: Project) {
+      if (resolveProjectPath(manager, project) != path) return
+      serviceScope.launch {
+        openNewChatInProject(project = project, projectPath = path, identity = identity, command = command, title = title)
+        connection.disconnect()
       }
-    })
-    openDedicatedFrameProject(dedicatedProjectDir, connection)
+    }
+  })
+  manager.openProject(projectFile = projectPath, options = OpenProjectTask())
+}
+
+private suspend fun openNewChatInDedicatedFrame(
+  path: String,
+  identity: String,
+  command: List<String>,
+  title: String,
+  serviceScope: CoroutineScope,
+) {
+  val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
+  val openProject = findOpenProject(dedicatedProjectPath)
+  if (openProject != null) {
+    AgentWorkbenchDedicatedFrameProjectManager.configureProject(openProject)
+    openNewChatInProject(project = openProject, projectPath = path, identity = identity, command = command, title = title)
+    return
   }
+
+  val dedicatedProjectDir = try {
+    AgentWorkbenchDedicatedFrameProjectManager.ensureProjectPath()
+  }
+  catch (e: Throwable) {
+    LOG.warn("Failed to prepare dedicated chat frame project", e)
+    return
+  }
+
+  val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)
+  connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    @Deprecated("Deprecated in Java")
+    @Suppress("removal")
+    override fun projectOpened(project: Project) {
+      val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return
+      val projectPath2 = resolveProjectPath(manager, project)
+      if (projectPath2 != dedicatedProjectPath) {
+        return
+      }
+      serviceScope.launch {
+        AgentWorkbenchDedicatedFrameProjectManager.configureProject(project)
+        openNewChatInProject(project = project, projectPath = path, identity = identity, command = command, title = title)
+        connection.disconnect()
+      }
+    }
+  })
+  openDedicatedFrameProject(dedicatedProjectDir, connection)
 }
 
 private suspend fun openNewChatInProject(
@@ -433,16 +438,17 @@ private suspend fun openNewChatInProject(
   command: List<String>,
   title: String,
 ) {
-  withContext(Dispatchers.EDT) {
-    project.service<AgentChatEditorService>().openChat(
-      projectPath = projectPath,
-      threadIdentity = identity,
-      shellCommand = command,
-      threadId = identity,
-      threadTitle = title,
-      subAgentId = null,
-    )
-    ProjectUtilService.getInstance(project).focusProjectWindow()
+  openChat(
+    project = project,
+    projectPath = projectPath,
+    threadIdentity = identity,
+    shellCommand = command,
+    threadId = identity,
+    threadTitle = title,
+    subAgentId = null,
+  )
+  withContext(Dispatchers.UI) {
+    project.serviceAsync<ProjectUtilService>().focusProjectWindow()
   }
 }
 
@@ -497,7 +503,8 @@ private suspend fun openChatInProject(
   val identity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
   val command = buildAgentSessionResumeCommand(provider = thread.provider, sessionId = thread.id)
   withContext(Dispatchers.EDT) {
-    project.service<AgentChatEditorService>().openChat(
+    openChat(
+      project = project,
       projectPath = projectPath,
       threadIdentity = identity,
       shellCommand = shellCommandOverride ?: command,
@@ -516,7 +523,11 @@ private suspend fun openDedicatedFrameProject(
   try {
     val result = (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(
       projectIdentityFile = dedicatedProjectDir,
-      options = OpenProjectTask(forceOpenInNewFrame = true),
+      options = OpenProjectTask {
+        forceOpenInNewFrame = true
+        runConfigurators = false
+        createModule = false
+      },
     )
     if (result == null) {
       connection.disconnect()

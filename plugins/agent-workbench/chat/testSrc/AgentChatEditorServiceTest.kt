@@ -1,6 +1,5 @@
 package com.intellij.agent.workbench.chat
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -12,6 +11,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.FileEditorManagerTestCase
 import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -26,11 +26,27 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
   }
 
   fun testReuseEditorForThread() {
-    val service = project.service<AgentChatEditorService>()
-
     runInEdtAndWait {
-      service.openChat("/work/project-a", "CODEX:thread-1", codexCommand, "thread-1", "Fix auth bug", null)
-      service.openChat("/work/project-a", "CODEX:thread-1", codexCommand, "thread-1", "Fix auth bug", null)
+      runBlocking {
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CODEX:thread-1",
+          shellCommand = codexCommand,
+          threadId = "thread-1",
+          threadTitle = "Fix auth bug",
+          subAgentId = null,
+        )
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CODEX:thread-1",
+          shellCommand = codexCommand,
+          threadId = "thread-1",
+          threadTitle = "Fix auth bug",
+          subAgentId = null,
+        )
+      }
     }
 
     val files = openedChatFiles()
@@ -38,11 +54,27 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
   }
 
   fun testSeparateTabsForSubAgents() {
-    val service = project.service<AgentChatEditorService>()
-
     runInEdtAndWait {
-      service.openChat("/work/project-a", "CODEX:thread-1", codexCommand, "thread-1", "Fix auth bug", "alpha")
-      service.openChat("/work/project-a", "CODEX:thread-1", codexCommand, "thread-1", "Fix auth bug", "beta")
+      runBlocking {
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CODEX:thread-1",
+          shellCommand = codexCommand,
+          threadId = "thread-1",
+          threadTitle = "Fix auth bug",
+          subAgentId = "alpha",
+        )
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CODEX:thread-1",
+          shellCommand = codexCommand,
+          threadId = "thread-1",
+          threadTitle = "Fix auth bug",
+          subAgentId = "beta",
+        )
+      }
     }
 
     val files = openedChatFiles()
@@ -50,18 +82,20 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
   }
 
   fun testTabTitleUsesThreadTitle() {
-    val service = project.service<AgentChatEditorService>()
     val title = "Investigate crash"
 
     runInEdtAndWait {
-      service.openChat(
-        "/work/project-a",
-        "CODEX:thread-2",
-        listOf("codex", "resume", "thread-2"),
-        "thread-2",
-        title,
-        null,
-      )
+      runBlocking {
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CODEX:thread-2",
+          shellCommand = listOf("codex", "resume", "thread-2"),
+          threadId = "thread-2",
+          threadTitle = title,
+          subAgentId = null,
+        )
+      }
     }
 
     val file = openedChatFiles().single()
@@ -69,11 +103,27 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
   }
 
   fun testDifferentSessionIdentitiesDoNotReuseTab() {
-    val service = project.service<AgentChatEditorService>()
-
     runInEdtAndWait {
-      service.openChat("/work/project-a", "CODEX:session-1", codexCommand, "session-1", "Thread", null)
-      service.openChat("/work/project-a", "CLAUDE:session-1", claudeCommand, "session-1", "Thread", null)
+      runBlocking {
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CODEX:session-1",
+          shellCommand = codexCommand,
+          threadId = "session-1",
+          threadTitle = "Thread",
+          subAgentId = null,
+        )
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CLAUDE:session-1",
+          shellCommand = claudeCommand,
+          threadId = "session-1",
+          threadTitle = "Thread",
+          subAgentId = null,
+        )
+      }
     }
 
     val files = openedChatFiles()
