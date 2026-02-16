@@ -22,9 +22,12 @@ import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,7 +37,9 @@ import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JRootPane
+import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeCellRenderer
 
 internal class IterativeMergeFlowDelegate(
   private val iterativeDataHolder: MergeConflictIterativeDataHolder,
@@ -59,6 +64,13 @@ internal class IterativeMergeFlowDelegate(
     table.toolTipTextProvider = { file ->
       iterativeDataHolder.getMergeConflictModel(file)?.let {
         VcsBundle.message("multiple.file.iterative.merge.tooltip", it.getResolvedChanges().size, it.getAllChanges().size)
+      }
+    }
+    table.installNameDecorator {
+      iterativeDataHolder.getMergeConflictModel(it)?.let { model ->
+        VcsBundle.message("multiple.file.iterative.merge.files.resolved.changes.count",
+                          model.getResolvedChanges().size,
+                          model.getAllChanges().size)
       }
     }
     return panel {
@@ -184,4 +196,20 @@ private class ConflictsGroupNode(val type: ConflictsNodeType) : ChangesBrowserNo
   }
 
   override fun shouldExpandByDefault(): Boolean = true
+}
+
+private fun TreeTable.installNameDecorator(extra: (VirtualFile) -> String?) {
+  val original = tree.cellRenderer
+  tree.cellRenderer = TreeCellRenderer { tree, value, selected, expanded, leaf, row, hasFocus ->
+    val component = original.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+    if (component is SimpleColoredComponent && value is DefaultMutableTreeNode) {
+      val virtualFile = value.userObject as? VirtualFile
+      val extraText = virtualFile?.let(extra)
+      if (!extraText.isNullOrBlank()) {
+        component.append(" ")
+        component.append(extraText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+    }
+    component
+  }
 }
