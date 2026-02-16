@@ -998,7 +998,6 @@ f:git4idea.checkin.GitCheckinEnvironment
 - sf:convertDocumentContentToBytesWithBOM(git4idea.repo.GitRepository,java.lang.String,com.intellij.openapi.vfs.VirtualFile):B[]
 - sf:createCommitMessageFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.io.File
 - createCommitOptions(com.intellij.openapi.vcs.CheckinProjectPanel,com.intellij.openapi.vcs.changes.CommitContext):com.intellij.openapi.vcs.ui.RefreshableOnComponent
-- getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.concurrency.CancellablePromise
 - getCheckinOperationName():java.lang.String
 - getDefaultMessageFor(com.intellij.openapi.vcs.FilePath[]):java.lang.String
 - getHelpId():java.lang.String
@@ -1054,21 +1053,15 @@ a:git4idea.checkin.GitCheckinHandlerFactory
 f:git4idea.checkin.GitCommitOptions
 - <init>():V
 - <init>(com.intellij.openapi.vcs.changes.CommitContext):V
-- <init>(Z,Z,Z,com.intellij.vcs.log.VcsUser,java.util.Date,Z):V
-- b:<init>(Z,Z,Z,com.intellij.vcs.log.VcsUser,java.util.Date,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():Z
 - f:component2():Z
 - f:component3():Z
 - f:component4():com.intellij.vcs.log.VcsUser
 - f:component5():java.util.Date
 - f:component6():Z
-- f:copy(Z,Z,Z,com.intellij.vcs.log.VcsUser,java.util.Date,Z):git4idea.checkin.GitCommitOptions
-- bs:copy$default(git4idea.checkin.GitCommitOptions,Z,Z,Z,com.intellij.vcs.log.VcsUser,java.util.Date,Z,I,java.lang.Object):git4idea.checkin.GitCommitOptions
 - equals(java.lang.Object):Z
 - f:getCommitAuthor():com.intellij.vcs.log.VcsUser
 - f:getCommitAuthorDate():java.util.Date
 - hashCode():I
-- f:isAmend():Z
 - f:isCleanupCommitMessage():Z
 - f:isSignOff():Z
 - f:isSkipHooks():Z
