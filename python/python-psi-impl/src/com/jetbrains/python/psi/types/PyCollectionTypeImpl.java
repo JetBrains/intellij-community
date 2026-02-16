@@ -108,7 +108,16 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
 
   @Override
   public @Nullable PyType getIteratedItemType() {
-    // TODO: Select the parameter type that matches T in Iterable[T]
+    if (myElementTypes.size() >= 2) {
+      String iterableName = "typing.Iterable";
+      if (!iterableName.equals(getClassQName())) {
+        TypeEvalContext context = TypeEvalContext.codeInsightFallback(getPyClass().getProject());
+        PyType asIterable = PyTypeUtil.convertToType(this, iterableName, getPyClass(), context);
+        if (asIterable instanceof PyCollectionType collectionType) {
+          return collectionType.getIteratedItemType();
+        }
+      }
+    }
     return ContainerUtil.getFirstItem(myElementTypes);
   }
 

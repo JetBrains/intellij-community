@@ -4255,5 +4255,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        serial_number = property(_get_serial_number)
                    """);
   }
+
+  // PY-64359
+  public void testTupleDictValues() {
+    doTestByText("""
+                   def f(a: dict[str, int]):
+                       b: tuple[int, ...] = tuple(a.values())
+                   """);
+  }
 }
 
