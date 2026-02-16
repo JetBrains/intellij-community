@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.kotlin.inspections
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.codeInspection.i18n.TitleCapitalizationInspection
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
   override fun setUp() {
     setUpWithKotlinPlugin { super.setUp() }
   }
@@ -19,8 +19,8 @@ class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase(), Ex
        import org.jetbrains.annotations.*      
 
        class Foo {
-         fun consumeTitle(@Nls(capitalization=Nls.Capitalization.Title) <warning descr="[UNUSED_PARAMETER] Parameter 's' is never used">s</warning> : String) {}
-         fun consumeSentence(@Nls(capitalization=Nls.Capitalization.Sentence) <warning descr="[UNUSED_PARAMETER] Parameter 's' is never used">s</warning> : String) {}
+         fun consumeTitle(@Nls(capitalization=Nls.Capitalization.Title) s : String) {}
+         fun consumeSentence(@Nls(capitalization=Nls.Capitalization.Sentence) s : String) {}
       
          fun foo(@Nls(capitalization=Nls.Capitalization.Sentence) s: String) {
            val s1 = <warning descr="The string is used in both title and sentence capitalization contexts">"Hello World"</warning>
@@ -40,7 +40,7 @@ class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase(), Ex
     """.trimIndent())
     myFixture.testHighlighting()
   }
-  
+
   fun testProperties() {
     val props = """
       property.lowercase=hello world
@@ -52,8 +52,8 @@ class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase(), Ex
 
       class Foo {
         fun message(@PropertyKey(resourceBundle = "MyBundle") key : String) : String = key
-        fun consumeTitle(@Nls(capitalization=Nls.Capitalization.Title) <warning descr="[UNUSED_PARAMETER] Parameter 's' is never used">s</warning> : String) {}
-        fun consumeSentence(@Nls(capitalization=Nls.Capitalization.Sentence) <warning descr="[UNUSED_PARAMETER] Parameter 's' is never used">s</warning> : String) {}
+        fun consumeTitle(@Nls(capitalization=Nls.Capitalization.Title) s : String) {}
+        fun consumeSentence(@Nls(capitalization=Nls.Capitalization.Sentence) s : String) {}
         
         fun test() {
           consumeTitle(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization"><caret>message("property.lowercase")</warning>)
@@ -70,4 +70,3 @@ class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase(), Ex
         property.titlecase=Hello World""".trimIndent(), myFixture.getIntentionPreviewText(action))
   }
 }
-

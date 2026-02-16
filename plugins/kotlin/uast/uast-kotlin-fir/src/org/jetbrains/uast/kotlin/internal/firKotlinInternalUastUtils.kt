@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
@@ -74,6 +75,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.light.classes.symbol.annotations.annotateByKtType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -434,8 +436,8 @@ internal fun toPsiType(
         config
     )
 
-context(_: KaSession)
-@OptIn(KaExperimentalApi::class)
+context(session: KaSession)
+@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
 internal fun toPsiType(
     ktType: KaType,
     containingLightDeclaration: PsiModifierListOwner?,
@@ -457,7 +459,9 @@ internal fun toPsiType(
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null
         }
-        if (psiType != null) return psiType
+        if (psiType != null) {
+            return psiType as? PsiPrimitiveType ?: session.annotateByKtType(psiType, ktType, context, true)
+        }
     }
     val psiTypeParent: PsiElement =
         containingLightDeclaration.takeIf { !ktType.isLocal || it is KtLightElement<*, *> }

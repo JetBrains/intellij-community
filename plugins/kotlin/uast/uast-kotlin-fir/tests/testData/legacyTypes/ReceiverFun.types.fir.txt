@@ -7,14 +7,14 @@ UFile (package = ) [public final class ReceiverFunKt {...]
             UBlockExpression [{...}]
                 UReturnExpression [return this.length]
                     UQualifiedReferenceExpression [this.length] : int
-                        UThisExpression (label = null) [this] : java.lang.String
+                        UThisExpression (label = null) [this] : @org.jetbrains.annotations.NotNull() java.lang.String
                         USimpleNameReferenceExpression (identifier = length) [length] : int
         UMethod (name = getRx) [public static final fun getRx(@org.jetbrains.annotations.NotNull @MyReceiverAnnotation(name = "RegExp") $this$rx: java.lang.String) : kotlin.text.Regex {...}]
             UParameter (name = $this$rx) [@org.jetbrains.annotations.NotNull @MyReceiverAnnotation(name = "RegExp") var $this$rx: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation(name = "RegExp")]
                     UNamedExpression (name = name) [name = "RegExp"]
-                        UPolyadicExpression (operator = +) ["RegExp"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["RegExp"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "RegExp") ["RegExp"] : java.lang.String
             UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UReturnExpression [return toRegex()] : @org.jetbrains.annotations.NotNull() java.lang.Void
@@ -22,5 +22,5 @@ UFile (package = ) [public final class ReceiverFunKt {...]
                         UIdentifier (Identifier (toRegex)) [UIdentifier (Identifier (toRegex))]
     UClass (name = MyReceiverAnnotation) [public abstract annotation MyReceiverAnnotation {...}]
         UAnnotationMethod (name = name) [public abstract fun name() : java.lang.String = UastEmptyExpression]
-            UPolyadicExpression (operator = +) [""] : java.lang.String
+            UPolyadicExpression (operator = +) [""] : @org.jetbrains.annotations.NotNull() java.lang.String
                 ULiteralExpression (value = "") [""] : java.lang.String

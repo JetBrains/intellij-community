@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.kotlin.quickfix
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.k2.quickfix
 
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInspection.i18n.I18nQuickFixHandler
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.expressions.UStringConcatenationsFacade.Companion.createFromTopConcatenation
+import org.jetbrains.uast.expressions.UStringConcatenationsFacade
 import org.jetbrains.uast.toUElementOfType
 import org.junit.Assert
 
@@ -26,7 +26,7 @@ private const val i18nizedExpr = "i18nizedExpr"
  * Analogical Java tests: [com.intellij.java.codeInsight.daemon.quickFix.I18nizeTest]
  */
 class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
   override fun setUp() {
     setUpWithKotlinPlugin { super.setUp() }
   }
@@ -149,7 +149,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeP
       }
     """.trimIndent())
     val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
-    val concatenation = createFromTopConcatenation(enclosingStringLiteral)
+    val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#suffix}",
@@ -157,7 +157,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeP
     assertSize(1, args)
     assertEquals("if (prefix) 0 else 1", args[0]!!.sourcePsi!!.text)
   }
-  
+
   fun testConcatenationWithIfExprNested() {
     myFixture.configureByText("Test.kt", """
       class MyTest {
@@ -167,7 +167,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeP
       }
     """.trimIndent())
     val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
-    val concatenation = createFromTopConcatenation(enclosingStringLiteral)
+    val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
@@ -186,8 +186,8 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeP
       }
     """.trimIndent())
     val enclosingStringLiteral = I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(myFixture.file.findElementAt(myFixture.editor.caretModel.offset))
-    
-    val concatenation = createFromTopConcatenation(enclosingStringLiteral)
+
+    val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
@@ -196,7 +196,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeP
     assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
     assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
   }
-  
+
   fun testConcatenationOfLiterals() {
     myFixture.configureByText("Test.kt", """
       class MyTest {
@@ -206,7 +206,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeP
       }
     """.trimIndent())
     val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
-    val concatenation = createFromTopConcatenation(enclosingStringLiteral)
+    val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("part in suffix {0} and prefix '{1}'",

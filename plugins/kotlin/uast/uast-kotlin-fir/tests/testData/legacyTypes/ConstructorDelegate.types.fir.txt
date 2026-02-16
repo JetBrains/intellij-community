@@ -31,7 +31,7 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
                 ULiteralExpression (value = 10) [10] : int
         UExpressionList (super_delegation) [super_delegation java.lang.CharSequence : "abc"]
             UTypeReferenceExpression (name = java.lang.CharSequence) [java.lang.CharSequence]
-            UPolyadicExpression (operator = +) ["abc"] : java.lang.String
+            UPolyadicExpression (operator = +) ["abc"] : @org.jetbrains.annotations.NotNull() java.lang.String
                 ULiteralExpression (value = "abc") ["abc"] : java.lang.String
         UMethod (name = Derived) [public fun Derived(@org.jetbrains.annotations.NotNull b: Base) = UastEmptyExpression]
             UParameter (name = b) [@org.jetbrains.annotations.NotNull var b: Base]
