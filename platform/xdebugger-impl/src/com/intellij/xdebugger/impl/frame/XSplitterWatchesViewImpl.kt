@@ -25,7 +25,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
 
-// TODO: Doesn't work when mixed-mode in RemDev : RIDER-134022
 /**
  * Allows customizing of variables view and splitting into 2 components.
  * Notice that you must provide the bottom component of the view by implementing XDebugSessionTabCustomizer in your XDebugProcess
