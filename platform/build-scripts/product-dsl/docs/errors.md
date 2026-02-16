@@ -385,10 +385,10 @@ Or suppress temporarily:
 ```
 ❌ Test plugin 'intellij.rider.tests' is missing plugin dependencies required by its content modules
 
-  ✗ Missing: com.jetbrains.codeWithMe
+  ✗ Missing: com.jetbrains.remote.development
     Needed by: intellij.rider.test.cases.rdct.distributed._test
 
-💡 Fix: Add <plugin id="com.jetbrains.codeWithMe"/> to the test plugin's plugin.xml
+💡 Fix: Add <plugin id="com.jetbrains.remote.development"/> to the test plugin's plugin.xml
 ```
 
 **Cause**: A DSL-defined test plugin has content modules whose JPS dependencies include modules
