@@ -46,8 +46,8 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
     return BreakpointBasedStreamTracer(
       session,
       support,
-      TraceResultInterpreterImpl(getLibrarySupport().interpreterFactory),
-      getXValueInterpreter(session.project)
+      getXValueInterpreter(session.project),
+      TraceResultInterpreterImpl(getLibrarySupport().interpreterFactory)
     )
   }
 

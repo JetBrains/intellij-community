@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.memory.utils.InstanceJavaValue
+import com.intellij.debugger.streams.core.trace.AbstractStreamTracer
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.TraceResultInterpreter
 import com.intellij.debugger.streams.core.trace.XValueInterpreter
@@ -29,9 +30,9 @@ private val LOG = logger<BreakpointBasedStreamTracer>()
 internal class BreakpointBasedStreamTracer(
   private val session: XDebugSession,
   private val librarySupport: BreakpointBasedLibrarySupport,
-  private val resultInterpreter: TraceResultInterpreter,
-  private val xValueInterpreter: XValueInterpreter,
-) : StreamTracer {
+  xValueInterpreter: XValueInterpreter,
+  resultInterpreter: TraceResultInterpreter,
+) : AbstractStreamTracer(session, xValueInterpreter, resultInterpreter) {
   override suspend fun trace(chain: StreamChain): StreamTracer.Result {
     val xDebugProcess = session.debugProcess as? JavaDebugProcess ?: return StreamTracer.Result.Unknown
     val suspendContext = xDebugProcess.session.suspendContext as? SuspendContextImpl
@@ -63,8 +64,7 @@ internal class BreakpointBasedStreamTracer(
       result,
     )
 
-    val extractedResult = xValueInterpreter.extract(session, xValue)
-    // TODO: extract shared value interpretation logic
+    return interpretStreamResult(xValue, chain, streamTraceExpression = "")
   }
 
   private fun createXValue(

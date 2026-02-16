@@ -68,8 +68,7 @@ public interface LibrarySupportProvider {
     return new EvaluateExpressionTracer(
       session,
       getExpressionBuilder(session.getProject()),
-      new TraceResultInterpreterImpl(getLibrarySupport().getInterpreterFactory()),
-      getXValueInterpreter(session.getProject())
+      getXValueInterpreter(session.getProject()), new TraceResultInterpreterImpl(getLibrarySupport().getInterpreterFactory())
     );
   }
 }
