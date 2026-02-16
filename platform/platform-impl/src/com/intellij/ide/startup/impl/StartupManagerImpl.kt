@@ -251,7 +251,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
             idString != "com.intellij.appcode" &&
             idString != "com.jetbrains.kmm" &&
             idString != "com.jetbrains.remote.development" &&
-            idString != "intellij.rider.plugins.cwm" &&
+            idString != "intellij.rider.plugins.remote.development" &&
             idString != "org.jetbrains.plugins.clion.radler") {
           if (!(idString == "com.intellij.ml.llm" && adapter.assignableToClassName.endsWith("XNextRootPaneCustomizer"))) {
             LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
