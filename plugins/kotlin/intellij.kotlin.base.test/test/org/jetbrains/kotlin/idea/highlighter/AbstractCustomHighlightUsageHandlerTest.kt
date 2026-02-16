@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -22,6 +23,21 @@ abstract class AbstractCustomHighlightUsageHandlerTest : KotlinLightCodeInsightF
     companion object {
         // Not standard <caret> to leave it in text after configureByFile and remove manually after collecting highlighting information
         const val CARET_TAG = "~"
+    }
+
+    override fun setUp() {
+        super.setUp()
+        Registry.get("kotlin.highlight.stdlib.dsl.exit.points").setValue(true)
+    }
+
+    override fun tearDown() {
+        try {
+            Registry.get("kotlin.highlight.stdlib.dsl.exit.points").resetToDefault()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     open fun doTest(unused: String) {
