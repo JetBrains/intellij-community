@@ -63,7 +63,7 @@ internal fun projectRowTint(): Color {
 
 @Composable
 internal fun threadIndicatorSize(): Dp {
-  return indicatorSize(scale = 0.18f, min = 4.dp, max = 8.dp)
+  return indicatorSize(scale = 0.22f, min = 5.dp, max = 9.dp)
 }
 
 @Composable
