@@ -3,12 +3,12 @@ package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
-import com.intellij.debugger.streams.core.lib.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
 import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.XValueInterpreter
+import com.intellij.debugger.streams.core.trace.impl.TraceResultInterpreterImpl
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointBasedStreamTracer
 import com.intellij.debugger.streams.trace.impl.JavaDebuggerCommandLauncher
@@ -32,7 +32,9 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
 
   override fun getTracerFor(chain: StreamChain, session: XDebugSession): StreamTracer {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    if (librarySupport !is BreakpointBasedLibrarySupport) {
+
+    val support = librarySupport // for smartcast
+    if (support !is BreakpointBasedLibrarySupport) {
       return super.getTracerFor(chain, session)
     }
 
@@ -41,7 +43,12 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
       return super.getTracerFor(chain, session)
     }
 
-    return BreakpointBasedStreamTracer(librarySupport, session)
+    return BreakpointBasedStreamTracer(
+      session,
+      support,
+      TraceResultInterpreterImpl(getLibrarySupport().interpreterFactory),
+      getXValueInterpreter(session.project)
+    )
   }
 
   private fun isSupportedVm(vm: VirtualMachineProxyImpl): Boolean = vm.canForceEarlyReturn() && vm.canGetMethodReturnValues()

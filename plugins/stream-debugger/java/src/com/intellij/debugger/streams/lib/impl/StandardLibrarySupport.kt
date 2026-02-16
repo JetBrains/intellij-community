@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.core.lib.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
 import com.intellij.debugger.streams.core.lib.impl.FilterOperation
 import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
@@ -13,6 +12,9 @@ import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTra
 import com.intellij.debugger.streams.core.trace.impl.interpret.AllMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.AnyMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.NoneMatchTraceInterpreter
+import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
+import com.intellij.debugger.streams.trace.breakpoint.JavaBreakpointPositionResolver
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
 
 /**
  * @author Vitaliy.Bibaev
@@ -54,4 +56,8 @@ class StandardLibrarySupport
                                     ToCollectionOperation("toList"),
                                     ToCollectionOperation("collect"))
   }
+
+  override fun createRuntimeHandlerFactory(): BreakpointBasedHandlerFactory = BreakpointBasedHandlerFactory()
+
+  override val breakpointResolverFactory: BreakpointPositionResolver = JavaBreakpointPositionResolver()
 }

@@ -11,12 +11,6 @@ interface LibrarySupport {
   val resolverFactory: ResolverFactory
 }
 
-interface BreakpointBasedLibrarySupport: LibrarySupport {
-  //fun createRuntimeHandlerFactory(): RuntimeHandlerFactory
-  //
-  //val breakpointResolverFactory: BreakpointResolverFactory
-}
-
 interface EvaluateExpressionBasedLibrarySupport: LibrarySupport {
   fun createHandlerFactory(dsl: Dsl): HandlerFactory
 }
