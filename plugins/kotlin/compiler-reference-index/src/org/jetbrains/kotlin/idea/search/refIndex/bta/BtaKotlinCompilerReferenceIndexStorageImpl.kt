@@ -25,8 +25,5 @@ internal class BtaKotlinCompilerReferenceIndexStorageImpl(
         .flatMap { it[fqName, deep] }
         .distinct()
 
-    override fun close() {
-        lookupStorages.forEach(BtaLookupInMemoryStorage::close)
-        subtypeStorages.forEach(BtaSubtypeInMemoryStorage::close)
-    }
+    override fun close() = Unit
 }

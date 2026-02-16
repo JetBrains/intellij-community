@@ -14,8 +14,6 @@ import kotlin.io.path.readBytes
 internal class BtaSubtypeInMemoryStorage private constructor(
     private val subtypes: Map<Int, Collection<String>>,
 ) {
-    fun close() {}
-
     operator fun get(key: FqName, deep: Boolean): Sequence<FqName> = getSubtypes(key, deep).map(::FqName)
 
     private fun getSubtypes(key: FqName, deep: Boolean): Sequence<String> {

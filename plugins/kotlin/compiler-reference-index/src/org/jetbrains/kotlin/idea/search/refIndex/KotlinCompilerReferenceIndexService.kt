@@ -161,23 +161,22 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
             }
         })
 
+        // TODO KTIJ-37446 Make Kotlin Compiler Reference Index JPS-agnostic
         if (BtaFileWatcher.isApplicable(project)) {
             BtaFileWatcher(project).watchIn(coroutineScope) { upToDateModules ->
-                onExternalCompilationDetected(upToDateModules)
+                executeOnBuildThread {
+                    onExternalCompilationDetected(upToDateModules)
+                }
             }
         }
     }
 
     private fun onExternalCompilationDetected(compiledModules: List<Module>) {
-        executeOnBuildThread {
-            compilationCounter.increment()
-            withDirtyScopeUnderWriteLock {
-                compilerActivityFinished(compiledModules)
-            }
-            withWriteLock {
-                val projectPath = runReadAction { projectIfNotDisposed?.basePath }
-                openStorage(projectPath)
-            }
+        compilationCounter.increment()
+        val projectPath = runReadAction { projectIfNotDisposed?.basePath }
+        withDirtyScopeUnderWriteLock {
+            compilerActivityFinished(compiledModules)
+            openStorage(projectPath)
         }
     }
 

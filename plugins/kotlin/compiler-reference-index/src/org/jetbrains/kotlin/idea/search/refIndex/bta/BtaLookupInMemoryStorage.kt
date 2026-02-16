@@ -19,8 +19,6 @@ internal class BtaLookupInMemoryStorage private constructor(
 ) {
     private val pathConverter = RelativeFileToPathConverter(File(projectPath))
 
-    fun close() {}
-
     operator fun get(fqName: FqName): List<Path> {
         val hashCode = fqName.hashCode()
         val fileIds = lookups[hashCode] ?: return emptyList()
@@ -42,6 +40,7 @@ internal class BtaLookupInMemoryStorage private constructor(
             val toolchains = KotlinToolchains.loadImplementation(ClassLoader.getSystemClassLoader())
             val (lookupEntries, fileIdToPathEntries) = toolchains.createBuildSession().use { session ->
                 val criToolchain = session.kotlinToolchains.cri
+                // TODO use streaming deserialization to avoid reading whole files
                 val lookupsOperation = criToolchain.createCriLookupDataDeserializationOperation(lookupsData)
                 val fileIdsToPathsOperation = criToolchain.createCriFileIdToPathDataDeserializationOperation(fileIdsToPathsData)
                 session.executeOperation(lookupsOperation) to session.executeOperation(fileIdsToPathsOperation)

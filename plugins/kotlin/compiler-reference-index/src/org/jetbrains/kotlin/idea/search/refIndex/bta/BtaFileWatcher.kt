@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -20,6 +19,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.time.Duration.Companion.seconds
 
@@ -46,29 +46,31 @@ internal class BtaFileWatcher(private val project: Project) {
     }
 
     private fun checkForExternalCompilation(onModulesCompiled: (List<Module>) -> Unit) {
-        val upToDateModules = runReadAction {
-            if (project.isDisposed) return@runReadAction emptyList()
-            ModuleManager.getInstance(project).modules.filter { module ->
-                val criPath = module.getCriPath() ?: return@filter false
-                val currentTimestamp = try {
-                    criPath.resolve(CriToolchain.LOOKUPS_FILENAME).getLastModifiedTime()
-                } catch (e: IOException) {
-                    LOG.warn("Failed to check CRI timestamp for lookups in module ${module.name}", e)
-                    return@filter false
-                }
-
-                val previousTimestamp = lastSeenCriTimestamps[criPath]
-                if (previousTimestamp == null || currentTimestamp > previousTimestamp) {
-                    lastSeenCriTimestamps[criPath] = currentTimestamp
-                    return@filter true
-                }
-                false
+        val modules = runReadAction {
+            if (project.isDisposed) return@runReadAction emptyArray()
+            ModuleManager.getInstance(project).modules
+        }
+        val updatedModules = modules.filter { module ->
+            val criPath = module.getCriPath() ?: return@filter false
+            val lookupsFile = criPath.resolve(CriToolchain.LOOKUPS_FILENAME).takeIf { it.exists() } ?: return@filter false
+            val currentTimestamp = try {
+                lookupsFile.getLastModifiedTime()
+            } catch (e: IOException) {
+                LOG.warn("Failed to check CRI timestamp for lookups in module ${module.name}", e)
+                return@filter false
             }
+
+            val previousTimestamp = lastSeenCriTimestamps[criPath]
+            if (previousTimestamp == null || currentTimestamp > previousTimestamp) {
+                lastSeenCriTimestamps[criPath] = currentTimestamp
+                return@filter true
+            }
+            false
         }
 
-        if (upToDateModules.isNotEmpty()) {
-            LOG.info("Detected CRI changes for ${upToDateModules.size} modules: ${upToDateModules.joinToString { it.name }}")
-            onModulesCompiled(upToDateModules)
+        if (updatedModules.isNotEmpty()) {
+            LOG.info("Detected CRI changes for ${updatedModules.size} modules: ${updatedModules.joinToString { it.name }}")
+            onModulesCompiled(updatedModules)
         }
     }
 
@@ -79,9 +81,9 @@ internal class BtaFileWatcher(private val project: Project) {
 
         internal fun isApplicable(project: Project): Boolean = isGradleCriEnabled(project) || isMavenCriEnabled(project)
 
-        private fun isGradleCriEnabled(project: Project): Boolean = ReadAction.compute<Boolean, RuntimeException> {
+        private fun isGradleCriEnabled(project: Project): Boolean = runReadAction {
             GradleSettings.getInstance(project).linkedProjectsSettings.isNotEmpty()
-                    && readGradleProperty(project, CRI_PROPERTY)?.toBoolean() ?: false
+                    && (readGradleProperty(project, CRI_PROPERTY)?.toBoolean() ?: false)
         }
 
         // TODO KTIJ-37735: check if CRI_PROPERTY is enabled for Maven projects

@@ -40,5 +40,6 @@ internal class BtaKotlinCompilerReferenceIndexStorageProvider : KotlinCompilerRe
     @OptIn(ExperimentalBuildToolsApi::class)
     private fun Project.getCriPaths(): List<Path> = ModuleManager.getInstance(this).modules
         .mapNotNull { it.getCriPath() }
+        .distinct()
         .filter { it.exists() }
 }
