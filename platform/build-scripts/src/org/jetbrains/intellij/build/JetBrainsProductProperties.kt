@@ -84,7 +84,7 @@ private fun isIntentionallyIgnored(problem: PluginProblem, pluginId: String?): B
       // FIXME IDEA-356970
       pluginId == "com.intellij.plugins.projectFragments" ||
       // FIXME IJPL-169105
-      pluginId == "com.jetbrains.codeWithMe" ||
+      pluginId == "com.jetbrains.remote.development" ||
       // FIXME IJPL-159498
       pluginId == "org.jetbrains.plugins.docker.gateway" ||
       // for intellij.build.minimal
