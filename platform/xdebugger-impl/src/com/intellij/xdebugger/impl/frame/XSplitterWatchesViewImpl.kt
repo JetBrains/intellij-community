@@ -2,19 +2,16 @@
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.dnd.DnDNativeTarget
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.debugger.impl.rpc.XMixedModeApi
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter.getSessionNonSplitOnly
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.util.application
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
-import com.intellij.xdebugger.impl.mixedmode.highLevelProcessOrThrow
-import com.intellij.xdebugger.impl.mixedmode.lowLevelMixedModeExtensionOrThrow
-import com.intellij.xdebugger.impl.mixedmode.lowLevelProcessOrThrow
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
-import com.intellij.xdebugger.impl.ui.getSessionTabCustomer
-import com.intellij.xdebugger.impl.ui.useSplitterView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -35,7 +32,8 @@ class XSplitterWatchesViewImpl(
   sessionProxy: XDebugSessionProxy,
   watchesInVariables: Boolean,
   isVertical: Boolean,
-  withToolbar: Boolean) : XWatchesViewImpl(sessionProxy, watchesInVariables, isVertical, withToolbar), DnDNativeTarget, XWatchesView {
+  withToolbar: Boolean,
+) : XWatchesViewImpl(sessionProxy, watchesInVariables, isVertical, withToolbar), DnDNativeTarget, XWatchesView {
 
   companion object {
     private const val proportionKey = "debugger.immediate.window.in.watches.proportion.key"
@@ -46,13 +44,13 @@ class XSplitterWatchesViewImpl(
 
   private var myPanel: BorderLayoutPanel? = null
   private var customized = true
-  private var localsPanel : JComponent? = null
+  private var localsPanel: JComponent? = null
 
   override fun createMainPanel(localsPanelComponent: JComponent): JPanel {
-    customized = getShowCustomized()
+    customized = true
     localsPanel = localsPanelComponent
 
-    addMixedModeListenerIfNeeded()
+    addMixedModeListener()
     return BorderLayoutPanel().also {
       myPanel = it
       updateMainPanel()
@@ -70,16 +68,7 @@ class XSplitterWatchesViewImpl(
       return
     }
 
-    val monolithSession = getSessionNonSplitOnly(sessionProxy!!)
-    val evaluatorComponent =
-      if (monolithSession != null) {
-        val provider = tryGetBottomComponentProvider(monolithSession, useLowLevelDebugProcessPanel())
-                       ?: error("BottomLocalsComponentProvider is not implemented to use SplitterWatchesVariablesView")
-        provider.createBottomLocalsComponent(sessionProxy!!)
-      }
-      else
-        SessionTabComponentProvider.getInstance().createBottomLocalsComponent(sessionProxy!!)
-
+    val evaluatorComponent = SessionTabComponentProvider.getInstance().createBottomLocalsComponent(sessionProxy!!)
 
     splitter = OnePixelSplitter(true, proportionKey, 0.01f, 0.99f)
 
@@ -89,58 +78,43 @@ class XSplitterWatchesViewImpl(
     myPanel.addToCenter(splitter)
   }
 
-  private fun addMixedModeListenerIfNeeded() {
-    val monolithSession = getSessionNonSplitOnly(sessionProxy!!) ?: return
-    if (!monolithSession.isMixedMode) return
-
-    val lowSupportsCustomization = monolithSession.lowLevelProcessOrThrow.useSplitterView()
-    val highSupportsCustomization = monolithSession.highLevelProcessOrThrow.useSplitterView()
-    if (lowSupportsCustomization == highSupportsCustomization) return
-
-    monolithSession.addSessionListener(object : XDebugSessionListener {
+  private fun addMixedModeListener() {
+    sessionProxy!!.addSessionListener(object : XDebugSessionListener {
       override fun stackFrameChanged() {
-        updateView()
+        updateViewIfNeeded()
       }
 
       override fun sessionPaused() {
-        updateView()
+        updateViewIfNeeded()
+      }
+
+      private fun updateViewIfNeeded() {
+        sessionProxy!!.coroutineScope.launch(Dispatchers.EDT) {
+          if (!XMixedModeApi.getInstance().isMixedModeSession(this@XSplitterWatchesViewImpl.sessionProxy!!.id))
+            return@launch
+
+          updateView()
+        }
       }
     })
   }
 
   private fun updateView() {
-    application.invokeLater {
+    sessionProxy!!.coroutineScope.launch(Dispatchers.EDT) {
       val showCustomizedView = getShowCustomized()
-      if (customized == showCustomizedView) return@invokeLater
+      if (customized == showCustomizedView) return@launch
 
       customized = showCustomizedView
       updateMainPanel()
     }
   }
 
-  private fun getShowCustomized(): Boolean {
-    val monolithSession = getSessionNonSplitOnly(sessionProxy!!) ?: return true // split debugger is on, return true to use rider default immediate window view
-    if (!monolithSession.isMixedMode) return true
+  private suspend fun getShowCustomized(): Boolean {
+    if (!XMixedModeApi.getInstance().isMixedModeSession(sessionProxy!!.id))
+      return true
 
-    val lowSupportsCustomization = monolithSession.lowLevelProcessOrThrow.useSplitterView()
-    val highSupportsCustomization = monolithSession.highLevelProcessOrThrow.useSplitterView()
-
-    val useLowLevelPanel = useLowLevelDebugProcessPanel() == true
-    val useHighLevelPanel = !useLowLevelPanel
-    return useLowLevelPanel && lowSupportsCustomization || useHighLevelPanel && highSupportsCustomization
+    val currentFrame = sessionProxy!!.getCurrentStackFrame() ?: return false
+    return XDebugManagerProxy.getInstance()
+      .withId(currentFrame, sessionProxy!!) { XMixedModeApi.getInstance().showCustomizedEvaluatorView(it) }
   }
-
-  private fun useLowLevelDebugProcessPanel(): Boolean? {
-    val monolithSession = getSessionNonSplitOnly(sessionProxy!!) ?: return null
-    if (!monolithSession.isMixedMode) return null
-    val frame = monolithSession.currentStackFrame ?: return false
-    return monolithSession.lowLevelMixedModeExtensionOrThrow.belongsToMe(frame)
-  }
-
-  private fun tryGetBottomComponentProvider(session: XDebugSession, useLowLevelDebugProcessPanel: Boolean?) =
-    when (useLowLevelDebugProcessPanel) {
-      null -> session.debugProcess
-      true -> session.lowLevelProcessOrThrow
-      false -> session.highLevelProcessOrThrow
-    }.getSessionTabCustomer()?.getBottomLocalsComponentProvider()
 }

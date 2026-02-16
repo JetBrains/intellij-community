@@ -16,6 +16,7 @@ import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
 import com.intellij.platform.debugger.impl.rpc.XDebuggerValueModifierApi
 import com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
+import com.intellij.platform.debugger.impl.rpc.XMixedModeApi
 import com.intellij.platform.debugger.impl.rpc.XValueApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
@@ -68,6 +69,9 @@ class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
     }
     remoteApi(remoteApiDescriptor<InternalSplitConfigurationApi>()) {
       BackendInternalSplitConfigurationApi()
+    }
+    remoteApi(remoteApiDescriptor<XMixedModeApi>()) {
+      BackendXMixedModeApi()
     }
   }
 }
