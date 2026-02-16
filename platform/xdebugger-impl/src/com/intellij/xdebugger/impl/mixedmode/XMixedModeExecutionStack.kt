@@ -164,7 +164,8 @@ class XMixedModeExecutionStack(
         else {
           // Split debugger case, we have to set the frame manually since the XStackFrameContainerEx unavailable
           container.addStackFrames(filterIfNeededCombinedFrames, true)
-          builtResult.highestHighLevelFrame?.let { frame -> session.setCurrentStackFrame(this, frame) }
+          // TODO: it is not correct for mono
+          filterIfNeededCombinedFrames.firstOrNull()?.let { frame -> session.setCurrentStackFrame(this, frame) }
         }
         computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
       }
