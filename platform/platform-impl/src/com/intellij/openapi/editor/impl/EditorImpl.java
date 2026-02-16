@@ -3362,7 +3362,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean shouldSetCursorPositionImmediately() {
-    return !getSettings().isAnimatedCaret() ||
+    return !getSettings().isSmoothCaretMovement() ||
            gainedFocus.getAndSet(false) ||
            myMouseIsInDrag ||
            shouldDisableAnimations();

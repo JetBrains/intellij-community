@@ -142,9 +142,10 @@ f:com.intellij.openapi.actionSystem.Presentation
 - a:paint(com.intellij.openapi.editor.CustomFoldRegion,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 com.intellij.openapi.editor.EditorSettings
 - *a:getCaretEasing():com.intellij.openapi.editor.EditorSettings$CaretEasing
-- *a:isAnimatedCaret():Z
 - *a:isSmoothCaretBlinking():Z
+- *a:isSmoothCaretMovement():Z
 - *a:setSmoothCaretBlinking(Z):V
+- *a:setSmoothCaretMovement(Z):V
 *e:com.intellij.openapi.editor.EditorSettings$CaretEasing
 - java.lang.Enum
 - sf:EASE:com.intellij.openapi.editor.EditorSettings$CaretEasing

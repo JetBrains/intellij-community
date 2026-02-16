@@ -168,7 +168,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myIsSmartHome: Boolean by property { EditorSettingsExternalizable.getInstance().isSmartHome }
   var myIsBlockCursor: Boolean by property { EditorSettingsExternalizable.getInstance().isBlockCursor }
   var myIsFullLineHeightCursor: Boolean by property { EditorSettingsExternalizable.getInstance().isFullLineHeightCursor }
-  var myIsAnimatedCaret: Boolean by property { EditorSettingsExternalizable.getInstance().isAnimatedCaret }
+  var myIsSmoothCaretMovement: Boolean by property { EditorSettingsExternalizable.getInstance().isSmoothCaretMovement }
   var myCaretEasing: EditorSettings.CaretEasing by property { EditorSettingsExternalizable.getInstance().caretEasing }
   var myCaretRowShown: Boolean by property { EditorSettingsExternalizable.getInstance().isCaretRowShown }
   var myIsWhitespacesShown: Boolean by property { EditorSettingsExternalizable.getInstance().isWhitespacesShown }
@@ -267,7 +267,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
             EditorSettingsExternalizable.PropNames.PROP_SMART_HOME -> refresh(::myIsSmartHome)
             EditorSettingsExternalizable.PropNames.PROP_IS_BLOCK_CURSOR -> refresh(::myIsBlockCursor)
             EditorSettingsExternalizable.PropNames.PROP_IS_FULL_LINE_HEIGHT_CURSOR -> refresh(::myIsFullLineHeightCursor)
-            EditorSettingsExternalizable.PropNames.PROP_IS_ANIMATED_CARET -> refresh(::myIsAnimatedCaret)
+            EditorSettingsExternalizable.PropNames.PROP_IS_ANIMATED_CARET -> refresh(::myIsSmoothCaretMovement)
             EditorSettingsExternalizable.PropNames.PROP_CARET_EASING -> refresh(::myCaretEasing)
             EditorSettingsExternalizable.PropNames.PROP_IS_WHITESPACES_SHOWN -> refresh(::myIsWhitespacesShown)
             EditorSettingsExternalizable.PropNames.PROP_IS_LEADING_WHITESPACES_SHOWN -> refresh(::myIsLeadingWhitespacesShown)

@@ -157,7 +157,7 @@ public final class ImmediatePainter {
 
     final EditorSettings settings = editor.getSettings();
     final boolean isBlockCursor = editor.isInsertMode() == settings.isBlockCursor();
-    final boolean isAnimatedCaret = editor.getSettings().isAnimatedCaret();
+    final boolean isSmoothCaretMovement = editor.getSettings().isSmoothCaretMovement();
     final int lineHeight = editor.getLineHeight();
     final int caretHeight = editor.myView.getCaretHeight();
     final int ascent = editor.getAscent();
@@ -222,7 +222,7 @@ public final class ImmediatePainter {
       EditorPainter.fillRectExact(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
-      if (!isAnimatedCaret) paintCaret.accept(graphics);
+      if (!isSmoothCaretMovement) paintCaret.accept(graphics);
 
       EditorPainter.fillRectExact(graphics, rectangle1, attributes1.getBackgroundColor());
       drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());

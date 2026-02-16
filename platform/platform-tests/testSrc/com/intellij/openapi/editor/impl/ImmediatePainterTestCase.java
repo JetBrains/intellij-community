@@ -38,7 +38,7 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
   private KeyboardFocusManager myDefaultFocusManager;
   private AntialiasingType myDefaultAntiAliasing;
   private boolean myDefaultSmoothCaretBlinking;
-  private boolean myDefaultAnimatedCaret;
+  private boolean myDefaultSmoothCaretMovement;
 
   @Override
   protected void setUp() throws Exception {
@@ -54,13 +54,13 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
 
     var settings = EditorSettingsExternalizable.getInstance();
     myDefaultSmoothCaretBlinking = settings.isSmoothBlinkCaret();
-    myDefaultAnimatedCaret = settings.isAnimatedCaret();
+    myDefaultSmoothCaretMovement = settings.isSmoothCaretMovement();
 
     FontLayoutService.setInstance(null);
 
     // Disable smooth caret features for pixel-perfect rendering
     settings.setSmoothBlinkCaret(false);
-    settings.setAnimatedCaret(false);
+    settings.setSmoothCaretMovement(false);
 
     setZeroLatencyRenderingEnabled(true);
     setDoubleBufferingEnabled(true);
@@ -83,7 +83,7 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
       com.intellij.openapi.editor.ex.EditorSettingsExternalizable settings =
         com.intellij.openapi.editor.ex.EditorSettingsExternalizable.getInstance();
       settings.setSmoothBlinkCaret(myDefaultSmoothCaretBlinking);
-      settings.setAnimatedCaret(myDefaultAnimatedCaret);
+      settings.setSmoothCaretMovement(myDefaultSmoothCaretMovement);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -171,7 +171,7 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
     getEditor().getSettings().setAdditionalColumnsCount(3);
 
     getEditor().getSettings().setCaretRowShown(false);
-    getEditor().getSettings().setAnimatedCaret(false);
+    getEditor().getSettings().setSmoothCaretMovement(false);
   }
 
   protected RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {

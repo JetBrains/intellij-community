@@ -63,13 +63,13 @@ object SmoothCaretSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeedbackC
 
     return today >= targetDate &&
            !usageStorage.state.feedbackNotificationShown &&
-           editorSettings.isAnimatedCaret
+           editorSettings.isSmoothCaretMovement
   }
 
   override fun checkExtraConditionSatisfiedForAction(project: Project): Boolean {
     // Action is only enabled when animated caret feature is enabled
     val editorSettings = EditorSettingsExternalizable.getInstance()
-    return editorSettings.isAnimatedCaret || editorSettings.isSmoothBlinkCaret
+    return editorSettings.isSmoothCaretMovement || editorSettings.isSmoothBlinkCaret
   }
 
   override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
