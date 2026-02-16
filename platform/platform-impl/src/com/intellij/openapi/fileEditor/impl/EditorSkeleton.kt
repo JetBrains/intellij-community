@@ -84,12 +84,12 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong) :
   private fun createLineNumbersComponent(): JComponent {
     return JPanel().apply {
       layout = VerticalLayout(LINES_GAP, SwingConstants.RIGHT)
-      border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, LINE_NUMBERS_LEFT_PADDING, 0, 0)
+      border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, LINE_NUMBERS_LEFT_PADDING, SKELETON_OUTER_PADDING, 0)
       isOpaque = false
       repeat(9) {
         add(EditorSkeletonBlock(GUTTER_SMALL, color = { currentColor() }))
       }
-      repeat(100) {
+      repeat(91) {
         add(EditorSkeletonBlock(GUTTER_NORMAL, color = { currentColor() }))
       }
     }
@@ -108,18 +108,25 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong) :
           add(EditorSkeletonBlock(GUTTER_NORMAL, color = { currentColor() }))
         }
         else {
-          Empty()
+          Empty(GUTTER_NORMAL)
         }
       }
     }
   }
 
+  // The JPanel hierarchy should be the exact same as for the gutter component
+  // This is to ensure that the lines stay y-aligned
   private fun createEditorComponent(): JComponent {
     return JPanel().apply {
-      layout = VerticalLayout(LINES_GAP)
-      border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, EDITOR_LEFT_GAP)
+      layout = HorizontalLayout(GUTTER_LINE_NUMBERS_AND_ICONS_GAP)
       isOpaque = false
-      addEditorBlocks()
+      border = IdeBorderFactory.createBorder(BACKGROUND_COLOR, SideBorder.LEFT)
+      add(JPanel().apply {
+        layout = VerticalLayout(LINES_GAP)
+        border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, EDITOR_LEFT_GAP)
+        isOpaque = false
+        addEditorBlocks()
+      })
     }
   }
 
@@ -179,11 +186,8 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong) :
   /**
    * Adds an empty component like an empty editor line.
    */
-  private fun JComponent.Empty() {
-    add(BorderLayoutPanel().apply {
-      isOpaque = false
-      border = JBUI.Borders.empty(EditorSkeletonBlock.HEIGHT / 2 + BLOCKS_GAP / 2, 0)
-    })
+  private fun JComponent.Empty(width: SkeletonBlockWidth = NORMAL) {
+    add(EditorSkeletonBlock(width) { EDITOR_BACKGROUND_COLOR })
   }
 
   /**
@@ -245,6 +249,8 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong) :
       val color = EditorColorsManager.getInstance().globalScheme.defaultBackground
       return if (ColorUtil.isDark(color)) ColorUtil.brighter(color, 10) else ColorUtil.darker(color, 1)
     }
+    private val EDITOR_BACKGROUND_COLOR
+      get() = EditorColorsManager.getInstance().globalScheme.defaultBackground
   }
 }
 
