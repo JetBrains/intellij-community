@@ -15,8 +15,10 @@ private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 private val RIDER_MODULE_ID = PluginModuleId("intellij.rider", PluginModuleId.JETBRAINS_NAMESPACE)
 private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
+private val CWM_PLUGIN_ID = PluginId.getId("com.jetbrains.codeWithMe")
 private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend", PluginModuleId.JETBRAINS_NAMESPACE)
 private val JAVA_BACKEND_MODULE_ID = PluginModuleId("intellij.java.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val REMOTE_DEVELOPMENT_MODULE_ID = PluginModuleId("intellij.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
 
 
 internal class ModulesWithDependencies(
@@ -96,6 +98,9 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
         }
         if (doesDependOnPluginAlias(module, JSON_ALIAS_ID)) {
           moduleIdToModule.get(JSON_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
+        }
+        if (doesDependOnPluginAlias(module, CWM_PLUGIN_ID)) {
+          moduleIdToModule.get(REMOTE_DEVELOPMENT_MODULE_ID)?.let { dependenciesCollector.add(it) }
         }
         moduleIdToModule.get(COLLABORATION_TOOLS_MODULE_ID)?.let { dependenciesCollector.add(it) }
       }
