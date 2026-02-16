@@ -3,18 +3,27 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.XMixedModeApi
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.util.asDisposable
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.time.Duration.Companion.milliseconds
 
 // TODO: Doesn't work when mixed-mode in RemDev : RIDER-134022
 /**
@@ -27,6 +36,7 @@ import javax.swing.JPanel
  * we will show the customized frame view only when a frame of this debug process is chosen.
  * When switching to a frame of a debug process that doesn't provide a custom bottom component, we will show a default frame view
  */
+@OptIn(FlowPreview::class)
 @Internal
 class XSplitterWatchesViewImpl(
   sessionProxy: XDebugSessionProxy,
@@ -45,6 +55,18 @@ class XSplitterWatchesViewImpl(
   private var myPanel: BorderLayoutPanel? = null
   private var customized = true
   private var localsPanel: JComponent? = null
+  private val updateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    sessionProxy.coroutineScope.launch {
+      updateRequests
+        .debounce(100.milliseconds)
+        .collectLatest {
+          withContext(Dispatchers.EDT) { updateView() }
+        }
+    }
+  }
+
 
   override fun createMainPanel(localsPanelComponent: JComponent): JPanel {
     customized = true
@@ -79,7 +101,8 @@ class XSplitterWatchesViewImpl(
   }
 
   private fun addMixedModeListener() {
-    sessionProxy!!.addSessionListener(object : XDebugSessionListener {
+    val disposable = Disposer.newDisposable(sessionProxy!!.coroutineScope.asDisposable())
+    val listener = object : XDebugSessionListener {
       override fun stackFrameChanged() {
         updateViewIfNeeded()
       }
@@ -90,23 +113,25 @@ class XSplitterWatchesViewImpl(
 
       private fun updateViewIfNeeded() {
         sessionProxy!!.coroutineScope.launch(Dispatchers.EDT) {
-          if (!XMixedModeApi.getInstance().isMixedModeSession(this@XSplitterWatchesViewImpl.sessionProxy!!.id))
+          if (!XMixedModeApi.getInstance().isMixedModeSession(this@XSplitterWatchesViewImpl.sessionProxy!!.id)) {
+            Disposer.dispose(disposable)
             return@launch
+          }
 
-          updateView()
+          updateRequests.emit(Unit)
         }
       }
-    })
+    }
+
+    sessionProxy!!.addSessionListener(listener, disposable)
   }
 
-  private fun updateView() {
-    sessionProxy!!.coroutineScope.launch(Dispatchers.EDT) {
-      val showCustomizedView = getShowCustomized()
-      if (customized == showCustomizedView) return@launch
+  private suspend fun updateView() {
+    val showCustomizedView = getShowCustomized()
+    if (customized == showCustomizedView) return
 
-      customized = showCustomizedView
-      updateMainPanel()
-    }
+    customized = showCustomizedView
+    updateMainPanel()
   }
 
   private suspend fun getShowCustomized(): Boolean {
