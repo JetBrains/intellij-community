@@ -10,7 +10,13 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.log.refreshAndWait
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertCommitted
+import git4idea.test.assertMessage
+import git4idea.test.last
+import git4idea.test.lastMessage
+import git4idea.test.message
+import git4idea.test.tac
 import kotlinx.coroutines.runBlocking
 
 internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {

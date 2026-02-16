@@ -3,7 +3,14 @@ package com.intellij.openapi.vcs.ex.commit
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -25,7 +32,6 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.RangeExclusionState
-import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
@@ -34,12 +40,30 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.AbstractCommitMessagePolicy
+import com.intellij.vcs.commit.ChangeListCommitState
+import com.intellij.vcs.commit.CommitExecutorListener
+import com.intellij.vcs.commit.CommitInputBorder
+import com.intellij.vcs.commit.CommitMessage
+import com.intellij.vcs.commit.CommitMessageUi
+import com.intellij.vcs.commit.CommitProgressPanel
+import com.intellij.vcs.commit.CommitProjectPanelAdapter
+import com.intellij.vcs.commit.CommitSessionInfo
+import com.intellij.vcs.commit.CommitToAmend
+import com.intellij.vcs.commit.CommitWorkflowListener
+import com.intellij.vcs.commit.LocalChangesCommitter
+import com.intellij.vcs.commit.NonModalAmendCommitHandler
+import com.intellij.vcs.commit.NonModalCommitPanel
+import com.intellij.vcs.commit.NonModalCommitWorkflow
+import com.intellij.vcs.commit.NonModalCommitWorkflowHandler
+import com.intellij.vcs.commit.ShowNotificationCommitResultHandler
+import com.intellij.vcs.commit.commitToAmend
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.JComponent
+import com.intellij.openapi.vcs.ui.CommitMessage as CommitMessageInputField
 
 private class CommitChunkPanel(
   private val tracker: ChangelistsLocalLineStatusTracker,
@@ -141,7 +165,7 @@ private class CommitChunkPanel(
     setupDocumentLengthTracker(commitMessage)
   }
 
-  private fun setupDocumentLengthTracker(message: CommitMessage) {
+  private fun setupDocumentLengthTracker(message: CommitMessageInputField) {
     message.editorField.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         val length = event.document.textLength
@@ -200,7 +224,7 @@ private class CommitChunkPanel(
     }
   }
 
-  private fun setupResizing(commitMessage: CommitMessage) {
+  private fun setupResizing(commitMessage: CommitMessageInputField) {
     commitMessage.editorField.addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent?) {
         animator.value.resume()
