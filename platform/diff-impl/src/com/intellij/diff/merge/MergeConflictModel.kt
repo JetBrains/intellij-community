@@ -127,6 +127,7 @@ class MergeConflictModel(
 
   fun getAllChanges(): List<TextMergeChange> = mergeChanges.toList()
   fun getUnresolvedChanges(): List<TextMergeChange> = mergeChanges.filterNot { it.isResolved }
+  fun getResolvedChanges(): List<TextMergeChange> = mergeChanges.filter { it.isResolved }
   fun getAutoResolvableChanges(): List<TextMergeChange> = mergeChanges.filter { canResolveChangeAutomatically(it.index, ThreeSide.BASE) }
   fun getImportChanges(): List<TextMergeChange> = mergeChanges.filter { it.isImportChange }
   fun getSemanticallyResolvableChanges(): List<TextMergeChange> = getAutoResolvableChanges()

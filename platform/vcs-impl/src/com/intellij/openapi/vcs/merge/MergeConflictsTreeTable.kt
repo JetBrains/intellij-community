@@ -2,11 +2,15 @@
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import java.awt.event.MouseEvent
+import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.math.max
 
 @ApiStatus.Internal
@@ -47,5 +51,33 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
     val columnName = StringUtil.shortenTextWithEllipsis(columnInfo.name, 15, 7, true)
     return max(getFontMetrics(font).stringWidth(maxStringValue),
                     getFontMetrics(tableHeader.font).stringWidth(columnName)) + columnInfo.additionalWidth
+  }
+
+
+  var toolTipTextProvider: ((file: VirtualFile) -> String?)? = null
+
+  override fun getToolTipText(e: MouseEvent): String? {
+    return toolTipTextProvider?.let { toolTipProvider ->
+      getHoveredFile(e)?.let { file ->
+        toolTipProvider.invoke(file)
+      }
+    } ?: super.getToolTipText(e)
+  }
+
+  private fun getHoveredFile(e: MouseEvent): VirtualFile? {
+    val viewRow = rowAtPoint(e.point)
+    if (viewRow < 0) return null
+
+    val path = tree.getPathForRow(viewRow) ?: return null
+    val node = path.lastPathComponent
+
+    return extractVirtualFile(node)
+  }
+
+  private fun extractVirtualFile(node: Any?): VirtualFile? = when (node) {
+    is DefaultMutableTreeNode -> extractVirtualFile(node.userObject)
+    is VirtualFile -> node
+    is FilePath -> node.virtualFile
+    else -> null
   }
 }

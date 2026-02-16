@@ -18,13 +18,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.merge.MergeConflictIterativeDataHolder
+import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,7 +38,7 @@ import javax.swing.tree.DefaultTreeModel
 
 internal class IterativeMergeFlowDelegate(
   private val iterativeDataHolder: MergeConflictIterativeDataHolder,
-  private val table: TreeTable,
+  private val table: MergeConflictsTreeTable,
   private val mergeDialogCustomizer: MergeDialogCustomizer,
   private val rootPane: JRootPane,
   private val files: List<VirtualFile>,
@@ -56,6 +56,11 @@ internal class IterativeMergeFlowDelegate(
   private lateinit var mergeButton: JButton
 
   override fun createCenterPanel(): JComponent {
+    table.toolTipTextProvider = { file ->
+      iterativeDataHolder.getMergeConflictModel(file)?.let {
+        VcsBundle.message("multiple.file.iterative.merge.tooltip", it.getResolvedChanges().size, it.getAllChanges().size)
+      }
+    }
     return panel {
       row {
         label(VcsBundle.message("merge.loading.merge.details")).applyToComponent {
