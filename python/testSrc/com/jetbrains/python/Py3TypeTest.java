@@ -477,7 +477,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromUnknownTuple() {
-    doTest("_T_co",
+    doTest("Any",
            """
              def get_tuple() -> tuple:
                  pass
@@ -487,7 +487,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromUnknownList() {
-    doTest("_T_co",
+    doTest("Any",
            """
              def get_list() -> list:
                  pass
@@ -497,7 +497,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromUnknownDict() {
-    doTest("_T_co",
+    doTest("Any",
            """
              def get_dict() -> dict:
                  pass
@@ -507,7 +507,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromUnknownSet() {
-    doTest("_T_co",
+    doTest("Any",
            """
              def get_set() -> set:
                  pass

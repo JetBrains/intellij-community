@@ -1693,7 +1693,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20794
   public void testIterateOverPureList() {
-    doTest("_T_co",
+    doTest("Any",
            """
              l = None  # type: list
              for expr in l:
@@ -1703,7 +1703,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20794
   public void testIterateOverDictValueWithDefaultValue() {
-    doTest("Union[_T_co, Any]",
+    doTest("Any",
            """
              d = None  # type: dict
              for expr in d.get('field', []):
@@ -2300,7 +2300,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-24364
   public void testReassignedParameter() {
-    doTest("(entries: Any) -> Generator[_T_co, Any, None]",
+    doTest("(entries: Any) -> Generator[Any, Any, None]",
            """
              def resort(entries):
                  entries = list(entries)
