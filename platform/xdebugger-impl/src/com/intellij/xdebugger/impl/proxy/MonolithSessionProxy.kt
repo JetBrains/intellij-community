@@ -42,13 +42,9 @@ import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-import com.intellij.xdebugger.impl.frame.XSplitterWatchesViewImpl
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
-import com.intellij.xdebugger.impl.inline.XInlineWatchesView
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.impl.updateExecutionPosition
@@ -370,13 +366,5 @@ internal class XDebuggerMonolithAccessPointImpl : XDebuggerMonolithAccessPoint {
 
   override fun asProxy(breakpoint: XBreakpoint<*>): XBreakpointProxy? {
     return (breakpoint as? XBreakpointBase<*, *, *>)?.asProxy()
-  }
-
-  override fun createWatchesViewComponent(sessionProxy: XDebugSessionProxy, watchesInVariables: Boolean): XInlineWatchesView {
-    if (SessionTabComponentProvider.hasProvider()) {
-      return XSplitterWatchesViewImpl(sessionProxy, watchesInVariables, true, withToolbar = false)
-    }
-
-    return XWatchesViewImpl(sessionProxy, watchesInVariables, true, false)
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.inline.XInlineWatchesView
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -26,11 +25,6 @@ interface XDebuggerMonolithAccessPoint {
   fun getBreakpoint(breakpointId: XBreakpointId): XBreakpoint<*>?
   fun getBreakpointId(breakpoint: XBreakpoint<*>): XBreakpointId?
   fun asProxy(breakpoint: XBreakpoint<*>): XBreakpointProxy?
-
-  /**
-   * Must return XWatchesViewImpl. The types are not exposed to keep the module structure clean.
-   */
-  fun createWatchesViewComponent(sessionProxy: XDebugSessionProxy, watchesInVariables: Boolean): XInlineWatchesView
 
   companion object {
     internal val EP_NAME = ExtensionPointName<XDebuggerMonolithAccessPoint>("com.intellij.xdebugger.monolithAccessPoint")
