@@ -93,6 +93,9 @@ jvm_library(
     "//platform/execution",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "@lib//:mockito",
+    "@lib//:mockito-kotlin",
+    "@lib//:commons-lang3",
   ],
   runtime_deps = [":tests"]
 )

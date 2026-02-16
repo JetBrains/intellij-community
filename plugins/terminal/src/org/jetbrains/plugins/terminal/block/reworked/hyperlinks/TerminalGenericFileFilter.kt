@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterScope
 import java.awt.Font
 
@@ -25,7 +26,8 @@ internal enum class ParsingState {
  *  output, sync output, run test output, built-in terminal emulator, etc. Therefore, we manually parse the string instead of using regex
  *  for maximum performance.
  */
-internal class TerminalGenericFileFilter(
+@ApiStatus.Internal
+class TerminalGenericFileFilter(
   private val project: Project,
   private val localFileSystem: LocalFileSystem
 ) : Filter {
@@ -34,14 +36,14 @@ internal class TerminalGenericFileFilter(
      *  Max filename considered during parsing. Do not confuse with file path, which may contain several file names separated by '/' or '\'.
      *
      * Modern popular FS do not allow file names longer than 255.*/
-    const val FILENAME_MAX = 255
+    const val FILENAME_MAX: Int = 255
 
     /**
      * Min path length to be considered.
      *
      * E.g. lonely slashes should be ignored.
      */
-    const val PATH_MIN = 2
+    const val PATH_MIN: Int = 2
   }
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
