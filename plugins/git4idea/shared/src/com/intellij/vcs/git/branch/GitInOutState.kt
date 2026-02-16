@@ -78,15 +78,15 @@ fun GitInOutCountersInProject.calcTooltip(lastFetchTime: Instant?): @NlsContexts
   val totalOutgoing = totalOutgoing()
 
   if (repositories.size == 1) {
-    if (totalIncoming != 0) {
-      html.append(message("branches.tooltip.number.incoming.commits", totalIncoming)).br()
+    val message = when {
+      hasUnfetched() -> message("branches.tooltip.some.incoming.commits.not.fetched", totalIncoming)
+      totalIncoming != 0 && totalOutgoing != 0 -> message("branches.tooltip.incoming.and.outgoing.commits", totalIncoming, totalOutgoing)
+      totalIncoming != 0 -> message("branches.tooltip.number.incoming.commits", totalIncoming)
+      totalOutgoing != 0 -> message("branches.tooltip.number.outgoing.commits", totalOutgoing)
+      else -> null
     }
-    else if (hasUnfetched()) {
-      html.append(message("branches.tooltip.some.incoming.commits.not.fetched", totalIncoming)).br()
-    }
-
-    if (totalOutgoing != 0) {
-      html.append(message("branches.tooltip.number.outgoing.commits", totalOutgoing)).br()
+    if (message != null) {
+      html.append(message).br()
     }
 
     if (lastFetchTime != null) {
