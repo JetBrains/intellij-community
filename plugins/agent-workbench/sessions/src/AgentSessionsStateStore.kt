@@ -96,6 +96,45 @@ internal class AgentSessionsStateStore(
     }
   }
 
+  fun removeThread(path: String, provider: AgentSessionProvider, threadId: String): Boolean {
+    val normalizedPath = normalizePath(path)
+    var removed = false
+    mutableState.update { state ->
+      val nextProjects = state.projects.map { project ->
+        if (project.path == normalizedPath) {
+          val nextThreads = project.threads.filterNot { it.provider == provider && it.id == threadId }
+          if (nextThreads.size != project.threads.size) {
+            removed = true
+            project.copy(threads = nextThreads)
+          }
+          else {
+            project
+          }
+        }
+        else {
+          val nextWorktrees = project.worktrees.map { worktree ->
+            if (worktree.path == normalizedPath) {
+              val nextThreads = worktree.threads.filterNot { it.provider == provider && it.id == threadId }
+              if (nextThreads.size != worktree.threads.size) {
+                removed = true
+                worktree.copy(threads = nextThreads)
+              }
+              else {
+                worktree
+              }
+            }
+            else {
+              worktree
+            }
+          }
+          if (nextWorktrees == project.worktrees) project else project.copy(worktrees = nextWorktrees)
+        }
+      }
+      if (!removed) state else state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis())
+    }
+    return removed
+  }
+
   fun buildInitialVisibleThreadCounts(knownPaths: List<String>): Map<String, Int> {
     return buildInitialVisibleThreadCounts(
       knownPaths = knownPaths,

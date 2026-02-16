@@ -35,6 +35,24 @@ class AgentChatTabSelectionServiceTest : TestCase() {
     assertNull((null as FileEditor?).toAgentChatTabSelection())
   }
 
+  fun testDetectOpenChatFiles() {
+    val nonChatFiles = arrayOf<VirtualFile>(LightVirtualFile("notes.txt", "notes"))
+    assertFalse(hasOpenAgentChatFiles(nonChatFiles))
+
+    val chatFiles = arrayOf<VirtualFile>(
+      LightVirtualFile("notes.txt", "notes"),
+      AgentChatVirtualFile(
+        projectPath = "/work/project-a",
+        threadIdentity = "CODEX:thread-1",
+        shellCommand = emptyList(),
+        threadId = "thread-1",
+        threadTitle = "Fix auth",
+        subAgentId = null,
+      ),
+    )
+    assertTrue(hasOpenAgentChatFiles(chatFiles))
+  }
+
   private class FakeEditor(private val virtualFile: VirtualFile) : UserDataHolderBase(), FileEditor {
     private val component = JPanel()
 

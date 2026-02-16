@@ -32,6 +32,8 @@ internal fun sessionTree(
   onOpenThread: (String, AgentSessionThread) -> Unit,
   onOpenSubAgent: (String, AgentSessionThread, AgentSubAgent) -> Unit,
   onCreateSession: (String, AgentSessionProvider, AgentSessionLaunchMode) -> Unit = { _, _, _ -> },
+  onArchiveThread: (String, AgentSessionThread) -> Unit = { _, _ -> },
+  canArchiveThread: (AgentSessionThread) -> Boolean = { false },
   treeUiState: SessionsTreeUiState,
   lastUsedProvider: AgentSessionProvider? = null,
   nowProvider: () -> Long,
@@ -149,6 +151,8 @@ internal fun sessionTree(
         onOpenProject = onOpenProject,
         onRefresh = onRefresh,
         onCreateSession = onCreateSession,
+        onArchiveThread = onArchiveThread,
+        canArchiveThread = canArchiveThread,
         lastUsedProvider = lastUsedProvider,
         nowProvider = nowProvider,
       )

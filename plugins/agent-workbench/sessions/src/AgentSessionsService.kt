@@ -20,6 +20,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -33,12 +34,14 @@ import com.intellij.util.messages.SimpleMessageBusConnection
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<AgentSessionsService>()
 
@@ -47,6 +50,8 @@ private const val OPEN_PROJECT_ACTION_KEY_PREFIX = "project-open"
 private const val CREATE_SESSION_ACTION_KEY_PREFIX = "session-create"
 private const val OPEN_THREAD_ACTION_KEY_PREFIX = "thread-open"
 private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
+private const val ARCHIVE_THREAD_ACTION_KEY_PREFIX = "thread-archive"
+private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
 @Service(Service.Level.APP)
 internal class AgentSessionsService private constructor(
@@ -116,14 +121,43 @@ internal class AgentSessionsService private constructor(
     val openProjects = ProjectManager.getInstance().openProjects
     if (openProjects.isEmpty()) {
       val stateSnapshot = stateStore.snapshot()
-      return@withContext stateSnapshot.projects.any { project ->
+      val decision = stateSnapshot.projects.any { project ->
         project.isOpen || project.worktrees.any { it.isOpen }
       }
+      LOG.debug {
+        "Source refresh gate decision=$decision (openProjects=0, stateProjects=${stateSnapshot.projects.size})"
+      }
+      return@withContext decision
     }
 
-    openProjects.any { project ->
-      isSessionsToolWindowVisible(project) || isAgentChatActive(project)
+    data class ProjectRefreshSignal(
+      val name: String,
+      val dedicated: Boolean,
+      val sessionsVisible: Boolean,
+      val chatActive: Boolean,
+    )
+
+    val signals = openProjects.map { project ->
+      ProjectRefreshSignal(
+        name = project.name,
+        dedicated = AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProject(project),
+        sessionsVisible = isSessionsToolWindowVisible(project),
+        chatActive = isAgentChatActive(project),
+      )
     }
+
+    val decision = signals.any { signal ->
+      signal.sessionsVisible || signal.chatActive
+    }
+
+    LOG.debug {
+      val signalText = signals.joinToString(separator = ";") { signal ->
+        "${signal.name}[dedicated=${signal.dedicated},sessionsVisible=${signal.sessionsVisible},chatActive=${signal.chatActive}]"
+      }
+      "Source refresh gate decision=$decision (openProjects=${openProjects.size}, signals=$signalText)"
+    }
+
+    decision
   }
 
   private fun isSessionsToolWindowVisible(project: Project): Boolean {
@@ -134,7 +168,8 @@ internal class AgentSessionsService private constructor(
 
   private fun isAgentChatActive(project: Project): Boolean {
     return runCatching {
-      project.service<AgentChatTabSelectionService>().selectedChatTab.value != null
+      val selectionService = project.service<AgentChatTabSelectionService>()
+      selectionService.selectedChatTab.value != null || selectionService.hasOpenChatTabs()
     }.getOrDefault(false)
   }
 
@@ -165,6 +200,11 @@ internal class AgentSessionsService private constructor(
 
   fun ensureThreadVisible(path: String, provider: AgentSessionProvider, threadId: String) {
     stateStore.ensureThreadVisible(path, provider, threadId)
+  }
+
+  fun canArchiveThread(thread: AgentSessionThread): Boolean {
+    val bridge = AgentSessionProviderBridges.find(thread.provider) ?: return false
+    return bridge.supportsArchiveThread
   }
 
   fun openChatThread(path: String, thread: AgentSessionThread, currentProject: Project? = null) {
@@ -231,7 +271,7 @@ internal class AgentSessionsService private constructor(
 
       val bridge = AgentSessionProviderBridges.find(provider)
       if (bridge == null) {
-        LOG.warn("No session provider bridge registered for ${provider.value}")
+        logMissingProviderBridge(provider)
         loadingCoordinator.appendProviderUnavailableWarning(normalized, provider)
         return@launch
       }
@@ -247,6 +287,57 @@ internal class AgentSessionsService private constructor(
       } ?: buildAgentSessionNewIdentity(provider)
 
       openNewChat(path = normalized, identity = identity, command = launchSpec.command, serviceScope = serviceScope)
+    }
+  }
+
+  fun archiveThread(path: String, thread: AgentSessionThread) {
+    val normalized = normalizePath(path)
+    val key = buildArchiveThreadActionKey(path = normalized, thread = thread)
+    actionGate.launch(
+      scope = serviceScope,
+      key = key,
+      policy = SingleFlightPolicy.DROP,
+      onDrop = {
+        LOG.debug("Dropped duplicate archive thread action for $normalized:${thread.provider}:${thread.id}")
+      },
+    ) {
+      val bridge = AgentSessionProviderBridges.find(thread.provider)
+      if (bridge == null) {
+        logMissingProviderBridge(thread.provider)
+        loadingCoordinator.appendProviderUnavailableWarning(normalized, thread.provider)
+        return@launch
+      }
+      if (!bridge.supportsArchiveThread) {
+        LOG.warn("Session provider bridge ${thread.provider.value} does not support archive")
+        loadingCoordinator.appendProviderUnavailableWarning(normalized, thread.provider)
+        return@launch
+      }
+
+      val archived = try {
+        bridge.archiveThread(path = normalized, threadId = thread.id)
+      }
+      catch (t: Throwable) {
+        if (t is CancellationException) {
+          throw t
+        }
+        LOG.warn("Failed to archive thread ${thread.provider}:${thread.id}", t)
+        loadingCoordinator.appendProviderUnavailableWarning(normalized, thread.provider)
+        return@launch
+      }
+
+      if (!archived) {
+        loadingCoordinator.appendProviderUnavailableWarning(normalized, thread.provider)
+        return@launch
+      }
+
+      if (thread.provider == AgentSessionProvider.CODEX) {
+        loadingCoordinator.suppressArchivedThread(path = normalized, provider = thread.provider, threadId = thread.id)
+      }
+      stateStore.removeThread(normalized, thread.provider, thread.id)
+      if (thread.provider == AgentSessionProvider.CODEX) {
+        delay(CODEX_ARCHIVE_REFRESH_DELAY)
+      }
+      refresh()
     }
   }
 
@@ -344,6 +435,14 @@ private fun buildOpenThreadActionKey(path: String, thread: AgentSessionThread): 
 
 private fun buildOpenSubAgentActionKey(path: String, thread: AgentSessionThread, subAgent: AgentSubAgent): String {
   return "$OPEN_SUB_AGENT_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}:${subAgent.id}"
+}
+
+private fun buildArchiveThreadActionKey(path: String, thread: AgentSessionThread): String {
+  return "$ARCHIVE_THREAD_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}"
+}
+
+private fun logMissingProviderBridge(provider: AgentSessionProvider) {
+  LOG.warn("No session provider bridge registered for ${provider.value}")
 }
 
 private fun dedicatedFrameOpenProgressRequest(currentProject: Project?): SingleFlightProgressRequest? {

@@ -17,7 +17,7 @@ Status: Draft
 Date: 2026-02-16
 
 ## Summary
-Define the Agent Threads tool window as a provider-agnostic, project-scoped session browser. Threads from supported providers are aggregated per project/worktree, rendered in one tree, and opened through a shared chat routing flow.
+Define the Agent Threads tool window as a provider-agnostic, project-scoped session browser. Threads from supported providers are aggregated per project/worktree, rendered in one tree, opened through a shared chat routing flow, and optionally archived when the provider supports archive.
 
 ## Goals
 - Keep project/worktree grouping deterministic across open and recent projects.
@@ -59,6 +59,10 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
   - Codex: `codex resume <sessionId>`
   - Claude: `claude --resume <sessionId>`
 - New-session action behavior (provider options, Codex/Claude command mapping, and Full Auto semantics) is defined in `spec/actions/new-thread.spec.md` and must be used by both project and worktree rows.
+- Thread context menu must expose `Archive` only when the corresponding provider bridge advertises archive capability.
+- Archive action requests must be deduplicated per `(path, provider, threadId)` while in flight.
+- Successful archive must optimistically remove the thread from current state and then trigger refresh.
+- Archive failures (provider missing, unsupported, or backend error) must resolve to provider-unavailable warning behavior.
 - Codex thread discovery must default to rollout session files; app-server thread discovery remains an explicit compatibility override path.
 - Codex thread title normalization and filtering rules are defined in `spec/agent-sessions-codex-rollout-source.spec.md` and must be used for Codex thread rows.
 - Branch mismatch between thread origin and current worktree branch must show a warning confirmation before opening chat.
@@ -67,6 +71,7 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
 [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
+[@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
 

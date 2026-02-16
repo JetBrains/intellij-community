@@ -6,6 +6,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +24,7 @@ data class AgentChatTabSelection(
 )
 
 @Service(Service.Level.PROJECT)
-class AgentChatTabSelectionService(project: Project, cs: CoroutineScope) {
+class AgentChatTabSelectionService(private val project: Project, cs: CoroutineScope) {
   val selectedChatTab: StateFlow<AgentChatTabSelection?> = flow {
     val manager = project.serviceAsync<FileEditorManager>()
     emitAll(manager.selectedEditorFlow)
@@ -31,6 +32,10 @@ class AgentChatTabSelectionService(project: Project, cs: CoroutineScope) {
     .map { selectedEditor -> selectedEditor.toAgentChatTabSelection() }
     .distinctUntilChanged()
     .stateIn(cs, SharingStarted.Eagerly, null)
+
+  fun hasOpenChatTabs(): Boolean {
+    return hasOpenAgentChatFiles(FileEditorManager.getInstance(project).openFiles)
+  }
 }
 
 internal fun FileEditor?.toAgentChatTabSelection(): AgentChatTabSelection? {
@@ -41,4 +46,8 @@ internal fun FileEditor?.toAgentChatTabSelection(): AgentChatTabSelection? {
     threadId = file.threadId,
     subAgentId = file.subAgentId,
   )
+}
+
+internal fun hasOpenAgentChatFiles(openFiles: Array<VirtualFile>): Boolean {
+  return openFiles.any { file -> file is AgentChatVirtualFile }
 }

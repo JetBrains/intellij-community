@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
@@ -34,6 +35,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private const val REQUEST_TIMEOUT_MS = 30_000L
 private const val PROCESS_TERMINATION_TIMEOUT_MS = 2_000L
+private const val DEFAULT_IDLE_SHUTDOWN_TIMEOUT_MS = 60_000L
 private const val MAX_PAGES = 10
 private const val PAGE_LIMIT = 50
 
@@ -44,6 +46,7 @@ class CodexAppServerClient(
   private val executablePathProvider: () -> String? = { CodexCliUtils.findExecutable() },
   private val environmentOverrides: Map<String, String> = emptyMap(),
   workingDirectory: Path? = null,
+  idleShutdownTimeoutMs: Long = DEFAULT_IDLE_SHUTDOWN_TIMEOUT_MS,
 ) {
   private val pending = ConcurrentHashMap<String, CompletableDeferred<String>>()
   private val requestCounter = AtomicLong(0)
@@ -51,6 +54,7 @@ class CodexAppServerClient(
   private val startMutex = Mutex()
   private val initMutex = Mutex()
   private val workingDirectoryPath = workingDirectory
+  private val idleShutdownTimeoutMs = idleShutdownTimeoutMs.coerceAtLeast(0)
   private val protocol = CodexAppServerProtocol()
 
   @Volatile
@@ -63,6 +67,8 @@ class CodexAppServerClient(
   private var readerJob: Job? = null
   private var stderrJob: Job? = null
   private var waitJob: Job? = null
+  private var idleShutdownJob: Job? = null
+  private var inFlightRequestCount: Int = 0
 
   suspend fun listThreadsPage(
     archived: Boolean,
@@ -129,6 +135,17 @@ class CodexAppServerClient(
     return thread ?: throw CodexAppServerException("Codex app-server returned empty thread/start result")
   }
 
+  suspend fun archiveThread(threadId: String) {
+    requestUnit(
+      method = "thread/archive",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("threadId", threadId)
+        generator.writeEndObject()
+      },
+    )
+  }
+
   /**
    * Sends a minimal [turn/start] followed by an immediate [turn/interrupt] for the given thread.
    * This forces the Codex app-server to flush the session to disk so that `codex resume <id>` can find it.
@@ -176,11 +193,13 @@ class CodexAppServerClient(
     resultParser: (JsonParser) -> T,
     defaultResult: T,
   ): T {
-    if (ensureInitialized) ensureInitialized() else ensureProcess()
-    val id = requestCounter.incrementAndGet().toString()
-    val deferred = CompletableDeferred<String>()
-    pending[id] = deferred
+    var id: String? = null
+    onRequestStarted()
     try {
+      if (ensureInitialized) ensureInitialized() else ensureProcess()
+      id = requestCounter.incrementAndGet().toString()
+      val deferred = CompletableDeferred<String>()
+      pending[id] = deferred
       sendRequest(id, method, paramsWriter)
       val response = withTimeout(REQUEST_TIMEOUT_MS.milliseconds) { deferred.await() }
       return protocol.parseResponse(response, resultParser, defaultResult)
@@ -189,8 +208,48 @@ class CodexAppServerClient(
       throw CodexAppServerException("Codex request timed out", t)
     }
     finally {
-      pending.remove(id)
+      id?.let { pending.remove(it) }
+      onRequestCompleted()
     }
+  }
+
+  private suspend fun onRequestStarted() {
+    startMutex.withLock {
+      inFlightRequestCount += 1
+      cancelIdleShutdownTimerLocked()
+    }
+  }
+
+  private suspend fun onRequestCompleted() {
+    startMutex.withLock {
+      if (inFlightRequestCount > 0) {
+        inFlightRequestCount -= 1
+      }
+      if (inFlightRequestCount == 0) {
+        scheduleIdleShutdownLocked()
+      }
+    }
+  }
+
+  private fun scheduleIdleShutdownLocked() {
+    cancelIdleShutdownTimerLocked()
+    if (idleShutdownTimeoutMs <= 0) {
+      stopProcess()
+      return
+    }
+    idleShutdownJob = coroutineScope.launch(Dispatchers.IO) {
+      delay(idleShutdownTimeoutMs.milliseconds)
+      startMutex.withLock {
+        if (inFlightRequestCount == 0) {
+          stopProcess()
+        }
+      }
+    }
+  }
+
+  private fun cancelIdleShutdownTimerLocked() {
+    idleShutdownJob?.cancel()
+    idleShutdownJob = null
   }
 
   private suspend fun requestUnit(
@@ -397,15 +456,19 @@ class CodexAppServerClient(
     val error = CodexAppServerException("Codex app-server terminated")
     pending.values.forEach { it.completeExceptionally(error) }
     pending.clear()
+    cancelIdleShutdownTimerLocked()
     process = null
     writer = null
     initialized = false
+    inFlightRequestCount = 0
   }
 
   private fun stopProcess() {
+    cancelIdleShutdownTimerLocked()
     val current = process ?: return
     process = null
     initialized = false
+    inFlightRequestCount = 0
     try {
       writer?.close()
     }

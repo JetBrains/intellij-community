@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexAppServerException
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.milliseconds
 
 class CodexAppServerClientTest {
   companion object {
@@ -278,6 +280,97 @@ class CodexAppServerClientTest {
       )
       assertThat(created.id).startsWith("thread-start-")
       assertThat(created.archived).isFalse()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun archiveThreadMovesThreadFromActiveToArchivedList(): Unit = runBlocking(Dispatchers.IO) {
+    val workingDir = tempDir.resolve("project-archive")
+    Files.createDirectories(workingDir)
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-1",
+          title = "Thread 1",
+          cwd = workingDir.toString(),
+          updatedAt = 1_700_000_005_000L,
+          archived = false,
+        ),
+        ThreadSpec(
+          id = "thread-2",
+          title = "Thread 2",
+          cwd = workingDir.toString(),
+          updatedAt = 1_700_000_004_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-archive")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val beforeArchive = client.listThreads(archived = false)
+      assertThat(beforeArchive.map { it.id }).contains("thread-1", "thread-2")
+
+      client.archiveThread("thread-1")
+
+      val active = client.listThreads(archived = false)
+      val archived = client.listThreads(archived = true)
+      assertThat(active.map { it.id }).doesNotContain("thread-1")
+      assertThat(archived.map { it.id }).contains("thread-1")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun idleTimeoutStopsLazyStartedProcess(): Unit = runBlocking(Dispatchers.IO) {
+    val workingDir = tempDir.resolve("project-idle-timeout")
+    Files.createDirectories(workingDir)
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-1",
+          title = "Thread 1",
+          cwd = workingDir.toString(),
+          updatedAt = 1_700_000_005_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-idle-timeout")
+    Files.createDirectories(backendDir)
+    val marker = backendDir.resolve("cwd-marker.txt")
+    val codexShim = createMockCodexShim(backendDir, configPath)
+    val client = CodexAppServerClient(
+      coroutineScope = this,
+      executablePathProvider = { codexShim.toString() },
+      environmentOverrides = mapOf("CODEX_TEST_CWD_MARKER" to marker.toString()),
+      idleShutdownTimeoutMs = 100,
+    )
+    try {
+      client.listThreads(archived = false)
+      assertThat(Files.exists(marker)).isTrue()
+      Files.deleteIfExists(marker)
+
+      delay(250.milliseconds)
+      client.listThreads(archived = false)
+
+      assertThat(Files.exists(marker))
+        .describedAs("marker file should be recreated when app-server restarts after idle timeout")
+        .isTrue()
     }
     finally {
       client.shutdown()

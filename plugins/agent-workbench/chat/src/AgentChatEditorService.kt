@@ -3,10 +3,16 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+
+private class AgentChatEditorServiceLog
+
+private val LOG = logger<AgentChatEditorServiceLog>()
 
 suspend fun openChat(
   project: Project,
@@ -19,6 +25,9 @@ suspend fun openChat(
 ) {
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
   val existing = findExistingChat(manager.openFiles, threadIdentity, subAgentId)
+  LOG.debug {
+    "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
+  }
   val file = existing ?: AgentChatVirtualFile(
     projectPath = projectPath,
     threadIdentity = threadIdentity,
@@ -27,10 +36,27 @@ suspend fun openChat(
     threadTitle = threadTitle,
     subAgentId = subAgentId,
   )
+  if (existing != null) {
+    val updated = existing.updateThreadTitle(threadTitle)
+    LOG.debug {
+      "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): updated=$updated, currentName=${existing.name}, currentTitle=${existing.threadTitle}"
+    }
+    if (updated) {
+      manager.updateFilePresentation(existing)
+    }
+  }
+  else {
+    LOG.debug {
+      "openChat created new tab(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name})"
+    }
+  }
   manager.openFile(
     file = file,
-    options = FileEditorOpenRequest(requestFocus = true, reuseOpen = true),
+    options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true),
   )
+  LOG.debug {
+    "openChat openFile completed(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name})"
+  }
 }
 
 private fun findExistingChat(

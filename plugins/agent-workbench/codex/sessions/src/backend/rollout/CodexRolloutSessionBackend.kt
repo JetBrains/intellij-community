@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
@@ -57,8 +58,10 @@ internal class CodexRolloutSessionBackend(
   private val threadsByCwd = Object2ObjectOpenHashMap<String, ObjectArrayList<CodexBackendThread>>()
 
   override val updates: Flow<Unit> = callbackFlow {
+    LOG.debug { "Initializing Codex rollout updates watcher (codexHome=${codexHomeProvider()})" }
     val watcher = runCatching {
       CodexRolloutSessionsWatcher(codexHomeProvider = codexHomeProvider) {
+        LOG.debug { "Rollout watcher signaled change; emitting update" }
         trySend(Unit)
       }
     }.onFailure { t ->
@@ -66,11 +69,13 @@ internal class CodexRolloutSessionBackend(
     }.getOrNull()
 
     if (watcher == null) {
+      LOG.debug { "Codex rollout updates watcher was not initialized; updates flow will stay idle" }
       awaitClose { }
       return@callbackFlow
     }
 
     awaitClose {
+      LOG.debug { "Closing Codex rollout updates watcher" }
       watcher.close()
     }
   }.conflate()
@@ -112,6 +117,7 @@ internal class CodexRolloutSessionBackend(
       scanRolloutFiles(sessionsDir)
     }
     catch (_: Throwable) {
+      LOG.debug { "Failed to scan rollout files under $sessionsDir" }
       return emptyMap()
     }
 
@@ -156,6 +162,9 @@ internal class CodexRolloutSessionBackend(
       synchronized(cacheLock) {
         rebuildThreadsByCwd()
       }
+      LOG.debug {
+        "Rollout cache updated (cwdFilters=${cwdFilters.size}, scannedFiles=${scannedFiles.size}, parsed=${filesToParse.size}, removedAny=$removedAny)"
+      }
     }
 
     synchronized(cacheLock) {
@@ -163,6 +172,9 @@ internal class CodexRolloutSessionBackend(
       for (cwdFilter in cwdFilters) {
         val threads = threadsByCwd[cwdFilter] ?: continue
         result[cwdFilter] = ArrayList(threads)
+      }
+      LOG.debug {
+        "Resolved Codex rollout threads for cwd filters (requested=${cwdFilters.size}, matched=${result.size})"
       }
       return result
     }
@@ -260,6 +272,10 @@ internal class CodexRolloutSessionBackend(
                 }
               }
 
+              "thread_name_updated", "threadNameUpdated" -> {
+                parseState.title = extractThreadName(event.payloadThreadName) ?: parseState.title
+              }
+
               "agent_message" -> {
                 parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
               }
@@ -314,7 +330,13 @@ internal class CodexRolloutSessionBackend(
 
     val fallbackUpdatedAt = runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(0L)
     val resolvedUpdatedAt = if (state.updatedAt > 0L) state.updatedAt else fallbackUpdatedAt
-    val resolvedTitle = state.title ?: "Thread ${resolvedSessionId.take(8)}"
+    val fallbackTitle = "Thread ${resolvedSessionId.take(8)}"
+    val resolvedTitle = state.title ?: fallbackTitle
+    val usedFallbackTitle = state.title == null
+
+    LOG.debug {
+      "Parsed rollout thread (sessionId=$resolvedSessionId, cwd=$normalizedCwd, title=$resolvedTitle, fallbackTitle=$usedFallbackTitle, updatedAt=$resolvedUpdatedAt, activity=$activity)"
+    }
 
     return ParsedRolloutThread(
       normalizedCwd = normalizedCwd,
@@ -340,6 +362,7 @@ internal class CodexRolloutSessionBackend(
       var payloadType: String? = null
       var payloadRole: String? = null
       var payloadMessage: String? = null
+      var payloadThreadName: String? = null
       var sessionId: String? = null
       var sessionCwd: String? = null
       var sessionTimestampMs: Long? = null
@@ -357,6 +380,7 @@ internal class CodexRolloutSessionBackend(
                   "type" -> payloadType = readStringOrNull(parser)
                   "role" -> payloadRole = readStringOrNull(parser)
                   "message" -> payloadMessage = readStringOrNull(parser)
+                  "thread_name", "threadName" -> payloadThreadName = readStringOrNull(parser)
                   "id" -> sessionId = readStringOrNull(parser)
                   "cwd" -> sessionCwd = readStringOrNull(parser)
                   "timestamp" -> sessionTimestampMs = parseIsoTimestamp(readStringOrNull(parser))
@@ -389,6 +413,7 @@ internal class CodexRolloutSessionBackend(
         payloadType = payloadType,
         payloadRole = payloadRole,
         payloadMessage = payloadMessage,
+        payloadThreadName = payloadThreadName,
         sessionId = sessionId,
         sessionCwd = sessionCwd,
         sessionTimestampMs = sessionTimestampMs,
@@ -408,6 +433,7 @@ private data class RolloutEvent(
   @JvmField val payloadType: String?,
   @JvmField val payloadRole: String?,
   @JvmField val payloadMessage: String?,
+  @JvmField val payloadThreadName: String?,
   @JvmField val sessionId: String?,
   @JvmField val sessionCwd: String?,
   @JvmField val sessionTimestampMs: Long?,
@@ -468,12 +494,14 @@ private class CodexRolloutSessionsWatcher(
 
   override fun close() {
     if (!running.compareAndSet(true, false)) return
+    LOG.debug { "Closing Codex rollout sessions watcher" }
     watchService.close()
     thread.interrupt()
   }
 
   private fun registerInitialPaths() {
     val codexHome = codexHomeProvider()
+    LOG.debug { "Registering initial watcher paths (codexHome=$codexHome, sessionsRoot=$sessionsRoot)" }
     if (Files.isDirectory(codexHome)) {
       registerDirectory(codexHome)
     }
@@ -494,7 +522,8 @@ private class CodexRolloutSessionsWatcher(
       catch (_: ClosedWatchServiceException) {
         break
       }
-      catch (_: Throwable) {
+      catch (t: Throwable) {
+        LOG.debug(t) { "Rollout watcher failed to take next watch key" }
         continue
       }
 
@@ -508,6 +537,7 @@ private class CodexRolloutSessionsWatcher(
       for (event in watchKey.pollEvents()) {
         val kind = event.kind()
         if (kind == StandardWatchEventKinds.OVERFLOW) {
+          LOG.debug { "Rollout watcher overflow event for $watchedPath" }
           hasRolloutChange = true
           continue
         }
@@ -520,6 +550,7 @@ private class CodexRolloutSessionsWatcher(
         }
 
         if (isRolloutPath(eventPath)) {
+          LOG.debug { "Rollout watcher event kind=$kind path=$eventPath" }
           hasRolloutChange = true
         }
       }
@@ -531,6 +562,7 @@ private class CodexRolloutSessionsWatcher(
       }
 
       if (hasRolloutChange) {
+        LOG.debug { "Rollout watcher detected relevant changes; notifying listeners" }
         onRolloutChange()
       }
     }
@@ -551,8 +583,10 @@ private class CodexRolloutSessionsWatcher(
           return FileVisitResult.CONTINUE
         }
       })
+      LOG.debug { "Registered watcher recursively for $root" }
     }
-    catch (_: Throwable) {
+    catch (t: Throwable) {
+      LOG.debug(t) { "Failed to register watcher recursively for $root" }
     }
   }
 
@@ -567,8 +601,10 @@ private class CodexRolloutSessionsWatcher(
       synchronized(watchKeysLock) {
         watchKeysByPath[watchKey] = path
       }
+      LOG.debug { "Registered watcher for directory $path" }
     }
-    catch (_: Throwable) {
+    catch (t: Throwable) {
+      LOG.debug(t) { "Failed to register watcher for directory $path" }
     }
   }
 }
@@ -594,6 +630,14 @@ private fun extractTitle(message: String?): String? {
     .firstOrNull { it.isNotEmpty() }
     ?: return null
   if (isSessionPrefix(candidate)) return null
+  return trimTitle(candidate.replace(Regex("\\s+"), " "))
+}
+
+private fun extractThreadName(threadName: String?): String? {
+  val candidate = threadName
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+    ?: return null
   return trimTitle(candidate.replace(Regex("\\s+"), " "))
 }
 

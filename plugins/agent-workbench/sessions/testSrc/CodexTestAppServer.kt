@@ -136,6 +136,7 @@ internal object CodexTestAppServer {
               forEachObjectField(parser) { paramName ->
                 when (paramName) {
                   "id" -> paramsId = readStringOrNull(parser)
+                  "threadId" -> paramsId = readStringOrNull(parser)
                   "archived" -> paramsArchived = readBooleanOrNull(parser)
                   "cursor" -> paramsCursor = readStringOrNull(parser)
                   "limit" -> paramsLimit = readLongOrNull(parser)?.toInt()

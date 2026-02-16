@@ -37,4 +37,8 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     client.persistThread(thread.id)
     return thread
   }
+
+  suspend fun archiveThread(threadId: String) {
+    client.archiveThread(threadId)
+  }
 }

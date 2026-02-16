@@ -37,6 +37,7 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 - When the setting is disabled, chat opens in the source project frame and closed source projects are opened first.
 - Clicking a thread row opens its chat editor. Clicking a sub-agent row opens a separate chat editor tab scoped to that sub-agent.
 - The editor tab title must use the thread title (fallback to `Agent Chat` when blank).
+- Reopening an already open chat tab for the same identity with a newer thread title must update the existing tab title.
 - The shell command used to start chat sessions is provider-specific:
   - Codex: `codex resume <threadId>`
   - Claude: `claude --resume <threadId>`

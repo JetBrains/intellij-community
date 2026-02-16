@@ -53,6 +53,35 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
     assertEquals(1, files.size)
   }
 
+  fun testReuseEditorUpdatesTitleForThread() {
+    runInEdtAndWait {
+      runBlocking {
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CODEX:thread-1",
+          shellCommand = codexCommand,
+          threadId = "thread-1",
+          threadTitle = "Thread",
+          subAgentId = null,
+        )
+        openChat(
+          project = project,
+          projectPath = "/work/project-a",
+          threadIdentity = "CODEX:thread-1",
+          shellCommand = codexCommand,
+          threadId = "thread-1",
+          threadTitle = "Renamed thread",
+          subAgentId = null,
+        )
+      }
+    }
+
+    val files = openedChatFiles()
+    assertEquals(1, files.size)
+    assertEquals("Renamed thread", files.single().name)
+  }
+
   fun testSeparateTabsForSubAgents() {
     runInEdtAndWait {
       runBlocking {

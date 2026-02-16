@@ -372,6 +372,33 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
+  fun prefersThreadNameUpdatedEventForTitle() {
+    runBlocking {
+      val projectDir = tempDir.resolve("project-thread-rename")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+          .resolve("rollout-thread-name-updated.jsonl"),
+        lines = listOf(
+          sessionMetaLine(
+            timestamp = "2026-02-14T12:00:00.000Z",
+            id = "session-title-updated",
+            cwd = projectDir,
+          ),
+          """{"timestamp":"2026-02-14T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Initial fallback title"}}""",
+          """{"timestamp":"2026-02-14T12:00:02.000Z","type":"event_msg","payload":{"type":"thread_name_updated","thread_name":"  Renamed   from   Codex  "}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().thread.title).isEqualTo("Renamed from Codex")
+    }
+  }
+
+  @Test
   fun skipsMalformedJsonLineAndKeepsParsingLaterEvents() {
     runBlocking {
       val projectDir = tempDir.resolve("project-malformed")

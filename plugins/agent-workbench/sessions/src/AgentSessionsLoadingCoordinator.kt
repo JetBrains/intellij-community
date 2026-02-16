@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
@@ -16,10 +17,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentSessionsLoadingCoordinator>()
 private const val SOURCE_UPDATE_DEBOUNCE_MS = 350L
+private const val SOURCE_REFRESH_GATE_RETRY_MS = 500L
 
 internal class AgentSessionsLoadingCoordinator(
   private val serviceScope: CoroutineScope,
@@ -35,6 +38,11 @@ internal class AgentSessionsLoadingCoordinator(
   private val onDemandWorktreeLoading = LinkedHashSet<String>()
   private val sourceRefreshJobs = LinkedHashMap<AgentSessionProvider, Job>()
   private val sourceRefreshJobsLock = Any()
+  private val pendingSourceRefreshProviders = LinkedHashSet<AgentSessionProvider>()
+  private var sourceRefreshProcessorRunning = false
+  private val sourceRefreshIdCounter = AtomicLong()
+  private val archiveSuppressions = LinkedHashSet<ArchiveSuppression>()
+  private val archiveSuppressionsLock = Any()
 
   fun observeSessionSourceUpdates() {
     serviceScope.launch {
@@ -269,6 +277,13 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
+  fun suppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
+    val normalizedPath = normalizePath(path)
+    synchronized(archiveSuppressionsLock) {
+      archiveSuppressions.add(ArchiveSuppression(path = normalizedPath, provider = provider, threadId = threadId))
+    }
+  }
+
   fun loadProjectThreadsOnDemand(path: String) {
     serviceScope.launch(Dispatchers.IO) {
       val normalized = normalizePath(path)
@@ -361,10 +376,10 @@ internal class AgentSessionsLoadingCoordinator(
   private fun scheduleSourceRefresh(provider: AgentSessionProvider) {
     synchronized(sourceRefreshJobsLock) {
       sourceRefreshJobs.remove(provider)?.cancel()
+      LOG.debug { "Scheduled debounced source refresh for ${provider.value}" }
       val job = serviceScope.launch(Dispatchers.IO) {
         delay(SOURCE_UPDATE_DEBOUNCE_MS.milliseconds)
-        if (!isRefreshGateActive()) return@launch
-        refreshLoadedProviderThreads(provider)
+        enqueueSourceRefresh(provider)
       }
       sourceRefreshJobs[provider] = job
       job.invokeOnCompletion {
@@ -377,13 +392,103 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
-  private suspend fun refreshLoadedProviderThreads(provider: AgentSessionProvider) {
-    if (!refreshMutex.tryLock()) return
-    try {
+  private fun enqueueSourceRefresh(provider: AgentSessionProvider) {
+    var shouldStartProcessor = false
+    var queueSize = 0
+    synchronized(sourceRefreshJobsLock) {
+      pendingSourceRefreshProviders.add(provider)
+      if (!sourceRefreshProcessorRunning) {
+        sourceRefreshProcessorRunning = true
+        shouldStartProcessor = true
+      }
+      queueSize = pendingSourceRefreshProviders.size
+    }
+
+    LOG.debug {
+      "Enqueued source refresh for ${provider.value} (queueSize=$queueSize, startProcessor=$shouldStartProcessor)"
+    }
+
+    if (shouldStartProcessor) {
+      serviceScope.launch(Dispatchers.IO) {
+        processQueuedSourceRefreshes()
+      }
+    }
+  }
+
+  private suspend fun processQueuedSourceRefreshes() {
+    while (true) {
+      val dequeued = synchronized(sourceRefreshJobsLock) {
+        val nextProvider = pendingSourceRefreshProviders.firstOrNull()
+        if (nextProvider == null) {
+          sourceRefreshProcessorRunning = false
+          null
+        }
+        else {
+          pendingSourceRefreshProviders.remove(nextProvider)
+          nextProvider to pendingSourceRefreshProviders.size
+        }
+      } ?: run {
+        LOG.debug { "Source refresh processor stopped (queue empty)" }
+        return
+      }
+
+      val provider = dequeued.first
+      val remainingQueueSize = dequeued.second
+      val refreshId = sourceRefreshIdCounter.incrementAndGet()
+      LOG.debug {
+        "Dequeued source refresh id=$refreshId provider=${provider.value} (remainingQueueSize=$remainingQueueSize)"
+      }
+
+      val gateActive = try {
+        isRefreshGateActive()
+      }
+      catch (e: Throwable) {
+        if (e is CancellationException) throw e
+        LOG.warn("Failed to evaluate source refresh gate", e)
+        false
+      }
+
+      LOG.debug {
+        "Source refresh gate evaluated for id=$refreshId provider=${provider.value}: active=$gateActive"
+      }
+
+      if (!gateActive) {
+        var queueSizeAfterRequeue = 0
+        synchronized(sourceRefreshJobsLock) {
+          pendingSourceRefreshProviders.add(provider)
+          queueSizeAfterRequeue = pendingSourceRefreshProviders.size
+        }
+        LOG.debug {
+          "Source refresh gate blocked id=$refreshId provider=${provider.value}; requeued (queueSize=$queueSizeAfterRequeue)"
+        }
+        delay(SOURCE_REFRESH_GATE_RETRY_MS.milliseconds)
+        continue
+      }
+
+      try {
+        refreshLoadedProviderThreads(provider = provider, refreshId = refreshId)
+      }
+      catch (e: Throwable) {
+        if (e is CancellationException) throw e
+        LOG.warn("Failed to refresh ${provider.value} sessions from queued update", e)
+      }
+    }
+  }
+
+  private suspend fun refreshLoadedProviderThreads(provider: AgentSessionProvider, refreshId: Long) {
+    refreshMutex.withLock {
+      LOG.debug { "Starting provider refresh id=$refreshId provider=${provider.value}" }
       val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
       val stateSnapshot = stateStore.snapshot()
       val targetPaths = collectLoadedPaths(stateSnapshot)
-      if (targetPaths.isEmpty()) return
+      if (targetPaths.isEmpty()) {
+        LOG.debug { "Provider refresh id=$refreshId provider=${provider.value} skipped (no loaded paths)" }
+        return
+      }
+
+      LOG.debug {
+        "Provider refresh id=$refreshId provider=${provider.value} targetPaths=${targetPaths.size}"
+      }
 
       val prefetched = try {
         source.prefetchThreads(targetPaths)
@@ -392,16 +497,28 @@ internal class AgentSessionsLoadingCoordinator(
         emptyMap()
       }
 
+      LOG.debug {
+        "Provider refresh id=$refreshId provider=${provider.value} prefetchedPaths=${prefetched.size}"
+      }
+
       val outcomes = LinkedHashMap<String, ProviderRefreshOutcome>(targetPaths.size)
       for (path in targetPaths) {
         val prefetchedThreads = prefetched[path]
         if (prefetchedThreads != null) {
-          outcomes[path] = ProviderRefreshOutcome(threads = prefetchedThreads)
+          outcomes[path] = ProviderRefreshOutcome(
+            threads = applyArchiveSuppressions(path = path, provider = provider, threads = prefetchedThreads),
+          )
           continue
         }
 
         try {
-          outcomes[path] = ProviderRefreshOutcome(threads = source.listThreadsFromClosedProject(path))
+          outcomes[path] = ProviderRefreshOutcome(
+            threads = applyArchiveSuppressions(
+              path = path,
+              provider = provider,
+              threads = source.listThreadsFromClosedProject(path),
+            ),
+          )
         }
         catch (e: Throwable) {
           if (e is CancellationException) throw e
@@ -445,18 +562,22 @@ internal class AgentSessionsLoadingCoordinator(
         }
 
         if (!changed) {
+          LOG.debug {
+            "Provider refresh id=$refreshId provider=${provider.value} finished without state changes (outcomes=${outcomes.size})"
+          }
           state
         }
         else {
+          LOG.debug {
+            "Provider refresh id=$refreshId provider=${provider.value} applied state changes (outcomes=${outcomes.size})"
+          }
           state.copy(
             projects = nextProjects,
             lastUpdatedAt = System.currentTimeMillis(),
           )
         }
       }
-    }
-    finally {
-      refreshMutex.unlock()
+      LOG.debug { "Finished provider refresh id=$refreshId provider=${provider.value}" }
     }
   }
 
@@ -521,7 +642,13 @@ internal class AgentSessionsLoadingCoordinator(
       sessionSources.map { source ->
         async {
           val result = try {
-            Result.success(loadOperation(source))
+            Result.success(
+              applyArchiveSuppressions(
+                path = path,
+                provider = source.provider,
+                threads = loadOperation(source),
+              ),
+            )
           }
           catch (throwable: Throwable) {
             if (throwable is CancellationException) throw throwable
@@ -552,7 +679,11 @@ internal class AgentSessionsLoadingCoordinator(
   ): AgentSessionSourceLoadResult {
     return try {
       val prefetched = prefetchedByProvider[source.provider]?.get(normalizedPath)
-      val threads = prefetched ?: source.listThreadsFromOpenProject(path = normalizedPath, project = project)
+      val threads = applyArchiveSuppressions(
+        path = normalizedPath,
+        provider = source.provider,
+        threads = prefetched ?: source.listThreadsFromOpenProject(path = normalizedPath, project = project),
+      )
       AgentSessionSourceLoadResult(
         provider = source.provider,
         result = Result.success(threads),
@@ -663,6 +794,24 @@ internal class AgentSessionsLoadingCoordinator(
     return mergedThreads
   }
 
+  private fun applyArchiveSuppressions(
+    path: String,
+    provider: AgentSessionProvider,
+    threads: List<AgentSessionThread>,
+  ): List<AgentSessionThread> {
+    val normalizedPath = normalizePath(path)
+    val suppressedThreadIds = synchronized(archiveSuppressionsLock) {
+      archiveSuppressions.asSequence()
+        .filter { suppression -> suppression.path == normalizedPath && suppression.provider == provider }
+        .map { suppression -> suppression.threadId }
+        .toHashSet()
+    }
+    if (suppressedThreadIds.isEmpty()) {
+      return threads
+    }
+    return threads.filterNot { thread -> thread.id in suppressedThreadIds }
+  }
+
   private fun List<AgentSessionThreadPreview>.toCachedSessionThreads(): List<AgentSessionThread> {
     return map { preview ->
       AgentSessionThread(
@@ -693,5 +842,11 @@ internal class AgentSessionsLoadingCoordinator(
   private data class ProviderRefreshOutcome(
     val threads: List<AgentSessionThread>? = null,
     val warningMessage: String? = null,
+  )
+
+  private data class ArchiveSuppression(
+    val path: String,
+    val provider: AgentSessionProvider,
+    val threadId: String,
   )
 }

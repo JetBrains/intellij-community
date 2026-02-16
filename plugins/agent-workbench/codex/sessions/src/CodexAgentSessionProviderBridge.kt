@@ -36,6 +36,9 @@ internal class CodexAgentSessionProviderBridge(
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.cli"
 
+  override val supportsArchiveThread: Boolean
+    get() = true
+
   override fun isCliAvailable(): Boolean = CodexCliUtils.isAvailable()
 
   override fun buildResumeCommand(sessionId: String): List<String> = listOf(CodexCliUtils.CODEX_COMMAND, "resume", sessionId)
@@ -52,6 +55,11 @@ internal class CodexAgentSessionProviderBridge(
       sessionId = thread.id,
       command = buildResumeCommand(thread.id),
     )
+  }
+
+  override suspend fun archiveThread(path: String, threadId: String): Boolean {
+    service<SharedCodexAppServerService>().archiveThread(threadId)
+    return true
   }
 
   override fun isCliMissingError(throwable: Throwable): Boolean {

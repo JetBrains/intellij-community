@@ -51,6 +51,8 @@ internal fun SelectableLazyItemScope.sessionTreeNodeContent(
   onOpenProject: (String) -> Unit,
   onRefresh: () -> Unit,
   onCreateSession: (String, AgentSessionProvider, AgentSessionLaunchMode) -> Unit = { _, _, _ -> },
+  onArchiveThread: (String, AgentSessionThread) -> Unit = { _, _ -> },
+  canArchiveThread: (AgentSessionThread) -> Boolean = { false },
   lastUsedProvider: AgentSessionProvider? = null,
   nowProvider: () -> Long,
 ) {
@@ -62,11 +64,19 @@ internal fun SelectableLazyItemScope.sessionTreeNodeContent(
       onCreateSession = onCreateSession,
       lastUsedProvider = lastUsedProvider,
     )
-    is SessionTreeNode.Thread -> threadNodeRow(
-      thread = node.thread,
-      nowProvider = nowProvider,
-      parentWorktreeBranch = node.parentWorktreeBranch,
-    )
+    is SessionTreeNode.Thread -> {
+      val path = when (val id = element.id) {
+        is SessionTreeId.WorktreeThread -> id.worktreePath
+        else -> node.project.path
+      }
+      threadNodeRow(
+        thread = node.thread,
+        nowProvider = nowProvider,
+        parentWorktreeBranch = node.parentWorktreeBranch,
+        canArchiveThread = canArchiveThread(node.thread),
+        onArchiveThread = { onArchiveThread(path, node.thread) },
+      )
+    }
     is SessionTreeNode.SubAgent -> subAgentNodeRow(
       subAgent = node.subAgent,
     )
@@ -213,6 +223,8 @@ private fun SelectableLazyItemScope.threadNodeRow(
   thread: AgentSessionThread,
   nowProvider: () -> Long,
   parentWorktreeBranch: String? = null,
+  canArchiveThread: Boolean = false,
+  onArchiveThread: (() -> Unit)? = null,
 ) {
   val timestamp = thread.updatedAt.takeIf { it > 0 }
   val timeLabel = timestamp?.let { formatRelativeTimeShort(it, nowProvider()) }
@@ -227,50 +239,72 @@ private fun SelectableLazyItemScope.threadNodeRow(
     .copy(alpha = 0.55f)
   val providerLabel = providerLabel(thread.provider)
   val indicatorColor = if (branchMismatch) JewelTheme.globalColors.text.warning else threadIndicatorColor(thread)
+  val archiveLabel = AgentSessionsBundle.message("toolwindow.action.archive")
   Tooltip(
     tooltip = {
       Text(AgentSessionsBundle.message("toolwindow.thread.branch.mismatch", originBranch ?: ""))
     },
     enabled = branchMismatch,
   ) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .background(chrome.background, chrome.shape)
-        .hoverable(chrome.interactionSource),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(chrome.spacing)
-    ) {
-      Box(
+    val rowContent: @Composable () -> Unit = {
+      Row(
         modifier = Modifier
-          .padding(end = chrome.indicatorPadding)
-          .size(threadIndicatorSize())
-          .background(indicatorColor, CircleShape)
-      )
-      var titleLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-      Text(
-        text = thread.title.highlightTextSearch(),
-        style = AgentSessionsTextStyles.threadTitle(),
-        color = titleColor,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        onTextLayout = { titleLayoutResult = it },
-        modifier = Modifier
-          .weight(1f)
-          .highlightSpeedSearchMatches(titleLayoutResult),
-      )
-      Text(
-        text = providerLabel,
-        color = timeColor,
-        style = AgentSessionsTextStyles.threadTime(),
-      )
-      if (timeLabel != null) {
+          .fillMaxWidth()
+          .background(chrome.background, chrome.shape)
+          .hoverable(chrome.interactionSource),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(chrome.spacing)
+      ) {
+        Box(
+          modifier = Modifier
+            .padding(end = chrome.indicatorPadding)
+            .size(threadIndicatorSize())
+            .background(indicatorColor, CircleShape)
+        )
+        var titleLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
         Text(
-          text = timeLabel,
+          text = thread.title.highlightTextSearch(),
+          style = AgentSessionsTextStyles.threadTitle(),
+          color = titleColor,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          onTextLayout = { titleLayoutResult = it },
+          modifier = Modifier
+            .weight(1f)
+            .highlightSpeedSearchMatches(titleLayoutResult),
+        )
+        Text(
+          text = providerLabel,
           color = timeColor,
           style = AgentSessionsTextStyles.threadTime(),
         )
+        if (timeLabel != null) {
+          Text(
+            text = timeLabel,
+            color = timeColor,
+            style = AgentSessionsTextStyles.threadTime(),
+          )
+        }
       }
+    }
+
+    if (canArchiveThread && onArchiveThread != null) {
+      ContextMenuArea(
+        items = {
+          listOf(
+            ContextMenuItemOption(
+              label = archiveLabel,
+              action = onArchiveThread,
+            ),
+          )
+        },
+        enabled = true,
+      ) {
+        rowContent()
+      }
+    }
+    else {
+      rowContent()
     }
   }
 }

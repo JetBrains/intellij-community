@@ -3,12 +3,14 @@ name: Agent Threads Testing
 description: Coverage requirements for provider aggregation, tree rendering, and backend contracts in Agent Threads.
 targets:
   - ../sessions/src/AgentSessionsTreeUiStateService.kt
+  - ../codex/common/src/CodexAppServerClient.kt
   - ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
   - ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
   - ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
   - ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
   - ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
   - ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
+  - ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
   - ../sessions/testSrc/AgentSessionsServiceIntegrationTestSupport.kt
   - ../sessions/testSrc/AgentSessionsToolWindowTest.kt
   - ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
@@ -47,7 +49,8 @@ Define required test coverage for the multi-provider Agent Threads stack: source
   - provider warning and blocking error paths,
   - unknown-count behavior when unknown provider fails/succeeds,
   - cached preview rows rendered before open-path provider load completes,
-  - persisted visible thread count restoration during refresh bootstrap.
+  - persisted visible thread count restoration during refresh bootstrap,
+  - archive action removing the thread from state and preserving remaining threads after refresh.
 - On-demand integration tests must cover:
   - project request deduplication,
   - worktree request deduplication with refresh interaction,
@@ -69,11 +72,15 @@ Define required test coverage for the multi-provider Agent Threads stack: source
   - backward-compatible provider default for legacy preview entries with missing provider value.
 - Codex compatibility tests must cover cursor-loop/no-progress guard behavior in `seedInitialVisibleThreads`.
 - Codex app-server contract tests must run against mock backend always and real backend when available.
+- Codex app-server client tests must cover:
+  - `thread/archive` behavior moving a thread from active to archived lists,
+  - lazy process restart behavior after idle-timeout shutdown.
 
 [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
+[@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
 [@test] ../sessions/testSrc/CodexSessionsPagingLogicTest.kt
@@ -87,6 +94,7 @@ Define required test coverage for the multi-provider Agent Threads stack: source
   - Threads are sorted by `updatedAt` descending.
   - `archived` flags are consistent with the requested list.
 - The mock backend additionally asserts exact thread IDs because the fixture is deterministic. The real backend uses only invariant assertions because thread data is user-specific and unstable.
+- Mock-only assertions cover archive mutation and idle-timeout lazy restart semantics.
 
 [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
 
