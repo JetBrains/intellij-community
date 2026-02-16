@@ -43,7 +43,7 @@ class ChainResolver {
     val elementLanguageId = elementAtDebugger.getLanguage().id
     val provider = LibrarySupportProvider.EP_NAME.findFirstSafe { it.getLanguageId() == elementLanguageId && it.getChainBuilder().isChainExists(elementAtDebugger) }
     if (provider != null) {
-      val result = provider.chainBuilder.build(elementAtDebugger).map { StreamChainWithLibrary(it, provider) }.toList()
+      val result = provider.getChainBuilder().build(elementAtDebugger).map { StreamChainWithLibrary(it, provider) }.toList()
       return result
     }
 

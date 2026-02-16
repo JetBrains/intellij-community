@@ -49,7 +49,7 @@ abstract class TraceExecutionTestHelper(
   }
 
   private fun createResultInterpreter(): TraceResultInterpreter {
-    return TraceResultInterpreterImpl(librarySupportProvider.librarySupport.interpreterFactory)
+    return TraceResultInterpreterImpl(librarySupportProvider.getLibrarySupport().interpreterFactory)
   }
 
   private fun createXValueInterpreter(): XValueInterpreter {
@@ -57,11 +57,11 @@ abstract class TraceExecutionTestHelper(
   }
 
   private fun createResolverFactory(): ResolverFactory {
-    return librarySupportProvider.librarySupport.resolverFactory
+    return librarySupportProvider.getLibrarySupport().resolverFactory
   }
 
   private fun createChainBuilder(): StreamChainBuilder {
-    return librarySupportProvider.chainBuilder
+    return librarySupportProvider.getChainBuilder()
   }
 
   protected open fun createExpressionBuilder(): TraceExpressionBuilder {
