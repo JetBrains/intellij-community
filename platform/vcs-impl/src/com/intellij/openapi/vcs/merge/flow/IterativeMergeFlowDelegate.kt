@@ -44,6 +44,7 @@ import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -105,6 +106,7 @@ internal class IterativeMergeFlowDelegate(
   private var currentDescription: String = VcsBundle.message("merge.loading.merge.details")
 
   override fun createCenterPanel(): JComponent {
+    table.changeHeaderColor()
     table.installButtonRenderer(iterativeDataHolder, getSelectedFiles = { state.selectedFiles }) { _, column ->
       val resolution = when (column) {
         1 -> MergeSession.Resolution.AcceptedYours
@@ -403,6 +405,15 @@ private class ConflictsGroupNode(val type: ConflictsNodeType) : ChangesBrowserNo
   }
 
   override fun shouldExpandByDefault(): Boolean = true
+}
+
+private fun TreeTable.changeHeaderColor() {
+  val defaultRenderer = tableHeader.defaultRenderer
+  tableHeader.defaultRenderer = TableCellRenderer { table, value, isSelected, hasFocus, row, column ->
+    defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column).apply {
+      foreground = UIUtil.getLabelInfoForeground()
+    }
+  }
 }
 
 private fun TreeTable.installNameDecorator(extra: (VirtualFile) -> String?) {
