@@ -26,6 +26,7 @@ import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -84,16 +85,17 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
     val workingDir: Path = tryResolvePath(sdkAssociatedModule.baseDir?.path)
                            ?: throw IllegalStateException("Can't determine working dir for the module")
 
+    val errorSink = ShowingMessageErrorSync.withProject(sdkAssociatedModule.project)
     val sdkSetupResult = if (envExists) {
       getUvEnv(venvsInModule)?.let {
         setupExistingEnvAndSdk(it, uv, workingDir, false)
       } ?: run {
         logger.warn("Can't find existing uv environment in project, but it was expected. " +
                     "Probably it was deleted. New environment will be created")
-        setupNewUvSdkAndEnv(uv, workingDir, null)
+        setupNewUvSdkAndEnv(uv, workingDir, null, errorSink)
       }
     }
-    else setupNewUvSdkAndEnv(uv, workingDir, null)
+    else setupNewUvSdkAndEnv(uv, workingDir, null, errorSink)
 
     sdkSetupResult.onSuccess {
       withContext(Dispatchers.EDT) {

@@ -52,7 +52,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
   }
 
   override fun createCenterPanel(): JComponent {
-    val errorSink = ShowingMessageErrorSync
+    val errorSink = ShowingMessageErrorSync.withProject(dialogPresenter.moduleOrProject.project)
 
     val rootPanel = panel {
       model = PythonLocalAddInterpreterModel(ProjectPathFlows.create(basePath), FileSystem.Eel(eelApi = localEel))

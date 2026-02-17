@@ -15,7 +15,10 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -279,13 +282,14 @@ private class MyService(val coroutineScope: CoroutineScope)
 internal suspend fun Sdk.getUvExecutionContext(project: Project? = null): UvExecutionContext<*>? =
   getUvExecutionContextAsync(service<MyService>().coroutineScope, project)?.await()
 
-suspend fun setupNewUvSdkAndEnv(uvExecutable: Path, workingDir: Path, version: Version?): PyResult<Sdk> =
+suspend fun setupNewUvSdkAndEnv(uvExecutable: Path, workingDir: Path, version: Version?, errorSink: ErrorSink): PyResult<Sdk> =
   setupNewUvSdkAndEnv(
     uvExecutable = PathHolder.Eel(uvExecutable),
     workingDir = workingDir,
     venvPath = null,
     fileSystem = FileSystem.Eel(localEel),
-    version = version
+    version = version,
+    errorSink = errorSink,
   )
 
 suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
@@ -294,6 +298,7 @@ suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   venvPath: P?,
   fileSystem: FileSystem<P>,
   version: Version?,
+  errorSink: ErrorSink,
 ): PyResult<Sdk> {
   val ops = createUvPathOperations(workingDir, venvPath, fileSystem)
 
@@ -302,7 +307,21 @@ suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
 
   val uv = createUvLowLevel(workingDir, createUvCli(mappedUvExecutable, fileSystem).getOr { return it }, fileSystem, venvPath)
   val pythonBinary = uv.initializeEnvironment(shouldInitProject, version).getOr { return it }
-  return setupExistingEnvAndSdk(pythonBinary, mappedUvExecutable, workingDir, venvPath, fileSystem, false)
+
+  val sdk = setupExistingEnvAndSdk(
+    pythonBinary = pythonBinary,
+    uvPath = mappedUvExecutable,
+    workingDir = workingDir,
+    venvPath = venvPath,
+    fileSystem = fileSystem,
+    usePip = false
+  ).getOr { return it }
+
+  if (!shouldInitProject) {
+    uv.sync().onFailure { errorSink.emit(it) }
+  }
+
+  return PyResult.success(sdk)
 }
 
 suspend fun setupExistingEnvAndSdk(

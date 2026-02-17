@@ -67,11 +67,6 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
     uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray())
       .getOr { return it }
 
-    if (!init) {
-      uvCli.runUv(cwd, venvPath, true, "sync")
-        .getOr { return it }
-    }
-
     // TODO PY-87712 Would be great to get rid of unsafe casts
     val path: P? = when (fileSystem) {
       is FileSystem.Eel -> {

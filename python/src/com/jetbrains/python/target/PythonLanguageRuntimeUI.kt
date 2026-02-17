@@ -67,7 +67,7 @@ class PythonLanguageRuntimeUI(
     mainPanel = PythonAddCustomInterpreter(
       model = model,
       module = module,
-      errorSink = ShowingMessageErrorSync,
+      errorSink = ShowingMessageErrorSync.withProject(project),
       limitExistingEnvironments = false,
       bestGuessCreateSdkInfo = CompletableDeferred(value = null)
     )

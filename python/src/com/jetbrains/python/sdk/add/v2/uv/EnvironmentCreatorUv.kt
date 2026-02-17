@@ -58,8 +58,10 @@ import kotlin.io.path.readText
  *               will navigate to the generic Python existing environment selector instead of the
  *               UV-specific selector if a .venv directory already exists.
  */
-internal fun PythonMutableTargetAddInterpreterModel<PathHolder.Eel>.uvCreator(module: Module?): EnvironmentCreatorUv<PathHolder.Eel> =
-  EnvironmentCreatorUv(this, module, ShowingMessageErrorSync)
+internal fun PythonMutableTargetAddInterpreterModel<PathHolder.Eel>.uvCreator(module: Module?): EnvironmentCreatorUv<PathHolder.Eel> {
+  val errorSink = module?.project?.let { ShowingMessageErrorSync.withProject(it) } ?: ShowingMessageErrorSync
+  return EnvironmentCreatorUv(this, module, errorSink)
+}
 
 internal class EnvironmentCreatorUv<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
@@ -185,6 +187,13 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
 
   override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
     val uv = toolExecutable.get()?.pathHolder!!
-    return setupNewUvSdkAndEnv(uv, moduleBasePath, model.uvViewModel.uvVenvPath.get()?.pathHolder, model.fileSystem, pythonVersion.get())
+    return setupNewUvSdkAndEnv(
+      uvExecutable = uv,
+      workingDir = moduleBasePath,
+      venvPath = model.uvViewModel.uvVenvPath.get()?.pathHolder,
+      fileSystem = model.fileSystem,
+      version = pythonVersion.get(),
+      errorSink = errorSink
+    )
   }
 }

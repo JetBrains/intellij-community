@@ -107,7 +107,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     custom = PythonAddCustomInterpreter(
       model = model,
       module = module,
-      errorSink = ShowingMessageErrorSync,
+      errorSink = module?.project?.let { ShowingMessageErrorSync.withProject(it) } ?: ShowingMessageErrorSync,
       limitExistingEnvironments = limitExistingEnvironments,
       bestGuessCreateSdkInfo = CompletableDeferred(value = null)
     )
