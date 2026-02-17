@@ -860,7 +860,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         RelativePoint point = new RelativePoint(component, new Point(component.getWidth() / 2, JBUIScale.scale(5)));
 
         String title = DiffBundle.message("merge.all.changes.processed.title.text");
-        @NlsSafe String message = XmlStringUtil.wrapInHtmlTag(DiffBundle.message("merge.all.changes.processed.message.text"), "a");
+        String messageKey = IterativeResolveSupport.hasIterativeData(myMergeRequest)
+                            ? "iterative.merge.all.changes.processed.message.text"
+                            : "merge.all.changes.processed.message.text";
+        @NlsSafe String message = XmlStringUtil.wrapInHtmlTag(DiffBundle.message(messageKey), "a");
         DiffBalloons.showSuccessPopup(title, message, point, this, () -> {
           if (isDisposed() || myLoadingPanel.isLoading()) return;
           doFinishMerge(MergeResult.RESOLVED, MergeResultSource.NOTIFICATION);
