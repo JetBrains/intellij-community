@@ -16,9 +16,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -62,15 +62,16 @@ private val TICK_MS = 4.milliseconds
 internal class EditorCaretMoveProcessor(private val coroutineScope: CoroutineScope, private val editor: EditorImpl) {
   private val lastPosMap = mutableMapOf<Caret, Pair<Point2D, LogicalPosition?>>()
   private val cursor = editor.myCaretCursor
-  private var animationJob: Job? = null
+  private var animationScope: CoroutineScope? = null
 
   private val setPositionRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       setPositionRequests.collectLatest { _ ->
-        if (!editor.isDisposed) {
-          animationJob = this@launch.launch {
+        coroutineScope {
+          if (!editor.isDisposed) {
+            animationScope = this
             runCatching {
               processRequest()
             }.getOrHandleException { e ->
@@ -90,13 +91,20 @@ internal class EditorCaretMoveProcessor(private val coroutineScope: CoroutineSco
     check(setPositionRequests.tryEmit(Unit))
   }
 
+  private fun previousPositionRectangles(updates: List<CaretUpdate>) = updates.mapNotNull {
+    val (pos, _) = lastPosMap[it.caret] ?: return@mapNotNull null
+
+    EditorImpl.CaretRectangle(pos, it.width, it.caret, it.isRtl)
+  }.toTypedArray()
+
   private suspend fun processRequest() {
     val animationDuration = Registry.intValue("editor.smooth.caret.duration")
 
     cursor.blinkOpacity = 1.0f
     cursor.startTime = System.currentTimeMillis() + animationDuration
 
-    val animationStates = calculateUpdates().map {
+    val updates = calculateUpdates()
+    val animationStates = updates.map {
       val (lastPos, lastVisualPosition) = lastPosMap.getOrPut(it.caret) {
         it.finalPos to it.finalLogicalPosition
       }
@@ -114,12 +122,7 @@ internal class EditorCaretMoveProcessor(private val coroutineScope: CoroutineSco
 
       var allDone = true
 
-      val oldRects = animationStates.mapNotNull {
-        val (pos, _) = lastPosMap[it.update.caret] ?: return@mapNotNull null
-
-        EditorImpl.CaretRectangle(pos, it.update.width, it.update.caret, it.update.isRtl)
-      }.toTypedArray()
-
+      val oldRects = previousPositionRectangles(updates)
       val interpolatedRects = animationStates.map { state ->
         val sameLogicalPosition = state.startLogicalPosition == state.update.finalLogicalPosition
         val isInAnimation = !sameLogicalPosition && t < 1
@@ -174,16 +177,18 @@ internal class EditorCaretMoveProcessor(private val coroutineScope: CoroutineSco
    * the ImmediatePainterTest to work.
    */
   fun setCursorPositionImmediately() {
-    animationJob?.cancel()
-    animationJob = null
+    animationScope?.cancel()
+    animationScope = null
 
     val animationStates = calculateUpdates()
+    val oldRects = previousPositionRectangles(animationStates)
     for (state in animationStates) {
       lastPosMap[state.caret] = state.finalPos to state.finalLogicalPosition
     }
     cursor.setPositions(animationStates.map { state ->
       EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl)
     }.toTypedArray())
+    cursor.repaint(oldRects)
   }
 }
 
