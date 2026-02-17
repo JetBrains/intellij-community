@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.merge.MergeConflictIterativeDataHolder
 import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeSession
+import com.intellij.openapi.vcs.merge.MergeUIUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
@@ -32,25 +33,43 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
+import com.intellij.ui.hover.TableHoverListener
+import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
+import java.awt.Color
+import java.awt.Component
 import java.awt.Graphics
+import java.awt.Rectangle
 import java.awt.event.ActionEvent
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLayer
 import javax.swing.JRootPane
+import javax.swing.JTable
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ListSelectionEvent
+import javax.swing.event.TableColumnModelEvent
+import javax.swing.event.TableColumnModelListener
 import javax.swing.plaf.LayerUI
+import javax.swing.table.TableCellRenderer
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
@@ -73,14 +92,19 @@ internal class IterativeMergeFlowDelegate(
 ) : MergeFlowDelegate {
 
   private lateinit var resolveAutomaticallyButton: JButton
-  private lateinit var acceptYoursButton: JButton
-  private lateinit var acceptTheirsButton: JButton
-  private lateinit var mergeButton: JButton
   private var wasResolveAutomaticallyPressedOnce = false
   private var isResolveAutomaticallyPressed = false
   private var isResolvingConflicts = false
 
   override fun createCenterPanel(): JComponent {
+    table.installButtonRenderer(iterativeDataHolder, getSelectedFiles = { state.selectedFiles }) { _, column ->
+      val resolution = when (column) {
+        1 -> MergeSession.Resolution.AcceptedYours
+        2 -> MergeSession.Resolution.AcceptedTheirs
+        else -> error("Invalid column index: $column")
+      }
+      acceptForResolution(resolution)
+    }
     table.toolTipTextProvider = { file ->
       iterativeDataHolder.getMergeConflictModel(file)?.let {
         VcsBundle.message("multiple.file.iterative.merge.tooltip", it.getResolvedChanges().size, it.getAllChanges().size)
@@ -125,6 +149,11 @@ internal class IterativeMergeFlowDelegate(
             .resizableColumn()
         }.resizableRow()
       }
+    }.apply {
+      // If the width is smaller than this, then buttons don't render properly
+      minimumSize = JBUI.size(550, 240)
+
+      preferredSize = JBUI.size(preferredSize.width, if (files.size <= 6) 400 else 500)
     }
   }
 
@@ -340,6 +369,138 @@ private fun TreeTable.installNameDecorator(extra: (VirtualFile) -> String?) {
       }
     }
     component
+  }
+}
+
+private data class ButtonRectKey(val row: Int, val column: Int)
+
+private const val ROW_HEIGHT = 28
+
+private fun MergeConflictsTreeTable.installButtonRenderer(
+  iterativeDataHolder: MergeConflictIterativeDataHolder,
+  getSelectedFiles: () -> List<VirtualFile>,
+  onButtonClick: (row: Int, column: Int) -> Unit,
+) {
+  // Default is 22, need to make it a tiny bit bigger so the button is nicely shown
+  tree.rowHeight = JBUI.scale(ROW_HEIGHT)
+  // If smaller than this, the buttons are not rendered properly
+  minimumColumnWidth = JBUI.scale(188)
+
+  val inlineButtonRects = mutableMapOf<ButtonRectKey, Rectangle>()
+  val table = this
+  TableHoverListener.DEFAULT.addTo(table)
+
+  val inlineRenderer = InlineButtonRenderer(table,
+                                            iterativeDataHolder,
+                                            getSelectedFiles,
+                                            inlineButtonRects,
+                                            getHoveredRow = { TableHoverListener.getHoveredRow(table) })
+  val colCount = table.columnModel.columnCount
+  if (colCount > 1) table.columnModel.getColumn(1).cellRenderer = inlineRenderer
+  if (colCount > 2) table.columnModel.getColumn(2).cellRenderer = inlineRenderer
+
+  // Click handler: trigger only if the click is inside the cached button rect
+  table.addMouseListener(object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+      if (!table.isEnabled) return
+      val row = table.rowAtPoint(e.point)
+      val column = table.columnAtPoint(e.point)
+
+      val cellRect = table.getCellRect(row, column, false)
+      val localX = e.x - cellRect.x
+      val localY = e.y - cellRect.y
+      if (inlineButtonRects[ButtonRectKey(row = row, column = column)]?.contains(localX, localY) == true) {
+        onButtonClick(row, column)
+      }
+    }
+  })
+
+  // Cache invalidation on resize (both per-column and whole table) and on data changes
+  table.columnModel.addColumnModelListener(object : TableColumnModelListener {
+    override fun columnMarginChanged(e: ChangeEvent?) {
+      inlineButtonRects.clear()
+    }
+
+    override fun columnAdded(e: TableColumnModelEvent?) {
+      inlineButtonRects.clear()
+    }
+
+    override fun columnRemoved(e: TableColumnModelEvent?) {
+      inlineButtonRects.clear()
+    }
+
+    override fun columnMoved(e: TableColumnModelEvent?) {
+      inlineButtonRects.clear()
+    }
+
+    override fun columnSelectionChanged(e: ListSelectionEvent?) { /* no-op */
+    }
+  })
+  table.addComponentListener(object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent) {
+      inlineButtonRects.clear()
+    }
+  })
+  (table.model)?.addTableModelListener { inlineButtonRects.clear() }
+}
+
+private class InlineButtonRenderer(
+  private val table: MergeConflictsTreeTable,
+  private val iterativeDataHolder: MergeConflictIterativeDataHolder,
+  private val getSelectedFiles: () -> List<VirtualFile>,
+  private val inlineButtonRects: MutableMap<ButtonRectKey, Rectangle>,
+  private val getHoveredRow: () -> Int,
+) : TableCellRenderer {
+
+  private lateinit var label: JLabel
+  private lateinit var button: JButton
+  private val panel = panel {
+    row {
+      label = label("").component
+      button = button(CommonBundle.message("button.accept"), actionListener = {
+        // Not working here because the cells are not editable by default,
+        // and even when making them editable, it first requires a click to enter edit mode
+        // and then another one to actually trigger the button action
+      }).applyToComponent {
+        putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+        putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.NONE)
+        putClientProperty("ActionToolbar.smallVariant", true)
+      }.component
+    }
+  }
+
+  override fun getTableCellRendererComponent(
+    jTable: JTable,
+    value: Any?,
+    isSelected: Boolean,
+    hasFocus: Boolean,
+    row: Int,
+    column: Int,
+  ): Component {
+    label.text = value?.toString().orEmpty()
+
+    val hoveredRow = getHoveredRow()
+    val someRowHovered = hoveredRow != -1
+    val isHovered = hoveredRow == row
+    val file = MergeUIUtil.getFileAtRow(jTable, row)
+    val selectedFiles = getSelectedFiles()
+    val showBySelection = selectedFiles.size == 1 && file == selectedFiles.first()
+
+    button.apply {
+      isVisible =
+        file?.isDirectory == false && !iterativeDataHolder.isFileResolved(file) && if (someRowHovered) isHovered else showBySelection
+      isEnabled = table.isEnabled
+    }
+
+    panel.background = RenderingUtil.getBackground(table, isSelected)
+    panel.foreground = RenderingUtil.getForeground(table, isSelected)
+
+    panel.doLayout()
+    if (button.isVisible) {
+      inlineButtonRects[ButtonRectKey(row, column)] = Rectangle(button.bounds)
+    }
+
+    return panel
   }
 }
 

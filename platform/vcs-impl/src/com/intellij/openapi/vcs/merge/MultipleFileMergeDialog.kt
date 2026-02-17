@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge
 
+import com.intellij.CommonBundle
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.diff.DiffManager
 import com.intellij.diff.DiffRequestFactory
@@ -28,6 +29,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ColumnName
@@ -184,10 +186,7 @@ open class MultipleFileMergeDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    return mergeFlowDelegate.createCenterPanel().apply {
-      // Temporary workaround for IDEA-302779
-      minimumSize = JBUI.size(200, 150)
-    }
+    return mergeFlowDelegate.createCenterPanel()
   }
 
   private fun updateButtonState() {
@@ -357,6 +356,19 @@ open class MultipleFileMergeDialog(
     filesWithModel: List<Pair<VirtualFile, MergeConflictModel>>,
     resolution: MergeSession.Resolution,
   ) {
+    if (filesWithModel.isEmpty()) return
+    if (filesWithModel.any { (_,model) ->
+        model.getResolvedChanges().isNotEmpty()
+      }) {
+      val confirmed = MessageDialogBuilder
+        .yesNo(VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.title", resolution.presentableName),
+               VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.message"))
+        .yesText(CommonBundle.message("button.accept"))
+        .noText(CommonBundle.getCancelButtonText())
+        .icon(Messages.getQuestionIcon())
+        .ask(project)
+      if (!confirmed) return
+    }
     filesWithModel.forEach { (file, model) ->
       acceptRevisionForFileIterativeResolution(file, model, resolution)
     }
@@ -393,10 +405,8 @@ open class MultipleFileMergeDialog(
     }
 
     val isCurrent = resolution == MergeSession.Resolution.AcceptedYours
-    val message = if (isCurrent) VcsBundle.message("multiple.file.merge.dialog.command.name.accept.yours")
-    else VcsBundle.message("multiple.file.merge.dialog.command.name.accept.theirs")
 
-    writeCommandAction(project).withName(message).run<Exception> {
+    writeCommandAction(project).withName(resolution.presentableName).run<Exception> {
       if (isCurrent) {
         file.setBinaryContent(data.CURRENT)
       }
@@ -749,3 +759,10 @@ private data class ConflictData(
   val contentTitles: List<@NlsContexts.Label String?>,
   val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList,
 )
+
+private val MergeSession.Resolution.presentableName: @Nls String
+  get() = when (this) {
+    MergeSession.Resolution.Merged -> TODO()
+    MergeSession.Resolution.AcceptedYours -> VcsBundle.message("multiple.file.merge.dialog.command.name.accept.yours")
+    MergeSession.Resolution.AcceptedTheirs -> VcsBundle.message("multiple.file.merge.dialog.command.name.accept.theirs")
+  }
