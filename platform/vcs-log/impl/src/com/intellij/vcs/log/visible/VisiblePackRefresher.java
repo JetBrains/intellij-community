@@ -26,7 +26,7 @@ public interface VisiblePackRefresher extends Disposable {
 
   void onGraphOptionsChange(@NotNull PermanentGraph.Options graphOptions);
 
-  void moreCommitsNeeded(@NotNull Runnable onLoaded);
+  void moreCommitsNeeded();
 
   boolean isValid();
 }

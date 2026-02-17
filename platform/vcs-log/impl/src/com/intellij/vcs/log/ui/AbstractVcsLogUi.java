@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
@@ -85,8 +84,8 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
   @Override
   public abstract @NotNull VcsLogGraphTable getTable();
 
-  public void requestMore(@NotNull Runnable onLoaded) {
-    VcsLogUtil.requestToLoadMore(this, onLoaded);
+  public void requestMore() {
+    VcsLogUtil.requestToLoadMore(this);
     getTable().setPaintBusy(true);
   }
 
@@ -154,7 +153,6 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
       VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (VcsLogUtil.canRequestMore(myVisiblePack)) {
-      VcsLogUtil.requestToLoadMore(this, EmptyRunnable.INSTANCE);
       VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myLogData.getGraphData() != myVisiblePack.getDataPack() ||

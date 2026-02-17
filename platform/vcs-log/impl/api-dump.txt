@@ -625,7 +625,7 @@ a:com.intellij.vcs.log.ui.AbstractVcsLogUi
 - p:handleCommitNotFound(java.lang.Object,Z,java.util.function.BiFunction):V
 - jumpTo(java.lang.Object,java.util.function.BiFunction,com.google.common.util.concurrent.SettableFuture,Z,Z):V
 - pa:onVisiblePackUpdated(Z):V
-- requestMore(java.lang.Runnable):V
+- requestMore():V
 - setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
 com.intellij.vcs.log.ui.VcsLogColorManager
 - getLongName(com.intellij.openapi.vcs.FilePath):java.lang.String
@@ -1197,7 +1197,7 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:isProjectLog(com.intellij.openapi.project.Project,java.util.Map):Z
 - s:isProjectLogForVcs(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.vcs.AbstractVcs):Z
 - s:isRegexp(java.lang.String):Z
-- s:requestToLoadMore(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.Runnable):V
+- s:requestToLoadMore(com.intellij.vcs.log.ui.VcsLogUiEx):V
 - s:runWhenVcsAndLogIsReady(com.intellij.openapi.project.Project,com.intellij.util.Consumer):V
 f:com.intellij.vcs.log.visible.CommitCountStage
 - sf:ALL:com.intellij.vcs.log.visible.CommitCountStage
@@ -1255,7 +1255,7 @@ com.intellij.vcs.log.visible.VisiblePackRefresher
 - com.intellij.openapi.Disposable
 - a:addVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - a:isValid():Z
-- a:moreCommitsNeeded(java.lang.Runnable):V
+- a:moreCommitsNeeded():V
 - a:onFiltersChange(com.intellij.vcs.log.VcsLogFilterCollection):V
 - a:onGraphOptionsChange(com.intellij.vcs.log.graph.PermanentGraph$Options):V
 - a:onRefresh():V
@@ -1269,7 +1269,7 @@ c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - addVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - dispose():V
 - isValid():Z
-- moreCommitsNeeded(java.lang.Runnable):V
+- moreCommitsNeeded():V
 - onFiltersChange(com.intellij.vcs.log.VcsLogFilterCollection):V
 - onGraphOptionsChange(com.intellij.vcs.log.graph.PermanentGraph$Options):V
 - onRefresh():V

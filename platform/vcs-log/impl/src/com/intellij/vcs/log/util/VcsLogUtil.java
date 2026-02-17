@@ -432,12 +432,11 @@ public final class VcsLogUtil {
    * Requests to load more filtered commits.
    *
    * @param ui       target {@link VcsLogUiEx} instance.
-   * @param onLoaded will be called upon task completion on the EDT.
    * @see VcsLogUtil#canRequestMore(VisiblePack)
    */
-  public static void requestToLoadMore(@NotNull VcsLogUiEx ui, @NotNull Runnable onLoaded) {
+  public static void requestToLoadMore(@NotNull VcsLogUiEx ui) {
     MORE_REQUESTED.set(ui.getDataPack(), true);
-    ui.getRefresher().moreCommitsNeeded(onLoaded);
+    ui.getRefresher().moreCommitsNeeded();
   }
 
   /**

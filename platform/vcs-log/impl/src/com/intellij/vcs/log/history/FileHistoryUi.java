@@ -3,7 +3,6 @@ package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.notification.NotificationAction;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -115,7 +114,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myFilterUi.setVisiblePack(pack);
 
     if (pack.getCanRequestMore()) {
-      requestMore(EmptyRunnable.INSTANCE);
+      requestMore();
     }
   }
 
