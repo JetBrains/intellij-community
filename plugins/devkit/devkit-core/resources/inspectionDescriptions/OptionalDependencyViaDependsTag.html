@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports cases when a plugin declares an option dependency on another plugin using a `depends` tag.
+Reports cases when a plugin declares an optional dependency on another plugin using a `depends` tag.
 <p>
   Experimental <a href="https://plugins.jetbrains.com/docs/intellij/modular-plugins.html">modular plugins</a> provide a different way to
   load a part of the plugin only if another plugin is loaded: move corresponding classes and resources to a separate module and register it
@@ -9,7 +9,7 @@ Reports cases when a plugin declares an option dependency on another plugin usin
   that separate module.
 </p>
 <p>
-  Give that modular plugins are experimental for now, it's recommended to migrate optional dependencies to use plugin content modules
+  Given that modular plugins are experimental for now, it's recommended to migrate optional dependencies to use plugin content modules
   only for plugins in the IntelliJ monorepo.
 </p>
 </body>
