@@ -148,7 +148,6 @@
     "text-muted": "gray-70",
     "text-secondary": "gray-90",
     "text-disabled": "gray-110",
-    "text-bright": "white",
     "text-over-accent": "white",
     "text-over-accent-inverted": "black",
     "text-link": "blue-70",
@@ -172,22 +171,20 @@
 
     "accent-brand-bg": "blue-90",
     "accent-brand-border": "blue-90",
-    "accent-brand-bg-muted": "blue-130",
-    "accent-brand-border-muted": "blue-110",
+    "accent-brand-bg-secondary": "blue-130",
+    "accent-brand-border-secondary": "blue-110",
     "accent-error-bg": "red-90",
     "accent-error-border": "red-90",
-    "accent-error-bg-muted": "red-130",
-    "accent-error-border-muted": "red-110",
-    "accent-error-border-secondary": "red-120",
+    "accent-error-bg-secondary": "red-130",
+    "accent-error-border-secondary": "red-110",
     "accent-warning-bg": "yellow-90",
     "accent-warning-border": "yellow-90",
-    "accent-warning-bg-muted": "yellow-130",
-    "accent-warning-border-muted": "yellow-110",
-    "accent-warning-border-secondary": "yellow-120",
+    "accent-warning-bg-secondary": "yellow-130",
+    "accent-warning-border-secondary": "yellow-110",
     "accent-success-bg": "green-90",
     "accent-success-border": "green-90",
-    "accent-success-bg-muted": "green-130",
-    "accent-success-border-muted": "green-110",
+    "accent-success-bg-secondary": "green-130",
+    "accent-success-border-secondary": "green-110",
     "accent-neutral-bg": "gray-90",
 
     "core-bg-transparent-hovered": "transparent-white-20",
@@ -215,13 +212,13 @@
     "container-main-window-bg-alt": "gray-130",
     "container-main-window-border": "layer-2-border",
 
-    "control-bg": "gray-160",
-    "control-bg-disabled": "gray-160",
+    "control-bg": "container-dialog-bg",
+    "control-bg-disabled": "container-dialog-bg",
     "control-bg-raised": "gray-140",
     "control-border": "gray-120",
     "control-border-disabled": "gray-130",
     "control-border-raised": "gray-100",
-    "control-border-transparent": "transparent-white-50",
+    "control-border-over-accent": "transparent-white-50",
     "control-bg-small": "gray-120",
     "control-bg-small-disabled": "gray-130",
     "control-border-small": "gray-100",
@@ -229,28 +226,41 @@
     "control-brand-border": "accent-brand-border",
     "control-error-bg": "accent-error-bg",
     "control-error-border": "accent-error-border",
-    "control-error-border-secondary": "accent-error-border-secondary",
+    "control-error-border-secondary": "red-120",
     "control-warning-bg": "accent-warning-bg",
     "control-warning-border": "accent-warning-border",
-    "control-warning-border-secondary": "accent-warning-border-secondary",
+    "control-warning-border-secondary": "yellow-120",
     "control-success-bg": "accent-success-bg",
     "control-success-border": "accent-success-border",
-
-    "control-selected-bg": "blue-110",
-    "control-selected-bg-hovered": "blue-100",
 
     "toolbar-bg-hovered": "core-bg-transparent-hovered",
     "toolbar-bg-pressed": "core-bg-transparent-pressed",
     "toolbar-border": "core-border-transparent",
-
-    "selection-bg-active": "blue-120",
-    "selection-bg-muted": "blue-130",
-    "selection-bg-inactive": "gray-130",
-    "selection-bg-hovered": "transparent-white-10",
+    "toolbar-selected-bg": "blue-110",
+    "toolbar-selected-bg-hovered": "blue-100",
+    "toolbar-selected-bg-active": "accent-brand-bg",
+    "toolbar-selected-bg-inactive": "core-bg-transparent-pressed",
+    "toolbar-run-bg": "accent-success-bg",
+    "toolbar-run-bg-hovered": "green-100",
+    "toolbar-stop-bg": "accent-error-bg",
+    "toolbar-stop-bg-hovered": "red-100",
 
     "feedback-bg": "layer-2-bg",
     "feedback-border": "layer-2-bg",
     "feedback-bg-inline": "layer-0-bg",
+    "feedback-brand-bg": "accent-brand-bg-secondary",
+    "feedback-brand-border": "accent-brand-border-secondary",
+    "feedback-success-bg": "accent-success-bg-secondary",
+    "feedback-success-border": "accent-success-border-secondary",
+    "feedback-warning-bg": "accent-warning-bg-secondary",
+    "feedback-warning-border": "accent-warning-border-secondary",
+    "feedback-error-bg": "accent-error-bg-secondary",
+    "feedback-error-border": "accent-error-border-secondary",
+
+    "selection-bg-active": "blue-120",
+    "selection-bg-active-muted": "blue-130",
+    "selection-bg-inactive": "gray-130",
+    "selection-bg-hovered": "transparent-white-10",
 
     "tab-selected-bg-active": "blue-130",
     "tab-selected-bg-inactive": "gray-140",
@@ -263,12 +273,13 @@
     "got-it-text-link": "blue-60",
 
     "editor-floating-toolbar-bg": "layer-2-bg",
+    "popup-completion-match-text": "blue-80",
     "presentation-assistant-bg": "blue-110",
     "search-match-bg": "#BA9752",
     "tree-indent-guide-border": "gray-130",
 
     "icon-default-stroke": "gray-50",
-    "icon-default-over-accent": "white",
+    "icon-over-accent": "white",
     "icon-green-stroke": "green-80",
 
     "grad-hor-left": "#2B2C3133",
@@ -344,7 +355,7 @@
       "disabledBorderColor": "control-border-disabled",
 
       "selectionBackground": "selection-bg-active",
-      "lightSelectionBackground": "selection-bg-muted",
+      "lightSelectionBackground": "selection-bg-active-muted",
       "selectionForeground": "text-default",
       "selectionInactiveForeground": "text-default",
       "selectionInactiveBackground": "selection-bg-inactive",
@@ -360,7 +371,7 @@
       "underlineColor": "control-brand-bg",
       "inactiveUnderlineColor": "control-bg-small",
 
-      "focusColor": "accent-brand-border",
+      "focusColor": "control-brand-border",
 
       "separatorColor": "container-popup-border",
       "separatorForeground": "text-secondary",
@@ -403,7 +414,7 @@
       "hoverBorderColor": "transparent",
       "pressedBackground": "toolbar-bg-pressed",
       "pressedBorderColor": "transparent",
-      "focusedBorderColor": "accent-brand-border",
+      "focusedBorderColor": "control-brand-border",
       "hoverSeparatorColor": "toolbar-border"
     },
 
@@ -411,18 +422,18 @@
 
     "Badge": {
       "greenOutlineForeground": "text-success",
-      "greenOutlineBorderColor": "accent-success-border"
+      "greenOutlineBorderColor": "control-success-border"
     },
 
     "Banner": {
-      "errorBackground": "accent-error-bg-muted",
-      "errorBorderColor": "accent-error-border-muted",
-      "warningBackground": "accent-warning-bg-muted",
-      "warningBorderColor": "accent-warning-border-muted",
-      "successBackground": "accent-success-bg-muted",
-      "successBorderColor": "accent-success-border-muted",
-      "infoBackground": "accent-brand-bg-muted",
-      "infoBorderColor": "accent-brand-border-muted",
+      "errorBackground": "feedback-error-bg",
+      "errorBorderColor": "feedback-error-border",
+      "warningBackground": "feedback-warning-bg",
+      "warningBorderColor": "feedback-warning-border",
+      "successBackground": "feedback-success-bg",
+      "successBorderColor": "feedback-success-border",
+      "infoBackground": "feedback-brand-bg",
+      "infoBorderColor": "feedback-brand-border",
       "arc": 12,
       "arc.compact": 8
     },
@@ -435,7 +446,7 @@
     "Bookmark": {
       "Mnemonic.iconForeground": "text-default",
       "MnemonicAvailable.borderColor": "control-border",
-      "MnemonicAssigned.background": "accent-warning-bg",
+      "MnemonicAssigned.background": "control-warning-bg",
       "MnemonicAssigned.foreground": "text-over-accent",
       "MnemonicCurrent.background": "control-brand-bg"
     },
@@ -468,7 +479,7 @@
       },
       "Split": {
         "default": {
-          "iconColor": "icon-default-over-accent",
+          "iconColor": "icon-over-accent",
           "separatorColor": "blue-70"
         }
       }
@@ -484,7 +495,7 @@
       "selectedStartBorderColor": "control-border-raised",
       "selectedEndBorderColor": "control-border-raised",
       "selectedButtonColor": "control-bg-raised",
-      "focusedSelectedButtonColor": "control-selected-bg"
+      "focusedSelectedButtonColor": "toolbar-selected-bg"
     },
 
     "ComboBox": {
@@ -527,7 +538,7 @@
       "background": "core-bg-transparent-hovered"
     },
 
-    "ComboPopup.border": "1,1,1,1,#4C5158",
+    "ComboPopup.border": "1,1,1,1,#4C4F56",
 
     "Counter": {
       "background": "accent-neutral-bg",
@@ -563,14 +574,14 @@
       "arrowAreaWidth": "28",
       "borderColor": "control-border",
       "focusedBorderColor": "container-dialog-bg",
-      "errorFocusColor": "accent-error-border",
-      "inactiveErrorFocusColor": "accent-error-border-secondary",
-      "warningFocusColor": "accent-warning-border",
-      "inactiveWarningFocusColor": "accent-warning-border-secondary"
+      "errorFocusColor": "control-error-border",
+      "inactiveErrorFocusColor": "control-error-border-secondary",
+      "warningFocusColor": "control-warning-border",
+      "inactiveWarningFocusColor": "control-warning-border-secondary"
     },
 
     "DragAndDrop": {
-      "borderColor": "accent-brand-border",
+      "borderColor": "control-brand-border",
       "rowBackground": "#3573F026",
       "areaBackground": "#FFFFFF10"
     },
@@ -608,12 +619,12 @@
       "ToolTip": {
         "background": "container-popup-bg",
         "border": "container-popup-border",
-        "errorBackground": "accent-error-bg-muted",
-        "errorBorder": "accent-error-border-muted",
-        "successBackground": "accent-success-bg-muted",
-        "successBorder": "accent-success-border-muted",
-        "warningBackground": "accent-warning-bg-muted",
-        "warningBorder": "accent-warning-border-muted",
+        "errorBackground": "feedback-error-bg",
+        "errorBorder": "feedback-error-border",
+        "successBackground": "feedback-success-bg",
+        "successBorder": "feedback-success-border",
+        "warningBackground": "feedback-warning-bg",
+        "warningBorder": "feedback-warning-border",
         "iconHoverBackground": "toolbar-bg-hovered",
         "selectionBackground": "#2B2D30"
       }
@@ -631,7 +642,7 @@
       "pressedForeground": "text-link",
       "visitedForeground": "text-link",
       "secondaryForeground": "text-link",
-      "focusedBorderColor": "accent-brand-border"
+      "focusedBorderColor": "control-brand-border"
     },
 
     "List": {
@@ -738,10 +749,10 @@
         "errorForeground": "text-default",
         "warningForeground": "text-default",
         "informativeForeground": "text-default",
-        "errorBackground": "accent-error-bg-muted",
-        "errorBorderColor": "accent-error-border-muted",
-        "warningBackground": "accent-warning-bg-muted",
-        "warningBorderColor": "accent-warning-border-muted",
+        "errorBackground": "feedback-error-bg",
+        "errorBorderColor": "feedback-error-border",
+        "warningBackground": "feedback-warning-bg",
+        "warningBorderColor": "feedback-warning-border",
         "informativeBackground": "feedback-bg",
         "informativeBorderColor": "feedback-border"
       },
@@ -765,8 +776,8 @@
       "hoverBackground": "selection-bg-hovered",
       "Button": {
         "installFillForeground": "text-over-accent",
-        "installFillBackground": "accent-success-bg",
-        "installBorderColor": "accent-success-border",
+        "installFillBackground": "control-success-bg",
+        "installBorderColor": "control-success-border",
         "installForeground": "text-success",
         "updateBackground": "control-brand-bg",
         "updateBorderColor": "control-brand-bg",
@@ -774,9 +785,9 @@
       },
       "tagForeground": "text-muted",
       "tagBackground": "gray-130",
-      "paidTagBackground": "accent-brand-bg-muted",
-      "trialTagBackground": "accent-success-bg-muted",
-      "eapTagBackground": "accent-error-bg-muted"
+      "paidTagBackground": "accent-brand-bg-secondary",
+      "trialTagBackground": "accent-success-bg-secondary",
+      "eapTagBackground": "accent-error-bg-secondary"
     },
 
     "Popup": {
@@ -819,7 +830,7 @@
 
     "CompletionPopup": {
       "foreground": "editor-text",
-      "matchForeground": "blue-80",
+      "matchForeground": "popup-completion-match-text",
       "Advertiser": {
         "foreground": "text-secondary",
         "background": "container-popup-bg",
@@ -879,7 +890,7 @@
 
     "SearchField": {
       "errorForeground": "text-error",
-      "errorBackground": "accent-error-bg-muted"
+      "errorBackground": "feedback-error-bg"
     },
 
     "SearchFieldWithExtension": {
@@ -892,9 +903,9 @@
     },
 
     "SearchOption": {
-      "selectedBackground": "control-selected-bg",
-      "selectedHoveredBackground": "control-selected-bg-hovered",
-      "selectedPressedBackground": "control-selected-bg-hovered"
+      "selectedBackground": "toolbar-selected-bg",
+      "selectedHoveredBackground": "toolbar-selected-bg-hovered",
+      "selectedPressedBackground": "toolbar-selected-bg-hovered"
     },
 
     "Slider": {
@@ -988,7 +999,7 @@
       "stepForeground": "blue-70",
       "secondaryActionForeground": "got-it-text-link",
       "shortcutForeground": "text-default",
-      "shortcutBackground": "accent-brand-bg-muted",
+      "shortcutBackground": "accent-brand-bg-secondary",
       "codeForeground": "text-default",
       "codeBackground": "got-it-bg",
       "codeBorderColor": "#FFFFFF70",
@@ -998,28 +1009,28 @@
       "imageBorderColor": "feedback-border",
       "animationBackground": "#1E1F22",
       "iconFillColor": "got-it-bg",
-      "iconBorderColor": "icon-default-over-accent",
+      "iconBorderColor": "icon-over-accent",
       "Button": {
         "foreground": "text-default",
         "startBackground": "transparent",
         "endBackground": "transparent",
-        "startBorderColor": "control-border-transparent",
-        "endBorderColor": "control-border-transparent",
-        "contrastBackground": "accent-brand-bg-muted"
+        "startBorderColor": "control-border-over-accent",
+        "endBorderColor": "control-border-over-accent",
+        "contrastBackground": "accent-brand-bg-secondary"
       }
     },
 
     "ValidationTooltip": {
-      "errorBackground": "accent-error-bg-muted",
-      "errorBorderColor": "accent-error-border-muted",
+      "errorBackground": "feedback-error-bg",
+      "errorBorderColor": "feedback-error-border",
       "errorForeground": "text-default",
-      "warningBackground": "accent-warning-bg-muted",
-      "warningBorderColor": "accent-warning-border-muted",
+      "warningBackground": "feedback-warning-bg",
+      "warningBorderColor": "feedback-warning-border",
       "warningForeground": "text-default"
     },
 
     "ToggleButton": {
-      "onBackground": "accent-success-bg-muted",
+      "onBackground": "accent-success-bg-secondary",
       "onForeground": "text-success",
       "offBackground": "layer-0-bg",
       "offForeground": "text-secondary",
@@ -1040,11 +1051,11 @@
       },
       "Button": {
         "foreground": "text-muted",
-        "selectedForeground": "white",
+        "selectedForeground": "icon-over-accent",
         "selectedBackground": "control-brand-bg",
         "DragAndDrop" : {
           "buttonDropBackground": "#3671E580",
-          "buttonDropBorderColor": "accent-brand-border",
+          "buttonDropBorderColor": "control-brand-border",
           "buttonFloatingBackground": "control-bg-small"
         }
       },
@@ -1053,7 +1064,7 @@
         "borderColor": "transparent",
         "separatorColor": "toolbar-border",
         "DragAndDrop": {
-          "separatorColor": "accent-brand-border"
+          "separatorColor": "control-brand-border"
         }
       },
       "DragAndDrop": {
@@ -1218,11 +1229,11 @@
       "linkForeground": "got-it-text-link",
       "linkUnderlineDefaultColor": "got-it-text-link",
       "linkUnderlineHoveredColor": "got-it-text-link",
-      "spanBackground": "accent-brand-bg-muted",
+      "spanBackground": "accent-brand-bg-secondary",
       "spanForeground": "text-default",
       "codeBorderColor": "#FFFFFF70",
       "iconFillColor": "got-it-bg",
-      "iconBorderColor": "icon-default-over-accent"
+      "iconBorderColor": "icon-over-accent"
     },
 
     "RecentProject": {
@@ -1545,9 +1556,9 @@
     "RunWidget" : {
       "iconColor": "icon-default-stroke",
       "runIconColor": "icon-green-stroke",
-      "runningBackground": "accent-success-bg",
-      "stopBackground": "accent-error-bg",
-      "runningIconColor": "icon-default-over-accent",
+      "runningBackground": "toolbar-run-bg",
+      "stopBackground": "toolbar-stop-bg",
+      "runningIconColor": "icon-over-accent",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028"
     },
@@ -1614,7 +1625,7 @@
       "currentOverloadBackground": "selection-bg-active",
       "borderColor": "feedback-border",
       "foreground": "text-default",
-      "currentParameterForeground": "text-bright",
+      "currentParameterForeground": "text-over-accent",
       "disabledForeground": "text-secondary",
       "infoForeground": "text-muted",
       "lineSeparatorColor": "feedback-border"
