@@ -29,6 +29,10 @@ data class ProjectId(private val id: UID) {
     return id.toString()
   }
 
+  override fun toString(): String {
+    return "ProjectId#$id"
+  }
+
   companion object {
     /**
      * Creates a new unique identifier for a [Project]
