@@ -9592,7 +9592,7 @@
     {
       "name": "screen.forwarding.common.settings",
       "scope": "app",
-      "pluginId": "com.jetbrains.remote.development",
+      "pluginId": "com.jetbrains.remoteDevelopment",
       "classFqn": "com.jetbrains.rd.platform.codeWithMe.screenForwarding.ScreenForwardingCommonSettings",
       "storage": "screenForwardingSettings.xml",
       "properties": [
@@ -9606,7 +9606,7 @@
     {
       "name": "screen.forwarding.settings",
       "scope": "app",
-      "pluginId": "com.jetbrains.remote.development",
+      "pluginId": "com.jetbrains.remoteDevelopment",
       "classFqn": "com.jetbrains.rdserver.screenForwarding.ScreenForwardingHostSettings",
       "storage": "screenForwarding.xml",
       "properties": [
