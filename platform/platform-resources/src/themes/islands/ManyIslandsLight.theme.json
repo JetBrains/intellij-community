@@ -239,7 +239,6 @@
     "toolbar-selected-bg": "blue-30",
     "toolbar-selected-bg-hovered": "blue-40",
     "toolbar-selected-bg-active": "accent-brand-bg",
-    "toolbar-selected-bg-inactive": "core-bg-transparent-pressed",
     "toolbar-run-bg": "accent-success-bg",
     "toolbar-run-bg-hovered": "green-90",
     "toolbar-stop-bg": "accent-error-bg",
@@ -268,6 +267,13 @@
     "tab-selected-border-inactive": "gray-40",
     "tab-bg-hovered": "core-bg-transparent-hovered",
     "tab-file-color-mask-bg": "#FFFFFF80",
+
+    "inlay-bg": "transparent-black-20",
+    "inlay-border": "transparent-black-50",
+
+    "toggle-off-bg": "gray-10",
+    "toggle-button-bg": "gray-50",
+    "toggle-border": "gray-50",
 
     "editor-floating-toolbar-bg": "layer-0-bg",
     "popup-completion-match-text": "blue-100",
@@ -520,13 +526,13 @@
 
     "Shortcut": {
       "foreground": "text-muted",
-      "borderColor": "control-border-small",
+      "borderColor": "inlay-border",
       "backgroundOpacity": 0
     },
 
     "Abbreviation": {
       "foreground": "text-muted",
-      "background": "core-bg-transparent-hovered"
+      "background": "inlay-bg"
     },
 
     "ComboPopup.border": {
@@ -1012,6 +1018,15 @@
       "warningForeground": "text-default"
     },
 
+    "ToggleButton": {
+      "onBackground": "control-success-bg",
+      "onForeground": "text-over-accent",
+      "offBackground": "toggle-off-bg",
+      "offForeground": "text-secondary",
+      "buttonColor": "toggle-button-bg",
+      "borderColor": "toggle-border"
+    },
+
     "ToolWindow": {
       "background": "container-tool-window-bg",
       "borderColor": "transparent",
@@ -1027,7 +1042,7 @@
       "Button": {
         "foreground": "text-muted",
         "selectedForeground": "icon-over-accent",
-        "selectedBackground": "control-brand-bg",
+        "selectedBackground": "toolbar-selected-bg-active",
         "DragAndDrop" : {
           "buttonDropBackground": "#3671E540",
           "buttonDropBorderColor": "control-brand-border",

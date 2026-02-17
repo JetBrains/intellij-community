@@ -239,7 +239,6 @@
     "toolbar-selected-bg": "blue-110",
     "toolbar-selected-bg-hovered": "blue-100",
     "toolbar-selected-bg-active": "accent-brand-bg",
-    "toolbar-selected-bg-inactive": "core-bg-transparent-pressed",
     "toolbar-run-bg": "accent-success-bg",
     "toolbar-run-bg-hovered": "green-100",
     "toolbar-stop-bg": "accent-error-bg",
@@ -271,6 +270,13 @@
 
     "got-it-bg": "blue-110",
     "got-it-text-link": "blue-60",
+
+    "inlay-bg": "transparent-white-30",
+    "inlay-border": "transparent-white-50",
+
+    "toggle-off-bg": "gray-160",
+    "toggle-button-bg": "gray-100",
+    "toggle-border": "gray-100",
 
     "editor-floating-toolbar-bg": "layer-2-bg",
     "popup-completion-match-text": "blue-80",
@@ -529,13 +535,13 @@
 
     "Shortcut": {
       "foreground": "text-muted",
-      "borderColor": "control-border-small",
+      "borderColor": "inlay-border",
       "backgroundOpacity": 0
     },
 
     "Abbreviation": {
       "foreground": "text-muted",
-      "background": "core-bg-transparent-hovered"
+      "background": "inlay-bg"
     },
 
     "ComboPopup.border": "1,1,1,1,#4C4F56",
@@ -1030,12 +1036,12 @@
     },
 
     "ToggleButton": {
-      "onBackground": "accent-success-bg-secondary",
-      "onForeground": "text-success",
-      "offBackground": "layer-0-bg",
+      "onBackground": "control-success-bg",
+      "onForeground": "text-over-accent",
+      "offBackground": "toggle-off-bg",
       "offForeground": "text-secondary",
-      "buttonColor": "accent-neutral-bg",
-      "borderColor": "transparent"
+      "buttonColor": "toggle-button-bg",
+      "borderColor": "toggle-border"
     },
 
     "ToolWindow": {
@@ -1052,7 +1058,7 @@
       "Button": {
         "foreground": "text-muted",
         "selectedForeground": "icon-over-accent",
-        "selectedBackground": "control-brand-bg",
+        "selectedBackground": "toolbar-selected-bg-active",
         "DragAndDrop" : {
           "buttonDropBackground": "#3671E580",
           "buttonDropBorderColor": "control-brand-border",
