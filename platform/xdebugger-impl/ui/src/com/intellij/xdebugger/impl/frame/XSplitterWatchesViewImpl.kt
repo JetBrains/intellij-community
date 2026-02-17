@@ -72,7 +72,7 @@ class XSplitterWatchesViewImpl(
     customized = true
     localsPanel = localsPanelComponent
 
-    addMixedModeListener()
+    addMixedModeListenerIfNeeded()
     return BorderLayoutPanel().also {
       myPanel = it
       updateMainPanel()
@@ -100,30 +100,31 @@ class XSplitterWatchesViewImpl(
     myPanel.addToCenter(splitter)
   }
 
-  private fun addMixedModeListener() {
-    val disposable = Disposer.newDisposable(sessionProxy!!.coroutineScope.asDisposable())
-    val listener = object : XDebugSessionListener {
-      override fun stackFrameChanged() {
-        updateViewIfNeeded()
-      }
+  private fun addMixedModeListenerIfNeeded() {
+    sessionProxy!!.coroutineScope.launch(Dispatchers.EDT) {
+      if (!isMixedModeSession())
+        return@launch
 
-      override fun sessionPaused() {
-        updateViewIfNeeded()
-      }
-
-      private fun updateViewIfNeeded() {
-        sessionProxy!!.coroutineScope.launch(Dispatchers.EDT) {
-          if (!isMixedModeSession()) {
-            Disposer.dispose(disposable)
-            return@launch
-          }
-
-          updateRequests.emit(Unit)
+      sessionProxy!!.addSessionListener(object : XDebugSessionListener {
+        override fun stackFrameChanged() {
+          updateViewIfNeeded()
         }
-      }
-    }
 
-    sessionProxy!!.addSessionListener(listener, disposable)
+        override fun sessionPaused() {
+          updateViewIfNeeded()
+        }
+
+        private fun updateViewIfNeeded() {
+          sessionProxy!!.coroutineScope.launch(Dispatchers.EDT) {
+            updateRequests.emit(Unit)
+          }
+        }
+      }, this@XSplitterWatchesViewImpl)
+
+      // Since we add the listener asynchronously, we may have missed an event,
+      // forcing update to make sure we are synced
+      updateRequests.emit(Unit)
+    }
   }
 
   private suspend fun updateView() {
