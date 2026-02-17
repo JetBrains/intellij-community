@@ -146,7 +146,9 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
     return builder.build()
   }
 
-  //TODO figure out why old files no longer show up. They ARE returned from this search function after all...
+  // TODO figure out why old files no longer show up. They ARE returned from this search function after all.
+  //   SeLuceneFilesProvider performs refiltering: val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of((it.path))) ?: return@collect
+  // TODO Store virtual file ID in the index to allow efficient retrieval later.
   fun search(params: SeParams) = luceneIndex.search(buildQuery(params)).map { (scoreDoc, doc) ->
     LOG.debug("Search for $params returned $doc with score ${scoreDoc.score}")
     val name = doc.get(FILE_NAME)
