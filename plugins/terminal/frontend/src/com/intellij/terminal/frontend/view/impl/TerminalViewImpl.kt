@@ -104,7 +104,6 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.math.min
 
@@ -116,7 +115,7 @@ class TerminalViewImpl(
   startupFusInfo: TerminalStartupFusInfo?,
   override val coroutineScope: CoroutineScope,
 ) : TerminalView {
-  private val sessionFuture: CompletableFuture<TerminalSession> = CompletableFuture()
+  private val sessionDeferred: CompletableDeferred<TerminalSession> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
   @VisibleForTesting
   val sessionModel: TerminalSessionModel
@@ -170,17 +169,18 @@ class TerminalViewImpl(
   override val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
   init {
-    // Cancell the hanging callbacks that wait for future completion if the coroutine scope is cancelled.
-    coroutineScope.coroutineContext.job.invokeOnCompletion {
-      sessionFuture.cancel(true)
-    }
-
     val hyperlinkScope = coroutineScope.childScope("TerminalViewImpl hyperlink facades")
 
     sessionModel = TerminalSessionModelImpl()
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
-    terminalInput = TerminalInput(sessionFuture, sessionModel, startupFusInfo, coroutineScope.childScope("TerminalInput"), encodingManager)
+    terminalInput = TerminalInput(
+      sessionDeferred,
+      sessionModel,
+      startupFusInfo,
+      coroutineScope.childScope("TerminalInput"),
+      encodingManager
+    )
 
     // Use the same instance of the listeners for both editors to report the metrics only once.
     // Usually, the cursor is painted or output received first in the output editor
@@ -371,13 +371,13 @@ class TerminalViewImpl(
   }
 
   fun connectToSession(session: TerminalSession) {
-    sessionFuture.complete(session)
+    sessionDeferred.complete(session)
     controller.handleEvents(session)
     mutableSessionState.value = TerminalViewSessionState.Running
   }
 
   override suspend fun hasChildProcesses(): Boolean {
-    val session = sessionFuture.getNow(null) ?: return false
+    val session = sessionDeferred.getNow() ?: return false
     return withContext(Dispatchers.Default) {
       session.hasRunningCommands()
     }
@@ -671,7 +671,7 @@ class TerminalViewImpl(
       sink[TerminalInput.DATA_KEY] = terminalInput
       sink[TerminalOutputModel.DATA_KEY] = outputModels.active.value
       sink[TerminalSearchController.KEY] = terminalSearchController
-      sink[TerminalSessionId.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
+      sink[TerminalSessionId.KEY] = (sessionDeferred.getNow() as? FrontendTerminalSession?)?.id
       sink[TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
       val hyperlinkFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
       sink[TerminalHyperlinkId.KEY] = hyperlinkFacade.getHoveredHyperlinkId()
