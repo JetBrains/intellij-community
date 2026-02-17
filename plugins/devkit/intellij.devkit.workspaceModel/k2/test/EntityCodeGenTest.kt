@@ -5,12 +5,8 @@ import com.intellij.devkit.workspaceModel.AbstractEntityCodeGenTest
 import com.intellij.idea.IJIgnore
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
+@IJIgnore(issue = "IJPL-235178")
 class EntityCodeGenTest : AbstractEntityCodeGenTest() {
   override val pluginMode: KotlinPluginMode
     get() = KotlinPluginMode.K2
-
-  @IJIgnore(issue = "KTIJ-37613")
-  override fun testCompatibilityInvoke() {
-    super.testCompatibilityInvoke()
-  }
 }
