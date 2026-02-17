@@ -4128,6 +4128,22 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testEllipsisDefaultArgumentInProtocolMethod() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class A(Protocol):
+                       def f(self, a: str = ...):
+                           pass""");
+  }
+
+  public void testEllipsisDefaultArgumentInMethod() {
+    doTestByText("""
+                   class A:
+                       def f(self, a: str = <warning descr="Expected type 'str', got 'EllipsisType' instead">...</warning>):
+                           pass""");
+  }
+
   // PY-76883
   public void testCallableSubtypingKeywordOnlyOrder() {
     doTestByText("""

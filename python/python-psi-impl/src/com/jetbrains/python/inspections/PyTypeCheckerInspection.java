@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyReferenceOwner;
@@ -52,6 +53,7 @@ import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterListType;
 import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyConcatenateType;
@@ -465,11 +467,32 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       final PyType expected = myTypeEvalContext.getType(node);
       final PyType actual = tryPromotingType(defaultValue, expected);
+      if (Objects.equals(actual, PyBuiltinCache.getInstance(node).getEllipsisType()) && isProtocolMethodParameter(node)) {
+        return;
+      }
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
         registerProblem(defaultValue, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
+    }
+
+    private boolean isProtocolMethodParameter(@NotNull PyNamedParameter node) {
+      PsiElement parent = node.getContext();
+      if (parent instanceof PyParameterList parameterList) {
+        PyCallable containingCallable = parameterList.getContainingCallable();
+        if (containingCallable instanceof PyFunction function) {
+          PyClass containingClass = function.getContainingClass();
+          if (containingClass == null) {
+            return false;
+          }
+          PyType classType = myTypeEvalContext.getType(containingClass);
+          if (classType instanceof PyClassLikeType classLikeType && PyProtocolsKt.isProtocol(classLikeType, myTypeEvalContext)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     @Override
