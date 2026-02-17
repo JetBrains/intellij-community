@@ -29,6 +29,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/indexing-api:indexing",
     "//platform/backend/observation",
+    "//platform/util/text-matching",
   ]
 )
 ### auto-generated section `build intellij.selucene.backend` end

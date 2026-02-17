@@ -241,7 +241,6 @@ jvm_library(
     "//plugins/laf/macos",
     "//plugins/laf/win10",
     "//plugins/search-everywhere-ml",
-    "//plugins/selucene:selucene-plugin-main",
     "//plugins/marketplace-ml",
     "//plugins/toml",
     "//platform/tracing-ide",
