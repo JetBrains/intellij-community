@@ -593,22 +593,15 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
 
       val lookupImpl = getMethodHandlesImplLookup(evaluationContext)
       if (lookupImpl == null) {
-        thisLogger().error("Cannot get MethodHandles.Lookup.IMPL_LOOKUP")
-        return emptyList()
+        throw EvaluateException("Cannot get MethodHandles.Lookup.IMPL_LOOKUP")
       }
 
-      val evaluated = try {
+      val evaluated =
         DebuggerUtilsImpl.invokeHelperMethod(
           evaluationContext,
           VirtualThreadDumper::class.java, "getAllVirtualThreadsWithStackTracesAndContainers",
           listOf(lookupImpl)
         )
-      }
-      catch (e: EvaluateException) {
-        thisLogger().error(e)
-        return emptyList()
-      }
-      if (evaluated == null) return emptyList()
 
       val packedThreadsAndStackTraces = ((evaluated as ArrayReference).values[0] as ArrayReference).values
       val threadIds = (evaluated.values[1] as ArrayReference).values
