@@ -227,7 +227,7 @@
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.remote.development"
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "mtxr.sqltools-driver-mysql",
