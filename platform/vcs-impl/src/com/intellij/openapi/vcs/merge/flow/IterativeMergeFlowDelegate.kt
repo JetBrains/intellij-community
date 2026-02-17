@@ -43,6 +43,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.treeStructure.treetable.TreeTable
+import com.intellij.util.FontUtil
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -410,7 +411,11 @@ private class ConflictsGroupNode(val type: ConflictsNodeType) : ChangesBrowserNo
     ConflictsNodeType.RESOLVED -> VcsBundle.message("changes.nodetitle.merge.dialog.resolved")
   }
 
-  override fun shouldExpandByDefault(): Boolean = true
+  override fun getCountText(): @Nls String {
+    return FontUtil.spaceAndThinSpace() + VcsBundle.message("iterative.merge.files.count", fileCount)
+  }
+
+  override fun isLeaf(): Boolean = false
 }
 
 private fun TreeTable.changeHeaderColor() {
