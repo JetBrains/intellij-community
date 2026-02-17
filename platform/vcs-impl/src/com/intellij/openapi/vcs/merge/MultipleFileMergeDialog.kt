@@ -441,8 +441,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun updateModelFromFiles() {
-    val iterativelyResolved = iterativeDataHolder?.getResolvedFiles() ?: emptySet()
-    if ((unresolvedFiles - iterativelyResolved).isEmpty()) {
+    if (unresolvedFiles.isEmpty()) {
       doCancelAction()
     }
     else {

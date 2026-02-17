@@ -92,6 +92,8 @@ internal class IterativeMergeFlowDelegate(
 ) : MergeFlowDelegate {
 
   private lateinit var resolveAutomaticallyButton: JButton
+  private lateinit var reviewOrResolveAction: AbstractAction
+  private lateinit var acceptAndFinishAction: AbstractAction
   private var wasResolveAutomaticallyPressedOnce = false
   private var isResolveAutomaticallyPressed = false
   private var isResolvingConflicts = false
@@ -214,13 +216,14 @@ internal class IterativeMergeFlowDelegate(
       unmergeableFileSelected = unmergeableFileSelected,
       unacceptableFileSelected = unacceptableFileSelected,
       resolvedFilesSelected = selectedFiles.any { iterativeDataHolder.isFileResolved(it) },
+      allSelectedFilesResolved = selectedFiles.all { iterativeDataHolder.isFileResolved(it) },
       onlyRevertableFilesSelected = selectedFiles.isNotEmpty() && selectedFiles.all {
         iterativeDataHolder.getMergeConflictModel(it)?.getResolvedChanges()?.isNotEmpty() == true
       })
-    updateResolveAutomaticallyButtonState()
+    updateButtonsState()
   }
 
-  private fun updateResolveAutomaticallyButtonState() {
+  private fun updateButtonsState() {
     val autoResolvableFiles =
       files.any { iterativeDataHolder.getMergeConflictModel(it)?.getAutoResolvableChanges()?.isNotEmpty() == true }
     val allFilesResolved = files.all { iterativeDataHolder.getMergeConflictModel(it)?.getUnresolvedChanges()?.isEmpty() == true }
@@ -243,6 +246,15 @@ internal class IterativeMergeFlowDelegate(
     }
 
     table.isEnabled = !isResolvingConflicts
+
+    reviewOrResolveAction.apply {
+      isEnabled = table.isEnabled
+      val text = if (com.intellij.openapi.vcs.merge.flow.state.allSelectedFilesResolved) VcsBundle.message("multiple.file.iterative.merge.review.changes")
+      else VcsBundle.message("multiple.file.iterative.merge.resolve.manually")
+      putValue(Action.NAME, text)
+    }
+
+    acceptAndFinishAction.isEnabled = table.isEnabled && files.all { iterativeDataHolder.isFileResolved(it) }
   }
 
   override fun buildTreeModel(
@@ -327,7 +339,7 @@ internal class IterativeMergeFlowDelegate(
     wasResolveAutomaticallyPressedOnce = true
     isResolveAutomaticallyPressed = true
     isResolvingConflicts = true
-    updateResolveAutomaticallyButtonState()
+    updateButtonsState()
     try {
       resolveAutomatically()
     }
@@ -337,7 +349,7 @@ internal class IterativeMergeFlowDelegate(
     }
     finally {
       isResolvingConflicts = false
-      updateResolveAutomaticallyButtonState()
+      updateButtonsState()
     }
   }
 }
@@ -510,6 +522,7 @@ private data class IterativeMergeDialogState(
   val unacceptableFileSelected: Boolean,
   val resolvedFilesSelected: Boolean,
   val onlyRevertableFilesSelected: Boolean,
+  val allSelectedFilesResolved: Boolean,
 )
 
 private class DisabledStateLayerUI(private val table: MergeConflictsTreeTable) : LayerUI<MergeConflictsTreeTable>() {
