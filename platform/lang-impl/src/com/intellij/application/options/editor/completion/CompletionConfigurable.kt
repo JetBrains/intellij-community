@@ -7,7 +7,11 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
+import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.ui.DialogPanel
