@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
@@ -349,6 +350,10 @@ internal class XDebuggerMonolithAccessPointImpl : XDebuggerMonolithAccessPoint {
 
   override fun getValue(valueId: XValueId): XValue? {
     return BackendXValueModel.findById(valueId)?.xValue
+  }
+
+  override fun getExecutionStack(stackId: XExecutionStackId): XExecutionStack? {
+    return stackId.findValue()?.executionStack
   }
 
   override fun getBreakpointType(typeId: String): XBreakpointType<*, *>? {

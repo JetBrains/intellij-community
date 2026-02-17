@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.ui
 
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
@@ -9,6 +10,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import org.jetbrains.annotations.ApiStatus
 
@@ -60,6 +62,19 @@ object XDebuggerEntityConverter {
     return XDebuggerMonolithAccessPoint.find { it.getValue(valueId) }
   }
 
+
+  /**
+   * For a given [XExecutionStackId] finds the corresponding [XExecutionStack] instance.
+   *
+   * Always returns `null` on the frontend.
+   *
+   * Use this method to implement monolith-only features with a split debugger enabled.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getExecutionStack(stackId: XExecutionStackId): XExecutionStack? {
+    return XDebuggerMonolithAccessPoint.find { it.getExecutionStack(stackId) }
+  }
   /**
    * For a given breakpoint type ID finds the corresponding [XBreakpointType] instance.
    *
