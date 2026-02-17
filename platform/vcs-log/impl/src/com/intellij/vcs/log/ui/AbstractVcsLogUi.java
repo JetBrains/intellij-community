@@ -137,7 +137,7 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
   /**
    * @see VcsLogNavigationUtil for public usages
    */
-  public <T> void tryJumpTo(@NotNull T commitId,
+  private <T> void tryJumpTo(@NotNull T commitId,
                             @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                             @NotNull SettableFuture<JumpResult> future,
                             boolean focus) {
@@ -147,6 +147,10 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
     if (result >= 0) {
       getTable().jumpToGraphRow(result, focus);
       future.set(JumpResult.SUCCESS);
+    }
+    else if (!getRefresher().isValid()) {
+      getRefresher().setValid(true, false);
+      VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (VcsLogUtil.canRequestMore(myVisiblePack)) {
       VcsLogUtil.requestToLoadMore(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
