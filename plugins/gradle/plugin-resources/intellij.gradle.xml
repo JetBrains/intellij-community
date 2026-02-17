@@ -15,6 +15,9 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.syncContributor"
                     interface="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.sourceRootSyncContributor"
+                    interface="org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributorExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.syncExtension"
                     interface="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension"
                     dynamic="true"/>
