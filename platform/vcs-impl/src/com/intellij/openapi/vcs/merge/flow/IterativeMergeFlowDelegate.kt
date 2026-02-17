@@ -34,7 +34,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.panel
@@ -139,26 +138,23 @@ internal class IterativeMergeFlowDelegate(
             }
           }
         }
-      }.customize(UnscaledGapsY(bottom = 24, top = 12))
-      customizeSpacingConfiguration(EmptySpacingConfiguration()) {
-        row {
-          resolveAutomaticallyButton =
-            button(VcsBundle.message(if (isResolvingConflicts) "multiple.file.merge.dialog.progress.title.resolving.conflicts"
-                                     else "multiple.file.iterative.merge.resolve.automatically"),
-                   actionListener = { onResolveAutomaticallyClick() }).applyToComponent {
-              icon = AllIcons.Diff.MagicResolve
-            }.align(AlignX.LEFT).customize(UnscaledGaps(left = 2)).component
+      }.customize(UnscaledGapsY(top = 8, bottom = 4))
+      row {
+        resolveAutomaticallyButton =
+          button(VcsBundle.message(if (isResolvingConflicts) "multiple.file.merge.dialog.progress.title.resolving.conflicts"
+                                   else "multiple.file.iterative.merge.resolve.automatically"),
+                 actionListener = { onResolveAutomaticallyClick() }).applyToComponent {
+            icon = AllIcons.Diff.MagicResolve
+          }.align(AlignX.LEFT).component
 
         cell(createToolbar().component)
           .align(AlignX.RIGHT)
-          .customize(UnscaledGaps(right = 4, top = 4, bottom = 4))
       }
-        row {
-          scrollCell(JLayer(table, DisabledStateLayerUI(table)))
-            .align(Align.FILL)
-            .resizableColumn()
-        }.resizableRow()
-      }
+
+      row {
+        scrollCell(JLayer(table, DisabledStateLayerUI(table)))
+          .align(Align.FILL)
+      }.resizableRow()
     }.apply {
       // If the width is smaller than this, then buttons don't render properly
       minimumSize = JBUI.size(550, 240)
