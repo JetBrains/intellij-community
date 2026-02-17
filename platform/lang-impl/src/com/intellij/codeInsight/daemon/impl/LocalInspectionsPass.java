@@ -203,14 +203,17 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
       Set<Pair<Object, PsiFile>> actualToolsRun = ContainerUtil.map2Set(result.resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
 
+      boolean fileExcludedFromIndexing = !isDumbMode() && !indexable;
       Set<? extends String> inactiveSmartOnlyToolIds = dumbToolWrapperCondition.getInactiveToolWrapperIds();
       BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, psiFile) -> {
         if (!HighlightInfoUpdaterImpl.isInspectionToolId(toolId)) {
           return true;
         }
-
         if (actualToolsRun.contains(Pair.create(toolId, psiFile))) {
           return true;
+        }
+        if (fileExcludedFromIndexing) {
+          return false;
         }
         // keep highlights from smart-only inspections in dumb mode
         return inactiveSmartOnlyToolIds.contains(toolId);

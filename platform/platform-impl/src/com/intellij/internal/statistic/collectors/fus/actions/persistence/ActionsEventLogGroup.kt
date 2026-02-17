@@ -27,7 +27,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("actions", 84)
+  val GROUP: EventLogGroup = EventLogGroup("actions", 85)
 
   @JvmField
   val ACTION_ID: PrimitiveEventField<String?> = ActionIdEventField("action_id")
