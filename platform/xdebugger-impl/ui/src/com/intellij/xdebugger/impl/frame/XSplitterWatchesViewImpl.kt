@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.dnd.DnDNativeTarget
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
@@ -36,12 +36,12 @@ import kotlin.time.Duration.Companion.milliseconds
  * When switching to a frame of a debug process that doesn't provide a custom bottom component, we will show a default frame view
  */
 @OptIn(FlowPreview::class)
-@Internal
+@ApiStatus.Internal
 class XSplitterWatchesViewImpl(
-  sessionProxy: XDebugSessionProxy,
-  watchesInVariables: Boolean,
-  isVertical: Boolean,
-  withToolbar: Boolean,
+    sessionProxy: XDebugSessionProxy,
+    watchesInVariables: Boolean,
+    isVertical: Boolean,
+    withToolbar: Boolean,
 ) : XWatchesViewImpl(sessionProxy, watchesInVariables, isVertical, withToolbar), DnDNativeTarget, XWatchesView {
 
   companion object {
@@ -61,7 +61,7 @@ class XSplitterWatchesViewImpl(
       updateRequests
         .debounce(100.milliseconds)
         .collectLatest {
-          withContext(Dispatchers.EDT) { updateView() }
+            withContext(Dispatchers.EDT) { updateView() }
         }
     }
   }
