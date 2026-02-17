@@ -360,6 +360,11 @@
                      implementationClass="com.intellij.codeInspection.CapturingCleanerInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.capturing.cleaner.description"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="IncorrectLazyConstantUsage"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.IncorrectLazyConstantUsageInspection"
+                     key="inspection.incorrect.lazy.constant.usage.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OverwrittenKey"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
