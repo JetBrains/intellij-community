@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XMixedModeApi : RemoteApi<Unit> {
   suspend fun isMixedModeSession(sessionId: XDebugSessionId): Boolean
-  suspend fun showCustomizedEvaluatorView(frameId: XStackFrameId) : Boolean
+  suspend fun shouldShowCustomizedEvaluatorView(frameId: XStackFrameId) : Boolean
 
   companion object {
     @JvmStatic

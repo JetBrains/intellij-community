@@ -55,6 +55,7 @@ class XSplitterWatchesViewImpl(
   private var customized = true
   private var localsPanel: JComponent? = null
   private val updateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private var cachedIsMixedMode: Boolean? = null
 
   init {
     sessionProxy.coroutineScope.launch {
@@ -112,7 +113,7 @@ class XSplitterWatchesViewImpl(
 
       private fun updateViewIfNeeded() {
         sessionProxy!!.coroutineScope.launch(Dispatchers.EDT) {
-          if (!XMixedModeApi.getInstance().isMixedModeSession(this@XSplitterWatchesViewImpl.sessionProxy!!.id)) {
+          if (!isMixedModeSession()) {
             Disposer.dispose(disposable)
             return@launch
           }
@@ -134,11 +135,17 @@ class XSplitterWatchesViewImpl(
   }
 
   private suspend fun getShowCustomized(): Boolean {
-    if (!XMixedModeApi.getInstance().isMixedModeSession(sessionProxy!!.id))
+    if (!isMixedModeSession())
       return true
 
     val currentFrame = sessionProxy!!.getCurrentStackFrame() ?: return false
     return XDebugManagerProxy.getInstance()
-      .withId(currentFrame, sessionProxy!!) { XMixedModeApi.getInstance().showCustomizedEvaluatorView(it) }
+      .withId(currentFrame, sessionProxy!!) { XMixedModeApi.getInstance().shouldShowCustomizedEvaluatorView(it) }
+  }
+
+  private suspend fun isMixedModeSession(): Boolean = cachedIsMixedMode ?: run {
+    val value = XMixedModeApi.getInstance().isMixedModeSession(sessionProxy!!.id)
+    cachedIsMixedMode = value
+    value
   }
 }
