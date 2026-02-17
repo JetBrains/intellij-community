@@ -12,6 +12,7 @@ import com.intellij.debugger.streams.core.trace.TraceResultInterpreter
 import com.intellij.debugger.streams.core.trace.XValueInterpreter
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamInstrumentationManager
 import com.intellij.debugger.streams.ui.impl.PrimitiveValueDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.xdebugger.frame.XValue
@@ -40,7 +41,9 @@ internal class BreakpointBasedStreamTracer(
                     ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("could.not.find.breakpoint.positions"))
 
     val breakpointFactory = BreakpointFactory()
-    val manager = StreamTracingManager(debuggerContext, breakpointFactory, librarySupport.createRuntimeHandlerFactory())
+    val handlerFactory = librarySupport.createRuntimeHandlerFactory()
+    val instrumentationManager = StreamInstrumentationManager(handlerFactory, chain)
+    val manager = StreamTracingManager(debuggerContext, breakpointFactory, instrumentationManager)
 
     val result = manager.evaluateChain(positions, chain)
     return when (result) {
