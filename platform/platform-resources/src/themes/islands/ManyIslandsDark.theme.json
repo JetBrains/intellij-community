@@ -137,12 +137,17 @@
     "teal-150": "#152624",
     "teal-160": "#111C1B",
 
-    "transparent": "#191A1C00",
     "transparent-white-10": "#FFFFFF10",
     "transparent-white-20": "#FFFFFF17",
     "transparent-white-30":  "#FFFFFF21",
     "transparent-white-40": "#FFFFFF29",
     "transparent-white-50":  "#FFFFFF45",
+    "transparent-black-10": "#00000008",
+    "transparent-black-20": "#00000012",
+    "transparent-black-30":  "#00000020",
+    "transparent-black-40": "#00000030",
+    "transparent-black-50":  "#00000045",
+    "transparent": "#191A1C00",
 
     "text-default": "gray-40",
     "text-muted": "gray-70",
@@ -486,7 +491,7 @@
       "Split": {
         "default": {
           "iconColor": "icon-over-accent",
-          "separatorColor": "blue-70"
+          "separatorColor": "control-border-over-accent"
         }
       }
     },
