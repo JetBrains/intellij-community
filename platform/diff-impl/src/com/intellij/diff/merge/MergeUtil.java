@@ -65,7 +65,11 @@ public final class MergeUtil {
       }
       case LEFT -> "button.merge.resolve.accept.left";
       case RIGHT -> "button.merge.resolve.accept.right";
-      case RESOLVED -> "button.merge.resolve.apply";
+      case RESOLVED -> {
+        if (!IterativeResolveSupport.hasIterativeData(request)) yield "button.merge.resolve.apply";
+
+        yield "button.merge.resolve.apply.changes";
+      }
     });
   }
 
