@@ -176,4 +176,7 @@ final class LightEditProjectFileIndex implements ProjectFileIndex {
   public @Nullable String getUnloadedModuleNameForFile(@NotNull VirtualFile fileOrDir) {
     return null;
   }
+
+  @Override
+  public @Nullable VirtualFile getWorkspaceContentFileSetRoot(@NotNull VirtualFile fileOrDir) { return null; }
 }
