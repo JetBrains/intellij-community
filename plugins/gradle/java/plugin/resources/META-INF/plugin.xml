@@ -9,7 +9,6 @@
   </description>
 
   <dependencies>
-    <plugin id="org.intellij.groovy"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.platform.jps.build"/>

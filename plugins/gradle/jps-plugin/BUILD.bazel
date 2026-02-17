@@ -23,7 +23,6 @@ jvm_library(
     "@lib//:gradle",
     "@lib//:gradle-jps-ant",
     "//libraries/gson",
-    "//plugins/groovy/jps-plugin:jps",
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//libraries/hash4j",

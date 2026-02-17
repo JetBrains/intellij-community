@@ -10,6 +10,7 @@
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.platform.jps.build"/>
     <module name="intellij.properties.psi"/>
   </dependencies>
   <!-- endregion -->
