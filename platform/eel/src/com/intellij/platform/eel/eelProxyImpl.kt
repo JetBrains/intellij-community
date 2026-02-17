@@ -159,6 +159,7 @@ private suspend fun handleIncomingConnection(
       remoteConnectionFactory()
     }
     catch (e: EelConnectionError) {
+      runCatching { localSocket.close() }.exceptionOrNull()?.let { closeException -> e.addSuppressed(closeException) }
       onConnectionError?.invoke(e)
       return
     }
