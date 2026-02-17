@@ -61,6 +61,7 @@ import com.intellij.ui.DefaultBorderPainter
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
+import com.intellij.ui.IslandsState
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.WindowRoundedCornersManager
@@ -120,36 +121,35 @@ private val DEFAULT_THEME_IDS = setOf(
   "Darcula",
 )
 
+private fun isDefaultTheme(): Boolean {
+  val id = LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false
+  return id in DEFAULT_THEME_IDS
+}
+
 internal val islandsInactiveAlpha: Float
   get() = JBUI.getFloat("Island.inactiveAlpha", 0.5f)
-
-internal val isManyIslandEnabled: Boolean
-  get() {
-    if (!ExperimentalUI.isNewUI()) return false
-
-    return when (JBUI.getInt("Islands", 0)) {
-      1 -> true
-      0 -> {
-        val id = LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false
-        val isDefaultTheme = id in DEFAULT_THEME_IDS
-        !isDefaultTheme && AdvancedSettings.getBoolean("ide.ui.theme.custom.islands")
-      }
-      else -> false
-    }
-  }
 
 internal class IslandsUICustomization : InternalUICustomization() {
 
   private var isManyIslandEnabledCache: Boolean? = null
 
-  private var isManyIslandCustomTheme = false
-
   private val isManyIslandEnabled: Boolean
     get() {
       var value = isManyIslandEnabledCache
       if (value == null) {
-        value = com.intellij.openapi.application.impl.islands.isManyIslandEnabled
+        val isManyIslandCustomTheme: Boolean
+
+        if (ExperimentalUI.isNewUI()) {
+          val themeValue = JBUI.getInt("Islands", 0)
+          isManyIslandCustomTheme = themeValue == 0 && !isDefaultTheme() && AdvancedSettings.getBoolean("ide.ui.theme.custom.islands")
+          value = isManyIslandCustomTheme || themeValue == 1
+        }
+        else {
+          value = false
+          isManyIslandCustomTheme = false
+        }
         isManyIslandEnabledCache = value
+        IslandsState.setEnabled(value, isManyIslandCustomTheme)
       }
       return value
     }
@@ -331,7 +331,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun applyMissingKeys() {
-    if (isManyIslandCustomTheme) {
+    if (IslandsState.isCustomEnabled()) {
       val uiDefaults = UIManager.getLookAndFeelDefaults()
 
       uiDefaults["MainToolbar.borderColor"] = Gray.TRANSPARENT

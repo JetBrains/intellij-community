@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
-import com.intellij.ide.ui.LafManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Graphics2DDelegate
+import com.intellij.ui.IslandsState
 import com.intellij.ui.JBColor
 import com.intellij.util.system.OS
 import java.awt.AlphaComposite
@@ -70,8 +70,7 @@ internal class IslandsInactiveFrameGraphics2D(g: Graphics2D, private val compone
     // todo Workaround of JBR-9949, should be removed when the bug is fixed
     // IJPL-230775: Use alpha blending for text on macOS Islands Light at high zoom
     // to avoid inconsistent dimming in inactive state
-    val useAlphaBlending = OS.CURRENT == OS.macOS && isManyIslandEnabled &&
-                           LafManager.getInstance().currentUIThemeLookAndFeel?.isDark == false
+    val useAlphaBlending = OS.CURRENT == OS.macOS && IslandsState.isEnabled() && JBColor.isBright()
     if (!useAlphaBlending) {
       return wrapPaint(runnable)
     }

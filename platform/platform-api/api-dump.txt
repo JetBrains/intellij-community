@@ -6495,6 +6495,12 @@ f:com.intellij.ui.InsertPathAction
 - s:addTo(javax.swing.text.JTextComponent,com.intellij.openapi.fileChooser.FileChooserDescriptor,Z):V
 - s:copyFromTo(javax.swing.text.JTextComponent,javax.swing.text.JTextComponent):V
 - s:removeFrom(javax.swing.text.JTextComponent):V
+f:com.intellij.ui.IslandsState
+- sf:Companion:com.intellij.ui.IslandsState$Companion
+- <init>():V
+f:com.intellij.ui.IslandsState$Companion
+- f:isCustomEnabled():Z
+- f:isEnabled():Z
 c:com.intellij.ui.JBCardLayout
 - java.awt.CardLayout
 - <init>():V

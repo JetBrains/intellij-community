@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl.islands
 import com.intellij.ide.ProjectWidgetGradientLocationService
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.GradientTextureCache
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AbstractPainter
@@ -15,6 +14,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
+import com.intellij.ui.IslandsState
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
@@ -109,8 +109,7 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
 
 internal fun isColorIslandGradient(): Boolean = Registry.`is`("idea.islands.color.gradient.enabled", false)
 
-// TODO: replace isRoundedTabDuringDrag to publuc API to check islands theme
-internal fun isColorIslandGradientAvailable(): Boolean = isColorIslandGradient() && InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true
+internal fun isColorIslandGradientAvailable(): Boolean = IslandsState.isEnabled() && isColorIslandGradient()
 
 private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService,
                             component: Component, g: Graphics2D) {
