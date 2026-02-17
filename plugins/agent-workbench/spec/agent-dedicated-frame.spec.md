@@ -12,7 +12,7 @@ targets:
 # Agent Chat Dedicated Frame
 
 Status: Draft
-Date: 2026-02-13
+Date: 2026-02-17
 
 ## Summary
 Define dedicated-frame behavior for Agent chat opening. By default, chat opens in a dedicated frame backed by a hidden internal project. Users can switch to current-project-frame mode via Advanced Settings and a Sessions gear toggle.
@@ -50,6 +50,10 @@ Define dedicated-frame behavior for Agent chat opening. By default, chat opens i
 - Dedicated frame project is hidden from recent projects metadata.
 - Dedicated frame project is excluded from Sessions project registry (both open and recent enumerations).
 - Chat terminal working directory remains the source project path regardless of frame mode.
+- Chat editor persistence/restore behavior is defined by `spec/agent-chat-editor.spec.md` and applies equally in both modes:
+  - protocol-backed restore via `agent-chat://`,
+  - restore of all previously open chat tabs,
+  - lazy terminal initialization on first explicit tab activation.
 - Implementation must stay independent from `welcomeScreenProjectProvider` because that provider model is singleton-like across products.
 - Chat resume command remains provider-specific in dedicated mode as in current-project mode:
   - Codex: `codex resume <threadId>`

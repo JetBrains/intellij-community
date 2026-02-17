@@ -28,15 +28,20 @@ suspend fun openChat(
   LOG.debug {
     "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
   }
-  val file = existing ?: AgentChatVirtualFile(
-    projectPath = projectPath,
-    threadIdentity = threadIdentity,
-    shellCommand = shellCommand,
-    threadId = threadId,
-    threadTitle = threadTitle,
-    subAgentId = subAgentId,
+  val fileSystem = AgentChatVirtualFileSystems.getInstanceOrFallback()
+  val file = existing ?: fileSystem.getOrCreateFile(
+    descriptor = AgentChatFileDescriptor(
+      projectHash = project.locationHash,
+      projectPath = projectPath,
+      threadIdentity = threadIdentity,
+      threadId = threadId,
+      threadTitle = threadTitle,
+      subAgentId = subAgentId,
+      shellCommand = shellCommand,
+    ),
   )
   if (existing != null) {
+    existing.updateCommandAndThreadId(shellCommand = shellCommand, threadId = threadId)
     val updated = existing.updateThreadTitle(threadTitle)
     LOG.debug {
       "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): updated=$updated, currentName=${existing.name}, currentTitle=${existing.threadTitle}"

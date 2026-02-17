@@ -14,15 +14,17 @@ targets:
 # Agent Chat Editor
 
 Status: Draft
-Date: 2026-02-11
+Date: 2026-02-17
 
 ## Summary
-Define how thread/sub-agent selections open chat editor tabs. Routing honors dedicated-frame mode, reuses tabs by session identity, and launches provider-specific resume commands.
+Define how thread/sub-agent selections open chat editor tabs. Routing honors dedicated-frame mode, reuses tabs by session identity, persists/restores chat tabs through a protocol-backed virtual file system, and lazily initializes heavy terminal content on first explicit tab selection.
 
 ## Goals
 - Open chat editor tabs reliably from Session tree interactions.
 - Reuse existing tabs for the same provider/session/sub-agent identity.
 - Keep routing behavior consistent with dedicated-frame setting.
+- Restore previously opened chat tabs across IDE restart without `mock:///` file resolution failures.
+- Keep startup responsive by deferring terminal initialization until a tab is explicitly shown.
 
 ## Non-goals
 - Implementing non-terminal chat UI.
@@ -30,8 +32,14 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 
 ## Requirements
 - The `intellij.agent.workbench` content module must register a `fileEditorProvider` for Agent chat editors.
+- The `intellij.agent.workbench` content module must register a non-physical `virtualFileSystem` with key `agent-chat` for chat editor files.
 - The chat editor must be opened via `AsyncFileEditorProvider` and use the reworked terminal frontend (`TerminalToolWindowTabsManager`) with `shouldAddToToolWindow(false)`.
 - Chat editors reuse an existing editor tab for the same provider/session identity (`provider:threadId`) and `subAgentId` when present.
+- Agent chat virtual files must be protocol-backed (`agent-chat://`) and restorable by `VirtualFileManager.findFileByUrl`.
+- Chat tab persistence must restore all previously open Agent chat tabs (not just the currently selected tab).
+- Chat editor creation must be lazy for heavy terminal content:
+  - tab/editor shell is created immediately,
+  - terminal session is created only after first explicit selection/focus of that tab.
 - Advanced setting `agent.workbench.chat.open.in.dedicated.frame` controls target frame selection (default `true`).
 - When the setting is enabled, chat opens in a dedicated frame project and the source project remains closed if it is currently closed.
 - When the setting is disabled, chat opens in the source project frame and closed source projects are opened first.
@@ -45,6 +53,9 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 
 [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+[@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+[@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
+[@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
 ## User Experience
 - Single click on a thread row opens the chat editor.
@@ -52,21 +63,37 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 - Editor tab name is the thread title; editor icon uses an Agent/communication glyph.
 - By default, chat editor opens in a dedicated frame.
 - Users can disable dedicated-frame mode from Advanced Settings to restore current-project-frame behavior.
+- After restart, all previously open chat tabs are restored in their prior project frame context.
+- Restored tabs appear immediately; terminal session creation is deferred until the user activates a tab.
 
 ## Data & Backend
 - Chat terminal sessions start in the source project/worktree working directory.
 - Sessions service passes provider-aware session identity and command into the chat open flow.
+- Chat file URLs persist a versioned descriptor containing:
+  - project hash,
+  - source project path,
+  - thread identity,
+  - thread id,
+  - thread title,
+  - sub-agent id,
+  - shell command.
 
 ## Error Handling
 - If the project path is invalid or project opening fails, do not open a chat editor tab.
 - If provider/session identity cannot be resolved, fail safely without crashing the UI.
+- If a restored chat descriptor is invalid (missing path/identity/command), skip and close that tab and show a non-blocking warning notification.
+- Restore warnings for the same tab/reason must be deduplicated per IDE session to avoid startup notification spam.
+- If terminal initialization fails on first tab activation, close the tab and show a warning notification.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsOpenModeRoutingTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatTabSelectionServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest'`
 
 ## Open Questions / Risks
-- Additional chat-module tests for tab reuse/title fallback should be added when editor test harness coverage grows.
+- Future product policy may intentionally limit restart restore to one chat tab; if adopted, this spec should be revised and implemented via explicit tab-closing policy before workspace save.
 
 ## References
 - `spec/agent-dedicated-frame.spec.md`

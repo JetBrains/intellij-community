@@ -7,13 +7,18 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.beans.PropertyChangeListener
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 @Suppress("unused")
 internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
@@ -41,13 +46,49 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   private fun createChatEditor(project: Project, file: AgentChatVirtualFile): FileEditor {
-    val terminalManager = TerminalToolWindowTabsManager.getInstance(project)
-    val tab = terminalManager.createTabBuilder()
-      .shouldAddToToolWindow(false)
-      .workingDirectory(file.projectPath)
-      .tabName(file.name)
-      .shellCommand(file.shellCommand)
-      .createTab()
-    return AgentChatFileEditor(file, tab)
+    val validationError = validate(file)
+    if (validationError != null) {
+      AgentChatRestoreNotificationService.reportRestoreFailure(project, file, validationError)
+      if (!project.isDisposed) {
+        FileEditorManager.getInstance(project).closeFile(file)
+      }
+      return AgentChatUnavailableFileEditor(file)
+    }
+    return AgentChatFileEditor(project = project, file = file)
   }
+
+  private fun validate(file: AgentChatVirtualFile): String? {
+    return when {
+      file.projectPath.isBlank() -> AgentChatBundle.message("chat.restore.validation.project.path")
+      file.threadIdentity.isBlank() -> AgentChatBundle.message("chat.restore.validation.thread.identity")
+      file.shellCommand.isEmpty() -> AgentChatBundle.message("chat.restore.validation.shell.command")
+      else -> null
+    }
+  }
+}
+
+private class AgentChatUnavailableFileEditor(
+  private val file: AgentChatVirtualFile,
+) : UserDataHolderBase(), FileEditor {
+  private val component = JPanel()
+
+  override fun getComponent(): JComponent = component
+
+  override fun getPreferredFocusedComponent(): JComponent = component
+
+  override fun getName(): String = file.name
+
+  override fun setState(state: FileEditorState) = Unit
+
+  override fun isModified(): Boolean = false
+
+  override fun isValid(): Boolean = false
+
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) = Unit
+
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) = Unit
+
+  override fun getFile(): AgentChatVirtualFile = file
+
+  override fun dispose() = Unit
 }
