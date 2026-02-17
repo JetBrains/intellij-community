@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.selucene.frontend.tabs.lucene
+package com.intellij.selucene.frontend.tabs
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItemData

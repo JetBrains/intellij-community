@@ -9,7 +9,7 @@
   <!-- endregion -->
   
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.tabFactory implementation="com.intellij.selucene.frontend.tabs.lucene.SeLuceneFilesTabFactory"/>
+    <searchEverywhere.tabFactory implementation="com.intellij.selucene.frontend.tabs.SeLuceneFilesTabFactory"/>
   </extensions>
 
 
