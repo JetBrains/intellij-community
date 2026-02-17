@@ -34,7 +34,6 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -53,7 +52,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -77,7 +75,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -137,7 +134,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected final @NotNull TextMergeViewer myTextMergeViewer;
 
   private final @NotNull LangSpecificMergeConflictResolverWrapper myConflictResolver;
-  private static final @NonNls String DO_NOT_ASK_KEY = "iterative.merge.do.not.ask.confirmation";
 
   public MergeThreesideViewer(
     @NotNull DiffContext context,
@@ -341,33 +337,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       return new ResolveActionResult(false, true);
     }
 
-    Runnable onConfirmedAction = () -> {
-      executeMergeCommand(DiffBundle.message("merge.dialog.ignore.all.changes"), true, model.getUnresolvedChanges(), () -> {
-        model.markAllChangesResolved();
-      });
-    };
-
     boolean confirmed;
     if (IterativeResolveSupport.hasIterativeData(myMergeRequest)) {
-      if (PropertiesComponent.getInstance().isTrueValue(DO_NOT_ASK_KEY)) {
-        onConfirmedAction.run();
-        return new ResolveActionResult(false, true);
-      }
       confirmed = MessageDialogBuilder
         .yesNo(
           DiffBundle.message("apply.partially.resolved.iterative.merge.dialog.title"),
-          DiffBundle.message("iterative.merge.dialog.apply.partially.resolved.changes.confirmation.message", changesCount + conflictsCount)
+          DiffBundle.message("iterative.merge.dialog.apply.partially.resolved.changes.confirmation.message", conflictsCount, changesCount)
         )
         .yesText(DiffBundle.message("iterative.merge.dialog.apply.partially.resolved.changes.yes"))
-        .noText(DiffBundle.message("continue.merge"))
-        .doNotAsk(new DoNotAskOption.Adapter() {
-          @Override
-          public void rememberChoice(boolean isSelected, int exitCode) {
-            if (isSelected && exitCode == Messages.YES) {
-              PropertiesComponent.getInstance().setValue(DO_NOT_ASK_KEY, true);
-            }
-          }
-        })
+        .noText(DiffBundle.message("iterative.merge.dialog.apply.partially.resolved.changes.no"))
+        .icon(Messages.getWarningIcon())
         .ask(myPanel.getRootPane());
     }
     else {
@@ -386,7 +365,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       return new ResolveActionResult(true, false);
     }
 
-    onConfirmedAction.run();
+    executeMergeCommand(DiffBundle.message("merge.dialog.ignore.all.changes"), true, model.getUnresolvedChanges(), () -> {
+      model.markAllChangesResolved();
+    });
 
     return new ResolveActionResult(true, true);
   }

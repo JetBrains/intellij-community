@@ -72,6 +72,7 @@ import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.awt.event.ComponentAdapter
@@ -308,7 +309,7 @@ open class MultipleFileMergeDialog(
         val iterativeFilesWithModel = filesWithMergeModels.mapNotNull { (file, model) -> model?.let { file to it } }
         val normalFiles = filesWithMergeModels.filter { (_, model) -> model == null }.map { it.first }
 
-        acceptRevisionForIterativeResolution(iterativeFilesWithModel, resolution)
+        acceptRevisionForIterativeResolution(iterativeFilesWithModel, resolution,  columns[1].name, columns[2].name,)
         acceptRevision(resolution, normalFiles)
       }
     }
@@ -359,15 +360,19 @@ open class MultipleFileMergeDialog(
   private fun acceptRevisionForIterativeResolution(
     filesWithModel: List<Pair<VirtualFile, MergeConflictModel>>,
     resolution: MergeSession.Resolution,
+    yoursLabel: @Nls String,
+    theirsLabel: @Nls String,
   ) {
     if (filesWithModel.isEmpty()) return
     if (filesWithModel.any { (_,model) ->
         model.getResolvedChanges().isNotEmpty()
       }) {
       val confirmed = MessageDialogBuilder
-        .yesNo(VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.title", resolution.presentableName),
-               VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.message"))
-        .yesText(CommonBundle.message("button.accept"))
+        .yesNo(VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.title"),
+               VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.message",
+                                 filesWithModel.size,
+                                 if (resolution == MergeSession.Resolution.AcceptedYours) yoursLabel else theirsLabel))
+        .yesText(VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.yes"))
         .noText(CommonBundle.getCancelButtonText())
         .icon(Messages.getQuestionIcon())
         .ask(project)
