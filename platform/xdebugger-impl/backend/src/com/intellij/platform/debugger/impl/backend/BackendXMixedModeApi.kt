@@ -14,12 +14,12 @@ internal class BackendXMixedModeApi : XMixedModeApi {
 
   override suspend fun isMixedModeSession(sessionId: XDebugSessionId): Boolean = sessionId.findValue()!!.isMixedMode
 
-  override suspend fun showCustomizedEvaluatorView(frameId: XStackFrameId): Boolean {
-    val session = frameId.findValue()!!.session
+  override suspend fun shouldShowCustomizedEvaluatorView(frameId: XStackFrameId): Boolean {
+    val frameModel = frameId.findValue()!!
+    val session = frameModel.session
     assert(isMixedModeSession(session.id))
 
-    val frame = frameId.findValue()!!.stackFrame
-    val useLowLevelPanel = session.lowLevelMixedModeExtensionOrThrow.belongsToMe(frame)
+    val useLowLevelPanel = session.lowLevelMixedModeExtensionOrThrow.belongsToMe(frameModel.stackFrame)
     val useHighLevelPanel = !useLowLevelPanel
     val lowSupportsCustomization = session.lowLevelProcessOrThrow.useSplitterView()
     val highSupportsCustomization = session.highLevelProcessOrThrow.useSplitterView()
