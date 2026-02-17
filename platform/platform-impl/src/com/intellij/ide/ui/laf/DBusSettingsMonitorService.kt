@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.ExecResult
@@ -53,6 +55,8 @@ internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
 
   private var LOG = thisLogger()
 
+  @Volatile
+  private var listener: ((Boolean) -> Unit)? = null
   private val darkSchemeFlow = MutableStateFlow<Boolean?>(null)
   private val darkSchemeDebounceFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
   private var dbusMonitorProcess = AtomicReference<Process?>(null)
@@ -89,14 +93,18 @@ internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
     }
   }
 
-  fun runSchemeCollector(listener: (Boolean) -> Unit) {
+  fun setDarkSchemeListener(listener: (Boolean) -> Unit) {
+    this.listener = listener
+  }
+
+  fun runSchemeCollector() {
     if (!isServiceAllowed) {
       return
     }
 
     scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       darkScheme.collect {
-        listener(it ?: false)
+        listener?.invoke(it ?: false)
       }
     }
   }
@@ -171,6 +179,15 @@ internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
   private fun killDbusMonitorListener() {
     val process = dbusMonitorProcess.getAndSet(null)
     process?.destroyForcibly()
+  }
+}
+
+private class DBusSettingsMonitorLifecycleListener : AppLifecycleListener {
+
+  override fun appStarted() {
+    // This code also preloads the service, so LinuxThemeDetector.detectionSupported will contain actual value when needed.
+    // Example of a possible problem: IJPL-235150
+    service<DBusSettingsMonitorService>().runSchemeCollector()
   }
 }
 

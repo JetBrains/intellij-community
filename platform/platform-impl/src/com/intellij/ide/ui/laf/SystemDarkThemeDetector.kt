@@ -171,7 +171,7 @@ private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, 
     }
 
   init {
-    service.runSchemeCollector {
+    service.setDarkSchemeListener {
       syncFunction.accept(it, null)
     }
   }
