@@ -14,38 +14,32 @@ import java.util.stream.Stream;
 @SuppressWarnings("unchecked")
 public final class VirtualThreadDumper {
 
-  static volatile boolean initialized = false;
-  static boolean successfully = false;
+  private final MethodHandle containersRootHandle;
+  private final MethodHandle containerChildrenHandle;
+  private final MethodHandle containerThreadsHandle;
 
-  static MethodHandle containersRootHandle;
-  static MethodHandle containerChildrenHandle;
-  static MethodHandle containerThreadsHandle;
+  private final MethodHandle threadIsVirtualHandle;
+  private final MethodHandle threadThreadState;
 
-  static MethodHandle threadIsVirtualHandle;
-  static MethodHandle threadThreadState;
+  private int threadsCount = 0;
+  private final HashMap<String, ArrayList<Thread>> threadsGroupedByStackTrace = new HashMap<>();
 
-  private static boolean init(MethodHandles.Lookup lookup) {
-    if (!initialized) {
-      try {
-        // ThreadContainer & Co., since Java 21
-        Class<?> threadContainersClass = Class.forName("jdk.internal.vm.ThreadContainers");
-        Class<?> threadContainerClass = Class.forName("jdk.internal.vm.ThreadContainer");
-        containersRootHandle = lookup.findStatic(threadContainersClass, "root", MethodType.methodType(threadContainerClass));
-        containerChildrenHandle = lookup.findVirtual(threadContainerClass, "children", MethodType.methodType(Stream.class));
-        containerThreadsHandle = lookup.findVirtual(threadContainerClass, "threads", MethodType.methodType(Stream.class));
+  private final ArrayList<String> containerNames = new ArrayList<>();
+  private final ArrayList<Object> containerReferences = new ArrayList<>();
+  private final ArrayList<Integer> containerParentOrdinals = new ArrayList<>();
 
-        // VirtualThread & Co., since Java 21
-        threadIsVirtualHandle = lookup.findVirtual(Thread.class, "isVirtual", MethodType.methodType(boolean.class));
-        // Thread, non-public method
-        threadThreadState = lookup.findVirtual(Thread.class, "threadState", MethodType.methodType(Thread.State.class));
+  private VirtualThreadDumper(MethodHandles.Lookup lookup) throws Throwable {
+    // ThreadContainer & Co., since Java 21
+    Class<?> threadContainersClass = Class.forName("jdk.internal.vm.ThreadContainers");
+    Class<?> threadContainerClass = Class.forName("jdk.internal.vm.ThreadContainer");
+    containersRootHandle = lookup.findStatic(threadContainersClass, "root", MethodType.methodType(threadContainerClass));
+    containerChildrenHandle = lookup.findVirtual(threadContainerClass, "children", MethodType.methodType(Stream.class));
+    containerThreadsHandle = lookup.findVirtual(threadContainerClass, "threads", MethodType.methodType(Stream.class));
 
-        successfully = true;
-      } catch (NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {
-        successfully = false;
-      }
-      initialized = true;
-    }
-    return successfully;
+    // VirtualThread & Co., since Java 21
+    threadIsVirtualHandle = lookup.findVirtual(Thread.class, "isVirtual", MethodType.methodType(boolean.class));
+    // Thread, non-public method
+    threadThreadState = lookup.findVirtual(Thread.class, "threadState", MethodType.methodType(Thread.State.class));
   }
 
   /**
@@ -69,111 +63,96 @@ public final class VirtualThreadDumper {
    * </ol>
    */
   public static Object[] getAllVirtualThreadsWithStackTracesAndContainers(MethodHandles.Lookup lookup) throws Throwable {
-    if (!init(lookup)) {
-      return null;
-    }
-
-    return new Collector().collect();
+    VirtualThreadDumper dumper = new VirtualThreadDumper(lookup);
+    return dumper.collect();
   }
 
-  private static class Collector {
-    int threadsCount = 0;
-    final HashMap<String, ArrayList<Thread>> threadsGroupedByStackTrace = new HashMap<>();
+  private Object[] collect() throws Throwable {
+    // Collect all threads and containers starting from the root container.
+    processContainer(containersRootHandle.invoke(), -1);
 
-    final ArrayList<String> containerNames = new ArrayList<>();
-    final ArrayList<Object> containerReferences = new ArrayList<>();
-    final ArrayList<Integer> containerParentOrdinals = new ArrayList<>();
-
-    /**
-     * @see VirtualThreadDumper#getAllVirtualThreadsWithStackTracesAndContainers(MethodHandles.Lookup)
-     */
-    Object[] collect() throws Throwable {
-      // Collect all threads and containers starting from the root container.
-      processContainer(containersRootHandle.invoke(), -1);
-
-      // Group threads by stack trace and compact them into arrays.
-      long[] threadIds = new long[threadsCount];
-      int tidIdx = 0;
-      Object[] allStackTraceAndThreads = new Object[threadsCount + threadsGroupedByStackTrace.size() * 2];
-      int stIdx = 0;
-      for (Map.Entry<String, ArrayList<Thread>> e : threadsGroupedByStackTrace.entrySet()) {
-        String st = e.getKey();
-        ArrayList<Thread> ts = e.getValue();
-        allStackTraceAndThreads[stIdx++] = st;
-        for (Thread t : ts) {
-          allStackTraceAndThreads[stIdx++] = t;
-          threadIds[tidIdx++] = t.getId();
-        }
-        allStackTraceAndThreads[stIdx++] = null;
+    // Group threads by stack trace and compact them into arrays.
+    long[] threadIds = new long[threadsCount];
+    int tidIdx = 0;
+    Object[] allStackTraceAndThreads = new Object[threadsCount + threadsGroupedByStackTrace.size() * 2];
+    int stIdx = 0;
+    for (Map.Entry<String, ArrayList<Thread>> e : threadsGroupedByStackTrace.entrySet()) {
+      String st = e.getKey();
+      ArrayList<Thread> ts = e.getValue();
+      allStackTraceAndThreads[stIdx++] = st;
+      for (Thread t : ts) {
+        allStackTraceAndThreads[stIdx++] = t;
+        threadIds[tidIdx++] = t.getId();
       }
-      assert tidIdx == threadsCount;
-      assert stIdx == allStackTraceAndThreads.length;
-
-      return new Object[] {
-        allStackTraceAndThreads,
-        threadIds,
-        containerNames.toArray(),
-        containerReferences.toArray(),
-        containerParentOrdinals.stream().mapToInt(Integer::intValue).toArray()
-      };
+      allStackTraceAndThreads[stIdx++] = null;
     }
+    assert tidIdx == threadsCount;
+    assert stIdx == allStackTraceAndThreads.length;
 
-    private void processContainer(Object container, int parentContainerOrdinal) throws Throwable {
-      int containerOrdinal = saveContainerInfo(container, parentContainerOrdinal);
-      saveVirtualThreadsInfo(container, containerOrdinal);
-      processContainerChildren(container, containerOrdinal);
-    }
+    return new Object[] {
+      allStackTraceAndThreads,
+      threadIds,
+      containerNames.toArray(),
+      containerReferences.toArray(),
+      containerParentOrdinals.stream().mapToInt(Integer::intValue).toArray()
+    };
+  }
 
-    private void saveVirtualThreadsInfo(Object container, int containerOrdinal) throws Throwable {
-      Iterator<Thread> threads = ((Stream<Thread>)containerThreadsHandle.invoke(container)).iterator();
-      while (threads.hasNext()) {
-        Thread t = threads.next();
+  private void processContainer(Object container, int parentContainerOrdinal) throws Throwable {
+    int containerOrdinal = saveContainerInfo(container, parentContainerOrdinal);
+    saveVirtualThreadsInfo(container, containerOrdinal);
+    processContainerChildren(container, containerOrdinal);
+  }
 
-        boolean isVirtual = (boolean)threadIsVirtualHandle.invoke(t);
-        if (!isVirtual) continue;
+  private void saveVirtualThreadsInfo(Object container, int containerOrdinal) throws Throwable {
+    Iterator<Thread> threads = ((Stream<Thread>)containerThreadsHandle.invoke(container)).iterator();
+    while (threads.hasNext()) {
+      Thread t = threads.next();
 
-        String name = t.getName();
-        Thread.State javaThreadState = (Thread.State)threadThreadState.invoke(t);
+      boolean isVirtual = (boolean)threadIsVirtualHandle.invoke(t);
+      if (!isVirtual) continue;
 
-        // "Stack trace" format, in such a way it should be shared between multiple threads and easily processed on the debugger side:
-        // <name>
-        // <javaThreadState>
-        // <threadContainerOrdinal>
-        // <stack trace elements...>
-        StringBuilder buffer = new StringBuilder();
-        buffer.append(name).append('\n')
-          .append(javaThreadState).append('\n')
-          .append(containerOrdinal);
-        for (StackTraceElement ste : t.getStackTrace()) {
-          buffer.append("\n\tat ").append(ste);
-        }
-        String stackTrace = buffer.toString();
+      String name = t.getName();
+      Thread.State javaThreadState = (Thread.State)threadThreadState.invoke(t);
 
-        ArrayList<Thread> similarThreads = threadsGroupedByStackTrace.get(stackTrace);
-        if (similarThreads == null) {
-          similarThreads = new ArrayList<>();
-          threadsGroupedByStackTrace.put(stackTrace, similarThreads);
-        }
-        similarThreads.add(t);
-        threadsCount++;
+      // "Stack trace" format, in such a way it should be shared between multiple threads and easily processed on the debugger side:
+      // <name>
+      // <javaThreadState>
+      // <threadContainerOrdinal>
+      // <stack trace elements...>
+      StringBuilder buffer = new StringBuilder();
+      buffer.append(name).append('\n')
+        .append(javaThreadState).append('\n')
+        .append(containerOrdinal);
+      for (StackTraceElement ste : t.getStackTrace()) {
+        buffer.append("\n\tat ").append(ste);
       }
-    }
+      String stackTrace = buffer.toString();
 
-    private int saveContainerInfo(Object container, int parentContainerOrdinal) throws Throwable {
-      assert containerNames.size() == containerParentOrdinals.size();
-      int ordinal = containerNames.size();
-      containerNames.add(container.toString());
-      containerReferences.add(container);
-      containerParentOrdinals.add(parentContainerOrdinal);
-      return ordinal;
-    }
-
-    private void processContainerChildren(Object container, int ordinal) throws Throwable {
-      Iterator<Object> children = ((Stream<Object>)containerChildrenHandle.invoke(container)).iterator();
-      while (children.hasNext()) {
-        Object childContainer = children.next();
-        processContainer(childContainer, ordinal);
+      ArrayList<Thread> similarThreads = threadsGroupedByStackTrace.get(stackTrace);
+      if (similarThreads == null) {
+        similarThreads = new ArrayList<>();
+        threadsGroupedByStackTrace.put(stackTrace, similarThreads);
       }
+      similarThreads.add(t);
+      threadsCount++;
+    }
+  }
+
+  private int saveContainerInfo(Object container, int parentContainerOrdinal) throws Throwable {
+    assert containerNames.size() == containerParentOrdinals.size();
+    int ordinal = containerNames.size();
+    containerNames.add(container.toString());
+    containerReferences.add(container);
+    containerParentOrdinals.add(parentContainerOrdinal);
+    return ordinal;
+  }
+
+  private void processContainerChildren(Object container, int ordinal) throws Throwable {
+    Iterator<Object> children = ((Stream<Object>)containerChildrenHandle.invoke(container)).iterator();
+    while (children.hasNext()) {
+      Object childContainer = children.next();
+      processContainer(childContainer, ordinal);
     }
   }
 }
