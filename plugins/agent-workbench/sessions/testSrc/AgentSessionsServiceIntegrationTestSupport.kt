@@ -33,10 +33,15 @@ internal class ScriptedSessionSource(
   }
 }
 
-internal fun thread(id: String, updatedAt: Long, provider: AgentSessionProvider): AgentSessionThread {
+internal fun thread(
+  id: String,
+  updatedAt: Long,
+  provider: AgentSessionProvider,
+  title: String = id,
+): AgentSessionThread {
   return AgentSessionThread(
     id = id,
-    title = id,
+    title = title,
     updatedAt = updatedAt,
     archived = false,
     provider = provider,

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -347,6 +348,50 @@ class AgentSessionsServiceRefreshIntegrationTest {
       assertThat(project.threads.map { it.id }).containsExactly("codex-1", "claude-1")
       assertThat(project.threads.first { it.provider == AgentSessionProvider.CLAUDE }.updatedAt).isEqualTo(200L)
       assertThat(project.threads.first { it.provider == AgentSessionProvider.CODEX }.updatedAt).isEqualTo(300L)
+    }
+  }
+
+  @Test
+  fun providerUpdateObservedAfterSourceAppearsLater() = runBlocking {
+    val codexUpdates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val codexUpdatedAt = 300L
+    var sessionSources: List<AgentSessionSource> = emptyList()
+
+    val codexSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      canReportExactThreadCount = false,
+      updates = codexUpdates,
+      listFromClosedProject = { path ->
+        if (path == PROJECT_PATH) {
+          listOf(thread(id = "codex-1", updatedAt = codexUpdatedAt, provider = AgentSessionProvider.CODEX))
+        }
+        else {
+          emptyList()
+        }
+      },
+    )
+
+    withService(
+      sessionSourcesProvider = { sessionSources },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+      }
+
+      sessionSources = listOf(codexSource)
+      codexUpdates.tryEmit(Unit)
+
+      waitForCondition {
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.threads.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == codexUpdatedAt
+      }
+
+      val project = service.state.value.projects.single { it.path == PROJECT_PATH }
+      assertThat(project.threads.map { it.id }).containsExactly("codex-1")
     }
   }
 }

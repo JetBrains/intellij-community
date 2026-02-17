@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
@@ -51,27 +50,18 @@ class AgentSessionsGearActionsTest {
 
   @Test
   fun refreshActionTriggersSessionsRefresh() {
-    val refreshAction = AgentSessionsRefreshAction()
-
-    val service = ApplicationManager.getApplication().getService(AgentSessionsService::class.java)
-    val initialTimestamp = service.state.value.lastUpdatedAt
+    var refreshInvocations = 0
+    val refreshAction = AgentSessionsRefreshAction(
+      refreshSessions = { refreshInvocations++ },
+      isRefreshingProvider = { false },
+    )
 
     runInEdtAndWait {
       refreshAction.actionPerformed(TestActionEvent.createTestEvent(refreshAction))
     }
 
-    val timeoutAt = System.currentTimeMillis() + 5_000
-    var refreshed = false
-    while (System.currentTimeMillis() < timeoutAt) {
-      val updatedAt = service.state.value.lastUpdatedAt
-      if (updatedAt != null && updatedAt != initialTimestamp) {
-        refreshed = true
-        break
-      }
-      Thread.sleep(20)
-    }
-    assertThat(refreshed)
-      .withFailMessage("Refresh action didn't trigger a sessions state update in time.")
-      .isTrue()
+    assertThat(refreshInvocations)
+      .withFailMessage("Refresh action didn't trigger sessions refresh callback.")
+      .isEqualTo(1)
   }
 }

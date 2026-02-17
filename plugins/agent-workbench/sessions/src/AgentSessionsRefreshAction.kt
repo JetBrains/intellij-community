@@ -6,14 +6,30 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 
-internal class AgentSessionsRefreshAction : DumbAwareAction() {
+internal class AgentSessionsRefreshAction : DumbAwareAction {
+  private val refreshSessions: () -> Unit
+  private val isRefreshingProvider: () -> Boolean
+
+  @Suppress("unused")
+  constructor() {
+    refreshSessions = { service<AgentSessionsService>().refresh() }
+    isRefreshingProvider = { service<AgentSessionsService>().state.value.projects.any { it.isLoading } }
+  }
+
+  internal constructor(
+    refreshSessions: () -> Unit,
+    isRefreshingProvider: () -> Boolean,
+  ) {
+    this.refreshSessions = refreshSessions
+    this.isRefreshingProvider = isRefreshingProvider
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
-    service<AgentSessionsService>().refresh()
+    refreshSessions()
   }
 
   override fun update(e: AnActionEvent) {
-    val isRefreshing = service<AgentSessionsService>().state.value.projects.any { it.isLoading }
-    e.presentation.isEnabled = !isRefreshing
+    e.presentation.isEnabled = !isRefreshingProvider()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

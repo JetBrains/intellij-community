@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("SSBasedInspection")
+
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-codex-rollout-source.spec.md
@@ -19,11 +21,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import java.nio.file.ClosedWatchServiceException
 import java.nio.file.FileSystems
@@ -60,7 +66,10 @@ internal class CodexRolloutSessionBackend(
   override val updates: Flow<Unit> = callbackFlow {
     LOG.debug { "Initializing Codex rollout updates watcher (codexHome=${codexHomeProvider()})" }
     val watcher = runCatching {
-      CodexRolloutSessionsWatcher(codexHomeProvider = codexHomeProvider) {
+      CodexRolloutSessionsWatcher(
+        codexHomeProvider = codexHomeProvider,
+        scope = this,
+      ) {
         LOG.debug { "Rollout watcher signaled change; emitting update" }
         trySend(Unit)
       }
@@ -474,6 +483,7 @@ private data class CachedRolloutFile(
 
 private class CodexRolloutSessionsWatcher(
   private val codexHomeProvider: () -> Path,
+  scope: CoroutineScope,
   private val onRolloutChange: () -> Unit,
 ) : AutoCloseable {
   private val watchService = FileSystems.getDefault().newWatchService()
@@ -482,21 +492,20 @@ private class CodexRolloutSessionsWatcher(
   private val watchKeysLock = Any()
   private val sessionsRoot: Path
     get() = codexHomeProvider().resolve("sessions")
-
-  private val thread = Thread(::runWatchLoop, "CodexRolloutSessionBackendWatcher").apply {
-    isDaemon = true
-    start()
-  }
+  private val watcherJob: Job
 
   init {
     registerInitialPaths()
+    watcherJob = scope.launch(Dispatchers.IO) {
+      runWatchLoop()
+    }
   }
 
   override fun close() {
     if (!running.compareAndSet(true, false)) return
     LOG.debug { "Closing Codex rollout sessions watcher" }
     watchService.close()
-    thread.interrupt()
+    watcherJob.cancel()
   }
 
   private fun registerInitialPaths() {
@@ -511,12 +520,17 @@ private class CodexRolloutSessionsWatcher(
     }
   }
 
-  private fun runWatchLoop() {
+  private suspend fun runWatchLoop() {
     while (running.get()) {
       val watchKey = try {
-        watchService.take()
+        runInterruptible {
+          watchService.take()
+        }
       }
       catch (_: InterruptedException) {
+        if (!running.get()) {
+          break
+        }
         continue
       }
       catch (_: ClosedWatchServiceException) {

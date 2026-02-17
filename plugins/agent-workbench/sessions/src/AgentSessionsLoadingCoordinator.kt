@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.collectOpenAgentChatProjectPaths
+import com.intellij.agent.workbench.chat.updateOpenAgentChatTabTitles
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
 import com.intellij.openapi.diagnostic.debug
@@ -23,6 +25,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private val LOG = logger<AgentSessionsLoadingCoordinator>()
 private const val SOURCE_UPDATE_DEBOUNCE_MS = 350L
 private const val SOURCE_REFRESH_GATE_RETRY_MS = 500L
+private const val SOURCE_OBSERVER_SYNC_INTERVAL_MS = 1_000L
 
 internal class AgentSessionsLoadingCoordinator(
   private val serviceScope: CoroutineScope,
@@ -31,6 +34,8 @@ internal class AgentSessionsLoadingCoordinator(
   private val treeUiState: SessionsTreeUiState,
   private val stateStore: AgentSessionsStateStore,
   private val isRefreshGateActive: suspend () -> Boolean,
+  private val openAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenAgentChatProjectPaths,
+  private val openAgentChatTabTitleUpdater: suspend (Map<Pair<String, String>, String>) -> Int = ::updateOpenAgentChatTabTitles,
 ) {
   private val refreshMutex = Mutex()
   private val onDemandMutex = Mutex()
@@ -41,17 +46,16 @@ internal class AgentSessionsLoadingCoordinator(
   private val pendingSourceRefreshProviders = LinkedHashSet<AgentSessionProvider>()
   private var sourceRefreshProcessorRunning = false
   private val sourceRefreshIdCounter = AtomicLong()
+  private val sourceObserverJobs = LinkedHashMap<AgentSessionProvider, Job>()
+  private val sourceObserverJobsLock = Any()
   private val archiveSuppressions = LinkedHashSet<ArchiveSuppression>()
   private val archiveSuppressionsLock = Any()
 
   fun observeSessionSourceUpdates() {
-    serviceScope.launch {
-      for (source in sessionSourcesProvider()) {
-        launch {
-          source.updates.collect {
-            scheduleSourceRefresh(source.provider)
-          }
-        }
+    serviceScope.launch(Dispatchers.IO) {
+      while (true) {
+        ensureSourceUpdateObservers()
+        delay(SOURCE_OBSERVER_SYNC_INTERVAL_MS.milliseconds)
       }
     }
   }
@@ -62,6 +66,7 @@ internal class AgentSessionsLoadingCoordinator(
         return@launch
       }
       try {
+        ensureSourceUpdateObservers()
         val entries = projectEntriesProvider()
         val currentState = stateStore.snapshot()
         val currentProjectsByPath = currentState.projects.associateBy { normalizePath(it.path) }
@@ -277,6 +282,51 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
+  private fun ensureSourceUpdateObservers() {
+    val availableSources = LinkedHashMap<AgentSessionProvider, AgentSessionSource>()
+    for (source in sessionSourcesProvider()) {
+      if (availableSources.putIfAbsent(source.provider, source) != null) {
+        LOG.warn("Duplicate session source for provider ${source.provider.value}; ignoring ${source::class.java.name}")
+      }
+    }
+
+    synchronized(sourceObserverJobsLock) {
+      val jobIterator = sourceObserverJobs.entries.iterator()
+      while (jobIterator.hasNext()) {
+        val (provider, job) = jobIterator.next()
+        if (availableSources.containsKey(provider)) continue
+        LOG.debug { "Stopping source updates observer for ${provider.value}" }
+        job.cancel()
+        jobIterator.remove()
+      }
+
+      for ((provider, source) in availableSources) {
+        if (sourceObserverJobs.containsKey(provider)) continue
+
+        LOG.debug { "Starting source updates observer for ${provider.value}" }
+        val job = serviceScope.launch(Dispatchers.IO) {
+          try {
+            source.updates.collect {
+              scheduleSourceRefresh(provider)
+            }
+          }
+          catch (e: Throwable) {
+            if (e is CancellationException) throw e
+            LOG.warn("Source updates observer failed for ${provider.value}", e)
+          }
+        }
+        sourceObserverJobs[provider] = job
+        job.invokeOnCompletion {
+          synchronized(sourceObserverJobsLock) {
+            if (sourceObserverJobs[provider] === job) {
+              sourceObserverJobs.remove(provider)
+            }
+          }
+        }
+      }
+    }
+  }
+
   fun suppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
     val normalizedPath = normalizePath(path)
     synchronized(archiveSuppressionsLock) {
@@ -480,9 +530,12 @@ internal class AgentSessionsLoadingCoordinator(
       LOG.debug { "Starting provider refresh id=$refreshId provider=${provider.value}" }
       val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
       val stateSnapshot = stateStore.snapshot()
-      val targetPaths = collectLoadedPaths(stateSnapshot)
+      val targetPaths = LinkedHashSet<String>()
+      targetPaths.addAll(collectLoadedPaths(stateSnapshot))
+      targetPaths.addAll(openAgentChatProjectPathsProvider())
+
       if (targetPaths.isEmpty()) {
-        LOG.debug { "Provider refresh id=$refreshId provider=${provider.value} skipped (no loaded paths)" }
+        LOG.debug { "Provider refresh id=$refreshId provider=${provider.value} skipped (no target paths)" }
         return
       }
 
@@ -491,7 +544,7 @@ internal class AgentSessionsLoadingCoordinator(
       }
 
       val prefetched = try {
-        source.prefetchThreads(targetPaths)
+        source.prefetchThreads(targetPaths.toList())
       }
       catch (_: Throwable) {
         emptyMap()
@@ -528,6 +581,8 @@ internal class AgentSessionsLoadingCoordinator(
           )
         }
       }
+
+      syncOpenChatTabTitles(provider = provider, outcomes = outcomes, refreshId = refreshId)
 
       stateStore.update { state ->
         var changed = false
@@ -594,6 +649,31 @@ internal class AgentSessionsLoadingCoordinator(
       }
     }
     return ArrayList(paths)
+  }
+
+  private suspend fun syncOpenChatTabTitles(
+    provider: AgentSessionProvider,
+    outcomes: Map<String, ProviderRefreshOutcome>,
+    refreshId: Long,
+  ) {
+    val titleByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, String>()
+    for ((path, outcome) in outcomes) {
+      val threads = outcome.threads ?: continue
+      for (thread in threads) {
+        if (thread.provider != provider) continue
+        titleByPathAndThreadIdentity[path to buildAgentSessionIdentity(thread.provider, thread.id)] = thread.title
+      }
+    }
+
+    if (titleByPathAndThreadIdentity.isEmpty()) {
+      return
+    }
+
+    val updatedTabs = openAgentChatTabTitleUpdater(titleByPathAndThreadIdentity)
+
+    LOG.debug {
+      "Provider refresh id=$refreshId provider=${provider.value} synchronized open chat tab titles (updatedTabs=$updatedTabs)"
+    }
   }
 
   private suspend fun markOnDemandLoading(path: String): Boolean {

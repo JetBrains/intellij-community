@@ -118,14 +118,18 @@ internal class AgentSessionsService private constructor(
   }
 
   private suspend fun isSourceRefreshGateActive(): Boolean = withContext(Dispatchers.EDT) {
+    val stateSnapshot = stateStore.snapshot()
+    val hasLoadedPaths = stateSnapshot.projects.any { project ->
+      project.hasLoaded || project.worktrees.any { it.hasLoaded }
+    }
+
     val openProjects = ProjectManager.getInstance().openProjects
     if (openProjects.isEmpty()) {
-      val stateSnapshot = stateStore.snapshot()
       val decision = stateSnapshot.projects.any { project ->
-        project.isOpen || project.worktrees.any { it.isOpen }
+        project.isOpen || project.hasLoaded || project.worktrees.any { it.isOpen || it.hasLoaded }
       }
       LOG.debug {
-        "Source refresh gate decision=$decision (openProjects=0, stateProjects=${stateSnapshot.projects.size})"
+        "Source refresh gate decision=$decision (openProjects=0, stateProjects=${stateSnapshot.projects.size}, hasLoadedPaths=$hasLoadedPaths)"
       }
       return@withContext decision
     }
@@ -146,15 +150,16 @@ internal class AgentSessionsService private constructor(
       )
     }
 
-    val decision = signals.any { signal ->
+    val uiSignalActive = signals.any { signal ->
       signal.sessionsVisible || signal.chatActive
     }
+    val decision = uiSignalActive || hasLoadedPaths
 
     LOG.debug {
       val signalText = signals.joinToString(separator = ";") { signal ->
         "${signal.name}[dedicated=${signal.dedicated},sessionsVisible=${signal.sessionsVisible},chatActive=${signal.chatActive}]"
       }
-      "Source refresh gate decision=$decision (openProjects=${openProjects.size}, signals=$signalText)"
+      "Source refresh gate decision=$decision (openProjects=${openProjects.size}, uiSignalActive=$uiSignalActive, hasLoadedPaths=$hasLoadedPaths, signals=$signalText)"
     }
 
     decision

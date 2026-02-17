@@ -5,10 +5,18 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private class AgentChatEditorServiceLog
 
@@ -64,6 +72,47 @@ suspend fun openChat(
   }
 }
 
+suspend fun collectOpenAgentChatProjectPaths(): Set<String> = runOnEdt {
+  val paths = LinkedHashSet<String>()
+  for (project in ProjectManager.getInstance().openProjects) {
+    val manager = runCatching { FileEditorManagerEx.getInstanceEx(project) }.getOrNull() ?: continue
+    for (openFile in manager.openFiles) {
+      val chatFile = openFile as? AgentChatVirtualFile ?: continue
+      paths.add(normalizeChatProjectPath(chatFile.projectPath))
+    }
+  }
+  paths
+}
+
+suspend fun updateOpenAgentChatTabTitles(
+  titleByPathAndThreadIdentity: Map<Pair<String, String>, String>,
+): Int {
+  if (titleByPathAndThreadIdentity.isEmpty()) {
+    return 0
+  }
+
+  var updatedTabs = 0
+  runOnEdt {
+    for (project in ProjectManager.getInstance().openProjects) {
+      val manager = runCatching { FileEditorManagerEx.getInstanceEx(project) }.getOrNull() ?: continue
+      for (openFile in manager.openFiles) {
+        val chatFile = openFile as? AgentChatVirtualFile ?: continue
+        val targetTitle = titleByPathAndThreadIdentity[
+          normalizeChatProjectPath(chatFile.projectPath) to chatFile.threadIdentity
+        ] ?: continue
+        if (chatFile.updateThreadTitle(targetTitle)) {
+          manager.updateFilePresentation(chatFile)
+          updatedTabs++
+        }
+      }
+    }
+  }
+  LOG.debug {
+    "updateOpenAgentChatTabTitles updatedTabs=$updatedTabs, requested=${titleByPathAndThreadIdentity.size}"
+  }
+  return updatedTabs
+}
+
 private fun findExistingChat(
   openFiles: Array<VirtualFile>,
   threadIdentity: String,
@@ -76,4 +125,22 @@ private fun findExistingChat(
     }
   }
   return null
+}
+
+private suspend fun <T> runOnEdt(action: () -> T): T {
+  if (ApplicationManager.getApplication()?.isDispatchThread == true) {
+    return action()
+  }
+  return withContext(Dispatchers.EDT) {
+    action()
+  }
+}
+
+private fun normalizeChatProjectPath(path: String): String {
+  return try {
+    Path.of(path).invariantSeparatorsPathString
+  }
+  catch (_: InvalidPathException) {
+    path
+  }
 }
