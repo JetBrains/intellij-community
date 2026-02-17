@@ -15,12 +15,9 @@
     <backgroundPostStartupActivity implementation="com.intellij.selucene.backend.providers.files.InitLuceneIndex"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.seluceneBackendBundle">
     <action id="Se.IndexFiles"
             class="com.intellij.selucene.backend.providers.files.debugActions.IndexFilesForLuceneAction"
-
-            text="Index Files for Lucene"
-            description="Index files for Lucene"
             icon="AllIcons.Actions.BuildLoadChanges"/>
   </actions>
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.selucene.backend.providers.files.FileIndex
 import com.intellij.selucene.backend.providers.files.LuceneFileIndexOperation
 
-@Suppress("HardCodedStringLiteral")
 class IndexFilesForLuceneAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
