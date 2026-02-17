@@ -14,12 +14,10 @@ import com.intellij.util.io.zip.JBZipEntry
 import com.intellij.util.io.zip.JBZipFile
 import com.intellij.util.system.OS
 import java.io.IOException
-import java.io.UncheckedIOException
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileStore
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
@@ -281,7 +279,7 @@ object FileSystem {
     val attributes = try {
       readAttributes<BasicFileAttributes>()
     }
-    catch (_: NoSuchFileException) {
+    catch (_: Exception) {
       return "N/A"
     }
     val size: Long = if (attributes.isRegularFile) {
@@ -299,7 +297,7 @@ object FileSystem {
           }.sum()
         }
       }
-      catch (_: UncheckedIOException) {
+      catch (_: Exception) {
         // Files may be deleted by concurrent processes (e.g., IDE indexer) during the walk
         return "N/A"
       }
@@ -323,7 +321,7 @@ object FileSystem {
           }
         }
       }
-      catch (_: UncheckedIOException) {
+      catch (_: Exception) {
         // Files may be deleted by concurrent processes (e.g., IDE indexer) during the walk
         appendLine("(some entries skipped due to concurrent file changes)")
       }
