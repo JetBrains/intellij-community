@@ -20,9 +20,10 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
   }
 
   var minimumColumnWidth: Int? = null
+  private var wasResized = false
 
   override fun doLayout() {
-    if (getTableHeader().resizingColumn == null) {
+    if (getTableHeader().resizingColumn == null && !wasResized) {
       updateColumnSizes()
     }
     super.doLayout()
@@ -46,6 +47,8 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
     }
 
     columnModel.getColumn(fileColumn).preferredWidth = max(size, JBUI.scale(200))
+
+    wasResized = true
   }
 
   private fun calcColumnWidth(maxStringValue: String, columnInfo: ColumnInfo<Any, Any>): Int {
