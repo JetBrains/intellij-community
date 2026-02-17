@@ -388,16 +388,35 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   private void onMergeEvent(MergeEvent event) {
     if (event instanceof MergeEvent.ChangeResolved changeResolved) {
       TextMergeChange change = changeResolved.getChange();
-
+      if (myAggregator != null) {
+        if (change.isResolvedWithAI()) {
+          myAggregator.wasResolvedByAi(change.getIndex());
+        }
+      }
       applyForHighlighters(change, highlighters -> {
         if (change.isResolved()) highlighters.destroyInnerHighlighters();
       });
       onChangeResolved(change);
     }
 
+    if (event instanceof MergeEvent.ChangeReset changeReset) {
+      TextMergeChange change = changeReset.getChange();
+
+      if (myAggregator != null) {
+        if (change.isResolvedWithAI()) {
+          myAggregator.wasRolledBackAfterAI(change.getIndex());
+        }
+      }
+    }
+
     if (event instanceof MergeEvent.ChangeSideResolved sideResolved) {
       TextMergeChange change = sideResolved.getChange();
       Side side = sideResolved.getSide();
+      if (myAggregator != null) {
+        if (change.isResolvedWithAI()) {
+          myAggregator.wasResolvedByAi(change.getIndex());
+        }
+      }
       applyForHighlighters(change, highlighters -> {
         if (change.isResolved()) {
           highlighters.destroyInnerHighlighters();
@@ -410,8 +429,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     if (event instanceof MergeEvent.ChangeProcessed changeProcessed) {
-      reinstallAllHighlighters(changeProcessed.getChange());
-      myInnerDiffWorker.scheduleRediff(changeProcessed.getChange());
+      TextMergeChange change = changeProcessed.getChange();
+      if (myAggregator != null) {
+        myAggregator.wasEdited(change.getIndex());
+        if (change.isResolvedWithAI()) {
+          myAggregator.wasEditedAfterAi(change.getIndex());
+        }
+      }
+
+      reinstallAllHighlighters(change);
+      myInnerDiffWorker.scheduleRediff(change);
     }
 
     if (event instanceof MergeEvent.BulkProcessingFinished) {

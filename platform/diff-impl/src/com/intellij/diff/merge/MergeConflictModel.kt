@@ -217,6 +217,7 @@ class MergeConflictModel(
     val baseContent = DiffUtil.getLines(content, startLine, endLine)
 
     resultModel.replaceChange(change.index, baseContent)
+    fireChangeReset(change)
     change.resetState()
     resultModel.invalidateChange(change.index)
   }
@@ -418,6 +419,7 @@ class MergeConflictModel(
   private fun fireChangeResolved(change: TextMergeChange) = fireEvent(MergeEvent.ChangeResolved(change))
   private fun fireChangeProcessed(change: TextMergeChange) = fireEvent(MergeEvent.ChangeProcessed(change))
   private fun fireBulkProcessingFinished() = fireEvent(MergeEvent.BulkProcessingFinished)
+  private fun fireChangeReset(change: TextMergeChange) = fireEvent(MergeEvent.ChangeReset(change))
 }
 
 @ApiStatus.Internal
@@ -439,6 +441,9 @@ sealed class MergeEvent {
 
   @ApiStatus.Internal
   class ChangeSideResolved(val change: TextMergeChange, val side: Side) : MergeEvent()
+
+  @ApiStatus.Internal
+  class ChangeReset(val change: TextMergeChange) : MergeEvent()
 
   @ApiStatus.Internal
   class ChangeProcessed(val change: TextMergeChange) : MergeEvent()
