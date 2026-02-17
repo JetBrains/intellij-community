@@ -510,8 +510,8 @@ object IconUtil {
   })
 
   @Internal
-  fun mainColor(source: Icon): Color {
-    val icon = (source as? DeferredIcon)?.evaluate() ?: source
+  fun mainColor(source: Icon, evaluate: Boolean): Color {
+    val icon = if (evaluate) (source as? DeferredIcon)?.evaluate() ?: source else source
 
     val iconImage = toBufferedImage(icon)
     val filter = MainColorFilter()

@@ -18,6 +18,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.Service
@@ -37,6 +38,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.DeferredIconImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
@@ -142,7 +144,7 @@ internal class ProjectGradients(val index: Int) {
 }
 
 @Service
-class ProjectWindowCustomizerService : Disposable {
+class ProjectWindowCustomizerService(private val coroutineScope: CoroutineScope) : Disposable {
   companion object {
     private var instance: ProjectWindowCustomizerService? = null
     private var leftGradientCache: GradientTextureCache = GradientTextureCache()
@@ -308,10 +310,22 @@ class ProjectWindowCustomizerService : Disposable {
       return false
     }
 
-    val iconMainColor = IconUtil.mainColor(icon)
-    setCustomProjectColor(project, iconMainColor, false)
+    if (icon is DeferredIconImpl<*>) {
+      coroutineScope.launch(Dispatchers.UI) {
+        icon.awaitEvaluation()
+        setCustomProjectColorWithIcon(project, icon, false)
+      }
+      return true
+    }
+
+    setCustomProjectColorWithIcon(project, icon, true)
 
     return true
+  }
+
+  private fun setCustomProjectColorWithIcon(project: Project, icon: Icon, evaluate: Boolean) {
+    val iconMainColor = IconUtil.mainColor(icon, evaluate)
+    setCustomProjectColor(project, iconMainColor, false)
   }
 
   @Internal

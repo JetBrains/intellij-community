@@ -178,6 +178,8 @@ com.intellij.ide.IdeTooltip$Ui
 - a:isInside(com.intellij.ui.awt.RelativePoint):Z
 com.intellij.ide.KeyboardAwareFocusOwner
 - a:skipKeyEventDispatcher(java.awt.event.KeyEvent):Z
+f:com.intellij.ide.ProjectWindowCustomizerService
+- <init>(kotlinx.coroutines.CoroutineScope):V
 com.intellij.ide.ProtocolHandler
 - sf:Companion:com.intellij.ide.ProtocolHandler$Companion
 - sf:PLEASE_DO_NOT_FOCUS:I

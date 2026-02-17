@@ -1536,7 +1536,6 @@ f:com.intellij.ide.ProjectGroupActionGroup
 f:com.intellij.ide.ProjectWindowCustomizerService
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.ide.ProjectWindowCustomizerService$Companion
-- <init>():V
 - f:addListener(kotlinx.coroutines.CoroutineScope,Z,kotlin.jvm.functions.Function1):V
 - dispose():V
 - f:enableIfNeeded():V
