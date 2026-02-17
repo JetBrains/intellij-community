@@ -41,7 +41,8 @@ internal class PythonPackageManagerServiceImpl(private val serviceScope: Corouti
       Disposer.register(createdSdk, vfsListenerDisposable)
 
       if (sdk is Disposable) {
-        Disposer.register(sdk, Disposable { cache.remove(cacheKey) })
+        val localCache = cache
+        Disposer.register(sdk, Disposable { localCache.remove(cacheKey) })
         Disposer.register(sdk, Disposable { Disposer.dispose(vfsListenerDisposable) })
       }
 
