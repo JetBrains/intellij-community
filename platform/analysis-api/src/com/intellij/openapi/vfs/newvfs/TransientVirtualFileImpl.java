@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
@@ -84,6 +85,15 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
     this.path = path;
     this.fileSystem = fileSystem;
     this.parent = parent;
+  }
+
+  private TransientVirtualFileImpl(@NotNull String name,
+                                   @NotNull String path,
+                                   @NotNull NewVirtualFileSystem fileSystem,
+                                   @NotNull VirtualFile parent,
+                                   @NotNull FileAttributes attributes) {
+    this(name, path, fileSystem, parent);
+    this.cachedAttributes = attributes;
   }
 
   @Override
@@ -171,6 +181,17 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
   @Override
   public VirtualFile[] getChildren() {
     //MAYBE RC: cache children once calculated?
+    // TODO: on Win/NTFS .listWithAttributes() has almost the same cost as plain .list() -- but for other OSes it is not true.
+    //      So, the eager loading of all children's attributes may be an overhead on non-Win OSes, in use-cases there most of the loaded children are not really used.
+    //      In such cases lazy loading of children attributes may be preferable. So far we don't know how frequent such use-cases are, so eager loading is the default (if available) -- this may need adjustments after enough statistics will be collecte
+    if (fileSystem instanceof BatchingFileSystem bfs) {
+      return bfs.listWithAttributes(this).entrySet().stream()
+        .map(entry -> {
+          var childName = entry.getKey();
+          var attributes = entry.getValue();
+          return new TransientVirtualFileImpl(childName, path + '/' + childName, fileSystem, this, attributes);
+        }).toArray(VirtualFile[]::new);
+    }
     String[] childNames = fileSystem.list(this);
     return Arrays.stream(childNames)
       .map(childName -> new TransientVirtualFileImpl(childName, path + '/' + childName, fileSystem, this))

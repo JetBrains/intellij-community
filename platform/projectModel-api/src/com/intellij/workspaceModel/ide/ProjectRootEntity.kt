@@ -59,9 +59,15 @@ fun unregisterProjectRootBlocking(project: Project, projectDir: VirtualFileUrl) 
 fun registerProjectRootBlocking(project: Project, projectDir: Path) {
   val workspaceModel = WorkspaceModel.getInstance(project)
   val projectBaseDirUrl = projectDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
+  registerProjectRootBlocking(project, projectBaseDirUrl)
+}
+
+@Internal
+fun registerProjectRootBlocking(project: Project, projectDir: VirtualFileUrl) {
+  val workspaceModel = WorkspaceModel.getInstance(project)
   ApplicationManager.getApplication().runWriteAction {
     workspaceModel.updateProjectModel("Add project root $projectDir to project ${project.name}") { storage ->
-      val entity = ProjectRootEntity(projectBaseDirUrl, ProjectRootEntitySource)
+      val entity = ProjectRootEntity(projectDir, ProjectRootEntitySource)
       if (storage.entities<ProjectRootEntity>().none { it.root == entity.root }) storage.addEntity(entity)
     }
   }

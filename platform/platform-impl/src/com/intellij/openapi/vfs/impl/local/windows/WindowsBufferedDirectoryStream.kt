@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.io.path.div
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 private const val STANDARD_BUFFER_SIZE = 4096L
@@ -46,7 +47,6 @@ internal class NTWindowsFileAttributes(
   private val creationTime: FileTime,
   private val lastAccessTime: FileTime,
   private val lastWriteTime: FileTime,
-  private val fileAttributes: Int,
   private val size: Long,
   private val parentPath: Path,
 ) : DosFileAttributes {
@@ -65,6 +65,13 @@ internal class NTWindowsFileAttributes(
 
   override fun isRegularFile(): Boolean {
     return !isSymbolicLink && !isDirectory && !isOther
+  }
+
+  private val fileAttributes: Int by lazy {
+    Arena.ofConfined().use { arena ->
+      val api = Windows(arena)
+      api.GetFileAttributesW(parentPath.pathString)
+    }
   }
 
   override fun isDirectory(): Boolean {
@@ -341,7 +348,6 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
         FileTime.from(convertFileTimeToMs(Windows.Read.FILE_FULL_DIR_INFORMATION.CreationTime(currentEntry)), TimeUnit.MILLISECONDS),
         FileTime.from(convertFileTimeToMs(Windows.Read.FILE_FULL_DIR_INFORMATION.LastAccessTime(currentEntry)), TimeUnit.MILLISECONDS),
         FileTime.from(convertFileTimeToMs(Windows.Read.FILE_FULL_DIR_INFORMATION.LastWriteTime(currentEntry)), TimeUnit.MILLISECONDS),
-        Windows.Read.FILE_FULL_DIR_INFORMATION.FileAttributes(currentEntry),
         Windows.Read.FILE_FULL_DIR_INFORMATION.EndOfFile(currentEntry),
         path
       )

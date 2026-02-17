@@ -6,6 +6,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
+import com.intellij.codeInsight.codeVision.CodeVisionState
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
@@ -13,6 +14,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.TextRange
@@ -39,7 +42,7 @@ import kotlin.system.measureTimeMillis
 class CodeVisionPass(
   rootElement: PsiElement,
   private val editor: Editor
-) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
+) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
   companion object {
     private val tracer by lazy { TelemetryManager.getTracer(CodeVision) }
 
@@ -103,6 +106,8 @@ class CodeVisionPass(
   private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
+    val project = editor.project ?: return
+    if (DumbService.isDumb(project)) return
     val settings = CodeVisionSettings.getInstance()
     if (!settings.codeVisionEnabled) return
     if (!CodeVisionProjectSettings.getInstance(myProject).isEnabledForProject()) return
