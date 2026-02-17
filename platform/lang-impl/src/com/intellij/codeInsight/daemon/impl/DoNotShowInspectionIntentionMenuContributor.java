@@ -60,6 +60,9 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
                              int passIdToShowIntentionsFor,
                              int offset) {
     Project project = hostFile.getProject();
+    if (project.isDefault()) {
+      return;
+    }
     PsiElement psiElement = hostFile.findElementAt(offset);
     if (HighlightingLevelManager.getInstance(project).shouldInspect(hostFile)) {
       PsiElement intentionElement = psiElement;
