@@ -645,7 +645,7 @@ public final class ListPluginComponent extends JPanel {
         myUpdateButton.addActionListener(
           e -> updatePlugin(plugin));
       }
-      else {
+      else if (!succesefullyFinishedOnce) {
         myUpdateButton.setEnabled(true);
         myUpdateButton.setVisible(true);
       }
@@ -969,6 +969,7 @@ public final class ListPluginComponent extends JPanel {
       myLayout.addButtonComponent(myInstallButton = createInstallButton());
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
     }
+    fullRepaint();
   }
 
   public void updatePlugin() {
