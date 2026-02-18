@@ -62,7 +62,7 @@ internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
   private var dbusMonitorProcess = AtomicReference<Process?>(null)
 
   val isServiceAllowed: Boolean
-    get() = SystemInfoRt.isLinux && System.getProperty("ide.linux.color.scheme.sync.support").toBoolean()
+    get() = SystemInfoRt.isLinux
 
   val darkScheme: StateFlow<Boolean?> = darkSchemeFlow.asStateFlow()
 
