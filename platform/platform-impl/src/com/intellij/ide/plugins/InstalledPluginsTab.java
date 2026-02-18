@@ -435,7 +435,7 @@ class InstalledPluginsTab extends PluginsTab {
       }
     }
     else if (myBundledUpdateGroup.ui == null) {
-      if (myBundledUpdateGroup.secondaryActions.isEmpty()) {
+      if (myBundledUpdateGroup.secondaryActions == null || myBundledUpdateGroup.secondaryActions.isEmpty()) {
         // removeGroup clears actions too
         myBundledUpdateGroup.addSecondaryAction(myUpdateAllBundled);
         myBundledUpdateGroup.addSecondaryAction(myUpdateCounterBundled);
