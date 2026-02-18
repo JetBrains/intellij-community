@@ -31,8 +31,10 @@ import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnpackedKeywordContainerType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,6 +240,31 @@ public final class ParamHelper {
    */
   public static List<PyCallableParameter> dropSelf(@NotNull List<PyCallableParameter> parameters) {
     return !parameters.isEmpty() && parameters.getFirst().isSelf() ? parameters.subList(1, parameters.size()) : parameters;
+  }
+
+
+  /**
+   * Processes a list of callable parameters, expanding any keyword container parameters
+   * into their unpacked forms if applicable.
+   *
+   * @param parameters the list of callable parameters to process. Each parameter is expected
+   *                   to implement {@link PyCallableParameter}.
+   * @param context    the type evaluation context to use when resolving parameter types.
+   * @return a list of callable parameters where any keyword container parameters are replaced
+   *         with their unpacked representations.
+   */
+  public static @NotNull List<PyCallableParameter> unpackKeywordContainerParameters(@NotNull List<PyCallableParameter> parameters,
+                                                                                    @NotNull TypeEvalContext context) {
+    return StreamEx.of(parameters)
+      .flatMap(param -> {
+        if (param.isKeywordContainer()) {
+          PyType paramType = param.getType(context);
+          if (paramType instanceof PyUnpackedKeywordContainerType unpackedKeywordContainerType) {
+            return StreamEx.of(unpackedKeywordContainerType.getUnpackedParameters());
+          }
+        }
+        return StreamEx.of(param);
+      }).toList();
   }
 
   public interface ParamWalker {

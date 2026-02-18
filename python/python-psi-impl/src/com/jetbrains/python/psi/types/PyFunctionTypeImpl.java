@@ -29,6 +29,7 @@ import java.util.List;
  * Type of particular function that is represented as a {@link PyCallable} in the PSI tree.
  */
 public class PyFunctionTypeImpl implements PyFunctionType {
+
   private final @NotNull PyCallable myCallable;
   private final @NotNull List<@NotNull PyCallableParameter> myParameters;
 

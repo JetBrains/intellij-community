@@ -124,8 +124,16 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
       else
         unpackedTupleType
     }
-    else if (isKeywordContainer && parameterType is PyCollectionType) {
-      parameterType.elementTypes.getOrNull(1)
+    else if (isKeywordContainer) {
+      if (parameterType is PyCollectionType) {
+        parameterType.elementTypes.getOrNull(1)
+      }
+      else if (parameterType is PyUnpackedKeywordContainerType) {
+        parameterType.wrapperType
+      }
+      else {
+        parameterType
+      }
     }
     else
       parameterType
@@ -165,6 +173,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     fun positionalNonPsi(name: String?, type: PyType?): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), myIsPositional = true)
 
+    @JvmStatic
     fun keywordNonPsi(name: String?, type: PyType?): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), myIsKeyword = true)
 

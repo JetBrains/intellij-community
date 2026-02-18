@@ -219,6 +219,19 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-55044
+  public void testTypedDictWithRequiredKeyKwargsArgument_() {
+    doTestByText("""
+                   def multiply(a, b, c, **kwargs):
+                       return a * b * c
+                   
+                   numbers = [1, 2, 3]
+                   kwargs = { 'd': 4, 'e': 5}
+                   result = multiply(*numbers, **kwargs)
+                   print(result)
+                   """);
+  }
+
+  // PY-55044
   public void testTypedDictWithNotRequiredKeyKwargsArgument() {
     doTestByText("""
                    from typing import NotRequired, TypedDict, Unpack

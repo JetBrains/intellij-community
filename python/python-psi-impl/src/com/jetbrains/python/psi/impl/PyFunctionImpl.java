@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
@@ -499,8 +498,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (parameter instanceof PyNamedParameter namedParameter &&
           namedParameter.isKeywordContainer() &&
           context.getType(namedParameter) instanceof PyTypedDictType typedDictType) {
-        List<PyCallableParameter> typedDictParameters = typedDictType.toClass().getParameters(context);
-        parameters.addAll(ContainerUtil.notNullize(typedDictParameters));
+        PyUnpackedKeywordContainerType keywordContainerType = new PyUnpackedKeywordContainerType(typedDictType);
+        parameters.add(PyCallableParameterImpl.keywordNonPsi(parameter.getName(), keywordContainerType));
       }
       else {
         parameters.add(PyCallableParameterImpl.psi(parameter));

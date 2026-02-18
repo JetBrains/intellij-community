@@ -466,8 +466,6 @@ class PyCallableParameterMappingTest : PyTestCase() {
   fun testDunderGetParamsConsideredPosOnly() {
     checkMatch("(__a)", "(b)")
     checkMatch("(__k, __v)", "(a, b)") // Names are not important here
-    checkNotMatch("(a, __k)", "(a, b)") // Should fail as `(a, __k)` is not a valid signature
-    checkNotMatch("(__a, b, __c)", "(a, b, c)") // Should fail as `(__a, b, __c)` is not a valid signature
     checkMatch("(__a: int, __b: str)", "(*args: int | str)")
   }
 

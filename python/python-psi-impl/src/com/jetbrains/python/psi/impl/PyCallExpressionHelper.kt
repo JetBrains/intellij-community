@@ -1088,9 +1088,10 @@ object PyCallExpressionHelper {
   @JvmStatic
   fun analyzeArguments(
     arguments: List<PyExpression>,
-    parameters: List<PyCallableParameter>,
-    context: TypeEvalContext,
-  ): ArgumentMappingResults {
+    originalParameters: List<PyCallableParameter>,
+  context: TypeEvalContext,
+): ArgumentMappingResults {
+    val parameters = originalParameters.unpackParametersIfNeeded(arguments, context)
     val hasSlashParameter = parameters.any { it.parameter is PySlashParameter }
     val firstExplicitParam = parameters.dropWhile { it.isSelf }.firstOrNull()
     val oldStylePositionalOnly = firstExplicitParam != null && isLegacyPositionalOnly(firstExplicitParam)
@@ -1450,6 +1451,18 @@ object PyCallExpressionHelper {
       }
     }
     return results
+  }
+
+  private fun List<PyCallableParameter>.unpackParametersIfNeeded(
+    arguments: List<PyExpression?>,
+    context: TypeEvalContext,
+  ): List<PyCallableParameter> {
+    // TODO handle multiple dict unpacks, e.g. foo(**dict1, **dict2)
+    val hasVariadicKeywordArguments = filterVariadicKeywordArguments(arguments).isNotEmpty()
+    if (hasVariadicKeywordArguments) { // preserve the original parameters
+      return this
+    }
+    return ParamHelper.unpackKeywordContainerParameters(this, context)
   }
 
   @JvmStatic

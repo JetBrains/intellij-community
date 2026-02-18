@@ -161,9 +161,12 @@ object PyExpectedTypeJudgement {
             val index = if (parent.key == expr) 0 else 1
             return typeOfParentDict.elementTypes[index]
           }
-          if (typeOfParentDict is PyTypedDictType && parent.key is PyStringLiteralExpression) {
-            val argName = (parent.key as PyStringLiteralExpression).stringValue
-            return typeOfParentDict.getElementType(argName)
+          if (typeOfParentDict is PyUnpackedKeywordContainerType && parent.key is PyStringLiteralExpression) {
+            val wrapperType = typeOfParentDict.wrapperType
+            if (wrapperType is PyTypedDictType) {
+              val argName = (parent.key as PyStringLiteralExpression).stringValue
+              return wrapperType.getElementType(argName)
+            }
           }
         }
         return null
@@ -267,7 +270,7 @@ object PyExpectedTypeJudgement {
           )
         }
 
-        return PyTypedDictType(
+        val typedDictType = PyTypedDictType(
           name = "Parameters",
           fields = fields,
           dictClass = dictClass,
@@ -285,6 +288,7 @@ object PyExpectedTypeJudgement {
           // ```
           declaration = mapping.callableType?.callable ?: return null
         )
+        return PyUnpackedKeywordContainerTypeImpl.fromTypedDict(typedDictType, ctx);
       }
       // TODO merge the type of `**kwargs` with the types of other mapped parameters here
       else {
