@@ -59,7 +59,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       is PyTargetExpression -> getTypedDictTypeForTarget(referenceTarget, context)
       else -> null
     }
-    return type.notNullToRef
+    return type.notNullToRef()
   }
 
   override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: TypeEvalContext): Ref<PyCallableType?>? {

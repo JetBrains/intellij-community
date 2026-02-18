@@ -10,6 +10,11 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * represents `typing.Any` and `Unknown`/untyped
+ *
+ * currently unused
+ */
 @ApiStatus.Experimental
 class PyAnyType private constructor(override val name: String) : PyType {
   override fun resolveMember(

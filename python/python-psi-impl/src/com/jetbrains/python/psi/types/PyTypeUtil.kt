@@ -166,9 +166,9 @@ object PyTypeUtil {
       StreamEx.of(this)
 
   @JvmStatic
-  val PyType?.notNullToRef: Ref<PyType>?
-    @Contract("null -> null; !null -> !null")
-    get() = if (this == null) null else Ref(this)
+  @Contract("null -> null; !null -> !null")
+  fun PyType?.notNullToRef(): Ref<PyType>? =
+    if (this == null) null else Ref(this)
 
   /**
    * Returns a collector that combines a stream of `Ref<PyType>` back into a single `Ref<PyType>`

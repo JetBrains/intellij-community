@@ -52,7 +52,7 @@ private typealias ImmutableNTFields = Map<String, PyNamedTupleType.FieldTypeAndD
 class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    return getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor).notNullToRef
+    return getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor).notNullToRef()
   }
 
   override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
