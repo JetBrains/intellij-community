@@ -42,7 +42,7 @@ internal object AgentChatRestoreNotificationService {
         .getNotificationGroup(AGENT_CHAT_NOTIFICATION_GROUP_ID)
         .createNotification(
           AgentChatBundle.message("chat.restore.failed.title"),
-          AgentChatBundle.message("chat.restore.failed.body", file.name, reason),
+          AgentChatBundle.message("chat.restore.failed.body", file.threadTitle, reason),
           NotificationType.WARNING,
         )
         .notify(project)

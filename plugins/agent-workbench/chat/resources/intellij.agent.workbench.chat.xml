@@ -11,5 +11,6 @@
     <notificationGroup id="Agent Workbench Chat" displayType="BALLOON" bundle="messages.AgentChatBundle"
                        key="notification.group.agent.workbench.chat"/>
     <fileEditorProvider id="agent.workbench-chat-editor" implementation="com.intellij.agent.workbench.chat.AgentChatFileEditorProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.agent.workbench.chat.AgentChatEditorTabTitleProvider"/>
   </extensions>
 </idea-plugin>

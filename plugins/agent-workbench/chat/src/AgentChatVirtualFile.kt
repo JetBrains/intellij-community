@@ -13,11 +13,19 @@ private val LOG = logger<AgentChatVirtualFileLog>()
 internal class AgentChatVirtualFile internal constructor(
   private val fileSystem: AgentChatVirtualFileSystem,
   descriptor: AgentChatFileDescriptor,
-) : LightVirtualFile(resolveFileName(descriptor.threadTitle)) {
-  val projectHash: String = descriptor.projectHash
-  val projectPath: String = descriptor.projectPath
-  val threadIdentity: String = descriptor.threadIdentity
-  val subAgentId: String? = descriptor.subAgentId
+) : LightVirtualFile(resolveFileName(descriptor.tabKey)) {
+  val tabKey: String = descriptor.tabKey
+  var projectHash: String = descriptor.projectHash
+    private set
+
+  var projectPath: String = descriptor.projectPath
+    private set
+
+  var threadIdentity: String = descriptor.threadIdentity
+    private set
+
+  var subAgentId: String? = descriptor.subAgentId
+    private set
 
   var shellCommand: List<String> = descriptor.shellCommand
     private set
@@ -25,7 +33,7 @@ internal class AgentChatVirtualFile internal constructor(
   var threadId: String = descriptor.threadId
     private set
 
-  var threadTitle: String = resolveFileName(descriptor.threadTitle)
+  var threadTitle: String = resolveThreadTitle(descriptor.threadTitle)
     private set
 
   internal constructor(
@@ -38,7 +46,7 @@ internal class AgentChatVirtualFile internal constructor(
     projectHash: String = "",
   ) : this(
     fileSystem = AgentChatVirtualFileSystems.getInstanceOrFallback(),
-    descriptor = AgentChatFileDescriptor(
+    descriptor = AgentChatFileDescriptor.create(
       projectHash = projectHash,
       projectPath = projectPath,
       threadIdentity = threadIdentity,
@@ -51,8 +59,7 @@ internal class AgentChatVirtualFile internal constructor(
 
   init {
     fileType = AgentChatFileType
-    // Keep writable so tab title can be renamed when the thread title changes.
-    isWritable = true
+    isWritable = false
   }
 
   override fun getFileSystem(): VirtualFileSystem = fileSystem
@@ -64,8 +71,8 @@ internal class AgentChatVirtualFile internal constructor(
   }
 
   fun updateThreadTitle(threadTitle: String): Boolean {
-    val resolvedTitle = resolveFileName(threadTitle)
-    if (this.threadTitle == resolvedTitle && name == resolvedTitle) {
+    val resolvedTitle = resolveThreadTitle(threadTitle)
+    if (this.threadTitle == resolvedTitle) {
       LOG.debug {
         "Skipped tab title update(identity=$threadIdentity, subAgentId=$subAgentId): unchanged title=$resolvedTitle"
       }
@@ -73,11 +80,9 @@ internal class AgentChatVirtualFile internal constructor(
     }
 
     val oldTitle = this.threadTitle
-    val oldName = name
     this.threadTitle = resolvedTitle
-    rename(null, resolvedTitle)
     LOG.debug {
-      "Updated tab title(identity=$threadIdentity, subAgentId=$subAgentId): oldTitle=$oldTitle oldName=$oldName newTitle=$resolvedTitle newName=$name"
+      "Updated tab title(identity=$threadIdentity, subAgentId=$subAgentId): oldTitle=$oldTitle newTitle=$resolvedTitle"
     }
     return true
   }
@@ -88,14 +93,23 @@ internal class AgentChatVirtualFile internal constructor(
   }
 
   internal fun updateFromDescriptor(descriptor: AgentChatFileDescriptor) {
-    updateCommandAndThreadId(shellCommand = descriptor.shellCommand, threadId = descriptor.threadId)
+    if (descriptor.threadIdentity.isNotBlank() || descriptor.projectPath.isNotBlank()) {
+      projectHash = descriptor.projectHash
+      projectPath = descriptor.projectPath
+      threadIdentity = descriptor.threadIdentity
+      subAgentId = descriptor.subAgentId
+    }
+    if (descriptor.threadId.isNotBlank() || descriptor.shellCommand.isNotEmpty()) {
+      updateCommandAndThreadId(shellCommand = descriptor.shellCommand, threadId = descriptor.threadId)
+    }
     if (descriptor.threadTitle.isNotBlank()) {
       updateThreadTitle(descriptor.threadTitle)
     }
   }
 
-  private fun toDescriptor(): AgentChatFileDescriptor {
+  internal fun toDescriptor(): AgentChatFileDescriptor {
     return AgentChatFileDescriptor(
+      tabKey = tabKey,
       projectHash = projectHash,
       projectPath = projectPath,
       threadIdentity = threadIdentity,
@@ -107,6 +121,10 @@ internal class AgentChatVirtualFile internal constructor(
   }
 }
 
-private fun resolveFileName(threadTitle: String): String {
+private fun resolveFileName(tabKey: String): String {
+  return "chat-$tabKey"
+}
+
+private fun resolveThreadTitle(threadTitle: String): String {
   return threadTitle.takeIf { it.isNotBlank() } ?: AgentChatBundle.message("chat.filetype.name")
 }

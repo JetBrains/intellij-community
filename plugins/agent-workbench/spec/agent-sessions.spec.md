@@ -55,6 +55,7 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
 - Concurrent refresh requests must be deduplicated while a refresh is already running.
 - Project primary click must open/focus the project; closed projects must expose `Open` in context menu.
 - Thread/sub-agent opens must route according to `agent.workbench.chat.open.in.dedicated.frame`.
+- Session-driven thread title refresh must update open chat tab metadata and trigger editor tab presentation refresh.
 - Resume command must be provider-specific:
   - Codex: `codex resume <sessionId>`
   - Claude: `claude --resume <sessionId>`

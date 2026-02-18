@@ -1,9 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 
 class AgentChatFileEditorProviderTest {
   @Test
@@ -17,7 +16,7 @@ class AgentChatFileEditorProviderTest {
       subAgentId = null,
     )
 
-    assertEquals(listOf("codex", "resume", "thread-1"), file.shellCommand)
+    assertThat(file.shellCommand).containsExactly("codex", "resume", "thread-1")
   }
 
   @Test
@@ -31,7 +30,7 @@ class AgentChatFileEditorProviderTest {
       subAgentId = null,
     )
 
-    assertEquals(listOf("claude", "--resume", "session-1"), file.shellCommand)
+    assertThat(file.shellCommand).containsExactly("claude", "--resume", "session-1")
   }
 
   @Test
@@ -46,15 +45,32 @@ class AgentChatFileEditorProviderTest {
       projectHash = "hash-1",
     )
 
-    assertEquals(AGENT_CHAT_PROTOCOL, file.fileSystem.protocol)
-    val descriptor = AgentChatFileDescriptor.parsePath(file.path)
-    assertNotNull(descriptor)
-    assertEquals("/work/project-a", descriptor?.projectPath)
-    assertEquals("CODEX:thread-42", descriptor?.threadIdentity)
-    assertEquals("thread-42", descriptor?.threadId)
-    assertEquals("Implement parser", descriptor?.threadTitle)
-    assertEquals("alpha", descriptor?.subAgentId)
-    assertEquals(listOf("codex", "resume", "thread-42"), descriptor?.shellCommand)
+    assertThat(file.fileSystem.protocol).isEqualTo(AGENT_CHAT_PROTOCOL)
+    val tabKey = AgentChatFileDescriptor.parsePath(file.path)
+    assertThat(tabKey).isNotNull
+    assertThat(tabKey).isEqualTo(file.tabKey)
+    assertThat(file.path).startsWith("2/")
+  }
+
+  @Test
+  fun usesLowercaseBase36TabKey() {
+    val descriptor = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-42",
+      threadId = "thread-42",
+      threadTitle = "Implement parser",
+      subAgentId = "alpha",
+      shellCommand = listOf("codex", "resume", "thread-42"),
+    )
+
+    val uppercasePath = "2/${descriptor.tabKey.uppercase()}"
+    val truncatedPath = "2/${descriptor.tabKey.dropLast(1)}"
+
+    assertThat(descriptor.tabKey).matches("[0-9a-z]{50}")
+    assertThat(AgentChatFileDescriptor.parsePath("2/${descriptor.tabKey}")).isEqualTo(descriptor.tabKey)
+    assertThat(AgentChatFileDescriptor.parsePath(uppercasePath)).isNull()
+    assertThat(AgentChatFileDescriptor.parsePath(truncatedPath)).isNull()
   }
 
   @Test
@@ -69,25 +85,63 @@ class AgentChatFileEditorProviderTest {
       projectHash = "hash-1",
     )
 
+    val originalPath = file.path
     file.updateThreadTitle("Renamed title")
-    val descriptor = AgentChatFileDescriptor.parsePath(file.path)
-    assertEquals("Renamed title", descriptor?.threadTitle)
+    assertThat(file.path).isEqualTo(originalPath)
   }
 
   @Test
-  fun preservesEmptyShellCommandInDescriptor() {
-    val file = AgentChatVirtualFile(
+  fun persistsMetadataInStore() {
+    val descriptor = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
       projectPath = "/work/project-a",
       threadIdentity = "CODEX:thread-empty",
-      shellCommand = emptyList(),
       threadId = "thread-empty",
       threadTitle = "Thread",
       subAgentId = null,
-      projectHash = "hash-1",
+      shellCommand = emptyList(),
     )
+    val store = AgentChatTabMetadataStores.getInstanceOrFallback()
+    store.upsert(descriptor)
+    try {
+      val loaded = store.loadDescriptor(descriptor.tabKey)
+      assertThat(loaded).isNotNull
+      assertThat(loaded?.projectPath).isEqualTo(descriptor.projectPath)
+      assertThat(loaded?.threadIdentity).isEqualTo(descriptor.threadIdentity)
+      assertThat(loaded?.threadId).isEqualTo(descriptor.threadId)
+      assertThat(loaded?.threadTitle).isEqualTo(descriptor.threadTitle)
+      assertThat(loaded?.subAgentId).isEqualTo(descriptor.subAgentId)
+      assertThat(loaded?.shellCommand).isEqualTo(descriptor.shellCommand)
+    }
+    finally {
+      store.delete(descriptor.tabKey)
+    }
+  }
 
-    val descriptor = AgentChatFileDescriptor.parsePath(file.path)
-    assertNotNull(descriptor)
-    assertEquals(emptyList<String>(), descriptor?.shellCommand)
+  @Test
+  fun promotesUnresolvedVirtualFileWhenDescriptorBecomesAvailable() {
+    val descriptor = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-9",
+      threadId = "thread-9",
+      threadTitle = "Thread",
+      subAgentId = "alpha",
+      shellCommand = listOf("codex", "resume", "thread-9"),
+    )
+    val fileSystem = AgentChatVirtualFileSystem()
+
+    val unresolved = fileSystem.getOrCreateFile(AgentChatFileDescriptor.unresolved(descriptor.tabKey))
+    assertThat(unresolved.projectPath).isBlank()
+    assertThat(unresolved.threadIdentity).isBlank()
+    assertThat(unresolved.shellCommand).isEmpty()
+
+    val resolved = fileSystem.getOrCreateFile(descriptor)
+    assertThat(resolved).isSameAs(unresolved)
+    assertThat(resolved.projectPath).isEqualTo(descriptor.projectPath)
+    assertThat(resolved.threadIdentity).isEqualTo(descriptor.threadIdentity)
+    assertThat(resolved.threadId).isEqualTo(descriptor.threadId)
+    assertThat(resolved.subAgentId).isEqualTo(descriptor.subAgentId)
+    assertThat(resolved.shellCommand).isEqualTo(descriptor.shellCommand)
   }
 }

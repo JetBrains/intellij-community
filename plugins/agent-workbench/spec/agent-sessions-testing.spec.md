@@ -75,6 +75,10 @@ Define required test coverage for the multi-provider Agent Threads stack: source
 - Codex app-server client tests must cover:
   - `thread/archive` behavior moving a thread from active to archived lists,
   - lazy process restart behavior after idle-timeout shutdown.
+- Chat editor tests must cover metadata-backed restore and title refresh semantics:
+  - v2 `agent-chat://2/<tabKey>` path parsing,
+  - metadata file round-trip for shell command/thread identity/title,
+  - open-tab title refresh via editor presentation updates.
 
 [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt

@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -64,7 +65,8 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
 
     val files = openedChatFiles()
     assertThat(files).hasSize(1)
-    assertThat(files.single().name).isEqualTo("Renamed thread")
+    assertThat(files.single().threadTitle).isEqualTo("Renamed thread")
+    assertThat(EditorTabPresentationUtil.getEditorTabTitle(project, files.single())).isEqualTo("Renamed thread")
   }
 
   fun testSeparateTabsForSubAgents() {
@@ -99,7 +101,8 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
     )
 
     val file = openedChatFiles().single()
-    assertThat(file.name).isEqualTo(title)
+    assertThat(file.threadTitle).isEqualTo(title)
+    assertThat(EditorTabPresentationUtil.getEditorTabTitle(project, file)).isEqualTo(title)
   }
 
   fun testDifferentSessionIdentitiesDoNotReuseTab() {

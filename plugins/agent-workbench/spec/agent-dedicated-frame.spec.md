@@ -51,8 +51,9 @@ Define dedicated-frame behavior for Agent chat opening. By default, chat opens i
 - Dedicated frame project is excluded from Sessions project registry (both open and recent enumerations).
 - Chat terminal working directory remains the source project path regardless of frame mode.
 - Chat editor persistence/restore behavior is defined by `spec/agent-chat-editor.spec.md` and applies equally in both modes:
-  - protocol-backed restore via `agent-chat://`,
+  - protocol-backed restore via `agent-chat://2/<tabKey>`,
   - restore of all previously open chat tabs,
+  - restore metadata persisted in `<config>/agent-workbench-chat-frame/tabs/*.awchat.json`,
   - lazy terminal initialization on first explicit tab activation.
 - Implementation must stay independent from `welcomeScreenProjectProvider` because that provider model is singleton-like across products.
 - Chat resume command remains provider-specific in dedicated mode as in current-project mode:

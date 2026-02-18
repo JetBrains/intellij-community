@@ -31,7 +31,7 @@ internal class AgentChatFileEditor(
     return tab?.view?.preferredFocusableComponent ?: component
   }
 
-  override fun getName(): String = file.name
+  override fun getName(): String = file.threadTitle
 
   override fun setState(state: FileEditorState) = Unit
 
@@ -65,7 +65,7 @@ internal class AgentChatFileEditor(
       val createdTab = terminalManager.createTabBuilder()
         .shouldAddToToolWindow(false)
         .workingDirectory(file.projectPath)
-        .tabName(file.name)
+        .tabName(file.threadTitle)
         .shellCommand(file.shellCommand)
         .createTab()
       tab = createdTab
