@@ -44,6 +44,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//libraries/jackson/jackson",
+    "//libraries/jackson/jackson:jackson_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-util-io:ide-util-io",
