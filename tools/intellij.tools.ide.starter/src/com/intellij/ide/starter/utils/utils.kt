@@ -10,7 +10,6 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.system.OS
-import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Path
@@ -156,11 +155,11 @@ fun stopProfileNativeThreads(pid: String, fileToStoreInfo: String) {
 }
 
 private fun downloadAsyncProfilerIfNeeded(profiler: Path, toolsDir: Path) {
-  if (!File(profiler.toString()).exists()) {
-    val profilerFileName = when {
-      SystemInfo.isMac -> "async-profiler-2.7-macos.zip"
-      SystemInfo.isLinux -> "async-profiler-2.7-linux-x64.tar.gz"
-      else -> error("Current OS is not supported")
+  if (!profiler.exists()) {
+    val profilerFileName = when (OS.CURRENT) {
+      OS.macOS -> "async-profiler-2.7-macos.zip"
+      OS.Linux -> "async-profiler-2.7-linux-x64.tar.gz"
+      else -> error("Current OS ${OS.CURRENT} is not supported")
     }
     val archivePath = toolsDir / profilerFileName
     HttpClient.download("https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.7/$profilerFileName",

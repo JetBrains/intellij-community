@@ -10,7 +10,6 @@ import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.impl.client.HttpClientBuilder
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -37,8 +36,6 @@ object HttpClient {
       }
     }
   }
-
-  fun download(url: String, outFile: File, retries: Long = 3) = download(url, outFile.toPath(), retries)
 
   /**
    * Downloading file from [url] to [outPath] with [retries].

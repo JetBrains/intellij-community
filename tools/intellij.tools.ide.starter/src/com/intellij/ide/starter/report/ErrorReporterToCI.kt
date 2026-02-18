@@ -9,9 +9,11 @@ import com.intellij.ide.starter.utils.generifyErrorMessage
 import com.intellij.util.SystemProperties
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+import kotlin.io.path.readText
 import kotlin.jvm.optionals.getOrNull
 
 object ErrorReporterToCI: ErrorReporter {
@@ -50,16 +52,16 @@ object ErrorReporterToCI: ErrorReporter {
     val errors = mutableListOf<Error>()
     val errorsDirectories = rootErrorsDir.listDirectoryEntries()
     for (errorDir in errorsDirectories) {
-      val messageFile = errorDir.resolve(MESSAGE_FILENAME).toFile()
+      val messageFile = errorDir.resolve(MESSAGE_FILENAME)
       if (!messageFile.exists()) continue
 
       val messageText = generifyErrorMessage(messageFile.readText().trimIndent().trim())
-      val testNameFile = errorDir.resolve(TESTNAME_FILENAME).toFile()
+      val testNameFile = errorDir.resolve(TESTNAME_FILENAME)
       val testName = if (testNameFile.exists()) testNameFile.readText().trim() else null
 
       val errorType = ErrorType.fromMessage(messageText)
       if (errorType == ErrorType.ERROR) {
-        val stacktraceFile = errorDir.resolve(STACKTRACE_FILENAME).toFile()
+        val stacktraceFile = errorDir.resolve(STACKTRACE_FILENAME)
         if (!stacktraceFile.exists()) continue
         val stackTrace = stacktraceFile.readText().trimIndent().trim()
         errors.add(Error(messageText, stackTrace, "", errorType, testName))

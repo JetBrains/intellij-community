@@ -266,7 +266,7 @@ suspend fun collectJavaThreadDumpSuspendable(
       workDir,
       timeout = 1.minutes,
       args = command,
-      stdoutRedirect = ExecOutputRedirect.ToFile(dumpFile.toFile()),
+      stdoutRedirect = ExecOutputRedirect.ToFile(dumpFile),
       stderrRedirect = ExecOutputRedirect.ToStdOut("[jstack-err]"),
       silent = true
     ).startCancellable()

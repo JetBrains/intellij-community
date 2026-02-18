@@ -99,8 +99,8 @@ class FFMpegScreenRecorder(recordingPath: Path, recordingFilePrefix: String, pri
         environmentVariables = mapOf("DISPLAY" to display),
         workDir = null,
         expectedExitCode = 0,
-        stdoutRedirect = ExecOutputRedirect.ToFile(ffmpegLogFile.toFile()),
-        stderrRedirect = ExecOutputRedirect.ToFile(ffmpegLogFile.toFile()),
+        stdoutRedirect = ExecOutputRedirect.ToFile(ffmpegLogFile),
+        stderrRedirect = ExecOutputRedirect.ToFile(ffmpegLogFile),
         timeout = timeout,
       ).startCancellable()
     }

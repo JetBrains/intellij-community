@@ -1,13 +1,15 @@
 package com.intellij.ide.starter.path
 
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
+import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
 import com.intellij.ide.starter.utils.createInMemoryDirectory
 import com.intellij.tools.ide.util.common.logOutput
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
-@Suppress("unused")
 open class IDEDataPaths(
   open val testHome: Path,
   private val inMemoryRoot: Path?,
@@ -15,8 +17,11 @@ open class IDEDataPaths(
 
   companion object {
     inline fun <reified T> createPaths(testName: String, testHome: Path, useInMemoryFs: Boolean): T where T : Any {
-      testHome.toFile().walkBottomUp().fold(true) { res, it ->
-        (it.absolutePath.startsWith((testHome / "system").toFile().absolutePath) || it.delete() || !it.exists()) && res
+      val isTestHomeCleanupSuccessful = testHome.listDirectoryEntriesQuietly()
+        ?.filterNot { it.name == "system" && it.isDirectory() }
+        ?.all { it.deleteRecursivelyQuietly() }
+      if (isTestHomeCleanupSuccessful == false) {
+        logOutput("Failed to delete some entries in $testHome\nLeft directories: ${testHome.listDirectoryEntriesQuietly()?.joinToString()}")
       }
       testHome.createDirectories()
       val inMemoryRoot = if (useInMemoryFs) {

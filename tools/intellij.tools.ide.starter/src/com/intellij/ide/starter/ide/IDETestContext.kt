@@ -35,6 +35,7 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.ui.NewUiValue
 import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
 import org.kodein.di.direct
@@ -57,11 +58,14 @@ import kotlin.io.path.createFile
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.div
 import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.notExists
 import kotlin.io.path.readBytes
 import kotlin.io.path.readText
+import kotlin.io.path.walk
 import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
 import kotlin.time.Duration
@@ -404,11 +408,11 @@ open class IDETestContext(
 
     logOutput("Removing all .iml files in $projectDir ...")
 
-    projectDir.toFile().walkTopDown()
+    projectDir.walk()
       .forEach {
-        if (it.isFile && it.extension == "iml") {
+        if (it.isRegularFile() && it.extension == "iml") {
           it.delete()
-          logOutput("File ${it.path} is deleted")
+          logOutput("File $it is deleted")
         }
       }
 
@@ -618,8 +622,8 @@ open class IDETestContext(
       IdeProductProvider.RD.productCode -> "rider.key"
       else -> return this
     }
-    val keyFile = paths.configDir.resolve(licenseKeyFileName).toFile()
-    keyFile.createNewFile()
+    val keyFile = paths.configDir.resolve(licenseKeyFileName)
+    keyFile.createFile()
     keyFile.writeBytes(Base64.getDecoder().decode(license))
     logOutput("License is set")
     return this

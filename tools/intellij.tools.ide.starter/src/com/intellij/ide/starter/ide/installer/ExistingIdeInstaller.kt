@@ -9,7 +9,7 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.system.OS
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
@@ -38,7 +38,7 @@ class ExistingIdeInstaller(private val installedIdePath: Path) : IdeInstaller {
     @OptIn(ExperimentalPathApi::class)
     installDir.deleteRecursivelyQuietly()
     val destDir = installDir.resolve(installedIdePath.name)
-    if (SystemInfo.isMac) {
+    if (OS.CURRENT == OS.macOS) {
       val taskName = "copy app"
       ProcessExecutor(taskName, null, 5.minutes, emptyMap(),
                       stderrRedirect = ExecOutputRedirect.ToStdOut(taskName), stdoutRedirect = ExecOutputRedirect.ToStdOut(taskName),
@@ -50,7 +50,7 @@ class ExistingIdeInstaller(private val installedIdePath: Path) : IdeInstaller {
     }
     return Pair(
       ideInstaller.buildNumber,
-      di.direct.instance<IdeDistributionFactory>().installIDE(installDir.toFile(), ideInfo.executableFileName)
+      di.direct.instance<IdeDistributionFactory>().installIDE(installDir, ideInfo.executableFileName)
     )
   }
 }

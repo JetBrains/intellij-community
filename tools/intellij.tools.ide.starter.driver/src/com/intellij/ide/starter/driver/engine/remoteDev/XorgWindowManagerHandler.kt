@@ -54,8 +54,8 @@ object XorgWindowManagerHandler {
         timeout = 2.hours,
         args = listOf("/usr/bin/${fluxboxName}", "-display", displayWithColumn),
         workDir = null,
-        stdoutRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog.toFile()),
-        stderrRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog.toFile())
+        stdoutRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog),
+        stderrRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog)
       ).startCancellable()
     }
     else {

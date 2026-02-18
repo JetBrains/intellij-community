@@ -5,12 +5,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.ide.util.common.logError
 import io.qameta.allure.Allure
 import io.qameta.allure.model.Status
-import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.Objects
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.extension
 import kotlin.io.path.name
+import kotlin.io.path.readBytes
 import kotlin.io.path.walk
 
 object AllureHelper {
@@ -28,7 +29,7 @@ object AllureHelper {
     CSV("text/csv", ".csv");
 
     companion object {
-      fun getMimeTypeByExtension(file: File): MimeType {
+      fun getMimeTypeByExtension(file: Path): MimeType {
         return entries.firstOrNull { it.ext == ".${file.extension}" } ?: TEXT
       }
     }
@@ -49,13 +50,9 @@ object AllureHelper {
     Allure.step(name, Status.SKIPPED)
   }
 
-  fun attachFile(name: String, file: File) {
+  fun attachFile(name: String, file: Path) {
     val mimeType = MimeType.getMimeTypeByExtension(file)
     Allure.getLifecycle().addAttachment(name, mimeType.value, mimeType.ext, file.readBytes())
-  }
-
-  fun attachFile(name: String, file: Path) {
-    attachFile(name, file.toFile())
   }
 
   fun attachText(name: String, value: String) {
@@ -82,7 +79,7 @@ object AllureHelper {
         .filter(filter)
         .forEach { file ->
           kotlin.runCatching {
-            val name = file.parent.fileName.toString() + "/" + file.name
+            val name = file.parent.name + "/" + file.name
             attachFile(name, file)
           }.onFailure {
             logError("Fail to attach file: ${file}", it)

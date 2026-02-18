@@ -10,11 +10,12 @@ import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.kodein.di.direct
 import org.kodein.di.instance
-import java.io.FileReader
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Properties
 import kotlin.io.path.div
@@ -67,10 +68,10 @@ object JBRResolver {
   suspend fun downloadAndUnpackJbrIfNeeded(jbrVersion: JBRVersion): Path = computeWithSpan("download and unpack JBR") {
     val (majorVersion, buildNumber) = listOf(jbrVersion.majorVersion, jbrVersion.buildNumber)
 
-    var os = when {
-      SystemInfo.isLinux -> "linux"
-      SystemInfo.isWindows -> "windows"
-      SystemInfo.isMac -> "osx"
+    var os = when (OS.CURRENT) {
+      OS.Linux -> "linux"
+      OS.Windows -> "windows"
+      OS.macOS -> "osx"
       else -> error("Unknown OS")
     }
 
@@ -94,7 +95,7 @@ object JBRResolver {
     val jbrVersion = ConfigurationStorage.jbrVersionForDevServer() ?: run {
       val jbrDependencyFile = GlobalPaths.instance.checkoutDir / "community" / "build" / "dependencies" / "dependencies.properties"
       val props = Properties()
-      FileReader(jbrDependencyFile.toFile()).use { reader -> props.load(reader) }
+      Files.newBufferedReader(jbrDependencyFile).use { reader -> props.load(reader) }
       props.getProperty("runtimeBuild")
     }
     return jbrVersion

@@ -45,8 +45,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.readText
 import kotlin.io.path.walk
@@ -332,6 +335,7 @@ data class IDERunContext(
     })
   }
 
+  @OptIn(ExperimentalPathApi::class)
   internal fun deleteSavedAppStateOnMac() {
     if (SystemInfoRt.isMac) {
       val filesToBeDeleted = listOf(
@@ -340,8 +344,8 @@ data class IDERunContext(
       )
       val home = System.getProperty("user.home")
       val savedAppStateDir = Path.of(home).resolve("Library/Saved Application State")
-      savedAppStateDir.toFile()
-        .walkTopDown().maxDepth(1)
+      savedAppStateDir
+        .listDirectoryEntries()
         .filter { file -> filesToBeDeleted.any { fileToBeDeleted -> file.name == fileToBeDeleted } }
         .forEach { it.deleteRecursively() }
     }

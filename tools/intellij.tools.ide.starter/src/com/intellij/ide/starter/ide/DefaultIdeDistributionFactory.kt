@@ -1,21 +1,21 @@
 package com.intellij.ide.starter.ide
 
-import com.intellij.openapi.util.SystemInfo
-import java.io.File
+import com.intellij.util.system.OS
+import java.nio.file.Path
 
 object DefaultIdeDistributionFactory : IdeDistributionFactory {
-  override fun installIDE(unpackDir: File, executableFileName: String): InstalledIde {
-    val distribution = when {
-      SystemInfo.isMac -> MacOsIdeDistribution()
-      SystemInfo.isWindows -> WindowsIdeDistribution()
-      SystemInfo.isLinux -> LinuxIdeDistribution()
+  override fun installIDE(unpackDir: Path, executableFileName: String): InstalledIde {
+    val distribution = when (OS.CURRENT) {
+      OS.macOS -> MacOsIdeDistribution()
+      OS.Windows -> WindowsIdeDistribution()
+      OS.Linux -> LinuxIdeDistribution()
       else -> error("Not supported ide distribution: $unpackDir")
     }
 
-    return distribution.installIde(unpackDir.toPath(), executableFileName)
+    return distribution.installIde(unpackDir, executableFileName)
   }
 }
 
 interface IdeDistributionFactory {
-  fun installIDE(unpackDir: File, executableFileName: String): InstalledIde
+  fun installIDE(unpackDir: Path, executableFileName: String): InstalledIde
 }
