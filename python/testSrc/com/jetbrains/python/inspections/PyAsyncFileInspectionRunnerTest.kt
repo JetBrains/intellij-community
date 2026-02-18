@@ -57,7 +57,7 @@ class PyAsyncFileInspectionRunnerTest {
 
     barrier.complete(Unit)
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+      assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(pyFile, module)?.map { it.name })
     }
   }
 
@@ -70,7 +70,7 @@ class PyAsyncFileInspectionRunnerTest {
     }
 
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+      assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(pyFile, module)?.map { it.name })
     }
 
     (1..100).map {
@@ -81,7 +81,7 @@ class PyAsyncFileInspectionRunnerTest {
       }
     }.joinAll()
 
-    assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+    assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(pyFile, module)?.map { it.name })
     assertEquals(1, callCount)
   }
 
@@ -99,7 +99,7 @@ class PyAsyncFileInspectionRunnerTest {
 
     // Wait for the result of the first run
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+      assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(pyFile, module)?.map { it.name })
       assertEquals(1, callCount)
     }
 
@@ -108,7 +108,7 @@ class PyAsyncFileInspectionRunnerTest {
 
     // Wait for the result of the second run
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes, runner.runInspection(pyFile, module))
+      assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(pyFile, module)?.map { it.name })
       assertEquals(2, callCount)
     }
   }

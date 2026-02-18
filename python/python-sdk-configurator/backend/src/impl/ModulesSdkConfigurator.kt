@@ -70,7 +70,7 @@ internal class ModulesSdkConfigurator private constructor(
         is ModuleCreateInfo.CreateSdkInfoWrapper -> {
           val version = when (val r = createInfo.createSdkInfo) {
             is CreateSdkInfo.ExistingEnv -> r.pythonInfo.languageLevel.toPythonVersion()
-            is CreateSdkInfo.WillCreateEnv -> null
+            is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> null
           }
           ModuleDTO(moduleName,
                     path = createInfo.moduleDir?.let { pathShorter.toString(it) },
@@ -224,9 +224,10 @@ private suspend fun configureSdkForModuleAutomatically(module: Module, createEnv
             info.createAndSetToModule(module)
           }
           else {
-            logger.trace { "${module.name} can't be configured automatically: no venv for ${info.intentionName}" }
+            logger.trace { "${module.name} can't be configured automatically: no venv for ${moduleInfo.toolId}" }
           }
         }
+        is CreateSdkInfo.WillInstallTool -> logger.trace { "${module.name} can't be configured automatically: no tool installed - ${moduleInfo.toolId}" }
       }
     }
     is ModuleCreateInfo.SameAs -> {

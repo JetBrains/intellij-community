@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.asNioPath
@@ -21,10 +19,8 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.runTool
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
@@ -33,8 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
@@ -54,6 +48,8 @@ private val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
   getToolPathFromSettings = {
     poetryPath
   })
+
+private val POETRY_EXCLUDE_NON_DIGITS_REGEX = Regex("""\D+$""")
 
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String> = POETRY_TOOL.runTool(projectPath, *args)
@@ -123,26 +119,17 @@ suspend fun setupPoetry(
   return runPoetry(projectPath, "env", "info", "-p").mapSuccess { Path.of(it) }
 }
 
-internal suspend fun detectPoetryEnvs(
-  module: Module?,
-  existingSdkPaths: Set<String>?,
-  projectPath: @SystemIndependent @NonNls String?,
-): List<PyDetectedSdk> {
-  val path = module?.baseDir?.path?.let { Path.of(it) } ?: projectPath?.let { Path.of(it) } ?: return emptyList()
-  return getPoetryEnvs(path).filter { existingSdkPaths?.contains(getPythonExecutable(it)) != false }
-    .map { PyDetectedSdk(getPythonExecutable(it)) }
-}
+internal suspend fun detectPoetryEnvs(searchPath: Path): List<PythonBinary> = getPoetryEnvs(searchPath).mapNotNull { getPythonExecutable(it) }
 
 internal suspend fun getPoetryVersion(): String? =
   runPoetry(null, "--version")
     .getOrNull()
     ?.split(' ')
     ?.lastOrNull()
-    ?.replace(Regex("""\D+$"""), "") // strip all non-numeric characters after the version
+    ?.replace(POETRY_EXCLUDE_NON_DIGITS_REGEX, "") // strip all non-numeric characters after the version
 
-@Internal
-suspend fun getPythonExecutable(homePath: String): String = withContext(Dispatchers.IO) {
-  VirtualEnvReader().findPythonInPythonRoot(Path.of(homePath))?.toString() ?: FileUtil.join(homePath, "bin", "python")
+private suspend fun getPythonExecutable(homePathString: String): PythonBinary? = withContext(Dispatchers.IO) {
+  VirtualEnvReader().findPythonInPythonRoot(Path.of(homePathString))
 }
 
 /**

@@ -451,7 +451,7 @@ private fun ExtendableTextComponent.removeLoadingExtension() {
 internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterModel<P>): ActionLink? {
   if ((model.fileSystem as? FileSystem.Eel)?.eelApi != localEel) return null
 
-  return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda", "")) {
+  return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda")) {
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {

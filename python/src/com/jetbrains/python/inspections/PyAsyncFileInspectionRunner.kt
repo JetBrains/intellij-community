@@ -4,15 +4,23 @@ package com.jetbrains.python.inspections
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
+import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.jetbrains.python.psi.PyFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -62,7 +70,7 @@ class PyAsyncFileInspectionRunner(
       if (!shouldCache) {
         cache.invalidate(module)
       }
-      return fixes
+      return fixes.map { InspectionRunnerLocalQuickFix(it) { cache.invalidate(module) } }
     }
 
     if (!cached) {
@@ -90,6 +98,32 @@ data class InspectionRunnerResult(
   val fixes: List<LocalQuickFix>,
   val shouldCache: Boolean,
 )
+
+private class InspectionRunnerLocalQuickFix(
+  private val fix: LocalQuickFix,
+  private val cacheEvictor: () -> Unit
+) : LocalQuickFix by fix {
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    fix.applyFix(project, descriptor)
+    cacheEvictor()
+  }
+
+  /**
+   * We have to override the following methods manually as the delegate does not override default methods in Java interfaces
+   */
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo =
+    fix.generatePreview(project, previewDescriptor)
+
+  override fun getRangesToHighlight(project: Project?, descriptor: ProblemDescriptor?): List<CustomizableIntentionAction.RangeToHighlight> =
+    fix.getRangesToHighlight(project, descriptor)
+
+  override fun getName(): @IntentionName String = fix.name
+  override fun startInWriteAction(): Boolean = fix.startInWriteAction()
+  override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = fix.getElementToMakeWritable(currentFile)
+  override fun getFileModifierForPreview(target: PsiFile): FileModifier? = fix.getFileModifierForPreview(target)
+  override fun availableInBatchMode(): Boolean = fix.availableInBatchMode()
+}
 
 @Service(Service.Level.PROJECT)
 private class InspectionRunnerService(val scope: CoroutineScope)

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.jetbrains.python.PyPsiBundle
@@ -143,6 +144,28 @@ private class UseProvidedInterpreterFix(private val myModule: Module, private va
   }
 }
 
+private class SuggestToolInstallationFix(
+  private val myModule: Module,
+  private val myCreateSdkInfo: CreateSdkInfo.WillInstallTool,
+  private val myTool: ToolId,
+) : LocalQuickFix {
+  @IntentionFamilyName
+  override fun getFamilyName(): String = PyPsiBundle.message("INSP.interpreter.install.suggested.tool")
+
+  @IntentionName
+  override fun getName(): String = myCreateSdkInfo.intentionName
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    PyProjectSdkConfiguration.installToolForInspection(descriptor.psiElement.containingFile, myModule, myCreateSdkInfo, myTool)
+    PyUiUtil.clearFileLevelInspectionResults(descriptor.psiElement.containingFile)
+  }
+
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+    // The quick fix doesn't change the code and is suggested on a file level
+    return IntentionPreviewInfo.EMPTY
+  }
+}
+
 private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): FindQuickFixResult = when (i) {
   is ModuleCreateInfo.CreateSdkInfoWrapper -> {
     when (val createSdkInfo = i.createSdkInfo) {
@@ -167,6 +190,10 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
         logger.trace { "$this: Ask user as it is a heavy operation" }
         val tool = CreateSdkInfoWithTool(createSdkInfo, i.toolId)
         FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(this, tool))
+      }
+      is CreateSdkInfo.WillInstallTool -> {
+        logger.trace { "$this: Tool installation will be suggested to the user" }
+        FindQuickFixResult.ShowUserFix(SuggestToolInstallationFix(this, createSdkInfo, i.toolId))
       }
     }
   }

@@ -974,12 +974,14 @@
       id="environmentYml"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.pipenv.sdk.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvSdkConfiguration"
+                                      id="uv" order="before poetry"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.poetry.sdk.configuration.PyPoetrySdkConfiguration"
-                                      id="poetry"/>"/>
+                                      id="poetry"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.hatch.sdk.configuration.PyHatchSdkConfiguration"
                                       id="hatch" order="after poetry"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvSdkConfiguration"
-                                      id="uv" order="before venv"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvBaseSdkConfiguration"
+                                      id="uvBase" order="before venv"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.venv.sdk.configuration.PyVenvSdkConfiguration"
                                       id="venv" order="last"/>
 
