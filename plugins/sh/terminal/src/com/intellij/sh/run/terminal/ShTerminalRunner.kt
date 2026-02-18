@@ -111,8 +111,8 @@ open class ShTerminalRunner : ShRunner {
       return null
     }
 
-    val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(widget.ttyConnector)
-    if (processTtyConnector == null || TerminalUtil.hasRunningCommands(processTtyConnector)) {
+    val ttyConnector = widget.ttyConnector
+    if (ttyConnector == null || TerminalUtil.hasRunningCommands(ttyConnector)) {
       return null
     }
 
