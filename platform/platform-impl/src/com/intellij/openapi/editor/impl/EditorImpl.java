@@ -3369,6 +3369,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void setCursorPosition() {
+    caretMoveProcessor.invalidateStaleCarets();
     if (shouldSetCursorPositionImmediately()) {
       caretMoveProcessor.setCursorPositionImmediately();
     } else {
