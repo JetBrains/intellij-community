@@ -20,7 +20,7 @@ import com.sun.jdi.request.ExceptionRequest
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
 
-private val LOG = logger<BreakpointFactory>()
+private val LOG = logger<JdiBreakpointFactory>()
 
 /**
  * JDI does not provide mirror for `null`.
@@ -36,7 +36,7 @@ typealias ExceptionHandler = (SuspendContext, Location?, ObjectReference) -> Boo
  * - All breakpoints are disabled by default
  * - All breakpoints are deleted after hit
  */
-internal class BreakpointFactory {
+internal class JdiBreakpointFactory {
   fun createMethodEntryBreakpoint(evaluationContext: EvaluationContextImpl,
                                   signature: JvmMethodSignature,
                                   onMethodEntry: ArgumentsTransformer): MethodEntryRequest {

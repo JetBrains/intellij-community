@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.breakpoint.instrumentation
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.wrapper.QualifierExpression
 import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.openapi.diagnostic.logger
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
@@ -27,39 +28,35 @@ private val LOG = logger<StreamInstrumentationManager>()
  *
  * Note: All methods of this class must be called only from the debugger manager thread.
  */
-internal class StreamInstrumentationManager(
-  private val handlerFactory: BreakpointBasedHandlerFactory,
-  private val chain: StreamChain,
+internal class StreamInstrumentationManager private constructor(
+  private val objectStorage: ObjectStorage,
+  private val sourceHandler: SourceCallHandler,
+  private val intermediateHandlers: List<IntermediateCallHandler>,
+  private val terminalHandler: TerminalCallHandler,
 ) {
-  private lateinit var sourceHandler: SourceCallHandler
-  private val intermediateHandlers: MutableList<IntermediateCallHandler> = mutableListOf()
-  private lateinit var terminalHandler: TerminalCallHandler
-
-  private var isInitialized = false
+  companion object {
+    fun create(
+      handlerFactory: BreakpointBasedHandlerFactory,
+      objectStorage: ObjectStorage,
+      chain: StreamChain,
+      evaluationContext: EvaluationContextImpl,
+    ): StreamInstrumentationManager {
+      handlerFactory.beforeStreamTracing(evaluationContext)
+      return StreamInstrumentationManager(
+        objectStorage = objectStorage,
+        sourceHandler = handlerFactory.getForSource(),
+        intermediateHandlers = chain.intermediateCalls.mapIndexed { i, call ->
+          handlerFactory.getForIntermediate(i, call)
+        },
+        terminalHandler = handlerFactory.getForTermination(chain.terminationCall),
+      )
+    }
+  }
 
   // State for qualifier variable replacement and restoration
   private var originalQualifierValue: ObjectReference? = null
   private var qualifierVariableName: String? = null
   private var stackDepthWhenReplaced: Int = -1
-
-  /**
-   * Initialize handlers for the stream chain.
-   * Must be called once before any instrumentation methods.
-   */
-  fun initialize() {
-    DebuggerManagerThreadImpl.assertIsManagerThread()
-    require(!isInitialized) { "StreamInstrumentationManager already initialized" }
-
-    sourceHandler = handlerFactory.getForSource()
-
-    for ((index, call) in chain.intermediateCalls.withIndex()) {
-      intermediateHandlers.add(handlerFactory.getForIntermediate(index, call))
-    }
-
-    terminalHandler = handlerFactory.getForTermination(chain.terminationCall)
-
-    isInitialized = true
-  }
 
   /**
    * Called when source operation (qualifier expression method) exits.
@@ -72,7 +69,6 @@ internal class StreamInstrumentationManager(
     value: Value?,
   ): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    checkInitialized()
 
     val handler = sourceHandler
     return transformIfObjectReference(value) { streamValue ->
@@ -96,7 +92,6 @@ internal class StreamInstrumentationManager(
     qualifierExpression: QualifierExpression,
   ): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    checkInitialized()
 
     val frameProxy = evaluationContext.frameProxy!!
 
@@ -134,7 +129,6 @@ internal class StreamInstrumentationManager(
    */
   fun restoreQualifierVariableIfReplaced(evaluationContext: EvaluationContextImpl) {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    checkInitialized()
 
     // Nothing was replaced, nothing to restore
     if (originalQualifierValue == null) {
@@ -175,7 +169,6 @@ internal class StreamInstrumentationManager(
     arguments: List<Value?>,
   ): List<Value?> {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    checkInitialized()
     require(callOrder in intermediateHandlers.indices) {
       "Invalid call order: $callOrder, available: ${intermediateHandlers.size}"
     }
@@ -197,7 +190,6 @@ internal class StreamInstrumentationManager(
     value: Value?,
   ): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    checkInitialized()
     require(callOrder in intermediateHandlers.indices) {
       "Invalid call order: $callOrder, available: ${intermediateHandlers.size}"
     }
@@ -220,7 +212,6 @@ internal class StreamInstrumentationManager(
     arguments: List<Value?>,
   ): List<Value?> {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    checkInitialized()
     return terminalHandler.transformArguments(evaluationContext, method, arguments)
   }
 
@@ -229,7 +220,6 @@ internal class StreamInstrumentationManager(
     value: Value?,
   ): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    checkInitialized()
     return terminalHandler.afterCall(evaluationContext, value)
   }
 
@@ -241,22 +231,19 @@ internal class StreamInstrumentationManager(
    */
   fun collectResults(evaluationContext: EvaluationContextImpl): Value {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    checkInitialized()
 
-    // Collect terminal result
-    val terminalResult = terminalHandler.result(evaluationContext)
+    return objectStorage.watch(evaluationContext) {
+      val intermediateResults = intermediateHandlers.map { it.result(evaluationContext) }
+      val terminalResult = terminalHandler.result(evaluationContext)
 
-    // TODO: Format as array [intermediateResults[], terminalResult, timing[]]
-    // Based on original patch getFormattedResult() (lines 3315-3336):
-    // val intermediateResults = intermediateHandlers.map { it.result(evaluationContext) }
-    // return createArrayValue([intermediateResults, terminalResult, timing])
-
-    // For now return terminal result directly (NopHandler returns null)
-    return terminalResult ?: TODO("return real array reference")
-  }
-
-  private fun checkInitialized() {
-    require(isInitialized) { "StreamInstrumentationManager not initialized" }
+      // Format: [intermediateResults[], terminalResult, timing[]]
+      // Note: timing is already included in terminal result, so we pass a placeholder
+      array(
+        array(*intermediateResults.toTypedArray()),
+        terminalResult,
+        array(0L.mirror)  // Placeholder for timing
+      )
+    }
   }
 
   /**

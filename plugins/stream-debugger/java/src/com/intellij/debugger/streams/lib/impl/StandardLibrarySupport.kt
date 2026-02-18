@@ -14,7 +14,9 @@ import com.intellij.debugger.streams.core.trace.impl.interpret.AnyMatchTraceInte
 import com.intellij.debugger.streams.core.trace.impl.interpret.NoneMatchTraceInterpreter
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
 import com.intellij.debugger.streams.trace.breakpoint.JavaBreakpointPositionResolver
+import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.CounterBasedBreakpointBasedHandlerFactory
 
 /**
  * @author Vitaliy.Bibaev
@@ -57,7 +59,8 @@ class StandardLibrarySupport
                                     ToCollectionOperation("collect"))
   }
 
-  override fun createRuntimeHandlerFactory(): BreakpointBasedHandlerFactory = BreakpointBasedHandlerFactory()
+  override fun createRuntimeHandlerFactory(objectStorage: ObjectStorage): BreakpointBasedHandlerFactory =
+    CounterBasedBreakpointBasedHandlerFactory(objectStorage)
 
   override val breakpointResolverFactory: BreakpointPositionResolver = JavaBreakpointPositionResolver()
 }

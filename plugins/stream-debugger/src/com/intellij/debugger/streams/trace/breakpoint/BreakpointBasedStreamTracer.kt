@@ -12,7 +12,6 @@ import com.intellij.debugger.streams.core.trace.TraceResultInterpreter
 import com.intellij.debugger.streams.core.trace.XValueInterpreter
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
-import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamInstrumentationManager
 import com.intellij.debugger.streams.ui.impl.PrimitiveValueDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.xdebugger.frame.XValue
@@ -40,21 +39,28 @@ internal class BreakpointBasedStreamTracer(
       .findBreakpointPositions(chain) as? BreakpointResolveResult.Found
                     ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("could.not.find.breakpoint.positions"))
 
-    val breakpointFactory = BreakpointFactory()
-    val handlerFactory = librarySupport.createRuntimeHandlerFactory()
-    val instrumentationManager = StreamInstrumentationManager(handlerFactory, chain)
-    val manager = StreamTracingManager(debuggerContext, breakpointFactory, instrumentationManager)
+    // Create ObjectStorage for protecting traced objects from GC
+    // TODO: perhaps the objects need to be held until the window is closed
+    DisableCollectionObjectStorage().use { objectStorage ->
+      val breakpointFactory = JdiBreakpointFactory()
+      val manager = StreamTracingManager(
+        debuggerContext,
+        breakpointFactory,
+        objectStorage,
+        librarySupport.createRuntimeHandlerFactory(objectStorage)
+      )
 
-    val result = manager.evaluateChain(positions, chain)
-    return when (result) {
-      is EvaluationResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
-      is EvaluationResult.Success -> {
-        val xValue = createXValue(
-          debuggerContext,
-          result.rawTrace,
-        ) ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("program.is.not.suspended"))
+      val result = manager.evaluateChain(positions, chain)
+      return when (result) {
+        is EvaluationResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
+        is EvaluationResult.Success -> {
+          val xValue = createXValue(
+            debuggerContext,
+            result.rawTrace,
+          ) ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("program.is.not.suspended"))
 
-        interpretStreamResult(xValue, chain, streamTraceExpression = "")
+          interpretStreamResult(xValue, chain, streamTraceExpression = "")
+        }
       }
     }
   }

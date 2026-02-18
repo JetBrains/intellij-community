@@ -8,6 +8,7 @@ import com.intellij.debugger.streams.core.StreamDebuggerBundle
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamInstrumentationManager
 import com.sun.jdi.Value
 import com.sun.jdi.request.EventRequest
@@ -25,12 +26,15 @@ sealed class EvaluationResult {
 
 internal class StreamTracingManager(
   private val debuggerContext: DebuggerContextImpl,
-  private val breakpointFactory: BreakpointFactory,
-  private val instrumentationManager: StreamInstrumentationManager,
+  private val breakpointFactory: JdiBreakpointFactory,
+  private val objectStorage: DisableCollectionObjectStorage,
+  private val handlerFactory: BreakpointBasedHandlerFactory,
 ) {
   private var sourceOperationBreakpoint: MethodExitRequest? = null
   private var intermediateOperationsBreakpoints: List<StreamCallRuntimeInfo> = emptyList()
   private lateinit var terminalOperationBreakpoint: StreamCallRuntimeInfo
+
+  private lateinit var instrumentationManager: StreamInstrumentationManager
 
   suspend fun evaluateChain(breakpointPositions: BreakpointResolveResult.Found, chain: StreamChain): EvaluationResult {
     val evaluationFinished = createEvaluationFinishedFuture()
@@ -38,9 +42,7 @@ internal class StreamTracingManager(
       val evaluationContextImpl = debuggerContext.createEvaluationContext()
                                   ?: return@withDebugContext EvaluationResult.Error(StreamDebuggerBundle.message("program.is.not.suspended"))
 
-      // Initialize instrumentation manager
-      instrumentationManager.initialize()
-
+      instrumentationManager = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContextImpl)
       withDebugContext(evaluationContextImpl.suspendContext) {
         val firstRequestor = createRequestors(evaluationContextImpl, chain, breakpointPositions, evaluationFinished)
         firstRequestor.enable()

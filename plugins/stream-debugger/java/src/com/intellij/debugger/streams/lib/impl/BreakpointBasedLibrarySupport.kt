@@ -3,10 +3,11 @@ package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.core.lib.LibrarySupport
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
+import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
 
 internal interface BreakpointBasedLibrarySupport: LibrarySupport {
-  fun createRuntimeHandlerFactory(): BreakpointBasedHandlerFactory
+  fun createRuntimeHandlerFactory(objectStorage: ObjectStorage): BreakpointBasedHandlerFactory
 
   val breakpointResolverFactory: BreakpointPositionResolver
 }
