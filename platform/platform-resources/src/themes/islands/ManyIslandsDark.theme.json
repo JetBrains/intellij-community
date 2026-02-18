@@ -1229,7 +1229,7 @@
     "WelcomeScreen": {
       "Details.background": "container-dialog-bg",
       "Banner.background": "container-dialog-bg-inline",
-      "SidePanel.background": "container-dialog-bg-inline",
+      "SidePanel.background": "container-dialog-bg",
       "Projects.actions.background": "#2B2D30"
     },
 
