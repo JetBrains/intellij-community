@@ -1,5 +1,6 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -8,7 +9,6 @@ import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionFixture.Companion.doWithCompletionFixture
 import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionPopupTest.Companion.MAX_ITEMS_COUNT
 import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
-import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
@@ -20,7 +20,9 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -289,7 +291,20 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("start", "status", "stop"))
 
-    fixture.outputModel.update(1, "some text")
+    fixture.outputModel.lookupAwareUpdate(1, "some text")
+    fixture.awaitPendingRequestsProcessed()
+    assertFalse(fixture.isLookupActive())
+  }
+
+  @Test
+  fun `test completion popup closes when whole prefix is replaced in a single update`() = doTest { fixture ->
+    fixture.type("test_cmd ST")
+    fixture.callCompletionPopup()
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("start", "status", "stop"))
+
+    fixture.outputModel.lookupAwareUpdate(0, "test_cmd start")
+    fixture.awaitPendingRequestsProcessed()
     assertFalse(fixture.isLookupActive())
   }
 
@@ -416,6 +431,20 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   private fun createTempDir(): Path {
     return createTempDirectory().also {
       Disposer.register(testRootDisposable) { it.deleteRecursively() }
+    }
+  }
+
+  private fun MutableTerminalOutputModel.lookupAwareUpdate(absoluteLineIndex: Long, text: String) {
+    val doUpdate = {
+      this.updateContent(absoluteLineIndex, text, emptyList())
+      this.updateCursorPosition(absoluteLineIndex, text.length)
+    }
+    val lookup = LookupManager.getInstance(project).activeLookup
+    if (lookup != null && lookup.editor.isReworkedTerminalEditor) {
+      lookup.performGuardedChange(doUpdate)
+    }
+    else {
+      doUpdate()
     }
   }
 

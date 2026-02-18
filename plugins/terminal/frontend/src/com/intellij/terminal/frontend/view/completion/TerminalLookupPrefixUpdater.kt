@@ -80,6 +80,13 @@ class TerminalLookupPrefixUpdater private constructor(
     }
 
     val commonPrefixLength = newPrefix.commonPrefixWith(curPrefix).length
+    if (curPrefix.isNotEmpty() && commonPrefixLength == 0) {
+      // The whole prefix was replaced in a single action - probably it is better to close the lookup
+      // to avoid reopening it in the incorrect context.
+      lookup.hideLookup(false)
+      return
+    }
+
     val truncateTimes = curPrefix.length - commonPrefixLength
     truncatePrefix(truncateTimes)
     val textToAppend = newPrefix.substring(commonPrefixLength, newPrefix.length)
