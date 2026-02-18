@@ -67,9 +67,9 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
   private final XSourcePosition myPosition;
   private SimpleColoredText myPresentation;
 
-  public InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull VirtualFile file, int line, @NotNull XDebugSessionProxy session) {
+  public InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull VirtualFile file, int offset, @NotNull XDebugSessionProxy session) {
     // We cannot pass any XSourcePosition object here, check EA-841896
-    myPosition = XSourcePositionImpl.create(file, line);
+    myPosition = XSourcePositionImpl.createByOffset(file, offset);
     mySession = session;
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;

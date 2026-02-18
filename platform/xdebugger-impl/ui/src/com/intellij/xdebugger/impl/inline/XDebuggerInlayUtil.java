@@ -85,10 +85,10 @@ public final class XDebuggerInlayUtil {
   public void createLineEndInlay(@NotNull XValueNodeImpl valueNode,
                                  @NotNull XDebugSessionProxy session,
                                  @NotNull VirtualFile file,
-                                 int line) {
+                                 XSourcePosition position) {
     if (valueNode.getValuePresentation() != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        createInlayInt(session, new InlineDebugRenderer(valueNode, file, line, session));
+        createInlayInt(session, new InlineDebugRenderer(valueNode, file, position.getOffset(), session));
       }, ModalityState.nonModal(), session.getProject().getDisposed());
     }
   }
@@ -118,7 +118,7 @@ public final class XDebuggerInlayUtil {
       Inlay<InlineDebugRenderer> inlay = e.getInlayModel().addAfterLineEndElement(lineEnd,
                                                                                   new InlayProperties()
                                                                                     .disableSoftWrapping(true)
-                                                                                    .priority(renderer.isCustomNode() ? 0 : -1),
+                                                                                    .priority(renderer.isCustomNode() ? 0 : -position.getOffset()),
                                                                                   renderer);
       if (inlay == null) {
         return;

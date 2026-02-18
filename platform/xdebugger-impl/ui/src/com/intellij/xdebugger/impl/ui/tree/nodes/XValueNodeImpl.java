@@ -161,7 +161,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
           int line = position.getLine();
           if (line >= 0) {
-            XDebuggerInlayUtil.getInstance(session.getProject()).createLineEndInlay(XValueNodeImpl.this, session, file, line);
+            XDebuggerInlayUtil.getInstance(session.getProject()).createLineEndInlay(XValueNodeImpl.this, session, file, position);
           }
         }
       };
