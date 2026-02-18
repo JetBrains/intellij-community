@@ -26,4 +26,11 @@ internal class PyUnpackedKeywordContainerTypeImpl(
   }
 
   override fun hashCode(): Int = Objects.hash(originalParameters, wrapperType)
+
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T? {
+    if (visitor is PyTypeVisitorExt) {
+      return visitor.visitPyUnpackedKeywordContainerType(this)
+    }
+    return visitor.visitPyType(this)
+  }
 }

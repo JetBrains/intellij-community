@@ -70,4 +70,8 @@ public abstract class PyTypeVisitorExt<T> extends PyTypeVisitor<T> {
   public T visitPyOverloadType(@NotNull PyOverloadType overloadType) {
     return visitPyType(overloadType);
   }
+
+  public T visitPyUnpackedKeywordContainerType(@NotNull PyUnpackedKeywordContainerType unpackedKeywordContainerType) {
+    return visitPyType(unpackedKeywordContainerType);
+  }
 }

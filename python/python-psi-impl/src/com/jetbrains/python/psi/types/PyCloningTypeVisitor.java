@@ -254,4 +254,19 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
         ))
     );
   }
+
+  @Override
+  public PyType visitPyUnpackedKeywordContainerType(@NotNull PyUnpackedKeywordContainerType unpackedKeywordContainerType) {
+    return new PyUnpackedKeywordContainerTypeImpl(
+      ContainerUtil.map(unpackedKeywordContainerType.getUnpackedParameters(), parameter ->
+        new PyCallableParameterImpl(
+          parameter.getName(),
+          Ref.create(clone(parameter.getType(myTypeEvalContext))),
+          parameter.getDefaultValue(),
+          parameter.getParameter(),
+          parameter.isPositionalContainer(),
+          parameter.isKeywordContainer(),
+          parameter.getDeclarationElement()
+        )), clone(unpackedKeywordContainerType.getWrapperType()));
+  }
 }
