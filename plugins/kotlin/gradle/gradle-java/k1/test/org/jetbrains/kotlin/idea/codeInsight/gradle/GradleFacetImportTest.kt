@@ -68,8 +68,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
@@ -78,7 +78,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         }
 
         with(testFacetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
             assertEquals("1.0", apiLevel!!.versionString)
             assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
@@ -127,15 +127,15 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings("project.myMain")) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals("-Xjava-source-roots=tmp", compilerSettings!!.additionalArguments)
         }
 
         with(facetSettings("project.myTest")) {
-            assertEquals("1.3", languageLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
             assertEquals("1.0", apiLevel!!.versionString)
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
@@ -170,8 +170,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings("project.module1.main")) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
         }
 
         with(facetSettings("project.module2.main")) {
@@ -190,8 +190,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
             assertTrue(targetPlatform.isJs())
@@ -208,7 +208,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         }
 
         with(testFacetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
             assertEquals("1.0", apiLevel!!.versionString)
             assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
@@ -259,8 +259,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertTrue(targetPlatform.isJs())
         }
 
@@ -297,8 +297,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings("project.myMain")) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertTrue(targetPlatform.isJs())
 
             with(compilerArguments as K2JSCompilerArguments) {
@@ -310,7 +310,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         }
 
         with(facetSettings("project.myTest")) {
-            assertEquals("1.3", languageLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
             assertEquals("1.0", apiLevel!!.versionString)
             assertTrue(targetPlatform.isJs())
 
@@ -356,8 +356,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
@@ -385,8 +385,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertTrue(targetPlatform.isJs())
         }
 
@@ -454,8 +454,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
@@ -486,8 +486,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
             assertTrue(targetPlatform.isJs())
         }
 
@@ -688,8 +688,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("1.3", languageLevel!!.versionString)
-            assertEquals("1.3", apiLevel!!.versionString)
+            assertEquals("1.6", languageLevel!!.versionString)
+            assertEquals("1.6", apiLevel!!.versionString)
         }
 
         assertAllModulesConfigured()
@@ -807,7 +807,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         importProject()
 
-        TestCase.assertEquals("1.3", holder.settings.languageVersion)
+        TestCase.assertEquals("1.6", holder.settings.languageVersion)
     }
 
     @Test
