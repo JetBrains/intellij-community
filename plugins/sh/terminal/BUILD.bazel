@@ -14,7 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":terminal_resources"],
   deps = [
-    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
     "//platform/projectModel-api:projectModel",
     "//plugins/terminal",
     "//platform/platform-api:ide",
@@ -23,6 +23,7 @@ jvm_library(
     "//libraries/jediterm-ui",
     "//plugins/sh/core",
     "//libraries/jediterm-core",
+    "//platform/core-api:core",
   ],
   runtime_deps = ["//platform/backend"]
 )
