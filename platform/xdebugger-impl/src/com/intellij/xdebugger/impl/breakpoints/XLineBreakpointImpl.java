@@ -133,7 +133,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   public void resetSourcePosition(long requestId) {
     mySourcePosition = null;
-    if (getBreakpointManager().getRequestCounter().setRequestCompleted(requestId)) {
+    if (getBreakpointManager().getRequestCounter().setRequestCompleted(getBreakpointId(), requestId)) {
       fireBreakpointChanged();
     }
   }

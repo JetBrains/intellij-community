@@ -167,7 +167,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     if (updateNeeded) {
       setter.accept(newValue);
     }
-    boolean requestCompleted = myBreakpointManager.getRequestCounter().setRequestCompleted(requestId);
+    boolean requestCompleted = myBreakpointManager.getRequestCounter().setRequestCompleted(myId, requestId);
     if (updateNeeded || requestCompleted) {
       fireBreakpointChanged();
     }
@@ -402,6 +402,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public final void dispose() {
     myDisposed = true;
+    myBreakpointManager.getRequestCounter().remove(myId);
     cancel(myCoroutineScope, null);
     doDispose();
   }

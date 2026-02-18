@@ -58,7 +58,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
   val breakpoint = this
   return withContext(Dispatchers.Default) {
     val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl
-    val completedRequestId = manager.requestCounter.getRequestId()
+    val completedRequestId = manager.requestCounter.getRequestId(breakpoint.breakpointId)
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
       sourcePosition = readAction { sourcePosition?.toRpc() },

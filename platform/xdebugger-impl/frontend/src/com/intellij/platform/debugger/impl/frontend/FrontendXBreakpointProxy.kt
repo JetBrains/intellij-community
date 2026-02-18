@@ -8,7 +8,8 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.debugger.impl.frontend.FrontendBreakpointRequestCounter.Companion.REQUEST_IS_NOT_NEEDED
+import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter
+import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter.Companion.REQUEST_IS_NOT_NEEDED
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointCustomPresentationDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
@@ -58,7 +59,7 @@ internal open class FrontendXBreakpointProxy(
   parentCs: CoroutineScope,
   dto: XBreakpointDto,
   override val type: XBreakpointTypeProxy,
-  private val breakpointRequestCounter: FrontendBreakpointRequestCounter,
+  private val breakpointRequestCounter: BreakpointRequestCounter,
 ) : XBreakpointProxy {
   override val id: XBreakpointId = dto.id
 
@@ -113,7 +114,7 @@ internal open class FrontendXBreakpointProxy(
       if (!forceRequestWithoutUpdate && newState == old) {
         return REQUEST_IS_NOT_NEEDED
       }
-      requestId = breakpointRequestCounter.increment()
+      requestId = breakpointRequestCounter.nextRequestId(id)
       newState.copy(requestId = requestId)
     }
     assert(requestId != REQUEST_IS_NOT_NEEDED)
@@ -147,7 +148,7 @@ internal open class FrontendXBreakpointProxy(
       // To avoid races with the backend state updates, we only react to breakpoint state updates
       // which have the latest requestId. Otherwise, we ignore the update.
       dto.state.toFlow().collectLatest {
-        if (breakpointRequestCounter.isSuitableUpdate(it.requestId)) {
+        if (breakpointRequestCounter.isSuitableUpdate(id, it.requestId)) {
           _state.value = it
           onBreakpointChange()
         }
@@ -375,6 +376,7 @@ internal open class FrontendXBreakpointProxy(
   }
 
   override fun dispose() {
+    breakpointRequestCounter.remove(id)
     cs.cancel()
     listener = null
     _customPresentation.value = null

@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -88,7 +89,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private final XDebuggerManagerImpl myDebuggerManager;
   private final XDependentBreakpointManager myDependentBreakpointManager;
   @NotNull private final CoroutineScope myCoroutineScope;
-  private final BackendBreakpointRequestCounter myRequestCounter = new BackendBreakpointRequestCounter();
+  private final BreakpointRequestCounter myRequestCounter = new BreakpointRequestCounter();
   private long myTime;
   private volatile @Nullable String myDefaultGroup;
   private RemovedBreakpointData myLastRemovedBreakpoint = null;
@@ -199,7 +200,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @ApiStatus.Internal
-  public BackendBreakpointRequestCounter getRequestCounter() {
+  public BreakpointRequestCounter getRequestCounter() {
     return myRequestCounter;
   }
 

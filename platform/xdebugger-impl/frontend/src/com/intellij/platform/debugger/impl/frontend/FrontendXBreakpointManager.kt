@@ -18,6 +18,7 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointEvent
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter
 import com.intellij.platform.debugger.impl.shared.InlineBreakpointsCache
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
@@ -92,7 +93,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   @VisibleForTesting
   val breakpointIdsRemovedLocally: MutableSet<XBreakpointId> = ConcurrentHashMap.newKeySet()
 
-  internal val breakpointRequestCounter = FrontendBreakpointRequestCounter()
+  internal val breakpointRequestCounter = BreakpointRequestCounter()
 
   init {
     cs.launch {
