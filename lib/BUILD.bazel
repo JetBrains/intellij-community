@@ -3079,17 +3079,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.google.protobuf/protobuf-java-util-3.24.4-jb.2.jar_copy",
-  src = "@com_google_protobuf-protobuf-java-util-3_24_4-jb_2_http//file",
-  out = "com.google.protobuf/protobuf-java-util-3.24.4-jb.2.jar",
+  name = "com.google.protobuf/protobuf-java-util-3.25.5.jar_copy",
+  src = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
+  out = "com.google.protobuf/protobuf-java-util-3.25.5.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "google-protobuf-java-util",
-  jar = "@com_google_protobuf-protobuf-java-util-3_24_4-jb_2_http//file",
-  source_jar = "@com_google_protobuf-protobuf-java-util-3_24_4-jb_2-sources_http//file",
+  jar = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
+  source_jar = "@com_google_protobuf-protobuf-java-util-3_25_5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -19207,17 +19207,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.google.protobuf/protobuf-java-3.24.4-jb.2.jar_copy",
-  src = "@com_google_protobuf-protobuf-java-3_24_4-jb_2_http//file",
-  out = "com.google.protobuf/protobuf-java-3.24.4-jb.2.jar",
+  name = "com.google.protobuf/protobuf-java-3.25.5.jar_copy",
+  src = "@com_google_protobuf-protobuf-java-3_25_5_http//file",
+  out = "com.google.protobuf/protobuf-java-3.25.5.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "protobuf",
-  jar = "@com_google_protobuf-protobuf-java-3_24_4-jb_2_http//file",
-  source_jar = "@com_google_protobuf-protobuf-java-3_24_4-jb_2-sources_http//file",
+  jar = "@com_google_protobuf-protobuf-java-3_25_5_http//file",
+  source_jar = "@com_google_protobuf-protobuf-java-3_25_5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -2422,17 +2422,17 @@ http_file(
 )
 
 http_file(
-  name = "com_google_protobuf-protobuf-java-util-3_24_4-jb_2_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/google/protobuf/protobuf-java-util/3.24.4-jb.2/protobuf-java-util-3.24.4-jb.2.jar",
-  sha256 = "bd30f6cf55c4f9f0891f8b6ea6601c1502b643543d2535c8b477ea0481809e99",
-  downloaded_file_path = "protobuf-java-util-3.24.4-jb.2.jar"
+  name = "com_google_protobuf-protobuf-java-util-3_25_5_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5.jar",
+  sha256 = "dacc58b2c3d2fa8d4bddc1acb881e78d6cf7c137dd78bc1d67f6aca732436a8d",
+  downloaded_file_path = "protobuf-java-util-3.25.5.jar"
 )
 
 http_file(
-  name = "com_google_protobuf-protobuf-java-util-3_24_4-jb_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/google/protobuf/protobuf-java-util/3.24.4-jb.2/protobuf-java-util-3.24.4-jb.2-sources.jar",
-  sha256 = "34b69bf5453b40989ae8d149447ff82e56fb34a82f213a4cef92578764a8f56f",
-  downloaded_file_path = "protobuf-java-util-3.24.4-jb.2-sources.jar"
+  name = "com_google_protobuf-protobuf-java-util-3_25_5-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5-sources.jar",
+  sha256 = "db5bda981edcda1fd4d60bf4cc7dca9ab144f6b880233fd4d1582fd0065f232c",
+  downloaded_file_path = "protobuf-java-util-3.25.5-sources.jar"
 )
 
 http_file(
@@ -15295,17 +15295,17 @@ http_file(
 )
 
 http_file(
-  name = "com_google_protobuf-protobuf-java-3_24_4-jb_2_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/google/protobuf/protobuf-java/3.24.4-jb.2/protobuf-java-3.24.4-jb.2.jar",
-  sha256 = "6ba90d0d081c03c5c03d2d41497f75a183da7fb23cc2691f7b782dea77f73d21",
-  downloaded_file_path = "protobuf-java-3.24.4-jb.2.jar"
+  name = "com_google_protobuf-protobuf-java-3_25_5_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.25.5/protobuf-java-3.25.5.jar",
+  sha256 = "8540247fad9e06baefa8fb45eb313802d019f485f14300e0f9d6b556ed88e753",
+  downloaded_file_path = "protobuf-java-3.25.5.jar"
 )
 
 http_file(
-  name = "com_google_protobuf-protobuf-java-3_24_4-jb_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/google/protobuf/protobuf-java/3.24.4-jb.2/protobuf-java-3.24.4-jb.2-sources.jar",
-  sha256 = "36406aee18f5c2bed51fe429e6d4ce381b1b1d50bb05da540409ffa318e83156",
-  downloaded_file_path = "protobuf-java-3.24.4-jb.2-sources.jar"
+  name = "com_google_protobuf-protobuf-java-3_25_5-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.25.5/protobuf-java-3.25.5-sources.jar",
+  sha256 = "d686e802329e42954e72e9b3b148b67eeb4f6f3ed327abc4508b79fda4937c3b",
+  downloaded_file_path = "protobuf-java-3.25.5-sources.jar"
 )
 
 http_file(
