@@ -239,8 +239,7 @@ public class MarkdownProcessor(
                 .subSequence(prefixPos, fullUpdatedText.length - commonSuffix.length)
                 .lineSequence()
                 .count() - previousText.subSequence(prefixPos, suffixPos).lineSequence().count()
-        // if modification starts at the edge, include the previous block by using less instead of less equal
-        val firstBlock = previousStartIndexes.indexOfLast { it < prefixPos }
+        val firstBlock = findFirstBlockToReparse(previousStartIndexes, prefixPos, previousBlocks)
         val blockAfterLast =
             previousEndIndexes.indexOfFirst { suffixPos <= it }.let { if (it == -1) previousBlocks.size else it + 1 }
         val changedText =
@@ -261,6 +260,35 @@ public class MarkdownProcessor(
         val updatedText: String,
         val nLinesDelta: Int,
     )
+
+    /**
+     * Finds the index of the first block that needs to be re-parsed after a text change.
+     *
+     * This function determines which block starts the range that needs re-parsing. It also considers whether the
+     * preceding block (if any) should be included, based on whether that block's extension allows merging with the next
+     * block.
+     */
+    private fun findFirstBlockToReparse(
+        previousStartIndexes: List<Int>,
+        prefixPos: Int,
+        previousBlocks: List<Block>,
+    ): Int {
+        // if modification starts at the edge, include the previous block by using less instead of less equal
+        val fb = previousStartIndexes.indexOfLast { it < prefixPos }
+        if (fb <= 0) return fb
+        val precedingBlock = previousBlocks[fb - 1]
+        // There are certain blocks (like tables) that can "absorb" the current block
+        // after the block is edited enough to be accounted as part of the preceding block.
+        // In case of tables, the current block can be a new table row.
+        return if (precedingBlock is CustomBlock && allowsMergingWithNextBlock(precedingBlock)) {
+            fb - 1
+        } else {
+            fb
+        }
+    }
+
+    private fun allowsMergingWithNextBlock(block: CustomBlock): Boolean =
+        blockExtensions.find { it.canProcess(block) }?.allowsMergingWithNextBlock == true
 
     private fun parseRawMarkdown(@Language("Markdown") rawMarkdown: String): List<Block> {
         val document =
