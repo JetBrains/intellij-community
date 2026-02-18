@@ -31,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.InvalidPathException
 import kotlin.io.path.Path
 
 //TODO::
@@ -42,7 +43,11 @@ import kotlin.io.path.Path
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 
 private fun Sdk.getEelDescriptor(): EelDescriptor? {
-  return homeDirectory?.toNioPath()?.getEelDescriptor() ?: homePath?.let(::Path)?.getEelDescriptor()
+  return homeDirectory?.toNioPath()?.getEelDescriptor() ?: try {
+    homePath?.let(::Path)?.getEelDescriptor()
+  } catch (_: InvalidPathException) {
+    null
+  }
 }
 
 @ApiStatus.Internal
