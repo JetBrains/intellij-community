@@ -2,9 +2,24 @@
 name: Agent Threads Testing
 description: Coverage ownership matrix for Swing-based Agent Threads, shared contracts, chat lifecycle, and Codex backends.
 targets:
-  - ../sessions/testSrc/*.kt
-  - ../chat/testSrc/*.kt
-  - ../codex/sessions/testSrc/**/*.kt
+  - ../sessions/src/AgentSessionsTreeUiStateService.kt
+  - ../codex/common/src/CodexAppServerClient.kt
+  - ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  - ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
+  - ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
+  - ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
+  - ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
+  - ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
+  - ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+  - ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+  - ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
+  - ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+  - ../sessions/testSrc/AgentSessionsServiceIntegrationTestSupport.kt
+  - ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+  - ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+  - ../sessions/testSrc/CodexAppServerClientTest.kt
+  - ../sessions/testSrc/CodexAppServerClientTestSupport.kt
+  - ../sessions/testSrc/CodexTestAppServer.kt
 ---
 
 # Agent Threads Testing
@@ -71,21 +86,35 @@ This file does not redefine runtime behavior; it maps each contract area to requ
   - open-tab title refresh via editor presentation updates.
 
 ## Requirement Ownership Matrix
-- Core contracts: `AgentSessionCliTest`, `AgentSessionsEditorTabActionsTest`, `AgentSessionArchiveServiceIntegrationTest`, `AgentSessionRefreshOnDemandIntegrationTest`
-- Sessions aggregation/loading: `AgentSessionLoadAggregationTest`, `AgentSessionRefreshServiceIntegrationTest`, `AgentSessionRefreshOnDemandIntegrationTest`, `AgentSessionRefreshConcurrencyIntegrationTest`
-- Swing tree rendering: `AgentSessionsSwingTreeRenderingTest`, `AgentSessionsSwingTreeCellRendererTest`
-- Swing tree interaction: `AgentSessionsSwingTreeInteractionTest`
-- Swing tree state persistence: `AgentSessionsSwingTreeStatePersistenceTest`
-- Tree UI persisted state: `AgentSessionTreeUiStateServiceTest`
-- Warm snapshot persisted state: `AgentSessionWarmStateServiceTest`
-- Shared UI preferences state: `AgentSessionUiPreferencesStateServiceTest`
-- New-thread flow: `AgentSessionsSwingNewSessionActionsTest`, `AgentSessionRefreshCoordinatorTest`, `AgentChatEditorServiceTest`
-- Tool-window factory wiring: `AgentSessionsToolWindowFactorySwingTest`, `AgentSessionsGearActionsTest`
-- Dedicated frame: `AgentSessionsGearActionsTest`, `AgentSessionsOpenModeRoutingTest`
-- Quota hint gating: `AgentSessionsSwingQuotaHintTest`, `AgentSessionsClaudeQuotaWidgetActionRegistrationTest`
-- Chat tab lifecycle: `AgentChatEditorServiceTest`, `AgentChatFileEditorProviderTest`, `AgentChatTabSelectionServiceTest`
-- Codex rollout/app-server selection + hint wiring: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexSessionActivityResolverTest`, `CodexAppServerSessionBackendTest`, `CodexAppServerRefreshHintsProviderTest`, `CodexSessionSourceRefreshHintsTest`, `CodexSessionSourceRolloutIntegrationTest`, `CodexSessionSourceRealTuiIntegrationTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`, `AgentSessionRefreshCoordinatorTest`
-- Codex app-server contract: `CodexAppServerClientTest`
+Primary ownership is singular by design to avoid overlap-heavy tests and keep failures actionable.
+
+- Aggregation ordering/warnings/errors/unknown total: `AgentSessionLoadAggregationTest`
+- Refresh merge + warning/error + unknown-count + cached preview + visible-count restore: `AgentSessionsServiceRefreshIntegrationTest`
+- On-demand dedup + visible-count persistence: `AgentSessionsServiceOnDemandIntegrationTest`
+- Refresh mutex dedup: `AgentSessionsServiceConcurrencyIntegrationTest`
+- Archive refresh semantics: `AgentSessionsServiceArchiveIntegrationTest`
+- Rollout parsing/title/activity + branch + cwd filtering + prefetch: `CodexRolloutSessionBackendTest`
+- Rollout file-watch end-to-end updates (in-place + atomic replace): `CodexRolloutSessionBackendFileWatchIntegrationTest`
+- Watch-event classification (path-scoped/full-rescan/refresh-ping): `CodexRolloutSessionsWatcherTest`
+- Backend selection defaults/override: `CodexSessionBackendSelectorTest`
+- Paging loop/no-progress guards: `CodexSessionsPagingLogicTest`
+- App-server protocol contract (mock required, real optional): `CodexAppServerClientTest`
+- Tree rendering and `More` state behavior: `AgentSessionsToolWindowTest`
+- Tree UI persisted state round-trip/backward compatibility: `AgentSessionsTreeUiStateServiceTest`
+
+[@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
+[@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+[@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+[@test] ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
+[@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+[@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+[@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+[@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+[@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
+[@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
+[@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
+[@test] ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
+[@test] ../sessions/testSrc/CodexAppServerClientTest.kt
 
 ## Contract Suite
 - `CodexAppServerClientTest` is parameterized for mock backend and optional real `codex app-server` backend.
@@ -108,14 +137,11 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 
 ## Running Locally
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSession*IntegrationTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwing*Test'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowFactorySwingTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChat*Test'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRollout*Test'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRefreshHintsTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRealTuiIntegrationTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsService*IntegrationTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackend*Test'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionsWatcherTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionsPagingLogicTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.CodexAppServerClientTest -Dintellij.build.test.main.module=intellij.agent.workbench.sessions'`
 
 Optional real-backend override:

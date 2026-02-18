@@ -47,11 +47,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//plugins/agent-workbench/filewatch",
     "//plugins/agent-workbench/codex/common",
-    "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
     "//plugins/agent-workbench/json",
-    "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions",
-    "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions_test_lib",
     "//plugins/agent-workbench/sessions",
     "//plugins/agent-workbench/sessions:sessions_test_lib",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
@@ -62,7 +58,6 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/assertj-core",
-    "//libraries/pty4j",
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.codex.sessions` end

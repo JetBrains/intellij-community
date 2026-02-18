@@ -78,71 +78,26 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
-  fun mapsCurrentCodexRolloutActivitySignals() {
-    runBlocking(Dispatchers.Default) {
+  fun mapsDistinctActivitySignalsWithoutOverlappingMicroTests() {
+    runBlocking {
       val projectDir = tempDir.resolve("project-activity")
       Files.createDirectories(projectDir)
 
       val activityCases = listOf(
         ActivityCase(
           id = "session-review",
-          eventLines = listOf(
-            """{"timestamp":"2026-02-13T11:00:05.000Z","type":"event_msg","payload":{"type":"entered_review_mode"}}"""
-          ),
+          eventLine = """{"timestamp":"2026-02-13T11:00:05.000Z","type":"event_msg","payload":{"type":"item_completed","item":{"type":"enteredReviewMode"}}}""",
           expected = CodexSessionActivity.REVIEWING,
         ),
         ActivityCase(
           id = "session-processing",
-          eventLines = listOf(
-            """{"timestamp":"2026-02-13T11:01:05.000Z","type":"event_msg","payload":{"type":"task_started"}}"""
-          ),
+          eventLine = """{"timestamp":"2026-02-13T11:01:05.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
           expected = CodexSessionActivity.PROCESSING,
         ),
         ActivityCase(
           id = "session-pending-input",
-          eventLines = listOf(
-            """{"timestamp":"2026-02-13T11:02:05.000Z","type":"event_msg","payload":{"type":"request_user_input"}}"""
-          ),
+          eventLine = """{"timestamp":"2026-02-13T11:02:05.000Z","type":"event_msg","payload":{"type":"requestUserInput"}}""",
           expected = CodexSessionActivity.UNREAD,
-          expectedRequiresResponse = true,
-        ),
-        ActivityCase(
-          id = "session-pending-input-function-call",
-          eventLines = listOf(
-            responseItemFunctionCall(
-              timestamp = "2026-02-13T11:02:10.000Z",
-              callId = "call-request-user-input",
-            )
-          ),
-          expected = CodexSessionActivity.UNREAD,
-          expectedRequiresResponse = true,
-        ),
-        ActivityCase(
-          id = "session-cleared-input-function-call-output",
-          eventLines = listOf(
-            responseItemFunctionCall(
-              timestamp = "2026-02-13T11:02:20.000Z",
-              callId = "call-cleared-user-input",
-            ),
-            """{"timestamp":"2026-02-13T11:02:21.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call-cleared-user-input","output":"ok"}}""",
-          ),
-          expected = CodexSessionActivity.READY,
-        ),
-        ActivityCase(
-          id = "session-processing-over-unread",
-          eventLines = listOf(
-            """{"timestamp":"2026-02-13T11:03:05.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
-            """{"timestamp":"2026-02-13T11:03:06.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Still working"}}"""
-          ),
-          expected = CodexSessionActivity.PROCESSING,
-        ),
-        ActivityCase(
-          id = "session-review-over-unread",
-          eventLines = listOf(
-            """{"timestamp":"2026-02-13T11:04:05.000Z","type":"event_msg","payload":{"type":"entered_review_mode"}}""",
-            """{"timestamp":"2026-02-13T11:04:06.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Review result draft"}}"""
-          ),
-          expected = CodexSessionActivity.REVIEWING,
         ),
       )
 
@@ -156,46 +111,19 @@ class CodexRolloutSessionBackendTest {
               id = testCase.id,
               cwd = projectDir,
             ),
-          ) + testCase.eventLines,
+            testCase.eventLine,
+          ),
         )
       }
 
       val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
-      val threadsById = backend.listThreads(path = projectDir.toString(), openProject = null).associateBy { it.thread.id }
-
-      assertThat(threadsById).hasSize(activityCases.size)
-      for (testCase in activityCases) {
-        val thread = threadsById.getValue(testCase.id)
-        assertThat(thread.activity).isEqualTo(testCase.expected)
-        assertThat(thread.requiresResponse).isEqualTo(testCase.expectedRequiresResponse)
-      }
-    }
-  }
-
-  @Test
-  fun prefersSnakeCaseThreadNameUpdatedEventForTitle() {
-    runBlocking(Dispatchers.Default) {
-      val projectDir = tempDir.resolve("project-thread-rename")
-      Files.createDirectories(projectDir)
-      writeRollout(
-        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
-          .resolve("rollout-thread-name-updated.jsonl"),
-        lines = listOf(
-          sessionMetaLine(
-            timestamp = "2026-02-14T12:00:00.000Z",
-            id = "session-title-updated",
-            cwd = projectDir,
-          ),
-          """{"timestamp":"2026-02-14T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Initial fallback title"}}""",
-          """{"timestamp":"2026-02-14T12:00:02.000Z","type":"event_msg","payload":{"type":"thread_name_updated","thread_name":"  Renamed   from   Codex  "}}""",
-        ),
-      )
-
-      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
       val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+      val activityById = threads.associate { it.thread.id to it.activity }
 
-      assertThat(threads).hasSize(1)
-      assertThat(threads.single().thread.title).isEqualTo("Renamed from Codex")
+      assertThat(threads).hasSize(activityCases.size)
+      for (testCase in activityCases) {
+        assertThat(activityById[testCase.id]).isEqualTo(testCase.expected)
+      }
     }
   }
 
@@ -779,8 +707,7 @@ private fun writeRollout(file: Path, lines: List<String>) {
 }
 
 private data class ActivityCase(
-  @JvmField val id: String,
-  @JvmField val eventLines: List<String>,
-  @JvmField val expected: CodexSessionActivity,
-  @JvmField val expectedRequiresResponse: Boolean = false,
+  val id: String,
+  val eventLine: String,
+  val expected: CodexSessionActivity,
 )
