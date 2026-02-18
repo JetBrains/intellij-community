@@ -56,6 +56,10 @@ jvm_library(
     "//platform/jewel/foundation:foundation_test_lib",
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    "//libraries/compose-foundation-desktop-junit",
+    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
