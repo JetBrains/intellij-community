@@ -2,42 +2,93 @@
 
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
+import com.intellij.agent.workbench.filewatch.AgentWorkbenchDirectoryWatcher
 import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEvent
 import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEventType
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionWatcher
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionWatcherSpec
-import com.intellij.agent.workbench.json.filebacked.normalizeFileBackedSessionPath
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
+import java.nio.file.Files
 import java.nio.file.Path
 
 private val LOG = logger<CodexRolloutSessionsWatcher>()
 
-internal class CodexRolloutSessionsWatcher(
-  codexHomeProvider: () -> Path,
-  scope: CoroutineScope,
-  onRolloutChange: (FileBackedSessionChangeSet) -> Unit,
-) : AutoCloseable {
-  private val codexHome = normalizeFileBackedSessionPath(codexHomeProvider())
-  private val sessionsRoot = normalizeFileBackedSessionPath(codexHome.resolve("sessions"))
-  private val watcher = FileBackedSessionWatcher(
-    logger = LOG,
-    watcherName = "Codex rollout",
-    spec = FileBackedSessionWatcherSpec(
-      roots = listOf(codexHome, sessionsRoot),
-      eventToChangeSet = ::eventToChangeSet,
-    ),
-    scope = scope,
-    onChange = onRolloutChange,
-    failureMessage = "Rollout watcher failed",
-  )
+internal data class CodexRolloutChangeSet(
+  // Known rollout files that must be reparsed regardless of file stat heuristics.
+  val changedRolloutPaths: Set<Path> = emptySet(),
 
-  override fun close() {
-    watcher.close()
+  // Overflow/ambiguous events where file-level attribution is not reliable.
+  val requiresFullRescan: Boolean = false,
+
+  // `changedRolloutPaths.isEmpty() && !requiresFullRescan` means "refresh ping":
+  // re-run stat-based scan without forcing full reparse.
+)
+
+internal class CodexRolloutSessionsWatcher(
+  private val codexHomeProvider: () -> Path,
+  scope: CoroutineScope,
+  private val onRolloutChange: (CodexRolloutChangeSet) -> Unit,
+) : AutoCloseable {
+  private val sessionsRoot: Path
+    get() = codexHomeProvider().resolve("sessions")
+  private val watcher: AgentWorkbenchDirectoryWatcher?
+
+  init {
+    val codexHome = normalizeWatchPath(codexHomeProvider())
+    val sessions = normalizeWatchPath(sessionsRoot)
+    LOG.debug { "Registering initial watcher paths (codexHome=$codexHome, sessionsRoot=$sessions)" }
+
+    val roots = LinkedHashSet<Path>()
+    if (Files.isDirectory(codexHome)) {
+      roots.add(codexHome)
+    }
+    if (Files.isDirectory(sessions)) {
+      roots.add(sessions)
+    }
+    watcher = if (roots.isEmpty()) {
+      LOG.debug { "No watcher roots found; rollout updates watcher will stay idle" }
+      null
+    }
+    else {
+      AgentWorkbenchDirectoryWatcher(
+        roots = roots,
+        scope = scope,
+        onWatchEvent = ::handleWatchEvent,
+        onFailure = { t ->
+          LOG.warn("Rollout watcher failed", t)
+        },
+      )
+    }
+
+    if (watcher != null) {
+      LOG.debug { "Initialized directory watcher for roots=$roots" }
+    }
   }
 
-  internal fun eventToChangeSet(event: AgentWorkbenchWatchEvent): FileBackedSessionChangeSet? {
+  override fun close() {
+    LOG.debug { "Closing Codex rollout sessions watcher" }
+    watcher?.close()
+  }
+
+  private fun handleWatchEvent(event: AgentWorkbenchWatchEvent) {
+    val eventPath = event.path
+    val rootPath = event.rootPath
+    val eventType = event.eventType
+    val isDirectory = event.isDirectory
+    val isRolloutFile = eventPath?.let(::isRolloutPath) == true
+    LOG.debug {
+      "Rollout watcher event type=$eventType path=$eventPath root=$rootPath isDirectory=$isDirectory count=${event.count} (isRolloutFile=$isRolloutFile)"
+    }
+
+    val changeSet = eventToChangeSet(event) ?: return
+
+    LOG.debug {
+      "Rollout watcher detected relevant changes; notifying listeners (fullRescan=${changeSet.requiresFullRescan}, changedPaths=${changeSet.changedRolloutPaths.size})"
+    }
+    onRolloutChange(changeSet)
+  }
+
+  internal fun eventToChangeSet(event: AgentWorkbenchWatchEvent): CodexRolloutChangeSet? {
     val eventPath = event.path
     val rootPath = event.rootPath
     if (event.eventType == AgentWorkbenchWatchEventType.OVERFLOW) {
@@ -47,11 +98,11 @@ internal class CodexRolloutSessionsWatcher(
         else -> false
       }
       if (!isRelevantOverflow) return null
-      return FileBackedSessionChangeSet(requiresFullRescan = true)
+      return CodexRolloutChangeSet(requiresFullRescan = true)
     }
 
     if (eventPath != null && isRolloutPath(eventPath)) {
-      return FileBackedSessionChangeSet(changedPaths = setOf(normalizeFileBackedSessionPath(eventPath)))
+      return CodexRolloutChangeSet(changedRolloutPaths = setOf(normalizeWatchPath(eventPath)))
     }
 
     // Prefer eventPath when present so codex-home root events outside sessions
@@ -66,17 +117,17 @@ internal class CodexRolloutSessionsWatcher(
     // Directory-level and path-less events are ambiguous, so force reparse.
     val isAmbiguousDirectoryEvent = event.isDirectory || eventPath == null
     if (isAmbiguousDirectoryEvent) {
-      return FileBackedSessionChangeSet(requiresFullRescan = true)
+      return CodexRolloutChangeSet(requiresFullRescan = true)
     }
 
     // For non-rollout files under sessions (e.g. temp files used by atomic rewrite),
     // emit a refresh ping. The index will re-scan file stats without forcing full reparse.
-    return FileBackedSessionChangeSet()
+    return CodexRolloutChangeSet()
   }
 
   private fun isSessionsPath(path: Path): Boolean {
-    val normalizedPath = normalizeFileBackedSessionPath(path)
-    return normalizedPath.startsWith(sessionsRoot)
+    val normalizedPath = normalizeWatchPath(path)
+    return normalizedPath.startsWith(normalizedSessionsRootPath())
   }
 
   private fun isRolloutPath(path: Path): Boolean {
@@ -85,7 +136,19 @@ internal class CodexRolloutSessionsWatcher(
   }
 
   private fun isRelevantWatcherRoot(path: Path): Boolean {
-    val normalizedPath = normalizeFileBackedSessionPath(path)
-    return normalizedPath == codexHome || normalizedPath == sessionsRoot || isSessionsPath(normalizedPath)
+    val normalizedPath = normalizeWatchPath(path)
+    return normalizedPath == normalizeWatchPath(codexHomeProvider()) || normalizedPath == normalizedSessionsRootPath() || isSessionsPath(normalizedPath)
+  }
+
+  private fun normalizedSessionsRootPath(): Path {
+    return normalizeWatchPath(sessionsRoot)
+  }
+
+  private fun normalizeWatchPath(path: Path): Path {
+    return runCatching {
+      path.toAbsolutePath().normalize()
+    }.getOrElse {
+      path.normalize()
+    }
   }
 }

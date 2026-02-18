@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -337,12 +338,15 @@ internal class AgentChatTabMetadataStore {
 }
 
 internal object AgentChatTabMetadataStores {
-  private val fallbackInstance = AgentChatTabMetadataStore()
-
-  fun getInstanceOrFallback(): AgentChatTabMetadataStore {
-    val application = ApplicationManager.getApplication() ?: return fallbackInstance
-    return application.getService(AgentChatTabMetadataStore::class.java) ?: fallbackInstance
+  fun getInstance(): AgentChatTabMetadataStore {
+    val application = ApplicationManager.getApplication()
+      ?: error("AgentChatTabMetadataStore requires an initialized application")
+    return application.getService(AgentChatTabMetadataStore::class.java)
+      ?: error("AgentChatTabMetadataStore service is not registered")
   }
+
+  @TestOnly
+  fun createStandaloneForTest(): AgentChatTabMetadataStore = AgentChatTabMetadataStore()
 }
 
 private data class AgentChatTabMetadata(

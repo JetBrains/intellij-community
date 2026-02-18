@@ -31,167 +31,42 @@ Define Codex thread-list behavior where discovery and primary status projection 
 - Full-state periodic refresh loops when no pending tabs exist.
 
 ## Requirements
-- Codex session listing must be implemented behind `CodexSessionBackend` interface.
-  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
-
-- `CodexAppServerSessionBackend` must be the only backend used by `CodexSessionSource` for thread listing.
-  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
-
-- Legacy backend override inputs (including `rollout`) must not switch listing away from app-server backend.
-  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
-
-- Unknown backend override values must keep app-server backend selected.
-  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
-
-- App-server backend must request `thread/list` with server-side `cwd` and `sourceKinds` filters so sub-agent sessions are included in listing results.
-  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
-
-- App-server backend must fold sub-agent thread-spawn sessions under parent threads and hide orphaned sub-agent sessions from tree rows.
-  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
-
-- Hidden orphaned sub-agent sessions must be auto-archived with one-shot retry policy and at most one archive attempt per refresh.
-  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
-
-- Pending Codex chat tabs must trigger pending-only polling refresh to rebind pending identities when source update notifications are unavailable.
-  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
-
-- Rollout backend scan scope must be limited to `~/.codex/sessions/**/rollout-*.jsonl`.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Rollout hints must be consumed for pending-tab rebinding, concrete `/new` tab rebinding, and Codex activity projection; rollout-discovered IDs must not create persisted thread rows.
-- Rollout refresh-hint rebind candidates must include only top-level CLI sessions; parsed sub-agent thread-spawn sessions may still contribute hierarchy/activity data but must not become automatic rebind targets.
-- Rollout source parsing must preserve explicit source-kind metadata for refresh-hint consumers, including camel-case `subAgent` payloads and non-CLI top-level source kinds, instead of inferring `CLI` solely from a missing parent-thread id.
-- Rollout parsing must preserve thread source classification for refresh-hint consumers: top-level sessions map to `CLI`, parsed child sessions with `parentThreadId` map to `SUB_AGENT_THREAD_SPAWN`.
-  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
-  [@test] ../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
-  [@test] ../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
-
-- A local-gated real Codex TUI integration suite must verify the production rollout path `codex TUI -> rollout jsonl -> CodexRolloutSessionBackend -> CodexRolloutRefreshHintsProvider -> CodexSessionSource` for passive unread after completed assistant output with read-tracking suppression, stale-`ready` override by fresher `processing`, and `request_user_input` response-required unread.
-  Deterministic rollout parser/backend tests remain the owner for canonical event-shape matrices and review-mode coverage.
-  [@test] ../codex/sessions/testSrc/CodexSessionSourceRealTuiIntegrationTest.kt
-
-- App-server refresh hints must map `thread/read` snapshot status and flags to Codex activity states (`unread`, `reviewing`, `processing`, `ready`) using the normalization rules below.
-  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
-  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
-
-- Workbench must treat `CodexThreadStatusKind` as raw provider status, not as UI activity.
-  - `NOT_LOADED`: thread is not currently loaded by the app-server.
-  - `IDLE`: thread is loaded and has no in-progress turn or action-required flag.
-  - `ACTIVE`: thread is loaded and either running or blocked on approval/user input.
-  - `SYSTEM_ERROR`: thread is loaded and currently in a provider runtime failure state.
-  - `UNKNOWN`: thread status was absent or unrecognized and must be treated as a non-fatal fallback state.
-  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
-
-- Workbench must treat `CodexThreadActiveFlag` as response-required raw signals only.
-  - `WAITING_ON_APPROVAL` and `WAITING_ON_USER_INPUT` both mean action is required outside the running agent turn.
-  - `responseRequired` must be `true` only for those two flags.
-  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
-  [@test] ../codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt
-
-- `REVIEWING` must remain a derived workbench activity only; it must come from snapshot or rollout review-mode signals and never from raw `CodexThreadStatusKind`.
-  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
-
-- Activity normalization from Codex raw signals must be:
-  - `UNREAD` when active flags indicate response required.
-  - `REVIEWING` when `isReviewing = true` and response-required activity is not already selected.
-  - `PROCESSING` when `hasInProgressTurn = true` or `statusKind = ACTIVE` without response-required flags.
-  - `UNREAD` when `hasUnreadAssistantMessage = true` and no higher-priority reviewing, processing, or response-required activity is present.
-  - `READY` otherwise, including `IDLE`, `SYSTEM_ERROR`, `NOT_LOADED`, and `UNKNOWN`.
-  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
-  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
-
-- `thread/started` fallback and `thread/status/changed` notifications must use only raw `statusKind` and `activeFlags`; snapshot-only promotions (`hasUnreadAssistantMessage`, `isReviewing`, `hasInProgressTurn`) require `thread/read` or rollout fallback.
-  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
-  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
-
-- For Codex activity projection, app-server activity must remain primary for overlapping thread ids, except that newer rollout activity may override a non-response-required app-server hint when rollout reports `PROCESSING` or `REVIEWING`; rollout may also apply when app-server activity is missing or rollout reports `UNREAD`.
-  TUI-backed rollout data may be fresher than app-server status and must be allowed to keep actively working threads from showing `ready`.
-  [@test] ../codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt
-  [@test] ../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
-
-- Rollout change detection must use `AgentWorkbenchDirectoryWatcher` stack; Java NIO `WatchService` must not be used.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
-
-- Rollout refresh behavior must be event-driven; periodic polling timers are not allowed.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
-
-- Rollout backend must filter sessions by normalized `cwd` matching requested project/worktree path.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Multi-path prefetch must use a shared scan and return per-path filtered thread lists.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Cache invalidation must be path-scoped for rollout file changes; full rescan is allowed only for overflow/ambiguous directory events.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
-
+- Introduce `CodexSessionBackend` interface (singular naming) for Codex thread loading.
+- Provide `CodexRolloutSessionBackend` as default backend and keep `CodexAppServerSessionBackend` as alternate.
+- Keep backend implementations separated by package:
+  - `com.intellij.agent.workbench.codex.sessions.backend.rollout`
+  - `com.intellij.agent.workbench.codex.sessions.backend.appserver`
+- Backend selection must default to rollout and only switch to app-server when `agent.workbench.codex.sessions.backend=app-server` is explicitly set.
+- Unknown backend override values must log a warning and fall back to rollout.
+- Rollout backend must scan only `~/.codex/sessions/**/rollout-*.jsonl`.
+- Rollout change detection must use `AgentWorkbenchDirectoryWatcher` (prop/io.methvin watcher stack); Java NIO `WatchService` must not be used in this backend.
+- Rollout updates must be strictly event-driven and must not rely on periodic polling timers.
+- Rollout backend must filter sessions by normalized `cwd` matching project/worktree path.
+- Rollout backend must support multi-path prefetch and return per-path filtered thread lists from a shared scan.
+- Rollout cache invalidation must be path-scoped for watcher-reported rollout file changes; full cache rescan is allowed only for overflow/ambiguous directory events.
 - Path-scoped invalidation must force reparse of dirty rollout paths even when file size and mtime are unchanged.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
-
-- Non-rollout file events under `~/.codex/sessions` must still trigger event-driven refresh (without forced full reparse) to support atomic temp/rename write patterns.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
-
-- Thread id source must be `session_meta.payload.id`; rollout filename fallback is forbidden.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Files missing `session_meta.payload.id` must be skipped.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Title extraction must use first qualifying `event_msg` with `payload.type=user_message`.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- `thread_name_updated` messages with non-blank `payload.thread_name` must override derived title.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Rollout review-mode signals must come from current Codex `event_msg` payload types `entered_review_mode` and `exited_review_mode`.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Rollout response-required unread must be detected from current Codex rollout signals: canonical `event_msg` payload type `request_user_input` and persisted `response_item` function calls named `request_user_input`.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Title normalization must:
-  - strip `## My request for Codex:` marker when present,
-  - ignore session-prefix messages (`<environment_context>`, `<turn_aborted>`),
-  - normalize whitespace and apply bounded trim.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- If no qualifying title is found, fallback title must be `Thread <id-prefix>`.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Activity precedence must follow the normalization rules above across direct snapshot resolution, started-thread fallback, folded parent/sub-agent aggregation, and rollout activity projection.
-  Response-required unread stays highest priority, while passive unread assistant output must not override reviewing or processing.
-  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
-  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-  [@test] ../codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt
-
-- `SYSTEM_ERROR` must not introduce a separate session-tree activity state; it normalizes to `ready` unless a higher-priority unread, reviewing, or processing signal exists, and provider failures continue to surface through existing warning and error channels.
-  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
-  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
-
-- Session-tree indicator colors for Codex activity must map to:
-  - unread: `#4DA3FF`,
-  - reviewing: `#2FD1C4`,
-  - processing: `#FF9F43`,
-  - ready: `#3FE47E`.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-
-- Codex provider bridge must advertise archive capability and route archive/unarchive calls through shared app-server service when unarchive is supported.
-  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
-  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
-
-- Shared app-server process must start lazily on first request.
-  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
-
-- Shared app-server process must stop after configurable idle timeout when no requests are in flight; default timeout is 60 seconds.
-  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
-
-- Paging seed logic must guard against cursor loops and no-progress iterations; it must terminate safely without infinite looping and preserve already collected thread results.
-  [@test] ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
-
-## User Experience
-- Codex activity indicators should reflect normalized workbench activity derived from app-server `thread/read` snapshots plus fresher TUI rollout working-state overrides; raw Codex status kinds are not shown directly.
-- Archive action remains available for Codex threads discovered from rollout source.
-- Archive undo should be available when Codex unarchive is supported by the active provider bridge.
+- Non-rollout file events under `~/.codex/sessions` must still trigger event-driven refresh (without forced full reparse) so atomic temp/rename write patterns are observed without polling.
+- Thread id must come from `session_meta.payload.id` (not rollout filename).
+- Rollout backend must skip files missing `session_meta.payload.id` (no filename fallback).
+- Title extraction must use the first qualifying `event_msg` with `payload.type=user_message`.
+- `event_msg` with `payload.type=thread_name_updated` and non-blank `payload.thread_name` must override previously derived title.
+- Title extraction must strip `## My request for Codex:` when present and use the text after the marker.
+- Title extraction must ignore session-prefix user messages starting with `<environment_context>` or `<turn_aborted>` (case-insensitive, leading whitespace ignored).
+- Title extraction must trim and whitespace-normalize text, then apply bounded title trim.
+- If no qualifying title is found, title must fall back to `Thread <id-prefix>`.
+- Thread activity precedence must be: `unread` > `reviewing` > `processing` > `ready`.
+- Session tree indicator colors must match CodexMonitor classes:
+  - `unread`: blue (`#4DA3FF`)
+  - `reviewing`: teal (`#2FD1C4`)
+  - `processing`: orange (`#FF9F43`)
+  - `ready`: green (`#3FE47E`)
+- New-session action semantics (including Codex `Codex (Full Auto)` parameters) are defined in `spec/actions/new-thread.spec.md` and are backend-invariant.
+- Existing thread open behavior remains `codex resume <threadId>`.
+- Codex archive action must use app-server `thread/archive` and pass `threadId`.
+- Codex provider bridge must advertise archive capability and route archive calls through shared app-server service.
+- Shared app-server client process must start lazily on first request.
+- Shared app-server client process must stop after configurable idle timeout once no requests are in flight.
+- Default app-server idle timeout must be 60 seconds; tests may set shorter values.
 
 ## Data & Backend
 - `updatedAt` derives from latest event timestamp with file mtime fallback.
@@ -207,21 +82,11 @@ Define Codex thread-list behavior where discovery and primary status projection 
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendFileWatchIntegrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionsWatcherTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRealTuiIntegrationTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionBackendSelectorTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivityResolverTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexAppServerSessionBackendTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRefreshHintsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionCliTest'`
 
-Local-gated real TUI suite:
-- `CodexSessionSourceRealTuiIntegrationTest` skips unless a real `codex` CLI is available and PTY support is available on the host platform.
-- The real TUI suite asserts the actual limited-rollout contract written by Codex TUI: completed assistant output is initially passive unread until Workbench read tracking suppresses it, and `request_user_input` is detected from persisted `response_item` tool calls.
-
-## Open Questions / Risks
-- Cross-platform filesystem event differences can still produce edge-case rescan spikes under heavy write churn.
+[@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+[@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
 
 ## References
 - `spec/agent-core-contracts.spec.md`

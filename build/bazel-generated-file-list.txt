@@ -880,7 +880,6 @@ plugins/agent-workbench/claude/common
 plugins/agent-workbench/claude/sessions
 plugins/agent-workbench/codex/common
 plugins/agent-workbench/codex/sessions
-plugins/agent-workbench/common
 plugins/agent-workbench/filewatch
 plugins/agent-workbench/json
 plugins/agent-workbench/plugin

@@ -116,7 +116,7 @@ class AgentChatFileEditorProviderTest {
       subAgentId = null,
       shellCommand = emptyList(),
     )
-    val store = AgentChatTabMetadataStores.getInstanceOrFallback()
+    val store = AgentChatTabMetadataStores.createStandaloneForTest()
     store.upsert(descriptor)
     try {
       val loaded = store.loadDescriptor(descriptor.tabKey)

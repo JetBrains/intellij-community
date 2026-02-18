@@ -4,12 +4,10 @@ package com.intellij.agent.workbench.filewatch
 import io.methvin.watcher.DirectoryChangeEvent
 import io.methvin.watcher.DirectoryChangeListener
 import io.methvin.watcher.DirectoryWatcher
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runInterruptible
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
@@ -22,11 +20,11 @@ enum class AgentWorkbenchWatchEventType {
 }
 
 data class AgentWorkbenchWatchEvent(
-  @JvmField val eventType: AgentWorkbenchWatchEventType,
-  @JvmField val path: Path?,
-  @JvmField val rootPath: Path?,
-  @JvmField val isDirectory: Boolean,
-  @JvmField val count: Int,
+  val eventType: AgentWorkbenchWatchEventType,
+  val path: Path?,
+  val rootPath: Path?,
+  val isDirectory: Boolean,
+  val count: Int,
 )
 
 class AgentWorkbenchDirectoryWatcher(
@@ -56,7 +54,6 @@ class AgentWorkbenchDirectoryWatcher(
 
   override fun close() {
     if (!running.compareAndSet(true, false)) return
-    watcherJob?.cancel()
     directoryWatcher?.let { watcher ->
       runCatching {
         watcher.close()
@@ -64,6 +61,7 @@ class AgentWorkbenchDirectoryWatcher(
         onFailure(t)
       }
     }
+    watcherJob?.cancel()
   }
 
   private fun createDirectoryWatcher(roots: Collection<Path>): DirectoryWatcher? {
@@ -80,9 +78,6 @@ class AgentWorkbenchDirectoryWatcher(
 
     return DirectoryWatcher.builder()
       .paths(ArrayList(watchRoots))
-      // Path-level change notifications are sufficient for current consumers.
-      // Disable file hashing to avoid expensive startup/shutdown hashing work.
-      .fileHashing(false)
       .listener(object : DirectoryChangeListener {
         override fun onEvent(event: DirectoryChangeEvent) {
           onWatchEvent(event.toAgentWorkbenchWatchEvent())
@@ -95,14 +90,9 @@ class AgentWorkbenchDirectoryWatcher(
       .build()
   }
 
-  private suspend fun runWatchLoop(watcher: DirectoryWatcher) {
+  private fun runWatchLoop(watcher: DirectoryWatcher) {
     try {
-      runInterruptible {
-        watcher.watch()
-      }
-    }
-    catch (e: CancellationException) {
-      throw e
+      watcher.watch()
     }
     catch (t: Throwable) {
       if (running.get()) {

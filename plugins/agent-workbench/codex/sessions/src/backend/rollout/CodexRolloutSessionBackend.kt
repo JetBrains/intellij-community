@@ -1,20 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-codex-rollout-source.spec.md
 
-import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
-import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
-import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.map
@@ -26,7 +23,7 @@ private val LOG = logger<CodexRolloutSessionBackend>()
 
 internal class CodexRolloutSessionBackend(
   private val codexHomeProvider: () -> Path = { Path.of(System.getProperty("user.home"), ".codex") },
-  rolloutChangeSource: (() -> Flow<FileBackedSessionChangeSet>)? = null,
+  rolloutChangeSource: (() -> Flow<CodexRolloutChangeSet>)? = null,
 ) : CodexSessionBackend {
   private val parser = CodexRolloutParser()
   private val threadIndex = CodexRolloutThreadIndex(codexHomeProvider = codexHomeProvider, parser = parser)
@@ -37,18 +34,31 @@ internal class CodexRolloutSessionBackend(
     }
     .conflate()
 
-  private fun createWatcherUpdates(): Flow<FileBackedSessionChangeSet> {
-    return createFileBackedSessionChangeFlow(
-      logger = LOG,
-      watcherName = "Codex rollout",
-      initContext = { "codexHome=${codexHomeProvider()}" },
-      emitInitialRefreshPing = true,
-    ) { scope, onChange ->
+  private fun createWatcherUpdates(): Flow<CodexRolloutChangeSet> = callbackFlow {
+    LOG.debug { "Initializing Codex rollout updates watcher (codexHome=${codexHomeProvider()})" }
+    val watcher = runCatching {
       CodexRolloutSessionsWatcher(
         codexHomeProvider = codexHomeProvider,
-        scope = scope,
-        onRolloutChange = onChange,
-      )
+        scope = this,
+      ) { changeSet ->
+        LOG.debug {
+          "Rollout watcher signaled change; emitting update (fullRescan=${changeSet.requiresFullRescan}, changedPaths=${changeSet.changedRolloutPaths.size})"
+        }
+        trySend(changeSet)
+      }
+    }.onFailure { t ->
+      LOG.warn("Failed to initialize Codex rollout watcher", t)
+    }.getOrNull()
+
+    if (watcher == null) {
+      LOG.debug { "Codex rollout updates watcher was not initialized; updates flow will stay idle" }
+      awaitClose { }
+      return@callbackFlow
+    }
+
+    awaitClose {
+      LOG.debug { "Closing Codex rollout updates watcher" }
+      watcher.close()
     }
   }
 
@@ -66,18 +76,18 @@ internal class CodexRolloutSessionBackend(
       val pathFilters = resolvePathFilters(paths)
       if (pathFilters.isEmpty()) return@withContext emptyMap()
 
-      val threadsByCwd = threadIndex.collectByCwd(pathFilters.mapTo(HashSet(pathFilters.size)) { (_, cwdFilter) -> cwdFilter })
+      val threadsByCwd = threadIndex.collectByCwd(pathFilters.map { (_, cwdFilter) -> cwdFilter }.toSet())
       pathFilters.associate { (path, cwdFilter) ->
         path to threadsByCwd.get(cwdFilter).orEmpty()
       }
     }
   }
-}
 
-private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> {
-  return paths.mapNotNull { path ->
-    resolveProjectDirectoryFromPath(path)?.let { directory ->
-      path to normalizeRootPath(directory.invariantSeparatorsPathString)
+  private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> {
+    return paths.mapNotNull { path ->
+      resolveProjectDirectoryFromPath(path)?.let { directory ->
+        path to normalizeRootPath(directory.invariantSeparatorsPathString)
+      }
     }
   }
 }

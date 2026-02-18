@@ -13,13 +13,14 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentHashMap
 
 internal class AgentChatVirtualFileSystem : DeprecatedVirtualFileSystem(), NonPhysicalFileSystem {
   override fun getProtocol(): String = AGENT_CHAT_PROTOCOL
 
   override fun findFileByPath(path: String): VirtualFile? {
     val tabKey = AgentChatFileDescriptor.parsePath(path) ?: return null
-    val metadataStore = AgentChatTabMetadataStores.getInstanceOrFallback()
+    val metadataStore = AgentChatTabMetadataStores.getInstance()
     val descriptor = metadataStore.loadDescriptor(tabKey) ?: AgentChatFileDescriptor.unresolved(tabKey)
     return getOrCreateFile(descriptor)
   }
@@ -76,13 +77,18 @@ private fun findOpenFileByStableKey(tabKey: String, projects: Array<Project>): A
 
 internal const val AGENT_CHAT_PROTOCOL: String = "agent-chat"
 
-internal fun agentChatVirtualFileSystem(): AgentChatVirtualFileSystem {
-  checkNotNull(ApplicationManager.getApplication()) {
-    "AgentChatVirtualFileSystem requires an initialized application"
+internal object AgentChatVirtualFileSystems {
+  fun getInstance(): AgentChatVirtualFileSystem {
+    checkNotNull(ApplicationManager.getApplication()) {
+      "AgentChatVirtualFileSystem requires an initialized application"
+    }
+    val fileSystem = VirtualFileManager.getInstance().getFileSystem(AGENT_CHAT_PROTOCOL)
+    return (fileSystem as? AgentChatVirtualFileSystem)
+      ?: error("AgentChatVirtualFileSystem is not registered for protocol $AGENT_CHAT_PROTOCOL")
   }
-  val fileSystem = VirtualFileManager.getInstance().getFileSystem(AGENT_CHAT_PROTOCOL)
-  return (fileSystem as? AgentChatVirtualFileSystem)
-    ?: error("AgentChatVirtualFileSystem is not registered for protocol $AGENT_CHAT_PROTOCOL")
+
+  @TestOnly
+  fun createStandaloneForTest(): AgentChatVirtualFileSystem = AgentChatVirtualFileSystem()
 }
 
 internal suspend fun agentChatVirtualFileSystemAsync(): AgentChatVirtualFileSystem {

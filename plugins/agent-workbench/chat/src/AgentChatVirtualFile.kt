@@ -44,62 +44,6 @@ internal class AgentChatVirtualFile internal constructor(
   var threadTitle: String = resolveThreadTitle(descriptor.threadTitle)
     private set
 
-  var provider: AgentSessionProvider? = null
-    private set
-
-  var sessionId: String = ""
-    private set
-
-  var isPendingThread: Boolean = false
-    private set
-
-  var subAgentId: String? = null
-    private set
-
-  var shellCommand: List<String> = emptyList()
-    private set
-
-  var shellEnvVariables: Map<String, String> = emptyMap()
-    private set
-
-  @Volatile
-  private var startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null
-
-  var threadId: String = ""
-    private set
-
-  var threadTitle: String = resolveThreadTitle("")
-    private set
-
-  var threadActivity: AgentThreadActivity = AgentThreadActivity.READY
-    private set
-
-  var pendingCreatedAtMs: Long? = null
-    private set
-
-  var pendingFirstInputAtMs: Long? = null
-    private set
-
-  var pendingLaunchMode: String? = null
-    private set
-
-  var newThreadRebindRequestedAtMs: Long? = null
-    private set
-
-  var initialComposedMessage: String? = null
-    private set
-
-  var initialMessageToken: String? = null
-    private set
-
-  var initialMessageSent: Boolean = false
-    private set
-
-  var initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
-    private set
-
-  private var initialMessageDispatchInFlight: AgentChatInitialMessageDispatch? = null
-
   @TestOnly
   internal constructor(
     projectPath: String,
@@ -113,7 +57,7 @@ internal class AgentChatVirtualFile internal constructor(
     projectHash: String = "",
     initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   ) : this(
-    fileSystem = AgentChatVirtualFileSystems.getInstanceOrFallback(),
+    fileSystem = AgentChatVirtualFileSystems.createStandaloneForTest(),
     descriptor = AgentChatFileDescriptor.create(
       projectHash = projectHash,
       projectPath = projectPath,

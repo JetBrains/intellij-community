@@ -154,8 +154,8 @@ suspend fun openChat(
   LOG.debug {
     "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
   }
-  val metadataStore = AgentChatTabMetadataStores.getInstanceOrFallback()
-  val fileSystem = AgentChatVirtualFileSystems.getInstanceOrFallback()
+  val metadataStore = AgentChatTabMetadataStores.getInstance()
+  val fileSystem = AgentChatVirtualFileSystems.getInstance()
   val descriptor = AgentChatFileDescriptor.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
@@ -370,7 +370,7 @@ fun rebindOpenPendingAgentChatTabs(
   }
 
   var updatedTabs = 0
-  val metadataStore = AgentChatTabMetadataStores.getInstanceOrFallback()
+  val metadataStore = AgentChatTabMetadataStores.getInstance()
   runOnEdt {
     for (project in ProjectManager.getInstance().openProjects) {
       val manager = runCatching { FileEditorManagerEx.getInstanceEx(project) }.getOrNull() ?: continue
