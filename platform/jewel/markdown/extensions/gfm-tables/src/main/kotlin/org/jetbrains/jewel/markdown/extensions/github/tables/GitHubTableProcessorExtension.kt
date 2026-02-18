@@ -45,6 +45,8 @@ public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
     override val htmlConverterExtension: MarkdownHtmlConverterExtension = GitHubTablesHtmlConverterExtension
 
     private object GitHubTablesProcessorExtension : MarkdownBlockProcessorExtension {
+        override val allowsMergingWithNextBlock: Boolean = true
+
         override fun canProcess(block: CustomBlock): Boolean = block is CommonMarkTableBlock
 
         override fun processMarkdownBlock(
