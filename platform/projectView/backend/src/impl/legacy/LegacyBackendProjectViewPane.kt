@@ -461,7 +461,7 @@ private class AbstractProjectViewPaneStateManager(
       val parent = treePath.lastPathComponent
       updateNodeValue(parent) // leaf state update
       val childIndices = e.childIndices ?: return
-      for (i in childIndices) {
+      for (i in childIndices.reversed()) { // reversed() is a must for consistency (indices remain valid as children are being removed)
         removeChild(parent, i)
       }
     }
