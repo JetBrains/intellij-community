@@ -10,9 +10,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.UI
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.Disposer
+import com.intellij.platform.projectView.actions.ProjectViewOption
+import com.intellij.platform.projectView.actions.ProjectViewOptionState
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
@@ -21,14 +21,17 @@ import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
+import com.intellij.platform.projectView.pane.ProjectViewOptionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRequest
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
+import com.intellij.platform.projectView.window.ProjectViewOptionSupport
 import com.intellij.pom.Navigatable
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.treeStructure.Tree
@@ -37,12 +40,11 @@ import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.withContext
 import org.jdom.Element
+import java.util.EnumMap
 import javax.swing.JComponent
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
@@ -56,6 +58,9 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
   }
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
   private val contentPanel = ContentPanel(scrollPane)
+
+  private val optionStates = EnumMap<ProjectViewOption, ProjectViewOptionState>(ProjectViewOption::class.java)
+  private val optionSupport = OptionSupport()
   
   private inner class ContentPanel(content: JComponent) : SimpleToolWindowPanel(true), UiDataProvider {
     init {
@@ -84,7 +89,8 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
     tree.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
         val expandedNodeId = (event.path.lastPathComponent as? Node)?.projectViewNode?.id ?: return
-        check(_requestChannel.trySend(ProjectViewPaneLoadChildrenRequest(expandedNodeId)).isSuccess)
+        val request = ProjectViewPaneLoadChildrenRequest(expandedNodeId)
+        sendRequest(request)
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) { }
@@ -93,9 +99,15 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
     EditSourceOnEnterKeyHandler.install(tree)
   }
 
+  private fun sendRequest(request: ProjectViewPaneRequest) {
+    check(_requestChannel.trySend(request).isSuccess)
+  }
+
   override suspend fun manage() {
     awaitCancellation()
   }
+
+  override fun getOptionSupport(): ProjectViewOptionSupport = optionSupport
 
   override fun applyStateChange(event: ProjectViewPaneStateEvent) {
     when (event) {
@@ -149,6 +161,9 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
           treeModel.setChildren(parent, emptyList())
         }
       }
+      is ProjectViewOptionStateEvent -> {
+        optionStates.putAll(event.optionStates)
+      }
     }
   }
 
@@ -188,7 +203,7 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
 
   private inner class NavigatableNode(private val model: ProjectViewNodeModel) : Navigatable {
     override fun navigate(requestFocus: Boolean) {
-      check(_requestChannel.trySend(ProjectViewPaneNavigateRequest(model.id, requestFocus)).isSuccess)
+      sendRequest(ProjectViewPaneNavigateRequest(model.id, requestFocus))
     }
 
     override fun canNavigate(): Boolean = model.canNavigate()
@@ -202,6 +217,14 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
 
   override fun restoreStateFrom(element: Element) {
     TreeState.createFrom(element).applyTo(tree)
+  }
+  
+  private inner class OptionSupport : ProjectViewOptionSupport {
+    override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = optionStates[option]
+
+    override fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean) {
+      sendRequest(ProjectViewPaneUpdateOptionValueRequest(option, newValue))
+    }
   }
 }
 

@@ -1411,7 +1411,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public AbstractProjectViewPane getCurrentProjectViewPane() {
     if (project.isDisposed()) return null;
-    ProjectViewCurrentPaneProvider currentPaneProvider = ProjectViewCurrentPaneProvider.getInstance(project);
+    ProjectViewCurrentPaneProvider currentPaneProvider = isBackendMode ? null : ProjectViewCurrentPaneProvider.getInstance(project);
     final String currentProjectViewPaneId = currentPaneProvider != null
                                             ? currentPaneProvider.getCurrentPaneId()
                                             : currentViewId;
@@ -1590,6 +1590,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     if (viewId.equals(currentViewId) && Objects.equals(subId, currentViewSubId)) {
       return ActionCallback.REJECTED;
+    }
+    
+    if (isBackendMode) {
+      currentViewId = viewId;
+      currentViewSubId = subId;
+      return ActionCallback.DONE;
     }
 
     // at this point null subId means that view has no subviews OR subview was never selected
@@ -2201,13 +2207,23 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  static class Action extends ToggleOptionAction implements DumbAware {
+  @ApiStatus.Internal
+  public static class Action extends ToggleOptionAction implements DumbAware {
+    private final Function<? super ProjectViewImpl, ? extends Option> optionSupplier;
+
     private Action(@NotNull Function<? super ProjectViewImpl, ? extends Option> optionSupplier) {
-      super(event -> {
-        Project project = event.getProject();
-        ProjectView view = project == null || project.isDisposed() ? null : getInstance(project);
-        return view instanceof ProjectViewImpl ? optionSupplier.apply((ProjectViewImpl)view) : null;
-      });
+      super(event -> getOption(optionSupplier, event.getProject()));
+      this.optionSupplier = optionSupplier;
+    }
+    
+    @ApiStatus.Internal
+    public @NotNull Function<? super Project, ? extends Option> getOptionSupplier() {
+      return project -> getOption(optionSupplier, project);
+    }
+
+    private static @Nullable Option getOption(@NotNull Function<? super ProjectViewImpl, ? extends Option> optionSupplier, @Nullable Project project) {
+      ProjectView view = project == null || project.isDisposed() ? null : getInstance(project);
+      return view instanceof ProjectViewImpl ? optionSupplier.apply((ProjectViewImpl)view) : null;
     }
 
     @Override
@@ -2215,50 +2231,58 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return ActionUpdateThread.BGT;
     }
 
-    static final class AbbreviatePackageNames extends Action {
-      AbbreviatePackageNames() {
+    @ApiStatus.Internal
+    public static final class AbbreviatePackageNames extends Action {
+      public AbbreviatePackageNames() {
         super(view -> view.abbreviatePackageNames);
       }
     }
 
-    static final class AutoscrollFromSource extends Action implements ActionRemoteBehaviorSpecification.Frontend {
-      AutoscrollFromSource() {
+    @ApiStatus.Internal
+    public static final class AutoscrollFromSource extends Action implements ActionRemoteBehaviorSpecification.Frontend {
+      public AutoscrollFromSource() {
         super(view -> view.myAutoscrollFromSource);
       }
     }
 
-    static final class AutoscrollToSource extends Action implements ActionRemoteBehaviorSpecification.Frontend {
-      AutoscrollToSource() {
+    @ApiStatus.Internal
+    public static final class AutoscrollToSource extends Action implements ActionRemoteBehaviorSpecification.Frontend {
+      public AutoscrollToSource() {
         super(view -> view.myAutoscrollToSource);
       }
     }
 
-    static final class OpenDirectoriesWithSingleClick extends Action implements ActionRemoteBehaviorSpecification.Frontend {
-      OpenDirectoriesWithSingleClick() {
+    @ApiStatus.Internal
+    public static final class OpenDirectoriesWithSingleClick extends Action implements ActionRemoteBehaviorSpecification.Frontend {
+      public OpenDirectoriesWithSingleClick() {
         super(view -> view.myOpenDirectoriesWithSingleClick);
       }
     }
 
-    static final class OpenInPreviewTab extends Action implements ActionRemoteBehaviorSpecification.Frontend {
-      OpenInPreviewTab() {
+    @ApiStatus.Internal
+    public static final class OpenInPreviewTab extends Action implements ActionRemoteBehaviorSpecification.Frontend {
+      public OpenInPreviewTab() {
         super(view -> view.openInPreviewTab);
       }
     }
 
-    static final class CompactDirectories extends Action {
-      CompactDirectories() {
+    @ApiStatus.Internal
+    public static final class CompactDirectories extends Action {
+      public CompactDirectories() {
         super(view -> view.compactDirectories);
       }
     }
 
-    static final class FlattenModules extends Action {
-      FlattenModules() {
+    @ApiStatus.Internal
+    public static final class FlattenModules extends Action {
+      public FlattenModules() {
         super(view -> view.flattenModules);
       }
     }
 
-    static final class FlattenPackages extends Action {
-      FlattenPackages() {
+    @ApiStatus.Internal
+    public static final class FlattenPackages extends Action {
+      public FlattenPackages() {
         super(view -> view.flattenPackages);
       }
     }
@@ -2269,14 +2293,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class ShowScratchesAndConsoles extends Action {
-      ShowScratchesAndConsoles() {
+    @ApiStatus.Internal
+    public static final class ShowScratchesAndConsoles extends Action {
+      public ShowScratchesAndConsoles() {
         super(view -> view.myShowScratchesAndConsoles);
       }
     }
 
-    static final class HideEmptyMiddlePackages extends Action {
-      HideEmptyMiddlePackages() {
+    @ApiStatus.Internal
+    public static final class HideEmptyMiddlePackages extends Action {
+      public HideEmptyMiddlePackages() {
         super(view -> view.myHideEmptyMiddlePackages);
       }
     }
@@ -2287,32 +2313,37 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class ShowExcludedFiles extends Action {
-      ShowExcludedFiles() {
+    @ApiStatus.Internal
+    public static final class ShowExcludedFiles extends Action {
+      public ShowExcludedFiles() {
         super(view -> view.myShowExcludedFiles);
       }
     }
 
-    static final class ShowLibraryContents extends Action {
-      ShowLibraryContents() {
+    @ApiStatus.Internal
+    public static final class ShowLibraryContents extends Action {
+      public ShowLibraryContents() {
         super(view -> view.myShowLibraryContents);
       }
     }
 
-    static final class ShowMembers extends Action {
-      ShowMembers() {
+    @ApiStatus.Internal
+    public static final class ShowMembers extends Action {
+      public ShowMembers() {
         super(view -> view.myShowMembers);
       }
     }
 
-    static final class ShowModules extends Action {
-      ShowModules() {
+    @ApiStatus.Internal
+    public static final class ShowModules extends Action {
+      public ShowModules() {
         super(view -> view.myShowModules);
       }
     }
 
-    static final class ShowVisibilityIcons extends Action {
-      ShowVisibilityIcons() {
+    @ApiStatus.Internal
+    public static final class ShowVisibilityIcons extends Action {
+      public ShowVisibilityIcons() {
         super(view -> view.myShowVisibilityIcons);
       }
     }

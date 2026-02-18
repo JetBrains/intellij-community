@@ -3,6 +3,7 @@ package com.intellij.platform.projectView.backend.impl.legacy
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
+import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
@@ -11,16 +12,37 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.projectView.actions.ProjectViewOption
+import com.intellij.platform.projectView.actions.ProjectViewOptionState
+import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
 import com.intellij.platform.projectView.backend.pane.projectViewPaneStateBuilder
 import com.intellij.platform.projectView.impl.legacy.LEGACY_PROVIDER_ID
-import com.intellij.platform.projectView.pane.*
+import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
+import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
+import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
+import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
+import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
+import com.intellij.platform.projectView.pane.ProjectViewNodeModel
+import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
+import com.intellij.platform.projectView.pane.ProjectViewOptionStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
+import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRequest
+import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
+import com.intellij.platform.projectView.pane.SuperRoot
+import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.ui.ComponentUtil
@@ -32,13 +54,19 @@ import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.event.TreeModelEvent
@@ -176,15 +204,21 @@ private class AbstractProjectViewPaneStateManager(
           treeModel.addTreeModelListener(treeModelListener)
           loadInitialState()
           launch(CoroutineName("tree model events")) {
+            LOG.debug { "Updating state for pane $id" }
             for (request in modelUpdateChannel) {
-              stateBuilder.updateState(buildStateUpdateEvent(request))
+              val event = buildStateUpdateEvent(request)
+              LOG.trace { "Applying state update for pane $id: $event" }
+              stateBuilder.updateState(event)
             }
           }
           launch(CoroutineName("requests from the frontend")) {
+            LOG.debug { "Processing requests from the frontend for pane $id" }
             for (request in requestChannel) {
+              LOG.trace { "Got request for pane $id: $request" }
               when (request) {
                 is ProjectViewPaneLoadChildrenRequest -> loadChildren(request.nodeId)
                 is ProjectViewPaneNavigateRequest -> navigate(request.nodeId)
+                is ProjectViewPaneUpdateOptionValueRequest -> updateOptionValue(request.option, request.newValue)
               }
             }
           }
@@ -216,6 +250,9 @@ private class AbstractProjectViewPaneStateManager(
       }
       is ModelChildRemoved -> {
         ProjectViewChildRemoved(request.parentId, request.index)
+      }
+      is ModelOptionStatesUpdated -> {
+        ProjectViewOptionStateEvent(request.optionStates)
       }
     }
   }
@@ -255,6 +292,7 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private fun loadInitialState() {
+    updateOptionStates()
     LOG.trace("Adding the super root")
     addNode(null, 0, SuperRoot)
     LOG.trace("Loading the real root")
@@ -409,6 +447,29 @@ private class AbstractProjectViewPaneStateManager(
     return nodeByModelNode[node]
   }
 
+  private fun updateOptionValue(option: ProjectViewOption, newValue: Boolean) {
+    val legacyOption = legacyProjectViewOption(project, option)
+    legacyOption.isSelected = newValue
+    updateOptionStates()
+  }
+
+  private fun updateOptionStates() {
+    val impl = ProjectViewImpl.getInstance(project)
+    impl.changeView(id)
+    val updatedOptionStates = ProjectViewOption.entries.associateWith { option ->
+      val legacyOption = legacyProjectViewOption(project, option)
+      ProjectViewOptionState(
+        isSelected = legacyOption.isSelected,
+        isEnabled = legacyOption.isEnabled,
+        isAlwaysVisible = legacyOption.isAlwaysVisible,
+      )
+    }
+    LOG.debug { "Updated option states: $updatedOptionStates" }
+    handleModelUpdate(ModelOptionStatesUpdated(
+      updatedOptionStates
+    ))
+  }
+
   fun uiDataSnapshot(sink: DataSink, selectedIds: List<Long>) {
     val tree = legacyPane.tree ?: return
     val selectedPaths = selectedIds.mapNotNull { id ->
@@ -490,6 +551,8 @@ private data class ModelNodeUpdated(val nodeId: Long, val modelNode: Any) : Mode
 private data class ModelChildrenRemoved(val parentId: Long) : ModelUpdateRequest()
 
 private data class ModelChildRemoved(val parentId: Long, val index: Int) : ModelUpdateRequest()
+
+private data class ModelOptionStatesUpdated(val optionStates: Map<ProjectViewOption, ProjectViewOptionState>) : ModelUpdateRequest()
 
 private data class LegacyProjectViewNode(
   val id: Long,

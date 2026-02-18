@@ -35,6 +35,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
+    "//platform/lang-api:lang",
   ]
 )
 

@@ -545,47 +545,6 @@
       <reference ref="ProjectViewPopupMenu"/>
     </group>
 
-    <group id="ProjectView.ToolWindow.SecondaryActions">
-      <group id="ProjectView.ToolWindow.Behavior.Actions" popup="true">
-        <reference ref="ProjectView.OpenInPreviewTab"/>
-        <reference ref="ProjectView.AutoscrollToSource"/>
-        <reference ref="ProjectView.OpenDirectoriesWithSingleClick"/>
-        <reference ref="ProjectView.AutoscrollFromSource"/>
-      </group>
-      <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
-        <separator key="group.ProjectView.ToolWindow.Appearance.Show.text"/>
-        <reference ref="ProjectView.ShowModules"/>
-        <reference ref="ProjectView.ShowMembers"/>
-        <reference ref="ProjectView.ShowExcludedFiles"/>
-        <reference ref="ProjectView.ShowVisibilityIcons"/>
-        <reference ref="ProjectView.ShowLibraryContents"/>
-        <reference ref="ProjectView.ShowScratchesAndConsoles"/>
-        <reference ref="ViewInplaceComments"/>
-        <separator/>
-        <reference ref="ProjectView.FlattenModules"/>
-        <reference ref="ProjectView.FlattenPackages"/>
-        <reference ref="ProjectView.AbbreviatePackageNames"/>
-        <reference ref="ProjectView.HideEmptyMiddlePackages"/>
-        <reference ref="ProjectView.CompactDirectories"/>
-        <separator/>
-        <reference ref="ProjectView.FileNesting"/>
-        <separator/>
-        <reference ref="ProjectView.CustomizeTrees"/>
-      </group>
-      <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
-        <reference ref="ProjectView.ManualOrder"/>
-        <reference ref="ProjectView.SortByName"/>
-        <reference ref="ProjectView.SortByType"/>
-        <reference ref="ProjectView.SortByTimeDescending"/>
-        <reference ref="ProjectView.SortByTimeAscending"/>
-        <separator/>
-        <reference ref="ProjectView.FoldersAlwaysOnTop"/>
-      </group>
-      <reference ref="ScopeView.EditScopes"/>
-
-      <add-to-group group-id="Other.KeymapGroup"/>
-    </group>
-
     <reference ref="Structure.ViewOptions"/>
     <reference ref="StructureViewToolbar"/>
     <reference ref="StructureViewFloatingToolbar"/>

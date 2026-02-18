@@ -1,0 +1,143 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.projectView.actions
+
+import com.intellij.ide.projectView.impl.ProjectViewImpl
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleOptionAction
+import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.window.ProjectViewOptionSupport
+import com.intellij.platform.projectView.window.isProjectViewSplit
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.Function
+
+internal abstract class OptionAction(
+  legacyActionSupplier: () -> ProjectViewImpl.Action,
+  frontendOptionSupplier: (AnActionEvent) -> Option,
+) : ToggleOptionAction(optionSupplier(legacyActionSupplier, frontendOptionSupplier)), DumbAware, ActionRemoteBehaviorSpecification {
+  
+  constructor(option: ProjectViewOption) : this(
+    legacyActionSupplier = { legacyProjectViewAction(option) },
+    frontendOptionSupplier = { event -> frontendOption(event, option) },
+  )
+  
+  private val legacyAction: ProjectViewImpl.Action by lazy { legacyActionSupplier() }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun getBehavior(): ActionRemoteBehavior? = if (isProjectViewSplit()) {
+    ActionRemoteBehavior.FrontendOnly
+  }
+  else {
+    (legacyAction as ActionRemoteBehaviorSpecification?)?.getBehavior()
+  }
+}
+
+internal class OpenInPreviewTab : OptionAction(ProjectViewOption.OPEN_IN_PREVIEW_TAB)
+internal class AutoscrollToSource : OptionAction(ProjectViewOption.AUTOSCROLL_TO_SOURCE)
+internal class OpenDirectoriesWithSingleClick : OptionAction(ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK)
+internal class AutoscrollFromSource : OptionAction(ProjectViewOption.AUTOSCROLL_FROM_SOURCE)
+internal class ShowModules : OptionAction(ProjectViewOption.SHOW_MODULES)
+internal class ShowMembers : OptionAction(ProjectViewOption.SHOW_MEMBERS)
+internal class ShowExcludedFiles : OptionAction(ProjectViewOption.SHOW_EXCLUDED_FILES)
+internal class ShowVisibilityIcons : OptionAction(ProjectViewOption.SHOW_VISIBILITY_ICONS)
+internal class ShowLibraryContents : OptionAction(ProjectViewOption.SHOW_LIBRARY_CONTENTS)
+internal class ShowScratchesAndConsoles : OptionAction(ProjectViewOption.SHOW_SCRATCHES_AND_CONSOLES)
+internal class FlattenModules : OptionAction(ProjectViewOption.FLATTEN_MODULES)
+internal class FlattenPackages : OptionAction(ProjectViewOption.FLATTEN_PACKAGES)
+internal class AbbreviatePackageNames : OptionAction(ProjectViewOption.ABBREVIATE_PACKAGE_NAMES)
+internal class HideEmptyMiddlePackages : OptionAction(ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES)
+internal class CompactDirectories : OptionAction(ProjectViewOption.COMPACT_DIRECTORIES)
+
+private fun optionSupplier(
+  legacyActionSupplier: () -> ProjectViewImpl.Action,
+  optionSupplier: (AnActionEvent) -> Option,
+): Function<in AnActionEvent, out Option> {
+  return Function { event ->
+    if (isProjectViewSplit()) {
+      optionSupplier(event)
+    }
+    else {
+      legacyActionSupplier().optionSupplier.apply(event.project)
+    }
+  }
+}
+
+private fun legacyProjectViewAction(option: ProjectViewOption): ProjectViewImpl.Action {
+  return when (option) {
+    ProjectViewOption.OPEN_IN_PREVIEW_TAB -> ProjectViewImpl.Action.OpenInPreviewTab()
+    ProjectViewOption.AUTOSCROLL_TO_SOURCE -> ProjectViewImpl.Action.AutoscrollToSource()
+    ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> ProjectViewImpl.Action.OpenDirectoriesWithSingleClick()
+    ProjectViewOption.AUTOSCROLL_FROM_SOURCE -> ProjectViewImpl.Action.AutoscrollFromSource()
+    ProjectViewOption.SHOW_MODULES -> ProjectViewImpl.Action.ShowModules()
+    ProjectViewOption.SHOW_MEMBERS -> ProjectViewImpl.Action.ShowMembers()
+    ProjectViewOption.SHOW_EXCLUDED_FILES -> ProjectViewImpl.Action.ShowExcludedFiles()
+    ProjectViewOption.SHOW_VISIBILITY_ICONS -> ProjectViewImpl.Action.ShowVisibilityIcons()
+    ProjectViewOption.SHOW_LIBRARY_CONTENTS -> ProjectViewImpl.Action.ShowLibraryContents()
+    ProjectViewOption.SHOW_SCRATCHES_AND_CONSOLES -> ProjectViewImpl.Action.ShowScratchesAndConsoles()
+    ProjectViewOption.FLATTEN_MODULES -> ProjectViewImpl.Action.FlattenModules()
+    ProjectViewOption.FLATTEN_PACKAGES -> ProjectViewImpl.Action.FlattenPackages()
+    ProjectViewOption.ABBREVIATE_PACKAGE_NAMES -> ProjectViewImpl.Action.AbbreviatePackageNames()
+    ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewImpl.Action.HideEmptyMiddlePackages()
+    ProjectViewOption.COMPACT_DIRECTORIES -> ProjectViewImpl.Action.CompactDirectories()
+  }
+}
+
+@ApiStatus.Internal
+fun legacyProjectViewOption(project: Project, option: ProjectViewOption): Option {
+  return legacyProjectViewAction(option).optionSupplier.apply(project)
+}
+
+private fun frontendOption(
+  event: AnActionEvent,
+  option: ProjectViewOption,
+): Option = FrontendOption(event, option)
+
+private class FrontendOption(private val event: AnActionEvent, private val option: ProjectViewOption) : Option {
+  override fun isSelected(): Boolean = service()?.getOptionState(option)?.isSelected == true
+
+  override fun isEnabled(): Boolean = service()?.getOptionState(option)?.isEnabled == true
+
+  override fun isAlwaysVisible(): Boolean = service()?.getOptionState(option)?.isAlwaysVisible == true
+
+  override fun setSelected(selected: Boolean) {
+    service()?.requestOptionValueUpdate(option, selected)
+  }
+  
+  private fun service(): ProjectViewOptionSupport? {
+    val project = event.project ?: return null
+    return ProjectViewOptionSupport.getInstance(project)
+  }
+}
+
+@ApiStatus.Internal
+enum class ProjectViewOption {
+  OPEN_IN_PREVIEW_TAB,
+  AUTOSCROLL_TO_SOURCE,
+  OPEN_DIRECTORIES_WITH_SINGLE_CLICK,
+  AUTOSCROLL_FROM_SOURCE,
+  SHOW_MODULES,
+  SHOW_MEMBERS,
+  SHOW_EXCLUDED_FILES,
+  SHOW_VISIBILITY_ICONS,
+  SHOW_LIBRARY_CONTENTS,
+  SHOW_SCRATCHES_AND_CONSOLES,
+  FLATTEN_MODULES,
+  FLATTEN_PACKAGES,
+  ABBREVIATE_PACKAGE_NAMES,
+  HIDE_EMPTY_MIDDLE_PACKAGES,
+  COMPACT_DIRECTORIES,
+}
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewOptionState(
+  val isSelected: Boolean,
+  val isEnabled: Boolean,
+  val isAlwaysVisible: Boolean,
+)
