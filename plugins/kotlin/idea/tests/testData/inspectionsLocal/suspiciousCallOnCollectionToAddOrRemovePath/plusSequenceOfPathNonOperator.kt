@@ -5,6 +5,6 @@
 // RUNTIME_WITH_FULL_JDK
 import java.nio.file.Path
 
-fun test(coll: MutableCollection<Path>, path: Path) {
-    coll.plusElement(path)
+fun test(seq: Sequence<Path>, path: Path) {
+    seq.<caret>plus(path)
 }

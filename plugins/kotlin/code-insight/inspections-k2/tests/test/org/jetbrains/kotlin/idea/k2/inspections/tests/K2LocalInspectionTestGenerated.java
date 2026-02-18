@@ -4409,9 +4409,19 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathNonOperator.kt");
         }
 
+        @TestMetadata("minusListOfPathWrapper.kt")
+        public void testMinusListOfPathWrapper() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathWrapper.kt");
+        }
+
         @TestMetadata("minusMutableCollectionOfPath.kt")
         public void testMinusMutableCollectionOfPath() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusMutableCollectionOfPath.kt");
+        }
+
+        @TestMetadata("minusSequenceAndPathWrapper.kt")
+        public void testMinusSequenceAndPathWrapper() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceAndPathWrapper.kt");
         }
 
         @TestMetadata("minusSequenceOfPath.kt")
@@ -4419,9 +4429,34 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceOfPath.kt");
         }
 
+        @TestMetadata("minusSequenceandSequence.kt")
+        public void testMinusSequenceandSequence() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceandSequence.kt");
+        }
+
         @TestMetadata("minusSetOfAny.kt")
         public void testMinusSetOfAny() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSetOfAny.kt");
+        }
+
+        @TestMetadata("plusListAndSequence.kt")
+        public void testPlusListAndSequence() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndSequence.kt");
+        }
+
+        @TestMetadata("plusListOfCustomIterableSelfWithPath.kt")
+        public void testPlusListOfCustomIterableSelfWithPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfCustomIterableSelfWithPath.kt");
+        }
+
+        @TestMetadata("plusListOfIntWithList.kt")
+        public void testPlusListOfIntWithList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfIntWithList.kt");
+        }
+
+        @TestMetadata("plusListOfIterableOfString.kt")
+        public void testPlusListOfIterableOfString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfIterableOfString.kt");
         }
 
         @TestMetadata("plusListOfPath.kt")
@@ -4439,14 +4474,54 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathNonOperator.kt");
         }
 
+        @TestMetadata("plusListOfPathWrapper.kt")
+        public void testPlusListOfPathWrapper() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathWrapper.kt");
+        }
+
+        @TestMetadata("plusListOfStringWithString.kt")
+        public void testPlusListOfStringWithString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfStringWithString.kt");
+        }
+
         @TestMetadata("plusMutableCollectionOfPath.kt")
         public void testPlusMutableCollectionOfPath() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusMutableCollectionOfPath.kt");
         }
 
+        @TestMetadata("plusPathAndPath.kt")
+        public void testPlusPathAndPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusPathAndPath.kt");
+        }
+
+        @TestMetadata("plusSequenceAndList.kt")
+        public void testPlusSequenceAndList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndList.kt");
+        }
+
+        @TestMetadata("plusSequenceAndPathWrapper.kt")
+        public void testPlusSequenceAndPathWrapper() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndPathWrapper.kt");
+        }
+
+        @TestMetadata("plusSequenceAndSequence.kt")
+        public void testPlusSequenceAndSequence() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndSequence.kt");
+        }
+
+        @TestMetadata("plusSequenceAndSequenceNonOperator.kt")
+        public void testPlusSequenceAndSequenceNonOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndSequenceNonOperator.kt");
+        }
+
         @TestMetadata("plusSequenceOfPath.kt")
         public void testPlusSequenceOfPath() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceOfPath.kt");
+        }
+
+        @TestMetadata("plusSequenceOfPathNonOperator.kt")
+        public void testPlusSequenceOfPathNonOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceOfPathNonOperator.kt");
         }
 
         @TestMetadata("plusSetOfAny.kt")

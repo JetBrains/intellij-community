@@ -13,7 +13,9 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -35,7 +37,6 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
-private val PATH_CLASS_ID: ClassId = ClassId.fromString("java/nio/file/Path")
 private val SUSPICIOUS_CALLABLE_IDS: Set<CallableId> = setOf(
     CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, Name.identifier("plus")),
     CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, Name.identifier("minus")),
@@ -84,21 +85,63 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
     }
 
     override fun KaSession.prepareContext(element: KtExpression): Context? {
-        fun expressionTypeClassId(expression: KtExpression?): ClassId? =
-            when (val expressionType = expression?.expressionType) {
-                is KaFlexibleType -> expressionType.upperBound
-                else -> expressionType
+        fun typeClassId(type: KaType?): ClassId? =
+            when (type) {
+                is KaFlexibleType -> type.upperBound
+                else -> type
             }?.symbol?.classId
+
+        fun getIterableElementTypeClassId(expression: KtExpression?): ClassId? {
+            val type = expression?.expressionType ?: return null
+
+            fun getElementClassId(classType: KaClassType): ClassId? {
+                val elementType = classType.typeArguments.firstOrNull()?.type
+                return typeClassId(elementType)
+            }
+
+            fun isIterableOrSequence(classId: ClassId?): Boolean {
+                return classId == StandardClassIds.Iterable || classId == StandardClassIds.Sequence
+            }
+
+            val directClassId = typeClassId(type)
+            if (isIterableOrSequence(directClassId)) {
+                val classType = type as? KaClassType ?: return null
+                return getElementClassId(classType)
+            }
+            val iterableSupertype = type.allSupertypes.firstOrNull {
+                isIterableOrSequence(typeClassId(it))
+            } as? KaClassType ?: return null
+            return getElementClassId(iterableSupertype)
+        }
+
+        fun isSuspiciousIterable(leftExpression: KtExpression?, rightExpression: KtExpression?): Boolean {
+            val rightClassId = typeClassId(rightExpression?.expressionType) ?: return false
+            val iteratedClassId = getIterableElementTypeClassId(rightExpression) ?: return false
+            val leftElementClassId = getIterableElementTypeClassId(leftExpression)
+
+            fun isCollectionOrSequence(classId: ClassId?): Boolean {
+                return classId == StandardClassIds.Collection || classId == StandardClassIds.Sequence
+            }
+
+            val rightType = rightExpression?.expressionType ?: return false
+            val isRightACollection = isCollectionOrSequence(typeClassId(rightType)) || rightType.allSupertypes.any {
+                isCollectionOrSequence(typeClassId(it))
+            }
+
+            return iteratedClassId == rightClassId ||
+                    (iteratedClassId == leftElementClassId && !isRightACollection)
+        }
 
         val isPlus = when (element) {
             is KtBinaryExpression -> {
-                if (expressionTypeClassId(element.right) != PATH_CLASS_ID) return null
+                if (!isSuspiciousIterable(element.left, element.right)) return null
                 element.operationToken == KtTokens.PLUS
             }
 
             is KtCallExpression -> {
+                val receiver = element.getQualifiedExpressionForSelector()?.receiverExpression ?: return null
                 val argument = element.valueArguments.singleOrNull()?.getArgumentExpression() ?: return null
-                if (expressionTypeClassId(argument) != PATH_CLASS_ID) return null
+                if (!isSuspiciousIterable(receiver, argument)) return null
                 element.calleeExpression?.text == "plus"
             }
 
