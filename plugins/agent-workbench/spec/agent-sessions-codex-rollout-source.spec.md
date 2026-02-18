@@ -40,8 +40,13 @@ Codex thread discovery for Agent Threads defaults to rollout files under `~/.cod
 - Backend selection must default to rollout and only switch to app-server when `agent.workbench.codex.sessions.backend=app-server` is explicitly set.
 - Unknown backend override values must log a warning and fall back to rollout.
 - Rollout backend must scan only `~/.codex/sessions/**/rollout-*.jsonl`.
+- Rollout change detection must use `AgentWorkbenchDirectoryWatcher` (prop/io.methvin watcher stack); Java NIO `WatchService` must not be used in this backend.
+- Rollout updates must be strictly event-driven and must not rely on periodic polling timers.
 - Rollout backend must filter sessions by normalized `cwd` matching project/worktree path.
 - Rollout backend must support multi-path prefetch and return per-path filtered thread lists from a shared scan.
+- Rollout cache invalidation must be path-scoped for watcher-reported rollout file changes; full cache rescan is allowed only for overflow/ambiguous directory events.
+- Path-scoped invalidation must force reparse of dirty rollout paths even when file size and mtime are unchanged.
+- Non-rollout file events under `~/.codex/sessions` must still trigger event-driven refresh (without forced full reparse) so atomic temp/rename write patterns are observed without polling.
 - Thread id must come from `session_meta.payload.id` (not rollout filename).
 - Rollout backend must skip files missing `session_meta.payload.id` (no filename fallback).
 - Title extraction must use the first qualifying `event_msg` with `payload.type=user_message`.
@@ -75,9 +80,11 @@ Codex thread discovery for Agent Threads defaults to rollout files under `~/.cod
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionsWatcherTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionCliTest'`
 
 [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+[@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
 
 ## References
 - `spec/agent-sessions.spec.md`

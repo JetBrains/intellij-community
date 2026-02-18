@@ -16,6 +16,12 @@
 - name: lib/modules/intellij.agent.workbench.codex.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.codex.sessions
+- name: lib/modules/intellij.agent.workbench.filewatch.jar
+  contentModules:
+  - name: intellij.agent.workbench.filewatch
+    libraries:
+      directory-watcher:
+      - name: $MAVEN_REPOSITORY$/io/methvin/directory-watcher/0/directory-watcher-0.jar
 - name: lib/modules/intellij.agent.workbench.json.jar
   contentModules:
   - name: intellij.agent.workbench.json

@@ -20,6 +20,7 @@ internal const val WORKTREE_PATH = "/work/project-feature"
 internal class ScriptedSessionSource(
   override val provider: AgentSessionProvider,
   override val canReportExactThreadCount: Boolean = true,
+  override val supportsUpdates: Boolean = false,
   override val updates: Flow<Unit> = emptyFlow(),
   private val listFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
   private val listFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },

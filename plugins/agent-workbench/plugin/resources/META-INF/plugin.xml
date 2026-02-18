@@ -12,5 +12,6 @@
     <module name="intellij.agent.workbench.codex.sessions"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.filewatch"/>
   </content>
 </idea-plugin>

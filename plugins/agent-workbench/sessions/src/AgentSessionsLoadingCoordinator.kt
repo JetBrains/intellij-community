@@ -25,7 +25,6 @@ import kotlin.time.Duration.Companion.milliseconds
 private val LOG = logger<AgentSessionsLoadingCoordinator>()
 private const val SOURCE_UPDATE_DEBOUNCE_MS = 350L
 private const val SOURCE_REFRESH_GATE_RETRY_MS = 500L
-private const val SOURCE_OBSERVER_SYNC_INTERVAL_MS = 1_000L
 
 internal class AgentSessionsLoadingCoordinator(
   private val serviceScope: CoroutineScope,
@@ -52,12 +51,7 @@ internal class AgentSessionsLoadingCoordinator(
   private val archiveSuppressionsLock = Any()
 
   fun observeSessionSourceUpdates() {
-    serviceScope.launch(Dispatchers.IO) {
-      while (true) {
-        ensureSourceUpdateObservers()
-        delay(SOURCE_OBSERVER_SYNC_INTERVAL_MS.milliseconds)
-      }
-    }
+    ensureSourceUpdateObservers()
   }
 
   fun refresh() {
@@ -294,13 +288,15 @@ internal class AgentSessionsLoadingCoordinator(
       val jobIterator = sourceObserverJobs.entries.iterator()
       while (jobIterator.hasNext()) {
         val (provider, job) = jobIterator.next()
-        if (availableSources.containsKey(provider)) continue
+        val source = availableSources[provider]
+        if (source != null && source.supportsUpdates) continue
         LOG.debug { "Stopping source updates observer for ${provider.value}" }
         job.cancel()
         jobIterator.remove()
       }
 
       for ((provider, source) in availableSources) {
+        if (!source.supportsUpdates) continue
         if (sourceObserverJobs.containsKey(provider)) continue
 
         LOG.debug { "Starting source updates observer for ${provider.value}" }
@@ -780,100 +776,6 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
-  private fun resolveErrorMessage(provider: AgentSessionProvider, t: Throwable): String {
-    return if (isCliMissingError(provider, t)) resolveCliMissingMessage(provider)
-    else AgentSessionsBundle.message("toolwindow.error")
-  }
-
-  private fun resolveCliMissingMessage(provider: AgentSessionProvider): String {
-    return if (AgentSessionProviderBridges.find(provider) != null) {
-      AgentSessionsBundle.message(agentSessionCliMissingMessageKey(provider))
-    }
-    else {
-      providerUnavailableMessage(provider)
-    }
-  }
-
-  private fun resolveProviderWarningMessage(provider: AgentSessionProvider, t: Throwable): String {
-    return if (isCliMissingError(provider, t)) resolveCliMissingMessage(provider)
-    else AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", resolveProviderLabel(provider))
-  }
-
-  private fun isCliMissingError(provider: AgentSessionProvider, t: Throwable): Boolean {
-    return AgentSessionProviderBridges.find(provider)?.isCliMissingError(t) == true
-  }
-
-  private fun resolveProviderLabel(provider: AgentSessionProvider): String {
-    val bridge = AgentSessionProviderBridges.find(provider)
-    return if (bridge != null) AgentSessionsBundle.message(bridge.displayNameKey) else provider.value
-  }
-
-  private fun providerUnavailableMessage(provider: AgentSessionProvider): String {
-    return AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", resolveProviderLabel(provider))
-  }
-
-  private fun mergeProviderWarning(
-    warnings: List<AgentSessionProviderWarning>,
-    warning: AgentSessionProviderWarning,
-  ): List<AgentSessionProviderWarning> {
-    if (warnings.any { it.provider == warning.provider && it.message == warning.message }) {
-      return warnings
-    }
-    return warnings + warning
-  }
-
-  private fun AgentProjectSessions.withProviderRefreshOutcome(
-    provider: AgentSessionProvider,
-    outcome: ProviderRefreshOutcome,
-  ): AgentProjectSessions {
-    val mergedThreads = outcome.threads?.let { threads ->
-      mergeThreadsForProvider(this.threads, provider, threads)
-    } ?: this.threads
-    return copy(
-      threads = mergedThreads,
-      providerWarnings = replaceProviderWarning(this.providerWarnings, provider, outcome.warningMessage),
-    )
-  }
-
-  private fun AgentWorktree.withProviderRefreshOutcome(
-    provider: AgentSessionProvider,
-    outcome: ProviderRefreshOutcome,
-  ): AgentWorktree {
-    val mergedThreads = outcome.threads?.let { threads ->
-      mergeThreadsForProvider(this.threads, provider, threads)
-    } ?: this.threads
-    return copy(
-      threads = mergedThreads,
-      providerWarnings = replaceProviderWarning(this.providerWarnings, provider, outcome.warningMessage),
-    )
-  }
-
-  private fun replaceProviderWarning(
-    warnings: List<AgentSessionProviderWarning>,
-    provider: AgentSessionProvider,
-    warningMessage: String?,
-  ): List<AgentSessionProviderWarning> {
-    val withoutProvider = warnings.filterNot { it.provider == provider }
-    return if (warningMessage == null) {
-      withoutProvider
-    }
-    else {
-      withoutProvider + AgentSessionProviderWarning(provider = provider, message = warningMessage)
-    }
-  }
-
-  private fun mergeThreadsForProvider(
-    existingThreads: List<AgentSessionThread>,
-    provider: AgentSessionProvider,
-    newProviderThreads: List<AgentSessionThread>,
-  ): List<AgentSessionThread> {
-    val mergedThreads = ArrayList<AgentSessionThread>(existingThreads.size + newProviderThreads.size)
-    existingThreads.filterTo(mergedThreads) { it.provider != provider }
-    mergedThreads.addAll(newProviderThreads)
-    mergedThreads.sortByDescending { it.updatedAt }
-    return mergedThreads
-  }
-
   private fun applyArchiveSuppressions(
     path: String,
     provider: AgentSessionProvider,
@@ -891,42 +793,136 @@ internal class AgentSessionsLoadingCoordinator(
     }
     return threads.filterNot { thread -> thread.id in suppressedThreadIds }
   }
+}
 
-  private fun List<AgentSessionThreadPreview>.toCachedSessionThreads(): List<AgentSessionThread> {
-    return map { preview ->
-      AgentSessionThread(
-        id = preview.id,
-        title = preview.title,
-        updatedAt = preview.updatedAt,
-        archived = false,
-        provider = preview.provider,
-      )
-    }
+private fun resolveErrorMessage(provider: AgentSessionProvider, t: Throwable): String {
+  return if (isCliMissingError(provider, t)) resolveCliMissingMessage(provider)
+  else AgentSessionsBundle.message("toolwindow.error")
+}
+
+private fun resolveCliMissingMessage(provider: AgentSessionProvider): String {
+  return if (AgentSessionProviderBridges.find(provider) != null) {
+    AgentSessionsBundle.message(agentSessionCliMissingMessageKey(provider))
   }
-
-  private fun List<AgentSessionThread>.toThreadPreviews(): List<AgentSessionThreadPreview> {
-    return map { thread ->
-      AgentSessionThreadPreview(
-        id = thread.id,
-        title = thread.title,
-        updatedAt = thread.updatedAt,
-        provider = thread.provider,
-      )
-    }
+  else {
+    providerUnavailableMessage(provider)
   }
+}
 
-  private fun normalizePath(path: String): String {
-    return normalizeSessionsProjectPath(path)
+private fun resolveProviderWarningMessage(provider: AgentSessionProvider, t: Throwable): String {
+  return if (isCliMissingError(provider, t)) resolveCliMissingMessage(provider)
+  else AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", resolveProviderLabel(provider))
+}
+
+private fun isCliMissingError(provider: AgentSessionProvider, t: Throwable): Boolean {
+  return AgentSessionProviderBridges.find(provider)?.isCliMissingError(t) == true
+}
+
+private fun resolveProviderLabel(provider: AgentSessionProvider): String {
+  val bridge = AgentSessionProviderBridges.find(provider)
+  return if (bridge != null) AgentSessionsBundle.message(bridge.displayNameKey) else provider.value
+}
+
+private fun providerUnavailableMessage(provider: AgentSessionProvider): String {
+  return AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", resolveProviderLabel(provider))
+}
+
+private fun mergeProviderWarning(
+  warnings: List<AgentSessionProviderWarning>,
+  warning: AgentSessionProviderWarning,
+): List<AgentSessionProviderWarning> {
+  if (warnings.any { it.provider == warning.provider && it.message == warning.message }) {
+    return warnings
   }
+  return warnings + warning
+}
 
-  private data class ProviderRefreshOutcome(
-    val threads: List<AgentSessionThread>? = null,
-    val warningMessage: String? = null,
-  )
-
-  private data class ArchiveSuppression(
-    val path: String,
-    val provider: AgentSessionProvider,
-    val threadId: String,
+private fun AgentProjectSessions.withProviderRefreshOutcome(
+  provider: AgentSessionProvider,
+  outcome: ProviderRefreshOutcome,
+): AgentProjectSessions {
+  val mergedThreads = outcome.threads?.let { threads ->
+    mergeThreadsForProvider(this.threads, provider, threads)
+  } ?: this.threads
+  return copy(
+    threads = mergedThreads,
+    providerWarnings = replaceProviderWarning(this.providerWarnings, provider, outcome.warningMessage),
   )
 }
+
+private fun AgentWorktree.withProviderRefreshOutcome(
+  provider: AgentSessionProvider,
+  outcome: ProviderRefreshOutcome,
+): AgentWorktree {
+  val mergedThreads = outcome.threads?.let { threads ->
+    mergeThreadsForProvider(this.threads, provider, threads)
+  } ?: this.threads
+  return copy(
+    threads = mergedThreads,
+    providerWarnings = replaceProviderWarning(this.providerWarnings, provider, outcome.warningMessage),
+  )
+}
+
+private fun replaceProviderWarning(
+  warnings: List<AgentSessionProviderWarning>,
+  provider: AgentSessionProvider,
+  warningMessage: String?,
+): List<AgentSessionProviderWarning> {
+  val withoutProvider = warnings.filterNot { it.provider == provider }
+  return if (warningMessage == null) {
+    withoutProvider
+  }
+  else {
+    withoutProvider + AgentSessionProviderWarning(provider = provider, message = warningMessage)
+  }
+}
+
+private fun mergeThreadsForProvider(
+  existingThreads: List<AgentSessionThread>,
+  provider: AgentSessionProvider,
+  newProviderThreads: List<AgentSessionThread>,
+): List<AgentSessionThread> {
+  val mergedThreads = ArrayList<AgentSessionThread>(existingThreads.size + newProviderThreads.size)
+  existingThreads.filterTo(mergedThreads) { it.provider != provider }
+  mergedThreads.addAll(newProviderThreads)
+  mergedThreads.sortByDescending { it.updatedAt }
+  return mergedThreads
+}
+
+private fun List<AgentSessionThreadPreview>.toCachedSessionThreads(): List<AgentSessionThread> {
+  return map { preview ->
+    AgentSessionThread(
+      id = preview.id,
+      title = preview.title,
+      updatedAt = preview.updatedAt,
+      archived = false,
+      provider = preview.provider,
+    )
+  }
+}
+
+private fun List<AgentSessionThread>.toThreadPreviews(): List<AgentSessionThreadPreview> {
+  return map { thread ->
+    AgentSessionThreadPreview(
+      id = thread.id,
+      title = thread.title,
+      updatedAt = thread.updatedAt,
+      provider = thread.provider,
+    )
+  }
+}
+
+private fun normalizePath(path: String): String {
+  return normalizeSessionsProjectPath(path)
+}
+
+private data class ProviderRefreshOutcome(
+  @JvmField val threads: List<AgentSessionThread>? = null,
+  @JvmField val warningMessage: String? = null,
+)
+
+private data class ArchiveSuppression(
+  @JvmField val path: String,
+  val provider: AgentSessionProvider,
+  @JvmField val threadId: String,
+)

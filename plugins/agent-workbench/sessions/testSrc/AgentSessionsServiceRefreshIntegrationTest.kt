@@ -295,6 +295,7 @@ class AgentSessionsServiceRefreshIntegrationTest {
           ScriptedSessionSource(
             provider = AgentSessionProvider.CODEX,
             canReportExactThreadCount = false,
+            supportsUpdates = true,
             updates = codexUpdates,
             listFromOpenProject = { path, _ ->
               if (path == PROJECT_PATH) {
@@ -352,15 +353,24 @@ class AgentSessionsServiceRefreshIntegrationTest {
   }
 
   @Test
-  fun providerUpdateObservedAfterSourceAppearsLater() = runBlocking {
+  fun providerUpdateObservedAfterSourceAppearsAfterRefresh() = runBlocking {
     val codexUpdates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
-    val codexUpdatedAt = 300L
+    var codexUpdatedAt = 100L
     var sessionSources: List<AgentSessionSource> = emptyList()
 
     val codexSource = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
       canReportExactThreadCount = false,
+      supportsUpdates = true,
       updates = codexUpdates,
+      listFromOpenProject = { path, _ ->
+        if (path == PROJECT_PATH) {
+          listOf(thread(id = "codex-1", updatedAt = codexUpdatedAt, provider = AgentSessionProvider.CODEX))
+        }
+        else {
+          emptyList()
+        }
+      },
       listFromClosedProject = { path ->
         if (path == PROJECT_PATH) {
           listOf(thread(id = "codex-1", updatedAt = codexUpdatedAt, provider = AgentSessionProvider.CODEX))
@@ -383,15 +393,24 @@ class AgentSessionsServiceRefreshIntegrationTest {
       }
 
       sessionSources = listOf(codexSource)
-      codexUpdates.tryEmit(Unit)
+      service.refresh()
 
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.threads.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == codexUpdatedAt
+        project.threads.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 100L
+      }
+
+      codexUpdatedAt = 300L
+      codexUpdates.emit(Unit)
+
+      waitForCondition {
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.threads.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 300L
       }
 
       val project = service.state.value.projects.single { it.path == PROJECT_PATH }
       assertThat(project.threads.map { it.id }).containsExactly("codex-1")
+      assertThat(project.threads.first().updatedAt).isEqualTo(300L)
     }
   }
 }

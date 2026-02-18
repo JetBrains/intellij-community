@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.LightVirtualFile
+import org.jetbrains.annotations.TestOnly
 
 private class AgentChatVirtualFileLog
 
@@ -36,6 +37,7 @@ internal class AgentChatVirtualFile internal constructor(
   var threadTitle: String = resolveThreadTitle(descriptor.threadTitle)
     private set
 
+  @TestOnly
   internal constructor(
     projectPath: String,
     threadIdentity: String,
@@ -45,7 +47,7 @@ internal class AgentChatVirtualFile internal constructor(
     subAgentId: String?,
     projectHash: String = "",
   ) : this(
-    fileSystem = AgentChatVirtualFileSystems.getInstanceOrFallback(),
+    fileSystem = AgentChatVirtualFileSystems.createStandaloneForTest(),
     descriptor = AgentChatFileDescriptor.create(
       projectHash = projectHash,
       projectPath = projectPath,

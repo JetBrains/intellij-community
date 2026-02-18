@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.Flow
 class CodexSessionSource(
   private val backend: CodexSessionBackend = createDefaultCodexSessionBackend(),
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CODEX, canReportExactThreadCount = false) {
+  override val supportsUpdates: Boolean
+    get() = true
+
   override val updates: Flow<Unit>
     get() = backend.updates
 

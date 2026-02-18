@@ -2,14 +2,22 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
+import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutChangeSet
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
 
 class CodexRolloutSessionBackendTest {
   @TempDir
@@ -17,7 +25,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun mapsSessionMetaIdAndUnreadPrecedence() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-a")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -427,6 +435,240 @@ class CodexRolloutSessionBackendTest {
       assertThat(thread.thread.title).isEqualTo("Initial title")
       assertThat(thread.thread.updatedAt).isEqualTo(Instant.parse("2026-02-14T13:00:04.000Z").toEpochMilli())
       assertThat(thread.activity).isEqualTo(CodexSessionActivity.UNREAD)
+    }
+  }
+
+  @Test
+  fun emitsUpdatesWhenExistingRolloutFileChanges() {
+    runBlocking {
+      val projectDir = tempDir.resolve("project-updates-modify")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-updates-modify.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T10:00:00.000Z", id = "session-updates-modify", cwd = projectDir),
+          """{"timestamp":"2026-02-16T10:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Initial title"}}""",
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(initialThreads).hasSize(1)
+        assertThat(initialThreads.single().thread.title).isEqualTo("Initial title")
+
+        drainUpdateChannel(updates)
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-02-16T10:00:00.000Z", id = "session-updates-modify", cwd = projectDir),
+            """{"timestamp":"2026-02-16T10:05:00.000Z","type":"event_msg","payload":{"type":"user_message","message":"Updated title"}}""",
+          ),
+        )
+        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+        val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(threads).hasSize(1)
+        assertThat(threads.single().thread.title).isEqualTo("Updated title")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun emitsUpdatesForNonRolloutSessionEventAndRefreshesByStatDiff() {
+    runBlocking {
+      val projectDir = tempDir.resolve("project-updates-refresh-ping")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-updates-refresh-ping.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T10:00:00.000Z", id = "session-updates-refresh-ping", cwd = projectDir),
+          """{"timestamp":"2026-02-16T10:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Initial title"}}""",
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(initialThreads).hasSize(1)
+        assertThat(initialThreads.single().thread.title).isEqualTo("Initial title")
+
+        drainUpdateChannel(updates)
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-02-16T10:00:00.000Z", id = "session-updates-refresh-ping", cwd = projectDir),
+            """{"timestamp":"2026-02-16T10:05:00.000Z","type":"event_msg","payload":{"type":"user_message","message":"Updated title"}}""",
+          ),
+        )
+
+        // Represents non-rollout file events (temp/rename artifacts) where path-level invalidation is unavailable.
+        sourceUpdates.emit(CodexRolloutChangeSet())
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+        val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(threads).hasSize(1)
+        assertThat(threads.single().thread.title).isEqualTo("Updated title")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun emitsUpdatesWhenRolloutFileCreatedInNewNestedSessionsDirectory() {
+    runBlocking {
+      val projectDir = tempDir.resolve("project-updates-create")
+      Files.createDirectories(projectDir)
+
+      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        val rollout = tempDir.resolve("sessions")
+          .resolve("2026")
+          .resolve("03")
+          .resolve("01")
+          .resolve("rollout-updates-create.jsonl")
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-03-01T09:00:00.000Z", id = "session-updates-create", cwd = projectDir),
+            """{"timestamp":"2026-03-01T09:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Created title"}}""",
+          ),
+        )
+        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+        val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(threads.map { it.thread.id }).contains("session-updates-create")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun refreshesThreadAfterSameSizeRewriteWhenLastModifiedTimeIsReset() {
+    runBlocking {
+      val projectDir = tempDir.resolve("project-updates-same-size")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-updates-same-size.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T11:00:00.000Z", id = "session-updates-same-size", cwd = projectDir),
+          """{"timestamp":"2026-02-16T11:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"AAAA"}}""",
+        ),
+      )
+      val originalLastModifiedTime = Files.getLastModifiedTime(rollout)
+
+      val sourceUpdates = MutableSharedFlow<CodexRolloutChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(initialThreads).hasSize(1)
+        assertThat(initialThreads.single().thread.title).isEqualTo("AAAA")
+
+        drainUpdateChannel(updates)
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-02-16T11:00:00.000Z", id = "session-updates-same-size", cwd = projectDir),
+            """{"timestamp":"2026-02-16T11:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"BBBB"}}""",
+          ),
+        )
+        Files.setLastModifiedTime(rollout, originalLastModifiedTime)
+        sourceUpdates.emit(CodexRolloutChangeSet(changedRolloutPaths = setOf(rollout)))
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+
+        val updatedThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(updatedThreads).hasSize(1)
+        assertThat(updatedThreads.single().thread.title).isEqualTo("BBBB")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+}
+
+private val WATCHER_UPDATE_WAIT_TIMEOUT = 5.seconds
+
+private suspend fun awaitWatcherUpdate(
+  updates: Channel<Unit>,
+): Boolean {
+  val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) {
+    updates.receive()
+  }
+  return update != null
+}
+
+private fun drainUpdateChannel(updates: Channel<Unit>) {
+  while (true) {
+    if (!updates.tryReceive().isSuccess) {
+      break
     }
   }
 }

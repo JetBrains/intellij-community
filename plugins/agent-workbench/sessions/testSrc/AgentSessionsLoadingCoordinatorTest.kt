@@ -29,6 +29,7 @@ class AgentSessionsLoadingCoordinatorTest {
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
       updates = updates,
       listFromOpenProject = { path, _ ->
         if (path != PROJECT_PATH) {
@@ -84,6 +85,7 @@ class AgentSessionsLoadingCoordinatorTest {
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
       updates = updates,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {
@@ -139,6 +141,56 @@ class AgentSessionsLoadingCoordinatorTest {
   }
 
   @Test
+  fun providerUpdateIgnoredWhenSourceDoesNotSupportUpdates() = runBlocking {
+    val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val closedRefreshInvocations = AtomicInteger(0)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      updates = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(thread(id = "codex-1", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(Unit)
+      delay(900.milliseconds)
+
+      assertThat(closedRefreshInvocations.get()).isEqualTo(0)
+      assertThat(
+        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.updatedAt
+      ).isEqualTo(100L)
+    }
+  }
+
+  @Test
   fun providerUpdateSynchronizesOpenChatTabTitlesWithoutExplicitRefresh() = runBlocking {
     val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
     var updatedTitle = "Initial title"
@@ -146,6 +198,7 @@ class AgentSessionsLoadingCoordinatorTest {
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
       updates = updates,
       listFromClosedProject = { path ->
         if (path != PROJECT_PATH) {

@@ -56,6 +56,20 @@ http_file(
 )
 
 http_file(
+  name = "io_methvin-directory-watcher-0_19_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/methvin/directory-watcher/0.19.1/directory-watcher-0.19.1.jar",
+  sha256 = "6e801aa1fb48a0b09cc9a8626c4fae329cb771423418a43bf0518425f9559e19",
+  downloaded_file_path = "directory-watcher-0.19.1.jar"
+)
+
+http_file(
+  name = "io_methvin-directory-watcher-0_19_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/methvin/directory-watcher/0.19.1/directory-watcher-0.19.1-sources.jar",
+  sha256 = "15fe9f4e76a20dcb706b2236c3e53be836ef382912dd5f99f6b60a84125a59f7",
+  downloaded_file_path = "directory-watcher-0.19.1-sources.jar"
+)
+
+http_file(
   name = "ai_grazie-grazie-rule-engine-0_3_116_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.116/grazie-rule-engine-0.3.116.jar",
   sha256 = "42295bfb13024abb78d2ef3b8347728b10ba108901894b3874fa4175bdcc27c9",

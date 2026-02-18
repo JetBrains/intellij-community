@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.codex.common"/>
+    <module name="intellij.agent.workbench.filewatch"/>
     <module name="intellij.agent.workbench.json"/>
     <module name="intellij.agent.workbench.sessions"/>
   </dependencies>

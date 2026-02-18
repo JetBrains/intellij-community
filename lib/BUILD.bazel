@@ -117,6 +117,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "io.methvin/directory-watcher-0.19.1.jar_copy",
+  src = "@io_methvin-directory-watcher-0_19_1_http//file",
+  out = "io.methvin/directory-watcher-0.19.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "agent-workbench-filewatch-directory-watcher",
+  jar = "@io_methvin-directory-watcher-0_19_1_http//file",
+  source_jar = "@io_methvin-directory-watcher-0_19_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "ai.grazie/grazie-rule-engine-0.3.116.jar_copy",
   src = "@ai_grazie-grazie-rule-engine-0_3_116_http//file",
   out = "ai.grazie/grazie-rule-engine-0.3.116.jar",

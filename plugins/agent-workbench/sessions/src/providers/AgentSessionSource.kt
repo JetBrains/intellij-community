@@ -12,6 +12,9 @@ interface AgentSessionSource {
   val canReportExactThreadCount: Boolean
     get() = true
 
+  val supportsUpdates: Boolean
+    get() = false
+
   val updates: Flow<Unit>
     get() = emptyFlow()
 

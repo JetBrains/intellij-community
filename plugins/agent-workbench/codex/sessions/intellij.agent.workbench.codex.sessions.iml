@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.filewatch" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.json" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" />
