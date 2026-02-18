@@ -228,6 +228,7 @@ f:org.jetbrains.jewel.markdown.SemanticsKt
 - a:renderImageContent(org.jetbrains.jewel.markdown.InlineMarkdown$Image,androidx.compose.runtime.Composer,I):androidx.compose.foundation.text.InlineTextContent
 *:org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 - a:canProcess(org.commonmark.node.CustomBlock):Z
+- getAllowsMergingWithNextBlock():Z
 - a:processMarkdownBlock(org.commonmark.node.CustomBlock,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
 *:org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 - a:RenderCustomBlock(org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock,org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer,org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer,Z,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I):V
