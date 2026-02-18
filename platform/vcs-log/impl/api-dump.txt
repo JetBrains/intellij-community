@@ -1190,8 +1190,8 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:getVcsDisplayName(java.util.Set):java.lang.String
 - s:getVisibleRoots(com.intellij.vcs.log.VcsLogUi):java.util.Set
 - s:groupRefsByRoot(java.util.Collection):java.util.Map
-- s:invokeOnChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable):V
-- s:invokeOnChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable,com.intellij.openapi.util.Condition):V
+- s:invokeOnceOnDataChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable):V
+- s:invokeOnceOnDataChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable,com.intellij.openapi.util.Condition):V
 - s:isFullHash(java.lang.String):Z
 - s:isMoreRequested(com.intellij.vcs.log.visible.VisiblePack):java.lang.Boolean
 - s:isProjectLog(com.intellij.openapi.project.Project,java.util.Map):Z

@@ -150,21 +150,21 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
     }
     else if (!getRefresher().isValid()) {
       getRefresher().setValid(true, false);
-      VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
+      VcsLogUtil.invokeOnceOnDataChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (VcsLogUtil.canRequestMore(myVisiblePack)) {
-      VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
+      VcsLogUtil.invokeOnceOnDataChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myLogData.getGraphData() != myVisiblePack.getDataPack() ||
              (myVisiblePack.getCanRequestMore() && VcsLogUtil.isMoreRequested(myVisiblePack))) {
-      VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
+      VcsLogUtil.invokeOnceOnDataChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myVisiblePack.getDataPack() instanceof VcsLogGraphData.Error ||
              myVisiblePack instanceof VisiblePack.ErrorVisiblePack) {
       future.set(JumpResult.fromInt(result));
     }
     else if (!myVisiblePack.isFull()) {
-      VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
+      VcsLogUtil.invokeOnceOnDataChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else {
       future.set(JumpResult.fromInt(result));

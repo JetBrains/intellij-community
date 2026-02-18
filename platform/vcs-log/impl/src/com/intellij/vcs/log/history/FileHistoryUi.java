@@ -135,7 +135,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       actions.add(
         NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
           getFilterUi().clearFilters();
-          VcsLogUtil.invokeOnChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
+          VcsLogUtil.invokeOnceOnDataChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
         }));
     }
     actions.add(NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
