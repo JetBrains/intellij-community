@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.registry.Registry
@@ -152,7 +153,7 @@ internal class SelectionLinePainter(
   private val lineExtensionWidth: Double,
 ) {
   private val radius = scale(lineHeight / 6.0f).toDouble()
-  private val selectionBg = editor.selectionModel.textAttributes.backgroundColor
+  private val selectionBg = editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
   private val leftExtensionWidth = if (editor.isRightAligned) lineExtensionWidth else 0.0
   private val rightExtensionWidth = if (editor.isRightAligned) 0.0 else lineExtensionWidth
 

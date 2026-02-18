@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +31,6 @@ public interface EditorColors {
   ColorKey SELECTED_INDENT_GUIDE_COLOR = ColorKey.createColorKey("SELECTED_INDENT_GUIDE");
   ColorKey MATCHED_BRACES_INDENT_GUIDE_COLOR = ColorKey.createColorKey("MATCHED_BRACES_INDENT_GUIDE_COLOR");
   ColorKey SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("SELECTION_BACKGROUND");
-  @ApiStatus.Experimental
-  ColorKey INACTIVE_SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("INACTIVE_SELECTION_BACKGROUND");
   ColorKey SELECTION_FOREGROUND_COLOR = ColorKey.createColorKey("SELECTION_FOREGROUND");
   /**
    * @deprecated use {@code ScrollBarPainter.THUMB_OPAQUE_BACKGROUND} instead

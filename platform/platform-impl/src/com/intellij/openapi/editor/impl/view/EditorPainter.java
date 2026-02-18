@@ -443,7 +443,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private Color selectionBackgroundColor() {
-      return myEditor.getSelectionModel().getTextAttributes().getBackgroundColor();
+      return myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
     }
 
     private void paintBackground() {
@@ -603,7 +603,10 @@ public final class EditorPainter implements TextDrawingCallback {
               float paintWidth = endX - startX;
               if (shouldUseNewSelection() && mySelectionLinePainter.isCFRInSelection(cfr)) {
                 paintWidth = cfr.getWidthInPixels();
-                backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
+                backgroundAttributes.setBackgroundColor(
+                  myEditor.getColorsScheme()
+                    .getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
+                );
 
                 float start = startX - (myEditor.isRightAligned() ? selectionExtensionWidth : 0.0f);
                 float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : selectionExtensionWidth);
@@ -1484,7 +1487,7 @@ public final class EditorPainter implements TextDrawingCallback {
         private Color backgroundColor;
 
         private MyProcessor(boolean selection) {
-          backgroundColor = selection ? selectionBackgroundColor() : null;
+          backgroundColor = selection ? myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR) : null;
           layer = backgroundColor == null ? Integer.MIN_VALUE : HighlighterLayer.SELECTION;
         }
 

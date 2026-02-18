@@ -185,9 +185,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     Color currentBgColor = textAttributes.getBackgroundColor();
     Color bgColor = currentBgColor == null ? defaultBgColor
                                            : ColorUtil.mix(defaultBgColor, textAttributes.getBackgroundColor(), .5);
-    if (myPane != null) {
-      myPane.setSelectionColor(editor.getSelectionModel().getTextAttributes().getBackgroundColor());
-    }
     if (currentBgColor != null) {
       g.setColor(bgColor);
       int arcDiameter = ARC_RADIUS * 2;
@@ -356,6 +353,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     pane.setForeground(textColor);
     pane.setBackground(backgroundColor != null ? backgroundColor : ((EditorEx)editor).getBackgroundColor());
     pane.setSelectedTextColor(textColor);
+    pane.setSelectionColor(editor.getSelectionModel().getTextAttributes().getBackgroundColor());
     UIUtil.enableEagerSoftWrapping(pane);
     pane.setText(text);
     pane.addHyperlinkListener(e -> {
