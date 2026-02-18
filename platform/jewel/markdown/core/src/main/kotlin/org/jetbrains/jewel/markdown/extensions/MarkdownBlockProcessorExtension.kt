@@ -28,4 +28,32 @@ public interface MarkdownBlockProcessorExtension {
      * @return null if the processing fails, otherwise the processed [MarkdownBlock.CustomBlock].
      */
     public fun processMarkdownBlock(block: CustomBlock, processor: MarkdownProcessor): MarkdownBlock.CustomBlock?
+
+    /**
+     * Whether this extension allows the next block to be merged into the custom block handled by this extension.
+     *
+     * When `true`, incremental parsing in editor mode will include this block in re-parsing when the following block
+     * changes, allowing proper merging behavior. This is needed for blocks like tables, where a paragraph immediately
+     * after a table header can become part of the table body.
+     *
+     * Example:
+     * ```
+     * |  |  |
+     * |--|--|
+     * |
+     * ```
+     *
+     * is a table with a header only and a paragraph consisting of one symbol `|`, but:
+     * ```
+     * |  |  |
+     * |--|--|
+     * | A
+     * ```
+     *
+     * is already a table with a header and one incomplete row.
+     *
+     * Defaults to `false`.
+     */
+    public val allowsMergingWithNextBlock: Boolean
+        get() = false
 }
