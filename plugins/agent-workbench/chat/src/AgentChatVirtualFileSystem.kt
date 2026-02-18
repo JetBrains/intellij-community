@@ -18,8 +18,10 @@ internal class AgentChatVirtualFileSystem : DeprecatedVirtualFileSystem(), NonPh
   override fun getProtocol(): String = AGENT_CHAT_PROTOCOL
 
   override fun findFileByPath(path: String): VirtualFile? {
-    val resolution = service<AgentChatTabsService>().resolveFromPath(path) ?: return null
-    return getOrCreateFileSync(resolution)
+    val tabKey = AgentChatFileDescriptor.parsePath(path) ?: return null
+    val metadataStore = AgentChatTabMetadataStores.getInstanceOrFallback()
+    val descriptor = metadataStore.loadDescriptor(tabKey) ?: AgentChatFileDescriptor.unresolved(tabKey)
+    return getOrCreateFile(descriptor)
   }
 
   override fun refresh(asynchronous: Boolean) = Unit

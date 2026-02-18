@@ -5,23 +5,10 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.common.parseAgentThreadIdentity
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
@@ -163,28 +150,13 @@ suspend fun openChat(
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
 ) {
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
-
-  val tabKey = AgentChatTabKey.fromIdentity(
-    AgentChatTabIdentity(
-      projectHash = project.locationHash,
-      projectPath = projectPath,
-      threadIdentity = threadIdentity,
-      subAgentId = subAgentId,
-    )
-  )
-  val existing = findExistingChatByTabKey(manager.openFiles, tabKey.value)
-                 ?: findExistingChat(manager.openFiles, threadIdentity, subAgentId)
-  val startupOverrideForNewTab = if (existing == null) initialMessageDispatchPlan.startupLaunchSpecOverride else null
-  val snapshotInitialComposedMessage = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialComposedMessage
-  val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialMessageToken
-  val snapshotInitialMessageSent = false
-  val snapshotInitialMessageTimeoutPolicy = if (startupOverrideForNewTab != null) {
-    AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK
+  val existing = findExistingChat(manager.openFiles, threadIdentity, subAgentId)
+  LOG.debug {
+    "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
   }
-  else {
-    initialMessageDispatchPlan.initialMessageTimeoutPolicy
-  }
-  val snapshot = AgentChatTabSnapshot.create(
+  val metadataStore = AgentChatTabMetadataStores.getInstanceOrFallback()
+  val fileSystem = AgentChatVirtualFileSystems.getInstanceOrFallback()
+  val descriptor = AgentChatFileDescriptor.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
     threadIdentity = threadIdentity,
@@ -192,40 +164,14 @@ suspend fun openChat(
     threadTitle = threadTitle,
     subAgentId = subAgentId,
     shellCommand = shellCommand,
-    shellEnvVariables = shellEnvVariables,
-    threadActivity = threadActivity,
-    pendingCreatedAtMs = pendingCreatedAtMs,
-    pendingFirstInputAtMs = pendingFirstInputAtMs,
-    pendingLaunchMode = pendingLaunchMode,
-    newThreadRebindRequestedAtMs = existing?.newThreadRebindRequestedAtMs,
-    initialComposedMessage = snapshotInitialComposedMessage,
-    initialMessageToken = snapshotInitialMessageToken,
-    initialMessageSent = snapshotInitialMessageSent,
-    initialMessageTimeoutPolicy = snapshotInitialMessageTimeoutPolicy,
   )
-  LOG.debug {
-    "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
-    "subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
-  }
-  val tabsService = serviceAsync<AgentChatTabsService>()
-  val fileSystem = agentChatVirtualFileSystemAsync()
-
-  val file = existing ?: fileSystem.getOrCreateFile(snapshot)
+  val file = existing ?: fileSystem.getOrCreateFile(descriptor)
   if (existing != null) {
-    existing.updateFromResolution(AgentChatTabResolution.Resolved(snapshot))
-    existing.updateCommandAndThreadId(shellCommand = shellCommand, shellEnvVariables = shellEnvVariables, threadId = threadId)
-    val titleUpdated = existing.updateThreadTitle(threadTitle)
-    val activityUpdated = existing.updateThreadActivity(threadActivity)
-    val pendingUpdated = if (
-      pendingCreatedAtMs != null ||
-      pendingFirstInputAtMs != null ||
-      pendingLaunchMode != null
-    ) {
-      existing.updatePendingMetadata(
-        pendingCreatedAtMs = pendingCreatedAtMs,
-        pendingFirstInputAtMs = pendingFirstInputAtMs,
-        pendingLaunchMode = pendingLaunchMode,
-      )
+    existing.updateCommandAndThreadId(shellCommand = shellCommand, threadId = threadId)
+    val updated = existing.updateThreadTitle(threadTitle)
+    metadataStore.upsert(existing.toDescriptor())
+    LOG.debug {
+      "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): updated=$updated, currentName=${existing.name}, currentTitle=${existing.threadTitle}"
     }
     else {
       false
@@ -259,10 +205,7 @@ suspend fun openChat(
     }
   }
   else {
-    if (startupOverrideForNewTab != null) {
-      file.setStartupLaunchSpecOverride(startupOverrideForNewTab)
-    }
-    tabsService.upsert(file.toSnapshot())
+    metadataStore.upsert(descriptor)
     LOG.debug {
       "openChat created new tab(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
     }
@@ -426,31 +369,21 @@ fun rebindOpenPendingAgentChatTabs(
     return emptyPendingCodexTabRebindReport()
   }
 
-  val normalizedRequestsByPath = normalizePathToListMap(requestsByProjectPath)
-  if (normalizedRequestsByPath.isEmpty()) {
-    return emptyPendingCodexTabRebindReport()
-  }
-
-  val tabsService = service<AgentChatTabsService>()
-  val managerByFile = LinkedHashMap<AgentChatVirtualFile, LinkedHashSet<FileEditorManagerEx>>()
-  val openConcreteIdentitiesByPathAndManager = LinkedHashMap<String, LinkedHashMap<FileEditorManagerEx, LinkedHashSet<String>>>()
-  val pendingFilesByPathAndTabKey = LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>()
-  for (project in ProjectManager.getInstance().openProjects) {
-    val manager = project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx ?: continue
-    for (openFile in manager.openFiles) {
-      val chatFile = openFile as? AgentChatVirtualFile ?: continue
-      val normalizedPath = normalizeAgentWorkbenchPath(chatFile.projectPath)
-      managerByFile.computeIfAbsent(chatFile) { LinkedHashSet() }.add(manager)
-      if (isPendingThreadIdentityForProvider(chatFile.threadIdentity, provider)) {
-        pendingFilesByPathAndTabKey
-          .computeIfAbsent(normalizedPath) { LinkedHashMap() }
-          .putIfAbsent(chatFile.tabKey, chatFile)
-      }
-      else {
-        openConcreteIdentitiesByPathAndManager
-          .computeIfAbsent(normalizedPath) { LinkedHashMap() }
-          .computeIfAbsent(manager) { LinkedHashSet() }
-          .add(chatFile.threadIdentity)
+  var updatedTabs = 0
+  val metadataStore = AgentChatTabMetadataStores.getInstanceOrFallback()
+  runOnEdt {
+    for (project in ProjectManager.getInstance().openProjects) {
+      val manager = runCatching { FileEditorManagerEx.getInstanceEx(project) }.getOrNull() ?: continue
+      for (openFile in manager.openFiles) {
+        val chatFile = openFile as? AgentChatVirtualFile ?: continue
+        val targetTitle = titleByPathAndThreadIdentity[
+          normalizeChatProjectPath(chatFile.projectPath) to chatFile.threadIdentity
+        ] ?: continue
+        if (chatFile.updateThreadTitle(targetTitle)) {
+          metadataStore.upsert(chatFile.toDescriptor())
+          manager.updateFilePresentation(chatFile)
+          updatedTabs++
+        }
       }
     }
   }

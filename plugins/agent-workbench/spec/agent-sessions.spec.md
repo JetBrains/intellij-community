@@ -64,8 +64,42 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 ## Requirements
-- Project registry must merge open projects and recent projects, excluding the dedicated-frame project.
-  [@test] ../sessions/testSrc/AgentSessionProjectCatalogTest.kt
+- Project registry must merge currently open projects and recent projects, excluding the dedicated frame project.
+- Git worktrees must be represented under parent projects when detected.
+- Default session sources must include Codex and Claude providers.
+- Thread identity must include provider + session id to avoid collisions across providers.
+- Provider results for a project/worktree load must be merged and sorted by `updatedAt` descending.
+- If at least one provider succeeds, successful threads must be shown and failed providers must surface provider-local warning rows.
+- If all providers fail for a project/worktree load, show blocking project/worktree error state and suppress provider warning rows for that load.
+- Unknown provider totals must propagate via `hasUnknownThreadCount` and drive unknown-count `More…` rendering.
+- Sessions tree UI state must persist by normalized path:
+  - collapsed project/worktree state,
+  - per-path visible thread count,
+  - open-path thread preview cache.
+- Refresh bootstrap must immediately seed open project/worktree nodes from cached previews when available and mark those paths loaded until live provider results arrive.
+- Refresh bootstrap must restore persisted visible thread counts above default for known project/worktree paths.
+- Refresh bootstrap must retain preview cache only for currently open project/worktree paths and prune stale closed-path entries.
+- Final merged refresh results must update preview cache for a path only when that path does not end in blocking error.
+- Auto-open default project expansion must skip paths persisted as collapsed.
+- User collapse/expand interactions must update persisted collapsed state.
+- Cached preview entries must preserve provider identity; missing legacy provider value must default to Codex for backward compatibility.
+- `More` and programmatic visibility expansion (`ensureThreadVisible`) must persist visible-count increments in tree UI state.
+- On-demand project/worktree loading must deduplicate concurrent requests for the same path.
+- Concurrent refresh requests must be deduplicated while a refresh is already running.
+- Project primary click must open/focus the project; closed projects must expose `Open` in context menu.
+- Thread/sub-agent opens must route according to `agent.workbench.chat.open.in.dedicated.frame`.
+- Session-driven thread title refresh must update open chat tab metadata and trigger editor tab presentation refresh.
+- Resume command must be provider-specific:
+  - Codex: `codex resume <sessionId>`
+  - Claude: `claude --resume <sessionId>`
+- New-session action behavior (provider options, Codex/Claude command mapping, and Full Auto semantics) is defined in `spec/actions/new-thread.spec.md` and must be used by both project and worktree rows.
+- Thread context menu must expose `Archive` only when the corresponding provider bridge advertises archive capability.
+- Archive action requests must be deduplicated per `(path, provider, threadId)` while in flight.
+- Successful archive must optimistically remove the thread from current state and then trigger refresh.
+- Archive failures (provider missing, unsupported, or backend error) must resolve to provider-unavailable warning behavior.
+- Codex thread discovery must default to rollout session files; app-server thread discovery remains an explicit compatibility override path.
+- Codex thread title normalization and filtering rules are defined in `spec/agent-sessions-codex-rollout-source.spec.md` and must be used for Codex thread rows.
+- Branch mismatch between thread origin and current worktree branch must show a warning confirmation before opening chat.
 
 - Git worktrees must be represented under parent projects when detected.
   [@test] ../sessions/testSrc/GitWorktreeDiscoveryTest.kt

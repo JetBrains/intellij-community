@@ -29,8 +29,32 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Defining shared command mapping or popup action contracts.
 
 ## Requirements
-- Advanced setting key `agent.workbench.chat.open.in.dedicated.frame` must exist, default to `true`, and be exposed in Advanced Settings.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+- Advanced setting key `agent.workbench.chat.open.in.dedicated.frame` exists, defaults to `true`, and is exposed in Advanced Settings.
+- Sessions gear menu includes toggle action `AgentWorkbenchSessions.ToggleDedicatedFrame` that updates the same setting.
+- Dedicated mode (`true`):
+  - Thread/sub-agent click opens chat in the dedicated frame project.
+  - If the dedicated frame project is not open, it is opened in a new frame and reused afterwards.
+  - Source project is not opened automatically when closed.
+  - Project View tool window is suppressed by frame capability and is not initialized for the dedicated frame project.
+  - Agent Workbench registers `AgentWorkbenchSessions.ActivateWithProjectShortcut` with `use-shortcut-of="ActivateProjectToolWindow"`.
+  - Shortcut routing for Cmd+1 is dedicated-frame-only: the custom action is enabled only for dedicated projects and activates Agent Sessions tool window.
+  - Platform action id `ActivateProjectToolWindow` is not redefined by Agent Workbench.
+- Current-project mode (`false`):
+  - Preserve legacy behavior: open chat in source project frame.
+  - If source project is closed, open it first and then open chat.
+- Dedicated frame project is hidden from recent projects metadata.
+- Dedicated frame project is excluded from Sessions project registry (both open and recent enumerations).
+- Chat terminal working directory remains the source project path regardless of frame mode.
+- Chat editor persistence/restore behavior is defined by `spec/agent-chat-editor.spec.md` and applies equally in both modes:
+  - protocol-backed restore via `agent-chat://2/<tabKey>`,
+  - restore of all previously open chat tabs,
+  - restore metadata persisted in `<config>/agent-workbench-chat-frame/tabs/*.awchat.json`,
+  - lazy terminal initialization on first explicit tab activation.
+- Implementation must stay independent from `welcomeScreenProjectProvider` because that provider model is singleton-like across products.
+- Chat resume command remains provider-specific in dedicated mode as in current-project mode:
+  - Codex: `codex resume <threadId>`
+  - Claude: `claude --resume <threadId>`
+- New-session action semantics (including Codex `Codex (Full Auto)` mapping) are defined in `spec/actions/new-thread.spec.md` and do not change between dedicated/current-project modes.
 
 - Sessions gear menu must expose `AgentWorkbenchSessions.ToggleDedicatedFrame` and update the same advanced setting.
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt

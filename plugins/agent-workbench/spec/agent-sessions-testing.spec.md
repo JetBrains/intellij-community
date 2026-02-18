@@ -29,24 +29,46 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Performance benchmarking in default CI path.
 
 ## Requirements
-- Core contract coverage must include identity and command mapping, shared editor-tab popup actions, archive gate behavior (including optional unarchive capability contract), and visibility primitive persistence.
-- Archive service coverage must include single-thread archive, multi-target archive with partial provider support, and unarchive restore behavior for supported providers.
-- Sessions aggregation/service coverage must include ordering, partial warning, blocking error, unknown counts, warm-snapshot bootstrap, on-demand dedup, refresh concurrency, and local read-state synchronization.
-- Swing tree rendering coverage must include warning/error precedence, empty-state exclusivity, `More` row exact/unknown behavior, and thread-row metadata presentation (badge + time, no inline status text, tooltip status preserved).
-- Swing tree interaction coverage must include single-click select behavior, activation-open policy, double-click open precedence on openable parent rows, path resolution for `More` rows, and context-menu selection retarget rules.
-- Persisted tree-state coverage must include collapsed-state restoration and expansion parent mapping for selected worktree paths.
-- Persisted UI-state coverage must include visible-count persistence, warm-snapshot persistence, and exclusion of transient thread content from tree UI state.
-- New-thread action coverage must include quick-provider eligibility, loading-row exposure, Standard/YOLO popup modeling, dedup, and pending-to-concrete Codex rebinding.
-- Refresh-loading coverage must include per-refreshed-path loading indicators and loading completion semantics (loading is not cleared on first partial provider success).
-- Tool-window factory coverage must include Swing factory registration and title/gear action registration.
-- Tree-popup action coverage must include platform copy group registration (`CopyReferencePopupGroup`) for project/worktree context menus.
-- Dedicated-frame coverage must include gear toggle setting wiring, routing behavior in both modes, and dedicated-project filtering.
-- Claude quota hint coverage must include visibility/acknowledgement gating and toggle action registration.
-- Chat-editor lifecycle coverage must include protocol v2 restore, state round-trip, lazy initialization, tab title refresh, icon mapping fallback, and archive-triggered close+forget.
-- Codex backend coverage must include raw status-kind parsing, rollout parser/title/activity behavior, watcher behavior (path-scoped + overflow/full-rescan), app-server sub-agent hierarchy/orphan handling, app-server-only backend selection, app-server `thread/read` status-and-flag normalization, response-required/read-tracker behavior, started-thread fallback mapping, app-server-first refresh-hints merge with rollout unread fallback, real-TUI rollout ingestion through the production rollout path, and paging no-progress guard behavior.
-- Codex app-server contract tests must run against mock backend in all environments and real backend when CLI is available.
-- Real-backend contract assertions must be invariant-based (ordering and archived consistency) and must not depend on user-specific thread IDs.
-- Mock-backend contract assertions must additionally validate deterministic fixture IDs, archive/unarchive mutation behavior, and idle-timeout lazy restart.
+- Aggregation unit tests must cover:
+  - merged ordering by `updatedAt`,
+  - partial-provider warnings,
+  - all-provider-failure blocking error,
+  - unknown total propagation.
+- Service integration tests must cover:
+  - mixed-provider refresh merge,
+  - provider warning and blocking error paths,
+  - unknown-count behavior when unknown provider fails/succeeds,
+  - cached preview rows rendered before open-path provider load completes,
+  - persisted visible thread count restoration during refresh bootstrap,
+  - archive action removing the thread from state and preserving remaining threads after refresh.
+- On-demand integration tests must cover:
+  - project request deduplication,
+  - worktree request deduplication with refresh interaction,
+  - `showMoreThreads` visible-count persistence,
+  - `ensureThreadVisible` visible-count persistence.
+- Concurrency integration tests must verify refresh mutex deduplicates overlapping refresh calls.
+- Codex rollout backend tests must cover rollout parsing/activity behavior as the default thread-discovery path.
+- Codex backend selector tests must verify rollout default behavior and explicit app-server override behavior.
+- Tree UI tests must cover:
+  - provider warning rendering,
+  - error row precedence over warnings,
+  - `More…` rendering for unknown count,
+  - `More (N)` rendering for exact count,
+  - persisted collapsed state blocking default auto-expand,
+  - collapsed-state persistence across content refresh/recreation when persistent tree UI state is used.
+- Tree UI state service tests must cover:
+  - collapsed/visible-count/open-preview state round-trip,
+  - preview provider identity persistence,
+  - backward-compatible provider default for legacy preview entries with missing provider value.
+- Codex compatibility tests must cover cursor-loop/no-progress guard behavior in `seedInitialVisibleThreads`.
+- Codex app-server contract tests must run against mock backend always and real backend when available.
+- Codex app-server client tests must cover:
+  - `thread/archive` behavior moving a thread from active to archived lists,
+  - lazy process restart behavior after idle-timeout shutdown.
+- Chat editor tests must cover metadata-backed restore and title refresh semantics:
+  - v2 `agent-chat://2/<tabKey>` path parsing,
+  - metadata file round-trip for shell command/thread identity/title,
+  - open-tab title refresh via editor presentation updates.
 
 ## Requirement Ownership Matrix
 - Core contracts: `AgentSessionCliTest`, `AgentSessionsEditorTabActionsTest`, `AgentSessionArchiveServiceIntegrationTest`, `AgentSessionRefreshOnDemandIntegrationTest`

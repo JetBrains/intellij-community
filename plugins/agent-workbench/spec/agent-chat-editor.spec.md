@@ -18,7 +18,7 @@ targets:
 # Agent Chat Editor
 
 Status: Draft
-Date: 2026-03-09
+Date: 2026-02-18
 
 ## Summary
 Define how Agent chat tabs are opened, restored, reused, and rendered in editor tabs. This spec owns tab lifecycle and persistence behavior. Shared command mapping and shared editor-tab popup action semantics are owned by `spec/agent-core-contracts.spec.md`.
@@ -35,11 +35,33 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Defining provider command mapping and shared popup-action contracts.
 
 ## Requirements
-- Agent Workbench modules must register:
-  - `fileEditorProvider` for Agent chat files,
-  - `virtualFileSystem` key `agent-chat`,
-  - `editorTabTitleProvider` for Agent chat tabs.
-  [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
+- The `intellij.agent.workbench` content module must register a `fileEditorProvider` for Agent chat editors.
+- The `intellij.agent.workbench` content module must register a non-physical `virtualFileSystem` with key `agent-chat` for chat editor files.
+- The `intellij.agent.workbench` content module must register an `editorTabTitleProvider` for Agent chat files.
+- The chat editor must be opened via `AsyncFileEditorProvider` and use the reworked terminal frontend (`TerminalToolWindowTabsManager`) with `shouldAddToToolWindow(false)`.
+- Chat editors reuse an existing editor tab for the same provider/session identity (`provider:threadId`) and `subAgentId` when present.
+- Agent chat virtual files must be protocol-backed (`agent-chat://`) and restorable by `VirtualFileManager.findFileByUrl`.
+- Chat tab persistence must restore all previously open Agent chat tabs (not just the currently selected tab).
+- Agent chat virtual file path must use short stable v2 format `agent-chat://2/<tabKey>`.
+- `tabKey` must use lowercase Base36 (`0-9a-z`) encoding of full SHA-256 identity digest.
+- Chat tab metadata must be persisted in disk files under `<config>/agent-workbench-chat-frame/tabs/<tabKey>.awchat.json`.
+- Metadata file payload must include identity and runtime fields: project hash/path, thread identity/sub-agent, thread id, shell command, title, and updated timestamp.
+- Metadata files are canonical restore state for Agent chat tabs; URL compatibility with previous descriptor-encoded format is not required.
+- Stale or invalid metadata files must be pruned periodically.
+- Chat editor creation must be lazy for heavy terminal content:
+  - tab/editor shell is created immediately,
+  - terminal session is created only after first explicit selection/focus of that tab.
+- Advanced setting `agent.workbench.chat.open.in.dedicated.frame` controls target frame selection (default `true`).
+- When the setting is enabled, chat opens in a dedicated frame project and the source project remains closed if it is currently closed.
+- When the setting is disabled, chat opens in the source project frame and closed source projects are opened first.
+- Clicking a thread row opens its chat editor. Clicking a sub-agent row opens a separate chat editor tab scoped to that sub-agent.
+- The editor tab title must use the thread title (fallback to `Agent Chat` when blank).
+- Editor tab title must be provided via `EditorTabTitleProvider` and must not depend on virtual file name mutations.
+- Reopening an already open chat tab for the same identity with a newer thread title must update the existing tab title.
+- The shell command used to start chat sessions is provider-specific:
+  - Codex: `codex resume <threadId>`
+  - Claude: `claude --resume <threadId>`
+- Codex fresh-thread opens (project-row `New Thread`) use `codex` without `resume`.
 
 - Chat editor opening must use `AsyncFileEditorProvider`.
 - Terminal integration must use reworked frontend (`TerminalToolWindowTabsManager`) with `shouldAddToToolWindow(false)`.
@@ -145,15 +167,17 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Restored tabs appear immediately, while terminal startup is deferred until first explicit selection.
 
 ## Data & Backend
-- Chat terminal sessions use source project/worktree `cwd`.
-- Sessions service provides identity and command inputs to chat open flow.
-- URL path carries only short stable `tabKey`; full restore payload is read from state service.
+- Chat terminal sessions start in the source project/worktree working directory.
+- Sessions service passes provider-aware session identity and command into the chat open flow.
+- Chat file URLs persist only short stable tab identity (`tabKey`).
+- Full restore metadata is read from tab metadata files and not encoded in virtual file URL path.
 
 ## Error Handling
-- Invalid project path or project-open failure must not crash UI or open a broken tab.
-- Missing/invalid identity context must fail safely without editor-tab corruption.
-- Restore/initialization warning notifications must be deduplicated per tab+reason for the IDE session.
-- Command lookup failures should expose actionable diagnostics (command + startup `PATH`) without adding fallback launch behavior.
+- If the project path is invalid or project opening fails, do not open a chat editor tab.
+- If provider/session identity cannot be resolved, fail safely without crashing the UI.
+- If a restored tab metadata file is missing/corrupt/invalid (or has missing path/identity/command), skip and close that tab and show a non-blocking warning notification.
+- Restore warnings for the same tab/reason must be deduplicated per IDE session to avoid startup notification spam.
+- If terminal initialization fails on first tab activation, close the tab and show a warning notification.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest'`

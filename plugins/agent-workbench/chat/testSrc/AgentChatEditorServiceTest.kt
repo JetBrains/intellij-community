@@ -184,7 +184,7 @@ class AgentChatEditorServiceTest {
     val files = openedChatFiles()
     assertThat(files).hasSize(1)
     assertThat(files.single().threadTitle).isEqualTo("Renamed thread")
-    assertThat(editorTabTitle(files.single())).isEqualTo("Renamed thread")
+    assertThat(EditorTabPresentationUtil.getEditorTabTitle(project, files.single())).isEqualTo("Renamed thread")
   }
 
   @Test
@@ -222,8 +222,7 @@ class AgentChatEditorServiceTest {
 
     val file = openedChatFiles().single()
     assertThat(file.threadTitle).isEqualTo(title)
-    assertThat(editorTabTitle(file)).isEqualTo(title)
-    assertThat(editorTabTooltip(file)).isEqualTo(title)
+    assertThat(EditorTabPresentationUtil.getEditorTabTitle(project, file)).isEqualTo(title)
   }
 
   @Test

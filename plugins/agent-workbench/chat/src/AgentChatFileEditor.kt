@@ -102,8 +102,6 @@ internal class AgentChatFileEditor(
 
   override fun getName(): String = file.threadTitle
 
-  override fun getTabActions(): ActionGroup? = editorTabActions
-
   override fun setState(state: FileEditorState) = Unit
 
   override fun isModified(): Boolean = false
@@ -139,7 +137,13 @@ internal class AgentChatFileEditor(
     }
     initializationStarted = true
     try {
-      val createdTab = terminalTabs.createTab(project, file)
+      val terminalManager = TerminalToolWindowTabsManager.getInstance(project)
+      val createdTab = terminalManager.createTabBuilder()
+        .shouldAddToToolWindow(false)
+        .workingDirectory(file.projectPath)
+        .tabName(file.threadTitle)
+        .shellCommand(file.shellCommand)
+        .createTab()
       tab = createdTab
       subscribePendingFirstInput(createdTab)
       subscribeConcreteCodexNewThreadRebind(createdTab)
