@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.TestOnly
 
 /**
  * [project] can't be default, check for it
@@ -17,6 +18,9 @@ internal class PyProjectAutoImportService(private val project: Project) : Dispos
 
   @Volatile
   private var projectId: ExternalSystemProjectId? = null
+
+  @get:TestOnly
+  internal val initialized: Boolean get() = projectId != null
 
 
   /**

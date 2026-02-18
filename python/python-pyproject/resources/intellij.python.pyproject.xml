@@ -11,7 +11,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="true" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
                  restartRequired="true"/>
-    <postStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.python.pyproject.statistics.PythonTomlStatsUsagesCollector"/>
   </extensions>
