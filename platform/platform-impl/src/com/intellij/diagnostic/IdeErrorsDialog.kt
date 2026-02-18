@@ -51,6 +51,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageCluster
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.ComponentUtil
@@ -115,7 +116,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   private val hideClearButton: Boolean = false,
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
-  private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
+  private val myMessageClusters: MutableList<ErrorMessageCluster> = ArrayList() // exceptions with the same stacktrace
   private var myIndex: Int = 0
     set(value) {
       field = value.coerceIn(0, (myMessageClusters.size - 1).coerceAtLeast(0))
@@ -378,15 +379,15 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     super.dispose()
   }
 
-  private fun selectedCluster(): MessageCluster = myMessageClusters[myIndex]
+  private fun selectedCluster(): ErrorMessageCluster = myMessageClusters[myIndex]
 
   private fun selectedMessage(): AbstractMessage = selectedCluster().first
 
   private fun updateMessages() {
     val messages = myMessagePool.getFatalErrors(true, true)
-    val clusters = LinkedHashMap<Long, MessageCluster>()
+    val clusters = LinkedHashMap<Long, ErrorMessageCluster>()
     for (message in messages) {
-      clusters.computeIfAbsent(hashMessage(message)) { MessageCluster(message) }.messages.add(message)
+      clusters.computeIfAbsent(hashMessage(message)) { ErrorMessageCluster(message) }.messages.add(message)
     }
     myMessageClusters.clear()
     myMessageClusters.addAll(clusters.values)
@@ -437,7 +438,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private suspend fun updateLabels(cluster: MessageCluster) {
+  private suspend fun updateLabels(cluster: ErrorMessageCluster) {
     val message = cluster.first
     myCountLabel.text = DiagnosticBundle.message("error.list.message.index.count", myIndex + 1, myMessageClusters.size)
     val t = message.throwable
@@ -544,7 +545,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
   private fun isValidUrl(url: String): Boolean = runCatching { URI(url).toURL() }.isSuccess
 
-  private fun updateDetails(cluster: MessageCluster) {
+  private fun updateDetails(cluster: ErrorMessageCluster) {
     val message = cluster.first
     val canReport = cluster.canSubmit
     if (myLastIndex != myIndex) {
@@ -572,7 +573,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private fun reportMessage(cluster: MessageCluster, dialogClosed: Boolean): Boolean {
+  private fun reportMessage(cluster: ErrorMessageCluster, dialogClosed: Boolean): Boolean {
     val submitter = cluster.submitter ?: return false
     val message = cluster.first
     message.isSubmitting = true
@@ -734,53 +735,6 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[CURRENT_TRACE_KEY] = selectedMessage().throwableText
-  }
-
-  /* helpers */
-  private class MessageCluster(val first: AbstractMessage) {
-    val pluginId: PluginId? = PluginUtil.getInstance().findPluginId(first.throwable)
-    val plugin: IdeaPluginDescriptor? = PluginManagerCore.getPlugin(pluginId)
-    val submitter: ErrorReportSubmitter? = DefaultIdeaErrorLogger.findSubmitter(first.throwable, plugin)
-    var detailsText: String? = detailsText()
-    val messages: MutableList<AbstractMessage> = ArrayList()
-
-    private fun detailsText(): String? {
-      val t = first.throwable
-      if (t is TooManyErrorsException) {
-        return t.message
-      }
-      val userMessage = first.message
-      val stacktrace = first.throwableText
-      return if (userMessage.isNullOrBlank()) stacktrace else "${userMessage}\n\n${stacktrace}"
-    }
-
-    val isUnsent: Boolean get() = !first.isSubmitted && !first.isSubmitting
-
-    val canSubmit: Boolean get() = submitter != null && isUnsent
-
-    fun decouple(): Pair<String?, Throwable>? {
-      val detailsText = detailsText!!
-      val originalThrowableText = first.throwableText
-      val originalThrowableClass = first.throwable.javaClass.name
-
-      val p1 = detailsText.indexOf(originalThrowableText)
-      if (p1 >= 0) {
-        val message = detailsText.substring(0, p1).trim { it <= ' ' }.takeIf(String::isNotEmpty)
-        return message to first.throwable
-      }
-
-      if (detailsText.startsWith(originalThrowableClass)) {
-        return null to RecoveredThrowable.fromString(detailsText)
-      }
-
-      val p2 = detailsText.indexOf('\n' + originalThrowableClass)
-      if (p2 >= 0) {
-        val message = detailsText.substring(0, p2).trim { it <= ' ' }.takeIf(String::isNotEmpty)
-        return message to RecoveredThrowable.fromString(detailsText.substring(p2 + 1))
-      }
-
-      return null
-    }
   }
 
   private class CompositeAction(mainAction: Action, additionalActions: List<Action>) :
