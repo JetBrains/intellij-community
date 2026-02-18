@@ -156,7 +156,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
 
-    val inheritedPluginLayouts = COMMUNITY_REPOSITORY_PLUGINS.removeAll { it.mainModule !in bundledPlugins }
+    val inheritedPluginLayouts = COMMUNITY_REPOSITORY_PLUGINS.removeAll { it.mainModule !in bundledPlugins || it.mainModule == "intellij.performanceTesting" }
     productLayout.pluginLayouts = inheritedPluginLayouts.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin(),
@@ -176,6 +176,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       pluginAuto("intellij.cidr.base") { spec ->
         copyCidrLicense(spec)
       },
+      pluginAuto("intellij.performanceTesting") { spec ->
+        spec.withProjectLibrary("assertJ")
+      }
     ))
 
     // Fill in the remaining plugin layouts (including "trivial-layout" plugins)
