@@ -66,6 +66,14 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
     val PROJECT_MODEL_PHASE: GradleModelFetchPhase = BuildFinished(0, "PROJECT_MODEL_PHASE")
 
     /**
+     * In this phase, Gradle model providers fetch the Gradle dependency download policy. This phase influences the behavior of other model
+     * builders, but doesn't provide any models itself.
+     */
+    @JvmField
+    @ApiStatus.Internal
+    val DEPENDENCY_DOWNLOAD_POLICY_PHASE: GradleModelFetchPhase = BuildFinished(500, "DEPENDENCY_DOWNLOAD_POLICY_PHASE")
+
+    /**
      * In this phase, Gradle model providers fetch a Gradle project source set models.
      */
     @JvmField
