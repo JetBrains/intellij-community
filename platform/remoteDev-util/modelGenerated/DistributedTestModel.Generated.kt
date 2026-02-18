@@ -61,7 +61,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 217769322142192170L
+        const val serializationHash = -8620132101972150534L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -935,8 +935,10 @@ class RdTestSession private constructor(
  */
 data class RdTestSessionException (
     val type: String,
-    val messageWithStacktrace: String,
-    val message: String?,
+    val messageWithDetails: String,
+    val messageForTestHistoryConsistency: String,
+    val messageForDiogen: String?,
+    val printToStringForDiogen: String,
     val stacktrace: List<RdTestSessionStackTraceElement>,
     val cause: RdTestSessionLightException?,
     val suppressedExceptions: List<RdTestSessionLightException>?
@@ -944,8 +946,10 @@ data class RdTestSessionException (
     //write-marshaller
     private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
         buffer.writeString(type)
-        buffer.writeString(messageWithStacktrace)
-        buffer.writeNullable(message) { buffer.writeString(it) }
+        buffer.writeString(messageWithDetails)
+        buffer.writeString(messageForTestHistoryConsistency)
+        buffer.writeNullable(messageForDiogen) { buffer.writeString(it) }
+        buffer.writeString(printToStringForDiogen)
         buffer.writeList(stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
         buffer.writeNullable(cause) { RdTestSessionLightException.write(ctx, buffer, it) }
         buffer.writeNullable(suppressedExceptions) { buffer.writeList(it) { v -> RdTestSessionLightException.write(ctx, buffer, v) } }
@@ -959,12 +963,14 @@ data class RdTestSessionException (
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSessionException  {
             val type = buffer.readString()
-            val messageWithStacktrace = buffer.readString()
-            val message = buffer.readNullable { buffer.readString() }
+            val messageWithDetails = buffer.readString()
+            val messageForTestHistoryConsistency = buffer.readString()
+            val messageForDiogen = buffer.readNullable { buffer.readString() }
+            val printToStringForDiogen = buffer.readString()
             val stacktrace = buffer.readList { RdTestSessionStackTraceElement.read(ctx, buffer) }
             val cause = buffer.readNullable { RdTestSessionLightException.read(ctx, buffer) }
             val suppressedExceptions = buffer.readNullable { buffer.readList { RdTestSessionLightException.read(ctx, buffer) } }
-            return RdTestSessionException(type, messageWithStacktrace, message, stacktrace, cause, suppressedExceptions)
+            return RdTestSessionException(type, messageWithDetails, messageForTestHistoryConsistency, messageForDiogen, printToStringForDiogen, stacktrace, cause, suppressedExceptions)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionException)  {
@@ -985,8 +991,10 @@ data class RdTestSessionException (
         other as RdTestSessionException
         
         if (type != other.type) return false
-        if (messageWithStacktrace != other.messageWithStacktrace) return false
-        if (message != other.message) return false
+        if (messageWithDetails != other.messageWithDetails) return false
+        if (messageForTestHistoryConsistency != other.messageForTestHistoryConsistency) return false
+        if (messageForDiogen != other.messageForDiogen) return false
+        if (printToStringForDiogen != other.printToStringForDiogen) return false
         if (stacktrace != other.stacktrace) return false
         if (cause != other.cause) return false
         if (suppressedExceptions != other.suppressedExceptions) return false
@@ -997,8 +1005,10 @@ data class RdTestSessionException (
     override fun hashCode(): Int  {
         var __r = 0
         __r = __r*31 + type.hashCode()
-        __r = __r*31 + messageWithStacktrace.hashCode()
-        __r = __r*31 + if (message != null) message.hashCode() else 0
+        __r = __r*31 + messageWithDetails.hashCode()
+        __r = __r*31 + messageForTestHistoryConsistency.hashCode()
+        __r = __r*31 + if (messageForDiogen != null) messageForDiogen.hashCode() else 0
+        __r = __r*31 + printToStringForDiogen.hashCode()
         __r = __r*31 + stacktrace.hashCode()
         __r = __r*31 + if (cause != null) cause.hashCode() else 0
         __r = __r*31 + if (suppressedExceptions != null) suppressedExceptions.hashCode() else 0
@@ -1009,8 +1019,10 @@ data class RdTestSessionException (
         printer.println("RdTestSessionException (")
         printer.indent {
             print("type = "); type.print(printer); println()
-            print("messageWithStacktrace = "); messageWithStacktrace.print(printer); println()
-            print("message = "); message.print(printer); println()
+            print("messageWithDetails = "); messageWithDetails.print(printer); println()
+            print("messageForTestHistoryConsistency = "); messageForTestHistoryConsistency.print(printer); println()
+            print("messageForDiogen = "); messageForDiogen.print(printer); println()
+            print("printToStringForDiogen = "); printToStringForDiogen.print(printer); println()
             print("stacktrace = "); stacktrace.print(printer); println()
             print("cause = "); cause.print(printer); println()
             print("suppressedExceptions = "); suppressedExceptions.print(printer); println()
