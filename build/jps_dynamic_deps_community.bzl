@@ -24,9 +24,10 @@ We use a Repository Rule that runs the JPS-to-Bazel converter during repository 
 before the loading phase completes. This ensures that target information is always available.
 
 The repository rule:
-1. Executes jps-to-bazel.cmd to generate/update bazel-targets.json
-2. Parses the JSON file and extracts productionTargets and testTargets from each module
-3. Generates targets.bzl with exported lists:
+1. Derives targets from .iml files and library XMLs (pure Starlark)
+2. Executes jps-to-bazel.cmd to generate/update bazel-targets.json
+3. Asserts that Starlark-derived targets match JSON-derived targets
+4. Generates targets.bzl with exported lists:
    - ALL_PRODUCTION_TARGETS: All production targets from all modules
    - ALL_TEST_TARGETS: All test targets from all modules
    - ALL_TARGETS: Combined list of both
@@ -36,7 +37,9 @@ STALENESS & WATCHING:
 This repository is invalidated on changes to `.idea/modules.xml` via ctx.watch().
 """
 
-load(":jps_model.bzl", "watch_project_model_files")
+load(":jps_model.bzl", "read_project_model")
+load(":jps_target_derivation.bzl", "SKIPPED_MODULES", "compute_build_dir", "compute_module_targets", "module_name_to_target", "parse_iml")
+load(":jps_library_derivation.bzl", "derive_library_targets")
 
 def _format_target_list(name, targets):
     """Format a list of targets as a Starlark list assignment."""
@@ -58,44 +61,86 @@ def _generate_targets_bzl(production_targets, test_targets, library_targets):
     content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)
 
-def _targets_repo_impl(ctx):
-    # SETUP CONTEXT AND WATCHER
-    root = ctx.path(Label("@community//:MODULE.bazel")).dirname
+def _derive_targets_from_model(ctx, project_root, model):
+    """Derive production, test, and library targets from project model using pure Starlark.
 
-    # Watch the entire model to re-run generator on changes
-    watch_project_model_files(ctx, root)
+    Args:
+        ctx: repository rule context (needed for jar directory expansion)
+        project_root: Path to the project root
+        model: struct from read_project_model with modules and library_xmls
 
-    script = (
-        root
-            .get_child("build")
-            .get_child("jpsModelToBazelCommunityOnly.cmd")
+    Returns:
+        struct with production, test, library (all sorted lists)
+    """
+    all_production = []
+    all_test = []
+    iml_data_list = []
+
+    # community-only: community_root_parts is [] (project root IS community root)
+    community_root_parts = []
+    # In community-only mode, ultimateRoot is null
+    ultimate_root_parts = None
+
+    for mod in model.modules:
+        # Skip modules that the converter also skips (standalone Bazel projects)
+        if mod.module_name in SKIPPED_MODULES:
+            continue
+
+        iml_dir_parts = mod.iml_dir_rel.split("/") if mod.iml_dir_rel else []
+        parsed = parse_iml(mod.iml_content, mod.iml_rel_path)
+
+        iml_data_list.append(struct(
+            module_name = mod.module_name,
+            iml_dir_rel = mod.iml_dir_rel,
+            iml_rel_path = mod.iml_rel_path,
+            parsed_iml = parsed,
+            is_community = True,
+        ))
+
+        build_dir_parts = compute_build_dir(iml_dir_parts, parsed.content_root_urls, mod.iml_rel_path)
+
+        target_name = module_name_to_target(
+            module_name = mod.module_name,
+            build_dir_parts = build_dir_parts,
+            community_root_parts = community_root_parts,
+            ultimate_root_parts = ultimate_root_parts,
+        )
+
+        targets = compute_module_targets(
+            module_name = mod.module_name,
+            build_dir_parts = build_dir_parts,
+            target_name = target_name,
+            is_community = True,
+            community_root_parts = community_root_parts,
+        )
+
+        for t in targets.production:
+            if t not in all_production:
+                all_production.append(t)
+        for t in targets.test:
+            if t not in all_test:
+                all_test.append(t)
+
+    library_targets = derive_library_targets(
+        ctx = ctx,
+        project_root = project_root,
+        library_xmls = model.library_xmls,
+        iml_data_list = iml_data_list,
+        is_community_only = True,
+        community_root_rel = "",
     )
 
-    # Invalidate results when generator or its settings change
-    ctx.watch_tree(root.get_child("platform").get_child("build-scripts").get_child("bazel"))
+    return struct(
+        production = all_production,
+        test = all_test,
+        library = library_targets,
+    )
 
-    # jps-to-bazel.cmd internally runs `bazel run` to execute the converter.
-    # This "bazel inside bazel" works because repository rules execute during the loading phase,
-    # before the current build's analysis phase starts. The inner bazel invocation is a completely
-    # separate bazel server process that doesn't conflict with the outer one.
-    if ctx.os.name.startswith("windows"):
-        # proper quoting of the script path is important in the case of whitespace in the path, see https://ss64.com/nt/cmd.html
-        res = ctx.execute(["cmd.exe", "/c", '""%s""' % script], quiet = False)
-    else:
-        res = ctx.execute(["/bin/bash", script], quiet = False)
-
-    if res.return_code != 0:
-        fail("jps-to-bazel failed (%d): %s" % (res.return_code, res.stderr))
-
-    # READ AND PARSE JSON
-    build_dir = root.get_child("build")
-    targets_json = build_dir.get_child("bazel-targets.json")
-    json_content = ctx.read(targets_json)
-    targets_data = json.decode(json_content)
-
+def _extract_targets_from_json(targets_data):
+    """Extract targets from the JSON output of the converter (existing logic)."""
     all_production_targets = []
     all_test_targets = []
-    all_library_targets = set()
+    all_library_targets = {}
 
     modules = targets_data.get("modules", {})
     for module_name in modules:
@@ -114,17 +159,76 @@ def _targets_repo_impl(ctx):
         module_libraries = module.get("moduleLibraries", {})
         for module_library_name in module_libraries:
             module_library = module_libraries[module_library_name]
-
             for jarTarget in module_library.get("jarTargets", []):
-                all_library_targets.add(jarTarget)
+                all_library_targets[jarTarget] = True
 
     projectLibraries = targets_data.get("projectLibraries", {})
     for projectLibraryName in projectLibraries:
         projectLibrary = projectLibraries[projectLibraryName]
         for jarTarget in projectLibrary.get("jarTargets", []):
-            all_library_targets.add(jarTarget)
+            all_library_targets[jarTarget] = True
 
-    content = _generate_targets_bzl(all_production_targets, all_test_targets, all_library_targets)
+    return struct(
+        production = all_production_targets,
+        test = all_test_targets,
+        library = sorted(all_library_targets.keys()),
+    )
+
+def _assert_targets_equal(kind, starlark_targets, json_targets):
+    """Assert that Starlark-derived targets match JSON-derived targets."""
+    if starlark_targets == json_targets:
+        return
+
+    starlark_set = {t: True for t in starlark_targets}
+    json_set = {t: True for t in json_targets}
+    only_starlark = sorted([t for t in starlark_targets if t not in json_set])
+    only_json = sorted([t for t in json_targets if t not in starlark_set])
+    fail(
+        "Community: Starlark vs JSON %s target mismatch!\n" % kind +
+        "  Only in Starlark (%d): %s\n" % (len(only_starlark), only_starlark[:20]) +
+        "  Only in JSON (%d): %s" % (len(only_json), only_json[:20]),
+    )
+
+def _targets_repo_impl(ctx):
+    # SETUP CONTEXT AND WATCHER
+    root = ctx.path(Label("@community//:MODULE.bazel")).dirname
+
+    # ── STEP 1: Derive targets from JPS model (pure Starlark) ──
+    model = read_project_model(ctx, root)
+    starlark = _derive_targets_from_model(ctx, root, model)
+
+    # ── STEP 2: Run converter and parse JSON (existing path) ──
+    script = (
+        root
+            .get_child("build")
+            .get_child("jpsModelToBazelCommunityOnly.cmd")
+    )
+
+    # Invalidate results when generator or its settings change
+    ctx.watch_tree(root.get_child("platform").get_child("build-scripts").get_child("bazel"))
+
+    if ctx.os.name.startswith("windows"):
+        res = ctx.execute(["cmd.exe", "/c", '""%s""' % script], quiet = False)
+    else:
+        res = ctx.execute(["/bin/bash", script], quiet = False)
+
+    if res.return_code != 0:
+        fail("jps-to-bazel failed (%d): %s" % (res.return_code, res.stderr))
+
+    # READ AND PARSE JSON
+    build_dir = root.get_child("build")
+    targets_json = build_dir.get_child("bazel-targets.json")
+    json_content = ctx.read(targets_json)
+    targets_data = json.decode(json_content)
+    json_targets = _extract_targets_from_json(targets_data)
+
+    # ── STEP 3: Assert parity ──
+    _assert_targets_equal("production", sorted(starlark.production), sorted(json_targets.production))
+    _assert_targets_equal("test", sorted(starlark.test), sorted(json_targets.test))
+    _assert_targets_equal("library", starlark.library, json_targets.library)
+
+    # ── STEP 4: Use JSON-derived targets (authoritative until Starlark is proven) ──
+    content = _generate_targets_bzl(json_targets.production, json_targets.test, json_targets.library)
     ctx.file("targets.bzl", content)
 
     # Expose it

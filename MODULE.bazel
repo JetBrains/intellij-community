@@ -48,6 +48,8 @@ single_version_override(
     version = "0.0.10",
 )
 
+bazel_dep(name = "xml.bzl", version = "0.2.3")
+
 bazel_dep(name = "lib")
 local_path_override(
     module_name = "lib",
