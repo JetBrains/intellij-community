@@ -63,7 +63,9 @@ suspend fun refreshPaths(project: Project, sdk: Sdk, reason: Any): Unit = edtWri
 
   //Restart all inspections because packages are changed
   DaemonCodeAnalyzer.getInstance(project).restart(reason)
-  PythonSdkUpdater.scheduleUpdate(sdk, project, false)
+  PyPackageCoroutine.launch(project) {
+    PythonSdkUpdater.scheduleUpdate(sdk, project, false)
+  }
 }
 
 internal fun dropUpdaterInHeadless(): Boolean {
