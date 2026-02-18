@@ -3,5 +3,5 @@ async def f() -> bool:
 
 
 async def main():
-    if await f():
+    if await f() or f():
         print("hi")

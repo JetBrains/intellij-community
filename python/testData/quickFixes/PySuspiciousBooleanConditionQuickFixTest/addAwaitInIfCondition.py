@@ -3,5 +3,5 @@ async def f() -> bool:
 
 
 async def main():
-    if <warning descr="Coroutine not awaited in boolean context"><caret>f()</warning>:
+    if <warning descr="Coroutine not awaited in boolean context"><caret>f()</warning> or <warning descr="Coroutine not awaited in boolean context">f()</warning>:
         print("hi")
