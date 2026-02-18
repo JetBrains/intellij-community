@@ -1111,6 +1111,7 @@
 
     "MainToolbar": {
       "background": "container-main-window-bg",
+      "inactiveBackground": "container-main-window-bg",
       "borderColor": "transparent",
       "separatorColor": "toolbar-border",
       "Icon": {

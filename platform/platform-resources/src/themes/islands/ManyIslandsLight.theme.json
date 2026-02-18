@@ -1098,6 +1098,7 @@
 
     "MainToolbar": {
       "background": "container-main-window-bg",
+      "inactiveBackground": "container-main-window-bg",
       "borderColor": "transparent",
       "foreground": "text-default",
       "separatorColor": "toolbar-border",
