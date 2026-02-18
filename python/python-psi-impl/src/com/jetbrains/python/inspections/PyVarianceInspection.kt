@@ -127,6 +127,7 @@ class PyVarianceInspection : PyInspection() {
     context: TypeEvalContext,
   ) {
     val varianceExpected = PyExpectedVarianceJudgment.getExpectedVariance(node, context) ?: return
+    if (varianceExpected == BIVARIANT) return
     val varianceInferred = PyInferredVarianceJudgment.getInferredVariance(node, context) ?: return
 
     if (!isCompatibleWith(varianceInferred, varianceExpected)) {

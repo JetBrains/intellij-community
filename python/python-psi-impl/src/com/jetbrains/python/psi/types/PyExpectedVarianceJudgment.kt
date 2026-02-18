@@ -2,6 +2,9 @@ package com.jetbrains.python.psi.types
 
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.GENERIC
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PROTOCOL
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PROTOCOL_EXT
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyArgumentList
@@ -63,9 +66,9 @@ object PyExpectedVarianceJudgment {
         -> {
         when (parent) {
           is PySubscriptionExpression,
-            -> fromElementInSubscriptionExpression(element, 0, parent, context)
+            -> fromElementInSubscriptionExpression(0, parent, context)
           is PyTupleExpression if parent.parent is PySubscriptionExpression
-            -> fromElementInSubscriptionExpression(element, parent.elements.indexOf(element),
+            -> fromElementInSubscriptionExpression(parent.elements.indexOf(element),
                                                    parent.parent as PySubscriptionExpression, context)
           else
             -> getExpectedVariance(parent, context)
@@ -89,7 +92,6 @@ object PyExpectedVarianceJudgment {
   }
 
   private fun fromElementInSubscriptionExpression(
-    element: PsiElement,
     refIndex: Int,
     subscriptionExpr: PySubscriptionExpression,
     context: TypeEvalContext,
@@ -101,10 +103,8 @@ object PyExpectedVarianceJudgment {
       qualifierType = PyTypeChecker.findGenericDefinitionType(qualifierType.pyClass, context) ?: qualifierType
     }
 
-    if (qualifierType is PyClassLikeType && qualifierType.classQName == PyTypingTypeProvider.GENERIC) {
-      val refExpr = element as? PyReferenceExpression ?: return null
-      val typeVarType = PyTypingTypeProvider.getType(refExpr, context)?.get() as? PyTypeVarType ?: return null
-      return getInferredVariance(typeVarType, context)
+    if (qualifierType is PyClassLikeType && setOf(GENERIC, PROTOCOL, PROTOCOL_EXT).contains(qualifierType.classQName)) {
+      return BIVARIANT // for T in: `class C(Generic[T])` or `class C(Protocol[T])`
     }
     if (qualifierType is PyCollectionType) {
       val paramVariance = getTypeParameterVarianceAtIndex(qualifierType, refIndex, context) ?: return null

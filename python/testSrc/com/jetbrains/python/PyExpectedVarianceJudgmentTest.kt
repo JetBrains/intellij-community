@@ -20,8 +20,17 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
     assertEquals(expectedVariance, actualVariance)
   }
 
-  fun `test Generic class legacy syntax 1co`() {
-    doTest("T1]", Variance.COVARIANT, """
+  fun `test Generic super class expects bivariant type parameters`() {
+    doTest("T]", Variance.BIVARIANT, """
+      from typing import TypeVar, Generic
+      T = TypeVar("T")
+      class C(Generic[T]):
+          pass
+      """)
+  }
+
+  fun `test Generic super class expects bivariant type parameters co`() {
+    doTest("T1]", Variance.BIVARIANT, """
       from typing import TypeVar, Generic
       T1 = TypeVar("T1", covariant=True)
       class Box(Generic[T1]):
@@ -29,11 +38,20 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
       """)
   }
 
-  fun `test Generic class legacy syntax 1contra`() {
-    doTest("T1]", Variance.CONTRAVARIANT, """
+  fun `test Generic super class expects bivariant type parameters contra`() {
+    doTest("T1]", Variance.BIVARIANT, """
       from typing import TypeVar, Generic
       T1 = TypeVar("T1", contravariant=True)
       class Box(Generic[T1]):
+          pass
+      """)
+  }
+
+  fun `test Protocol super class expects bivariant type parameters`() {
+    doTest("T]", Variance.BIVARIANT, """
+      from typing import TypeVar, Protocol
+      T = TypeVar("T")
+      class C(Protocol[T]):
           pass
       """)
   }
