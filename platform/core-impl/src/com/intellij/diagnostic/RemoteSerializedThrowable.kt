@@ -4,6 +4,7 @@ package com.intellij.diagnostic
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Field
 
@@ -25,6 +26,7 @@ class RemoteSerializedThrowable(
   private val localizedMessage: String?,
   val classFqn: String,
   stacktrace: Array<StackTraceElement>,
+  val pluginId: PluginId?,
   cause: Throwable? = null,
   private val headerPrefix: String? = null,
   private val attachments: Array<Attachment> = emptyArray(),

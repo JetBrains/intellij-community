@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.RemoteSerializedThrowable;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -28,6 +29,9 @@ public class PluginUtilImpl implements PluginUtil {
   public static @Nullable PluginId doFindPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
+    }
+    if (t instanceof RemoteSerializedThrowable) {
+      return ((RemoteSerializedThrowable)t).getPluginId();
     }
 
     PluginId bundledId = null;
