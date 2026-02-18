@@ -215,7 +215,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final StringBuilder myTextBeforeStart = new StringBuilder();
 
-  protected Map<VirtualMachineProxyImpl, Method> myIsUnderBreakpointCheckFnMap = CollectionFactory.createWeakMap();
+  protected Map<VirtualMachineProxyImpl, EnterAndExitEvaluationCheck> myBreakpointCheckFnMap = CollectionFactory.createWeakMap();
 
   protected enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
 
@@ -3099,8 +3099,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @ApiStatus.Internal
-  public void setIsUnderBreakpointCheckFn(@NotNull Method isUnderBreakpointCheckFn) {
-    myIsUnderBreakpointCheckFnMap.put(VirtualMachineProxyImpl.getCurrent(), isUnderBreakpointCheckFn);
+  public void setIsUnderBreakpointCheckFn(@NotNull Method enterBreakpointCheckFn, @NotNull Method checkIsDoneFn) {
+    myBreakpointCheckFnMap.put(VirtualMachineProxyImpl.getCurrent(), new EnterAndExitEvaluationCheck(enterBreakpointCheckFn, checkIsDoneFn));
   }
 
   @ApiStatus.Internal

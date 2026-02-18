@@ -7,6 +7,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.PositionManagerFactory;
 import com.intellij.debugger.engine.evaluation.DebuggerImplicitEvaluationContextUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -698,16 +699,20 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
 
-        Method isUnderBreakpointCheckFn = myIsUnderBreakpointCheckFnMap.get(suspendContext.getVirtualMachineProxy());
-        if (isUnderBreakpointCheckFn != null && shouldCheckForSkipBreakpoint(event)) {
+        Method checkIsDoneFn = null;
+        EnterAndExitEvaluationCheck enterAndExitEvaluationCheck = myBreakpointCheckFnMap.get(suspendContext.getVirtualMachineProxy());
+        if (enterAndExitEvaluationCheck != null && shouldCheckForSkipBreakpoint(event)) {
+          Method enterBreakpointCheckFn = enterAndExitEvaluationCheck.enterBreakpointCheckFn;
+
           EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, null);
           try {
             Value value = invokeMethod(
               evaluationContext,
-              (ClassType)isUnderBreakpointCheckFn.declaringType(),
-              isUnderBreakpointCheckFn,
+              (ClassType)enterBreakpointCheckFn.declaringType(),
+              enterBreakpointCheckFn,
               Collections.emptyList()
             );
+            checkIsDoneFn = enterAndExitEvaluationCheck.checkIsDoneFn;
             if (value instanceof BooleanValue booleanValue) {
               if (booleanValue.value()) {
                 notifySkippedBreakpointInEvaluation(event, suspendContext);
@@ -750,6 +755,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
                 }
                 logSuspendContext(suspendContext, () -> "Skip breakpoint because of filter " + filter);
+
+                markForInstrumentationThatBreakpointCheksAreDone(suspendContext, checkIsDoneFn);
                 suspendManager.voteResume(suspendContext);
                 return;
               } else {
@@ -849,6 +856,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
         }
 
+        markForInstrumentationThatBreakpointCheksAreDone(suspendContext, checkIsDoneFn);
+
         if (!requestHit || resumePreferred) {
           boolean finalRequestHit = requestHit;
           boolean finalResumePreferred = resumePreferred;
@@ -876,6 +885,20 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       }
     });
+  }
+
+  private void markForInstrumentationThatBreakpointCheksAreDone(@NotNull SuspendContextImpl suspendContext, Method checkIsDoneFn) {
+    if (checkIsDoneFn == null) {
+      return;
+    }
+    EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, null);
+
+    try {
+      invokeMethod(evaluationContext, (ClassType)checkIsDoneFn.declaringType(), checkIsDoneFn, Collections.emptyList());
+    }
+    catch (EvaluateException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static boolean shouldCheckForSkipBreakpoint(LocatableEvent event) {
