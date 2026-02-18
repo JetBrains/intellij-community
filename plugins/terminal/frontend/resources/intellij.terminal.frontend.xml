@@ -49,9 +49,6 @@
     <statistics.collectorExtension implementation="com.intellij.terminal.frontend.view.completion.TerminalCompletionUsageCollectorExtension"/>
     <lookup.usageDetails implementation="com.intellij.terminal.frontend.view.completion.TerminalCompletionUsageDescriptor"/>
 
-    <advancedSetting id="terminal.shift.enter.sends.esc.cr" default="true"
-                     bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
-
     <platform.rpc.applicationRemoteTopicListener
         implementation="com.intellij.terminal.frontend.settings.TerminalActionShortcutChangedListener"/>
   </extensions>
