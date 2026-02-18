@@ -28,8 +28,8 @@ import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesWsmChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CompletableDeferred
@@ -57,6 +57,7 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
 class ModuleBridgeLoaderService : InitProjectActivity {
   override suspend fun run(project: Project) {
     coroutineScope {
+      project.serviceAsync<DumpWorkspaceEntitiesWsmChangeListener>()
       val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
       val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
 

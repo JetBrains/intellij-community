@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelIdeBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,13 +49,12 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
     prettyPrintIndent = "  "
   }
   
-  private val logFileName = "workspace-model-dump.json"
+  private val logFileName = "workspace-model-dump"
 
-  suspend fun getWorkspaceEntitiesAsJsonArray(): JsonArray {
-    val snapshot = project.workspaceModel.currentSnapshot
-
+  suspend fun getWorkspaceEntitiesAsJsonArray(snapshot: EntityStorage? = null): JsonArray {
+    val snapshot = snapshot ?: project.workspaceModel.currentSnapshot
     val wsmSerializers = WorkspaceModelSerializers()
-    val rootEntities = snapshot.allUniqueEntities().rootEntitiesClasses().toList()
+    val rootEntities = snapshot.allUniqueEntities().rootEntitiesClasses().toList().sortedBy { it.simpleName }
 
     return withBackgroundProgress(project, WorkspaceModelIdeBundle.message("progress.title.dumping.workspace.entities.json.to.clipboard")) {
       reportSequentialProgress(rootEntities.size) { reporter ->
@@ -62,7 +63,7 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
             reporter.itemStep(rootEntityClass.name)
             addJsonObject {
               put("rootEntityName", rootEntityClass.simpleName)
-              val entities = snapshot.entities(rootEntityClass).toList()
+              val entities = snapshot.entities(rootEntityClass).toList().sortedBy { if (it is WorkspaceEntityWithSymbolicId) it.symbolicId.presentableName else it.toString() }
               put("rootEntitiesCount", entities.size)
               putJsonArray("entities") {
                 for ((i, entity) in entities.withIndex()) {
@@ -97,7 +98,8 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
     }
   }
 
-  fun dumpWorkspaceEntitiesToLogFileAsJson() {
+  fun dumpWorkspaceEntitiesToLogFileAsJson(name: String = logFileName, snapshot: EntityStorage? = null, openFileInEditor: Boolean = true) {
+    val fileName = "$name.json"
     coroutineScope.launch(Dispatchers.IO) {
       val logDirectory2 = LoggerFactory.getLogFilePath().parent?.let {
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it)
@@ -108,14 +110,16 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
         Notifications.Bus.notify(Notification(groupAndTitle, groupAndTitle, content, NotificationType.INFORMATION))
         return@launch
       }
-      val jsonEntities = getWorkspaceEntitiesAsJsonArray()
+      val jsonEntities = getWorkspaceEntitiesAsJsonArray(snapshot)
       val serializedEntitiesString = json.encodeToString(jsonEntities)
       val wsmDumpFile = edtWriteAction {
-        logDirectory2.findChild(logFileName)?.delete(this)
-        val wsmDumpFile = logDirectory2.createChildData(this, logFileName)
+        logDirectory2.findChild(fileName)?.delete(this)
+        val wsmDumpFile = logDirectory2.createChildData(this, fileName)
         wsmDumpFile.writeText(serializedEntitiesString)
         VfsUtil.markDirtyAndRefresh(true, false, false, wsmDumpFile)
-        openDumpInEditor(wsmDumpFile)
+        if (openFileInEditor) {
+          openDumpInEditor(wsmDumpFile)
+        }
         wsmDumpFile
       }
       LOG.info("Workspace model was dumped to ${wsmDumpFile.canonicalPath}")

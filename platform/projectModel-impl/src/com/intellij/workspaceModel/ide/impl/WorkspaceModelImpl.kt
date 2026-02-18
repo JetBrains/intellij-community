@@ -337,13 +337,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       updatesCounter.incrementAndGet()
     }
 
-    log.debug("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
-    if (generalTime > 1000) {
-      log.info("Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m")
-    }
-    else {
-      log.debug { "Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m" }
-    }
+    log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
   }
 
   /**
