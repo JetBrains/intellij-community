@@ -3,12 +3,10 @@ package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.execution.ExecutionException;
 import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
@@ -39,9 +37,8 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
-import com.jetbrains.python.packaging.PyRequirementsKt;
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -63,6 +60,7 @@ import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.lang.reflect.Method;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -314,7 +312,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     return path;
   }
 
-  private void setRequirementsPath(String requirementsPath) {
+  private void setRequirementsPath(String requirementsPath) throws ConfigurationException {
     if (myModule == null) {
       return;
     }
@@ -326,8 +324,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     try {
       PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(myModule.getProject(), sdk, Path.of(requirementsPath));
     }
-    catch (Throwable t) {
-      Logger.getInstance(PyIntegratedToolsConfigurable.class).warn("Failed to save requirements path", t);
+    catch (InvalidPathException e) {
+      throw new ConfigurationException(PyBundle.message("form.integrated.tools.package.requirements.file.invalid.path", e.getMessage()));
     }
   }
 
@@ -359,18 +357,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     return new FacetConfigurationQuickFix() {
       @Override
       public void run(JComponent place) {
-        final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, sdk, new PyPackageManagerUI.Listener() {
-          @Override
-          public void started() { }
-
-          @Override
-          public void finished(List<ExecutionException> exceptions) {
-            if (exceptions.isEmpty()) {
-              facetErrorPanel.getValidatorsManager().validate();
-            }
-          }
-        });
-        ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(name, null)), Collections.emptyList());
+        PythonPackageManagerUI.forSdk(myProject, sdk).installPackagesWithModalProgressBlocking(name);
+        facetErrorPanel.getValidatorsManager().validate();
       }
     };
   }
