@@ -22,7 +22,8 @@ import java.util.List;
  * @see PyPositionalVariadicType
  */
 @ApiStatus.Experimental
-public sealed interface PyVariadicType extends PyType permits PyPositionalVariadicType, PyCallableParameterVariadicType {
+public sealed interface PyVariadicType extends PyType permits PyPositionalVariadicType, PyCallableParameterVariadicType,
+                                                              PyKeywordVariadicType {
   @Override
   default boolean isBuiltin() {
     return false;
