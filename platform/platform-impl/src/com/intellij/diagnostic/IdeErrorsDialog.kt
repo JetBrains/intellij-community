@@ -451,8 +451,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     val plugin = cluster.plugin
     val info = StringBuilder()
 
-    if (t is RemoteSerializedThrowable) {
-      info.append("[backend] ")
+    if (t is RemoteSerializedThrowable && t.headerPrefix != null) {
+      info.append("[${t.headerPrefix}] ")
     }
 
     if (pluginId != null && !t.isSpecialBackendException()) {

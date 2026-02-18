@@ -28,7 +28,7 @@ class RemoteSerializedThrowable(
   stacktrace: Array<StackTraceElement>,
   val pluginId: PluginId?,
   cause: Throwable? = null,
-  private val headerPrefix: String? = null,
+  val headerPrefix: String? = null,
   private val attachments: Array<Attachment> = emptyArray(),
 ) : Throwable(message, cause), ExceptionWithAttachments {
   companion object {
