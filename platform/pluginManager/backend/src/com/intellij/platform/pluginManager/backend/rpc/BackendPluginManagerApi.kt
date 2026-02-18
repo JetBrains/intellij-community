@@ -105,11 +105,14 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getCustomRepoTags()
   }
 
-  override suspend fun updateCustomRepositories(repositoryUrls: List<String>) {
-    val list = UpdateSettings.getInstance().storedPluginHosts
-    list.clear()
-    list.addAll(repositoryUrls)
+  override suspend fun updateCustomRepositories(repositoryUrls: List<String>): List<String> {
+    val storedHosts = UpdateSettings.getInstance().storedPluginHosts
+    val repositoryUrlsSet = repositoryUrls.toSet()
+    val extraHosts = storedHosts.filter { it !in repositoryUrlsSet }
+    storedHosts.clear()
+    storedHosts.addAll(repositoryUrls + extraHosts)
     CustomPluginRepositoryService.getInstance().clearCache()
+    return extraHosts
   }
 
   override suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
