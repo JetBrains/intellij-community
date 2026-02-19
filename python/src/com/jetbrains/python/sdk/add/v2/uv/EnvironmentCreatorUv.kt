@@ -30,6 +30,8 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
+import com.jetbrains.python.sdk.add.v2.VenvAlreadyExistsError
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.uv.impl.createUvCli
@@ -38,6 +40,7 @@ import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,11 +82,27 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     savePathForEelOnly(pathHolder) { path -> setUvExecutableLocal(path) }
   }
 
+  private val venvAlreadyExistsError = propertyGraph.property<VenvAlreadyExistsError<P>?>(null)
   private val loading = AtomicBooleanProperty(false)
 
   init {
     model.uvViewModel.uvExecutable.afterChange {
       executableFlow.value = it
+    }
+
+    venvAlreadyExistsError.afterChange {
+      if (it == null) {
+        venvExistenceValidationState.set(VenvExistenceValidationState.Invisible)
+      }
+      else {
+        val venvName = model.fileSystem.getVenvName(it.detectedSelectableInterpreter.homePath)
+                       ?: VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME
+        venvExistenceValidationState.set(VenvExistenceValidationState.Error(venvName))
+      }
+    }
+
+    propertyGraph.dependsOn(venvAlreadyExistsError, model.uvViewModel.uvVenvPath, deleteWhenChildModified = false) {
+      model.uvViewModel.uvVenvPath.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
     }
   }
 
@@ -120,7 +139,14 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
         labelText = message("sdk.create.custom.location"),
         missingExecutableText = null,
         isFileSelectionMode = false,
+        venvExistenceValidationState = venvExistenceValidationState,
       )
+
+      row("") {
+        venvExistenceValidationAlert(validationRequestor) {
+          onVenvSelectExisting()
+        }
+      }
     }
   }
 

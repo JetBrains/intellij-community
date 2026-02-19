@@ -62,6 +62,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
 
 private val LOG: Logger = fileLogger()
@@ -92,7 +93,8 @@ sealed interface FileSystem<P : PathHolder> {
   suspend fun wrapSdk(sdk: Sdk): SdkWrapper<P>
   suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<P>>
   fun preferredInterpreterBasePath(): P? = null
-  suspend fun resolvePythonBinary(pythonHome: P): P?
+  fun resolvePythonBinary(pythonHome: P): P?
+  fun getVenvName(pythonHome: P): String?
 
   fun getBinaryToExec(path: P): BinaryToExec
   suspend fun which(cmd: String): P?
@@ -236,8 +238,12 @@ sealed interface FileSystem<P : PathHolder> {
       else -> null
     }
 
-    override suspend fun resolvePythonBinary(pythonHome: PathHolder.Eel): PathHolder.Eel? {
+    override fun resolvePythonBinary(pythonHome: PathHolder.Eel): PathHolder.Eel? {
       return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
+    }
+
+    override fun getVenvName(pythonHome: PathHolder.Eel): String? {
+      return resolvePythonBinary(pythonHome)?.let { VirtualEnvReader().getVenvName(it.path) }
     }
 
     override suspend fun which(cmd: String): PathHolder.Eel? = detectTool(cmd, eelApi)?.let { PathHolder.Eel(it) }
@@ -353,10 +359,17 @@ sealed interface FileSystem<P : PathHolder> {
       return listOf(systemPython)
     }
 
-    override suspend fun resolvePythonBinary(pythonHome: PathHolder.Target): PathHolder.Target {
+    override fun resolvePythonBinary(pythonHome: PathHolder.Target): PathHolder.Target {
       val pythonHomeString = pythonHome.pathString
       val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
       return PathHolder.Target(VirtualEnvReader().findPythonInPythonRootForTarget(pythonHomeString, platform))
+    }
+
+    override fun getVenvName(pythonHome: PathHolder.Target): String? {
+      val pythonBinary = resolvePythonBinary(pythonHome)
+      val pythonBinaryString = pythonBinary.pathString
+      val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
+      return VirtualEnvReader().getVenvNameForTarget(pythonBinaryString, platform)
     }
 
     override suspend fun which(cmd: String): PathHolder.Target? {

@@ -49,7 +49,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.exists
 
 internal class EnvironmentCreatorPoetry<P : PathHolder>(
@@ -108,7 +107,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
 
           venvExistenceValidationState.set(
             if (venvPath.exists())
-              Error(Paths.get(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+              Error(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
             else
               Invisible
           )
@@ -145,7 +144,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
     with(panel) {
       row("") {
         checkBox(PyBundle.message("python.sdk.poetry.dialog.add.new.environment.in.project.checkbox"))
-          .bindSelected(service<PoetryConfigService>().state::isInProjectEnv)
+          .bindSelected(isInProjectEnvProp)
       }
     }
   }
