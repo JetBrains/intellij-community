@@ -28,24 +28,23 @@ import kotlin.io.path.visitFileTree
  * Walks down the [root]. Like [walkFileSystemNoTomlContent] but with TOML files content
  */
 internal suspend fun walkFileSystemWithTomlContent(root: Directory): Result<FSWalkInfoWithToml, IOException> {
-  val (rawTomlFiles, excludedDirs) = walkFileSystemNoTomlContent(root).getOr { return it }
+  val rawTomlFiles = walkFileSystemNoTomlContent(root).getOr { return it }.rawTomlFiles
 
   // TODO: with a big number of files, use `chunk` to parse them concurrently
   val tomlFiles = rawTomlFiles.map { file ->
     val toml = readFile(file) ?: return@map null
     file to toml
   }.filterNotNull().toMap()
-  return Result.success(FSWalkInfoWithToml(tomlFiles = tomlFiles, excludedDirs.toSet()))
+  return Result.success(FSWalkInfoWithToml(tomlFiles = tomlFiles))
 }
 
 /**
- * Walks down [root], returns all [PY_PROJECT_TOML] and [FsWalkInfoNoToml.excludedDirs] (started with dot).
+ * Walks down [root], returns all [PY_PROJECT_TOML]  (started with dot).
  * [IOException] is returned if [root] is inaccessible
  */
 suspend fun walkFileSystemNoTomlContent(
   root: Directory,
 ): Result<FsWalkInfoNoToml, IOException> {
-  val excludedDirs = ArrayList<Directory>(10)
   val rawTomlFiles = ArrayList<Path>(10)
   try {
     withContext(Dispatchers.IO) {
@@ -63,7 +62,6 @@ suspend fun walkFileSystemNoTomlContent(
           if (dirName == VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME
               || VirtualEnvReader().findPythonInPythonRoot(directory) != null) {
             // Venv: exclude and skip
-            excludedDirs.add(directory)
             FileVisitResult.SKIP_SUBTREE
           }
           else if (dirName.startsWith(".")) {
@@ -76,7 +74,7 @@ suspend fun walkFileSystemNoTomlContent(
         }
       }
     }
-    return Result.success(FsWalkInfoNoToml(rawTomlFiles = rawTomlFiles, excludedDirs = excludedDirs))
+    return Result.success(FsWalkInfoNoToml(rawTomlFiles = rawTomlFiles))
   }
   catch (e: IOException) {
     return Result.failure(e)
