@@ -74,11 +74,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
       SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-        val selectedScopeId = scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-        } ?: return@let
-
-        scopeProviderDelegate.applyScope(selectedScopeId, false)
+        scopeProviderDelegate.applyScope(isEverywhere, false)
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
         SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)

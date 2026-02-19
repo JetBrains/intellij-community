@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
 import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
@@ -10,6 +11,7 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
@@ -22,6 +24,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FilesDeque
@@ -39,6 +43,9 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  */
 @ApiStatus.Internal
 interface FilesTabSEContributor {
+  val psiContext: SmartPsiElementPointer<PsiElement?>?
+  val project: Project
+
   fun setScope(scope: ScopeDescriptor)
   fun setHiddenTypes(hiddenTypes: List<FileTypeRef>)
 
@@ -73,11 +80,14 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
                                                              DumbAware,
                                                              FilesTabSEContributor,
                                                              SearchEverywhereExtendedInfoProvider {
-  private val project: Project = event.project!!
+  override val project: Project = event.project!!
   private val navigationHandler: SearchEverywhereNavigationHandler = FileSearchEverywhereNavigationContributionHandler(project)
 
   private val scope: AtomicReference<ScopeDescriptor?> = AtomicReference(null)
   private val hiddenTypes: AtomicReference<Set<FileTypeRef>> = AtomicReference(emptySet())
+  override val psiContext: SmartPsiElementPointer<PsiElement?>? = GotoActionBase.getPsiContext(event)?.let { context ->
+    SmartPointerManager.getInstance(project).createSmartPsiElementPointer(context)
+  }
 
   override fun getSearchProviderId(): String = ID
 
@@ -137,7 +147,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
      */
     val pathMatcher = GotoFileItemProvider.getQualifiedNameMatcher(pathPattern)
 
-    val nameMatcher = NameUtil.buildMatcher("*" + namePattern)
+    val nameMatcher = NameUtil.buildMatcher("*$namePattern")
       .withMatchingMode(MatchingMode.IGNORE_CASE)
       .preferringStartMatches()
       .build()
@@ -163,7 +173,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
       if (file == null) break
 
       val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-      val nonIndexableRoot = runReadAction { workspaceFileIndex.findNonIndexableFileSet(file) }?.root
+      val nonIndexableRoot = runReadActionBlocking { workspaceFileIndex.findNonIndexableFileSet(file) }?.root
       // path includes root
       val pathFromNonIndexableRoot = file.path.removePrefix(nonIndexableRoot?.parent?.path ?: "").removePrefix("/")
 

@@ -170,6 +170,15 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
       }
       return current
     }
+
+    @ApiStatus.Internal
+    fun createScopes(project: Project, psiContext: SmartPsiElementPointer<PsiElement?>?): List<ScopeDescriptor> {
+      @Suppress("DEPRECATION")
+      return project.getService(ScopeService::class.java)
+        .createModel(EnumSet.of(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
+        .getScopesImmediately(createContext(project, psiContext))
+        .scopeDescriptors
+    }
   }
 
   @ApiStatus.Internal
@@ -190,10 +199,7 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
 
   protected open fun createScopes(): List<ScopeDescriptor> {
     @Suppress("DEPRECATION")
-    return myProject.getService(ScopeService::class.java)
-      .createModel(EnumSet.of(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
-      .getScopesImmediately(createContext(myProject, myPsiContext))
-      .scopeDescriptors
+    return createScopes(myProject, myPsiContext)
   }
 
   override fun getSearchProviderId(): String = javaClass.simpleName
