@@ -46,7 +46,7 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
               else {
                 val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutinesWithHierarchy()
                 if (coroutinesCache.isOk()) coroutinesCache.cache.map { info ->
-                    if (info.parentJobId == null) info.parentJobId = CoroutineRootDumpItem.id
+                    if (info.parentJobId == null) info.parentJobId = CoroutineRootDumpItem.treeId
                     CoroutineDumpItem(info)
                 } + CoroutineRootDumpItem else emptyList()
               })
@@ -61,9 +61,9 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
 
     override val name: String = info.name + ":" + info.id
 
-    override val id: Long get() = info.jobId ?: info.hashCode().toLong()
+    override val treeId: Long? get() = info.jobId
 
-    override val parentId: Long? get() = info.parentJobId
+    override val parentTreeId: Long? get() = info.parentJobId
 
     override val stateDesc: String = " (${info.state.name.lowercase()})"
 
@@ -148,9 +148,9 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val name: String = "Dumped Coroutines"
 
-    override val id: Long = Long.MIN_VALUE // todo: this item does not actually exist in the dump, and it's index is artificial
+    override val treeId: Long = Long.MIN_VALUE
 
-    override val parentId: Long? = null
+    override val parentTreeId: Long? = null
 
     override val stateDesc: String = ""
 

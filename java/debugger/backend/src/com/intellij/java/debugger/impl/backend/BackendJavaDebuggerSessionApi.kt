@@ -219,8 +219,8 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
                           iconToolTipIndex = iconToolTipToIndex[it.iconToolTip]!!.toByte(),
                           firstLine = firstLine,
                           isContainer = it.isContainer,
-                          id = it.id,
-                          parentId = it.parentId,
+                          treeId = it.treeId,
+                          parentTreeId = it.parentTreeId,
                           canBeHidden = it.canBeHidden
     )
   }

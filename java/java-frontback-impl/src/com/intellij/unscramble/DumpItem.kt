@@ -40,14 +40,14 @@ interface DumpItem {
   val awaitingDumpItems: Set<DumpItem>
 
   /**
-   * Unique identifier of the dump item.
+   * Unique identifier of the dump item used to represent hierarchy of [DumpItem]s as a tree.
    */
-  val id: Long
+  val treeId: Long?
 
   /**
-   * Unique identifier of the parent dump item.
+   * [treeId] of the parent [DumpItem].
    */
-  val parentId: Long?
+  val parentTreeId: Long?
 
   /**
    * True if the given dump item can be a parent to some other dump item.
@@ -172,10 +172,10 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
   override val isContainer: Boolean
     get() = false
 
-  override val id: Long
+  override val treeId: Long
     get() = threadState.uniqueId
 
-  override val parentId: Long?
+  override val parentTreeId: Long?
     get() = threadState.threadContainerUniqueId
 
   override val canBeHidden: Boolean
@@ -286,7 +286,7 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
       if (threadState.awaitingThreads != otherThreadState.awaitingThreads) return false
       if (threadState.deadlockedThreads != otherThreadState.deadlockedThreads) return false
       if (this.comparableStackTrace != other.comparableStackTrace) return false
-      if (this.item.parentId != other.item.parentId) return false
+      if (this.item.parentTreeId != other.item.parentTreeId) return false
       return true
     }
 
@@ -301,13 +301,13 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
         threadState.awaitingThreads,
         threadState.deadlockedThreads,
         comparableStackTrace,
-        parentId
+        parentTreeId
       )
     }
   }
 }
 
-private class JavaVirtualThreadContainerItem(private val containerName: String, override val id: Long, override val parentId: Long?) : MergeableDumpItem {
+private class JavaVirtualThreadContainerItem(private val containerName: String, override val treeId: Long, override val parentTreeId: Long?) : MergeableDumpItem {
   override val name: @NlsSafe String
     get() = formatThreadContainerName(containerName)
 
@@ -387,10 +387,10 @@ class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe
   override val canBeHidden: Boolean
     get() = false
 
-  override val id: Long
-    get() = this.hashCode().toLong()
+  override val treeId: Long?
+    get() = null
 
-  override val parentId: Long?
+  override val parentTreeId: Long?
     get() = null
 }
 

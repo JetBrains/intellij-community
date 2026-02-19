@@ -70,7 +70,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Jeka
@@ -253,7 +252,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
         var rootItems = new ArrayList<DumpItem>();
         var parentIdToChildren = new HashMap<Long, List<DumpItem>>();
         for (var item : threadStates) {
-          var parentId = item.getParentId();
+          var parentId = item.getParentTreeId();
           if (parentId != null) {
             parentIdToChildren.computeIfAbsent(parentId, k -> new ArrayList<>()).add(item);
           } else {
@@ -307,7 +306,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
 
   private static void buildDumpItemsTree(DefaultMutableTreeNode currentNode, HashMap<Long, List<DumpItem>> parentIdToChildren) {
     var currentDumpItem = (DumpItem)currentNode.getUserObject();
-    var childItems = parentIdToChildren.get(currentDumpItem.getId());
+    var childItems = parentIdToChildren.get(currentDumpItem.getTreeId());
     if (childItems == null) {
       if (currentDumpItem.isContainer()) currentNode.removeFromParent(); // do not add empty containers to the tree
       return;
