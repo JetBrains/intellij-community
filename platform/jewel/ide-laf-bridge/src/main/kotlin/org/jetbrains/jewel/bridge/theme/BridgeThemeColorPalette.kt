@@ -3,24 +3,27 @@ package org.jetbrains.jewel.bridge.theme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.ui.IslandsState
 import java.util.TreeMap
+import javax.swing.UIDefaults
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 
-private val logger = Logger.getInstance("BridgeThemeColorPalette")
+private val logger: Logger = Logger.getInstance("BridgeThemeColorPalette")
 
 public val ThemeColorPalette.windowsPopupBorder: Color?
     get() = lookup("windowsPopupBorder")
 
 public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
-    val gray = readPaletteColors("Gray")
-    val blue = readPaletteColors("Blue")
-    val green = readPaletteColors("Green")
-    val red = readPaletteColors("Red")
-    val yellow = readPaletteColors("Yellow")
-    val orange = readPaletteColors("Orange")
-    val purple = readPaletteColors("Purple")
-    val teal = readPaletteColors("Teal")
+    val isIslands = IslandsState.isEnabled()
+    val gray = readPaletteColors("Gray", isIslands)
+    val blue = readPaletteColors("Blue", isIslands)
+    val green = readPaletteColors("Green", isIslands)
+    val red = readPaletteColors("Red", isIslands)
+    val yellow = readPaletteColors("Yellow", isIslands)
+    val orange = readPaletteColors("Orange", isIslands)
+    val purple = readPaletteColors("Purple", isIslands)
+    val teal = readPaletteColors("Teal", isIslands)
     val windowsPopupBorder = readPaletteColor("windowsPopupBorder")
 
     val rawMap = buildMap {
@@ -45,28 +48,36 @@ public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
         purple = purple.values.toList(),
         teal = teal.values.toList(),
         rawMap = rawMap,
+        isIslands = isIslands,
     )
 }
 
-private fun readPaletteColors(colorName: String): Map<String, Color> {
-    val defaults = uiDefaults
-    val allKeys = defaults.keys
-    val colorNameKeyPrefix = "ColorPalette.$colorName"
+private fun readPaletteColors(colorName: String, isIslands: Boolean): Map<String, Color> {
+    val defaults: UIDefaults = uiDefaults
+    val allKeys: Set<Any> = defaults.keys
+    val colorNameKeyPrefix = if (isIslands) "ColorPalette.${colorName.lowercase()}-" else "ColorPalette.$colorName"
     val colorNameKeyPrefixLength = colorNameKeyPrefix.length
 
     val lastColorIndex =
         allKeys
-            .asSequence()
-            .filterIsInstance(String::class.java)
+            .filterIsInstance<String>()
             .filter { it.startsWith(colorNameKeyPrefix) }
             .mapNotNull {
                 val afterName = it.substring(colorNameKeyPrefixLength)
                 afterName.toIntOrNull()
             }
-            .maxOrNull() ?: return TreeMap()
+            .maxOrNull()
+    if (lastColorIndex == null) return TreeMap()
+
+    val indices =
+        if (isIslands) {
+            (10..lastColorIndex step 10)
+        } else {
+            (1..lastColorIndex)
+        }
 
     return buildMap {
-        for (i in 1..lastColorIndex) {
+        for (i in indices) {
             val key = "$colorNameKeyPrefix$i"
             val value = defaults[key] as? java.awt.Color
             if (value == null) {
@@ -80,7 +91,7 @@ private fun readPaletteColors(colorName: String): Map<String, Color> {
 }
 
 private fun readPaletteColor(colorName: String): Color {
-    val defaults = uiDefaults
+    val defaults: UIDefaults = uiDefaults
     val colorNameKey = "ColorPalette.$colorName"
     return (defaults[colorNameKey] as? java.awt.Color)?.toComposeColor() ?: Color.Unspecified
 }
