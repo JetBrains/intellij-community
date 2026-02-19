@@ -40,10 +40,10 @@ public final class MavenResolveResultProblemProcessor {
     }
   }
 
-  public static void notifyMavenProblems(@NotNull Project project) {
+  public static void notifyMavenProblems(MavenProjectsTree tree, @NotNull Project project) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     MavenSyncConsole syncConsole = projectsManager.getSyncConsole();
-    for (MavenProject mavenProject : projectsManager.getProjects()) {
+    for (MavenProject mavenProject : tree.getProjects()) {
       for (MavenProjectProblem problem : mavenProject.getProblems()) {
         if (!processedWithErrorParsers(problem, project, syncConsole)) {
           syncConsole.showProblem(problem);
