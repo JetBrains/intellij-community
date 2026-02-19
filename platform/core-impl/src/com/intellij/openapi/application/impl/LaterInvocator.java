@@ -394,7 +394,7 @@ public final class LaterInvocator {
   @RequiresEdt
   public static void purgeExpiredItems() {
     if (ourNonBlockingEdtQueue != null) {
-      // in com.intellij.ml.llm.experimental.insights.insight.handler.provider.caches.CancellingExecutorTest, leaks are checked without instantiation of application
+      // in com.intellij.ml.llm.daemon.insight.handler.provider.caches.CancellingExecutorTest, leaks are checked without instantiation of application
       ourNonBlockingEdtQueue.purgeExpiredItems();
     }
   }
