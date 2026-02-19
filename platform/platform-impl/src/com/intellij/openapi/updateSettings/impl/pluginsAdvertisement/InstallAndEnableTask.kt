@@ -58,7 +58,7 @@ class InstallAndEnableTask(
   )
 
 
-  private suspend fun loadPlugins() = runInterruptible { //for proper cancellation
+  suspend fun loadPlugins(): Unit = runInterruptible { //for proper cancellation
     try {
       val marketplacePlugins: List<PluginUiModel> = runBlockingCancellable { MarketplaceRequests.loadLastCompatiblePluginModels(pluginIds) }
       val customPluginNodes = runBlockingCancellable {
