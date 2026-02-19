@@ -145,15 +145,10 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
           .applyToComponent { icon = AllIcons.General.Warning }
           .component
         installButton = button(PyBundle.message("black.install.button.label")) {
-          runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("black.installing.modal.title")) {
-            if (selectedSdk != null) {
-              PythonPackageManagerUI.forSdk(project, selectedSdk!!).installPackageBackground(BlackFormatterUtil.PACKAGE_NAME)?.let {
-                withContext(Dispatchers.EDT) {
-                  isBlackFormatterPackageInstalled = true
-                  enableOnReformatCheckBox.isSelected = true
-                }
-              }
-            }
+          val sdk = selectedSdk ?: return@button
+          PythonPackageManagerUI.forSdk(project, sdk).installPackagesWithModalProgressBlocking(BlackFormatterUtil.PACKAGE_NAME)?.let {
+            isBlackFormatterPackageInstalled = true
+            enableOnReformatCheckBox.isSelected = true
           }
           updateUiState()
         }.component
