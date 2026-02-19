@@ -88,6 +88,18 @@ f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
 - f:isMac():Z
 - f:isWaylandToolkit():Z
 - f:isWindows():Z
+c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
+- *f:getProblematicPluginInfo():com.intellij.openapi.diagnostic.ProblematicPluginInfo
+*:com.intellij.openapi.diagnostic.ProblematicPluginInfo
+- a:getAllowsBundledUpdate():Z
+- a:getName():java.lang.String
+- a:getOrganization():java.lang.String
+- a:getPluginId():com.intellij.openapi.extensions.PluginId
+- a:getVendor():java.lang.String
+- a:getVendorEmail():java.lang.String
+- a:getVendorUrl():java.lang.String
+- a:getVersion():java.lang.String
+- a:isBundled():Z
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
