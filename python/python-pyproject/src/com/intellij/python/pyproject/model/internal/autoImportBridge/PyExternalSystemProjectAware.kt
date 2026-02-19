@@ -3,7 +3,6 @@ package com.intellij.python.pyproject.model.internal.autoImportBridge
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
@@ -17,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.project.stateStore
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
+import com.intellij.python.pyproject.model.internal.PyProjectScopeService
 import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemWithTomlContent
@@ -25,7 +25,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -68,7 +67,7 @@ class PyExternalSystemProjectAware private constructor(
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
-    project.service<PyExternalSystemProjectAwareService>().scope.launchTracked {
+    project.service<PyProjectScopeService>().scope.launchTracked {
       reloadProjectImpl()
     }
   }
@@ -130,8 +129,5 @@ class PyExternalSystemProjectAware private constructor(
 private val PROJECT_AWARE_TOPIC: Topic<ExternalSystemProjectListener> =
   Topic(ExternalSystemProjectListener::class.java, Topic.BroadcastDirection.NONE)
 
-
-@Service(Service.Level.PROJECT)
-private class PyExternalSystemProjectAwareService(val scope: CoroutineScope)
 
 private val log = fileLogger()
