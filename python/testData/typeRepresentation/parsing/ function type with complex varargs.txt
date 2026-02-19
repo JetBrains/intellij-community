@@ -10,7 +10,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiElement(Py:LPAR)('(')
       PyStarExpression
         PsiElement(Py:MULT)('*')
-        PyNamedParameterTypeRepresentation
+        PyNamedParameterTypeRepresentation('args')
           PsiElement(Py:IDENTIFIER)('args')
           PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')
@@ -27,7 +27,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiWhiteSpace(' ')
       PyDoubleStarExpression
         PsiElement(Py:EXP)('**')
-        PyNamedParameterTypeRepresentation
+        PyNamedParameterTypeRepresentation('kwargs')
           PsiElement(Py:IDENTIFIER)('kwargs')
           PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')
