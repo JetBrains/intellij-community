@@ -39,6 +39,10 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
       return super.getTracerFor(chain, session)
     }
 
+    if (!support.canHandleChain(chain)) {
+      return super.getTracerFor(chain, session)
+    }
+
     val isSupportedVm = withDebugContext(debugProcess.debuggerSession.contextManager.context) {
       val vm = VirtualMachineProxyImpl.getCurrent()
       isSupportedVm(vm)

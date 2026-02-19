@@ -62,11 +62,11 @@ abstract class LibrarySupportBase(private val compatibleLibrary: EvaluateExpress
     }
   }
 
-  protected fun addIntermediateOperationsSupport(vararg operations: IntermediateOperation) {
+  protected open fun addIntermediateOperationsSupport(vararg operations: IntermediateOperation) {
     operations.forEach { mySupportedIntermediateOperations[it.name] = it }
   }
 
-  protected fun addTerminationOperationsSupport(vararg operations: TerminalOperation) {
+  protected open fun addTerminationOperationsSupport(vararg operations: TerminalOperation) {
     operations.forEach { mySupportedTerminalOperations[it.name] = it }
   }
 

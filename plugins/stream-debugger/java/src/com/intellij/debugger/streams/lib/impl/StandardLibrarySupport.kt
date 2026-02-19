@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
 import com.intellij.debugger.streams.core.lib.impl.FilterOperation
 import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
-import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
 import com.intellij.debugger.streams.core.lib.impl.MappingOperation
 import com.intellij.debugger.streams.core.lib.impl.SortedOperation
 import com.intellij.debugger.streams.core.lib.impl.ToCollectionOperation
@@ -14,16 +13,11 @@ import com.intellij.debugger.streams.core.trace.impl.interpret.AnyMatchTraceInte
 import com.intellij.debugger.streams.core.trace.impl.interpret.NoneMatchTraceInterpreter
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
 import com.intellij.debugger.streams.trace.breakpoint.JavaBreakpointPositionResolver
-import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
-import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
-import com.intellij.debugger.streams.trace.breakpoint.instrumentation.CounterBasedBreakpointBasedHandlerFactory
 
 /**
  * @author Vitaliy.Bibaev
  */
-class StandardLibrarySupport
-  : LibrarySupportBase(), BreakpointBasedLibrarySupport {
-
+class StandardLibrarySupport : JvmLibrarySupportBase() {
   init {
     addIntermediateOperationsSupport(FilterOperation("filter"),
                                      FilterOperation("limit"),
@@ -58,9 +52,6 @@ class StandardLibrarySupport
                                     ToCollectionOperation("toList"),
                                     ToCollectionOperation("collect"))
   }
-
-  override fun createRuntimeHandlerFactory(objectStorage: ObjectStorage): BreakpointBasedHandlerFactory =
-    CounterBasedBreakpointBasedHandlerFactory(objectStorage)
 
   override val breakpointResolverFactory: BreakpointPositionResolver = JavaBreakpointPositionResolver()
 }

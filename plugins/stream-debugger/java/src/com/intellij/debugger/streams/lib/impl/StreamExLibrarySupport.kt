@@ -7,7 +7,6 @@ import com.intellij.debugger.streams.core.lib.impl.ConcatOperation
 import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
 import com.intellij.debugger.streams.core.lib.impl.FilterOperation
 import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
-import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
 import com.intellij.debugger.streams.core.lib.impl.MappingOperation
 import com.intellij.debugger.streams.core.lib.impl.OrderBasedOperation
 import com.intellij.debugger.streams.core.lib.impl.SortedOperation
@@ -25,7 +24,7 @@ import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctValuesHa
  * @author Vitaliy.Bibaev
  */
 class StreamExLibrarySupport
-  : LibrarySupportBase(StandardLibrarySupport()) {
+  : JvmLibrarySupportBase(StandardLibrarySupport()) {
   init {
     addIntermediateOperationsSupport(*filterOperations(
       "atLeast", "atMost", "less", "greater", "filterBy", "filterKeys", "filterValues", "filterKeyValue",
