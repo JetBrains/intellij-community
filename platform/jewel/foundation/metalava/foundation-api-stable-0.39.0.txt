@@ -940,7 +940,7 @@ package org.jetbrains.jewel.foundation.theme {
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class ThemeColorPalette {
-    ctor public ThemeColorPalette(java.util.List<androidx.compose.ui.graphics.Color> gray, java.util.List<androidx.compose.ui.graphics.Color> blue, java.util.List<androidx.compose.ui.graphics.Color> green, java.util.List<androidx.compose.ui.graphics.Color> red, java.util.List<androidx.compose.ui.graphics.Color> yellow, java.util.List<androidx.compose.ui.graphics.Color> orange, java.util.List<androidx.compose.ui.graphics.Color> purple, java.util.List<androidx.compose.ui.graphics.Color> teal, java.util.Map<java.lang.String,androidx.compose.ui.graphics.Color> rawMap);
+    ctor public ThemeColorPalette(java.util.List<androidx.compose.ui.graphics.Color> gray, java.util.List<androidx.compose.ui.graphics.Color> blue, java.util.List<androidx.compose.ui.graphics.Color> green, java.util.List<androidx.compose.ui.graphics.Color> red, java.util.List<androidx.compose.ui.graphics.Color> yellow, java.util.List<androidx.compose.ui.graphics.Color> orange, java.util.List<androidx.compose.ui.graphics.Color> purple, java.util.List<androidx.compose.ui.graphics.Color> teal, java.util.Map<java.lang.String,androidx.compose.ui.graphics.Color> rawMap, boolean isIslands);
     method @Deprecated public long blue(int index);
     method public androidx.compose.ui.graphics.Color? blueOrNull(int index);
     method public java.util.List<androidx.compose.ui.graphics.Color> getBlue();

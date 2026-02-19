@@ -88,7 +88,7 @@ internal object IntUiThemeDescriptorReader {
 
         addProperty(
             PropertySpec.builder("colors", colorPaletteClassName, KModifier.OVERRIDE)
-                .initializer("ThemeColorPalette(%L,\n%L\n)", colorGroups.joinToCode(","), rawMap)
+                .initializer("ThemeColorPalette(%L,\n%L,\nisIslands = false\n)", colorGroups.joinToCode(","), rawMap)
                 .build()
         )
     }
