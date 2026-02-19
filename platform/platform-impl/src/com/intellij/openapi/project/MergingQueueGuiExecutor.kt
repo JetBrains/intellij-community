@@ -92,7 +92,6 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   }
 
   private val mySingleTaskExecutor: SingleTaskExecutor
-  private val mySuspended = AtomicBoolean()
   private val myListener: ExecutorStateListener = SafeExecutorStateListenerWrapper(listener)
   protected val guiSuspender: MergingQueueGuiSuspender = MergingQueueGuiSuspender()
   private val myProgressTitle: @ProgressTitle String = progressTitle
@@ -113,7 +112,6 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     return guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender, Supplier<SubmissionReceipt?> {
       while (true) {
         if (project.isDisposed) return@Supplier null
-        if (mySuspended.get()) return@Supplier null
 
         // There is no race: we either observe correct latestSubmittedReceipt and no next task, either non-null next task
         // (latestSubmittedReceipt might be stale then, but it is not used in this case anyway)
@@ -145,7 +143,6 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   fun startBackgroundProcess(onFinish: () -> Unit) {
     var startedInBackground = false
     try {
-      if (mySuspended.get()) return
       if (taskQueue.isEmpty) return  // there is no race: client first adds a task to myTaskQueue, then invokes startBackgroundProcess
       // this means that if myTaskQueue empty, then recently added task is already handled
 
@@ -294,38 +291,6 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
    * @return state containing `true` if some task is currently executed in background thread.
    */
   val isRunning: StateFlow<Boolean> = mySingleTaskExecutor.isRunning
-
-  /**
-   * Modification tracker that increases each time the executor starts or stops
-   *
-   * This is not the same as [isRunning], because [isRunning] is a state flow, meaning that it is conflated and deduplicated, i.e. short
-   * transitions true-false-true can be missed in [isRunning]. [startedOrStoppedEvent] is still conflated, but never miss the latest event.
-   *
-   * TODO: [isRunning] should be a shared flow without deduplication, then we wont need [startedOrStoppedEvent]
-   */
-  val startedOrStoppedEvent: Flow<*> = mySingleTaskExecutor.modificationTrackerAsFlow
-
-  /**
-   * Suspends queue in this executor: new tasks will be added to the queue, but they will not be executed until [resumeQueue]
-   * is invoked. Already running task still continues to run.
-   * Does nothing if the queue is already suspended.
-   */
-  fun suspendQueue() {
-    mySuspended.set(true)
-    mySingleTaskExecutor.clearScheduledFlag()
-  }
-
-  /**
-   * Resumes queue in this executor after [suspendQueue]. All the queued tasks will be scheduled for execution immediately.
-   * Does nothing if the queue was not suspended.
-   */
-  fun resumeQueue(onFinish: () -> Unit) {
-    if (mySuspended.compareAndSet(true, false)) {
-      if (!taskQueue.isEmpty) {
-        startBackgroundProcess(onFinish)
-      }
-    }
-  }
 
   fun suspendAndRun(activityName: @ProgressText String, activity: Runnable) {
     guiSuspender.suspendAndRun(activityName, activity)
