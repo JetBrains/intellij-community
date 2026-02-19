@@ -59,12 +59,21 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
     }
 
     runWithMessageFile(project, root, fullMessage) { messageFile ->
-      commitStaged(messageFile)
+      performCommit(messageFile)
     }
+
+    performPostCommitSquashIfNeeded(commitMessage)
+  }
+
+  @Deprecated("Use commitStaged(commitMessage: String) instead")
+  @Throws(VcsException::class)
+  fun commitStaged(messageFile: File) {
+    performCommit(messageFile)
+    // doesn't perform post-commit operations
   }
 
   @Throws(VcsException::class)
-  fun commitStaged(messageFile: File) {
+  private fun performCommit(messageFile: File) {
     val pinentryProblemDetector = GitPinentryProblemDetector()
     val gpgProblemDetector = GitGpgProblemDetector()
     val emptyCommitProblemDetector = GitEmptyCommitProblemDetector()
@@ -95,6 +104,12 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
         throw VcsException(GitBundle.message("git.commit.nothing.to.commit.error.message"))
       }
       throw e
+    }
+  }
+
+  private fun performPostCommitSquashIfNeeded(commitMessage: String) {
+    if (commitOptions.commitToAmend is CommitToAmend.Specific) {
+      GitAmendSpecificCommitSquasher.squashLastCommitIntoTarget(repository, commitOptions.commitToAmend.targetHash, commitMessage)
     }
   }
 }
