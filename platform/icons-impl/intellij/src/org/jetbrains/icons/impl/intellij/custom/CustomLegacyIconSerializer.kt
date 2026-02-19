@@ -11,6 +11,6 @@ abstract class CustomLegacyIconSerializer<T : Icon>(
   @ApiStatus.Internal
   companion object: CustomSerializableRegistration.Companion<Icon, CustomLegacyIconSerializer<*>>(
     Icon::class,
-    "com.intellij.customLegacyIconSerializer"
+    "com.intellij.icons.customLegacyIconSerializer"
   )
 }

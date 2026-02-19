@@ -18,12 +18,9 @@ interface IconManager {
   /**
    * @see org.jetbrains.icons.deferredIcon
    */
-  fun deferredIcon(placeholder: Icon?, identifier: String? = null, preventClashes: Boolean = true, evaluator: (String) -> Icon?): Icon
+  fun deferredIcon(placeholder: Icon?, identifier: String? = null, classLoader: ClassLoader? = null, evaluator: suspend () -> Icon): Icon
 
-  /**
-   * @see org.jetbrains.icons.deferredIconAsync
-   */
-  fun deferredIconAsync(placeholder: Icon?, identifier: String? = null, preventClashes: Boolean = true, evaluator: suspend (String) -> Icon?): Icon
+  suspend fun forceEvaluation(icon: DeferredIcon): Icon
 
   /**
    * Converts specific Icon to swing Icon.
@@ -79,19 +76,13 @@ fun icon(designer: IconDesigner.() -> Unit): Icon = IconManager.getInstance().ic
  *
  * To cache such icons and synchronize them over the network, some identifier should be given.
  * Implementations might try to prefix the identifier with the source pluginId/moduleId to avoid clashes.
- * If the identifier should be global, preventClashes can be set to false to disable this.
  *
  * If the identifier is not passed, an automatic one is created, however, this will prevent the result
  * from being cached, as a new one is generated per each deferredIcon() call.
+ *
+ * @param classLoader This classLoader might be used to prevent id clashes (prefix with pluginId & moduleId if possible for example)
  */
-fun deferredIcon(placeholder: Icon?, identifier: String? = null, preventClashes: Boolean = true, evaluator: (String) -> Icon?): Icon =
-  IconManager.getInstance().deferredIcon(placeholder, identifier, preventClashes, evaluator)
-
-/**
- * Alternative for deferredIcon that accepts suspending functions.
- * @see deferredIcon
- */
-fun deferredIconAsync(placeholder: Icon?, identifier: String? = null, preventClashes: Boolean = true, evaluator: suspend (String) -> Icon?): Icon =
-  IconManager.getInstance().deferredIconAsync(placeholder, identifier, preventClashes, evaluator)
+fun deferredIcon(placeholder: Icon?, identifier: String? = null, classLoader: ClassLoader? = null, evaluator: suspend () -> Icon): Icon =
+  IconManager.getInstance().deferredIcon(placeholder, identifier, classLoader, evaluator)
 
 fun imageIcon(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier): Icon = icon { image(path, classLoader, modifier) }

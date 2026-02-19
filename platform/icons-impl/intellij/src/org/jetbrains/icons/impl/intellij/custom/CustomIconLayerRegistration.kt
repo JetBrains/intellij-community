@@ -11,6 +11,6 @@ abstract class CustomIconLayerRegistration<T : IconLayer>(
   @ApiStatus.Internal
   companion object: CustomSerializableRegistration.Companion<IconLayer, CustomIconLayerRegistration<*>>(
     IconLayer ::class,
-    "com.intellij.customIconLayer"
+    "com.intellij.icons.customLayer"
   )
 }

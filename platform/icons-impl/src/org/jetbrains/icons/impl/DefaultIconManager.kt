@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.icons.impl
 
+import StringIconIdentifier
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.serialDescriptor
@@ -14,6 +16,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.SerializersModuleBuilder
 import org.jetbrains.icons.DeferredIcon
 import org.jetbrains.icons.Icon
+import org.jetbrains.icons.IconIdentifier
 import org.jetbrains.icons.IconManager
 import org.jetbrains.icons.impl.layers.AnimatedIconLayer
 import org.jetbrains.icons.impl.layers.IconIconLayer
@@ -21,29 +24,73 @@ import org.jetbrains.icons.impl.layers.ImageIconLayer
 import org.jetbrains.icons.impl.layers.LayoutIconLayer
 import org.jetbrains.icons.impl.layers.ShapeIconLayer
 import org.jetbrains.icons.modifiers.IconModifier
+import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class DefaultIconManager: IconManager {
-  override fun deferredIcon(placeholder: Icon?, identifier: String?, preventClashes: Boolean, evaluator: (String) -> Icon?): Icon {
-    return DefaultDeferredIcon(identifier, placeholder)
+  protected abstract val resolverService: DeferredIconResolverService
+
+  private val deferredIconDeserializer by lazy {
+    DefaultDeferredIconSerializer(this)
   }
 
-  override fun deferredIconAsync(placeholder: Icon?, identifier: String?, preventClashes: Boolean, evaluator: suspend (String) -> Icon?): Icon {
-    return DefaultDeferredIcon(identifier,  placeholder)
+  override fun deferredIcon(placeholder: Icon?, identifier: String?, classLoader: ClassLoader?, evaluator: suspend () -> Icon): Icon {
+    return resolverService.getOrCreateDeferredIcon(
+      generateDeferredIconIdentifier(identifier, classLoader),
+      placeholder
+    ) { id, ref ->
+      createDeferredIconResolver(id, ref, evaluator)
+    }
   }
 
-  protected open fun SerializersModuleBuilder.buildCustomSerializers() {
-    // Register nothing in default implementation
+  internal fun registerDeserializedDeferredIcon(icon: DefaultDeferredIcon): DefaultDeferredIcon {
+    return resolverService.register(icon) { id, ref ->
+      createDeferredIconResolver(id, ref, null)
+    }
   }
+
+  protected open fun generateDeferredIconIdentifier(id: String?, classLoader: ClassLoader? = null): IconIdentifier {
+    if (id != null) return StringIconIdentifier(id)
+    return StringIconIdentifier("dynamicIcon_" + dynamicIconNextId.getAndIncrement().toString())
+  }
+
+  override suspend fun forceEvaluation(icon: DeferredIcon): Icon {
+    return resolverService.forceEvaluation(icon)
+  }
+
+  fun scheduleEvaluation(icon: DeferredIcon) {
+    resolverService.scheduleEvaluation(icon)
+  }
+
+  protected open fun createDeferredIconResolver(
+    id: IconIdentifier,
+    ref: WeakReference<DefaultDeferredIcon>,
+    evaluator: (suspend () -> Icon)?,
+  ): DeferredIconResolver {
+    if (evaluator == null) error("Evaluator is not specified for icon $id")
+    return InPlaceDeferredIconResolver(resolverService, id, ref, evaluator)
+  }
+
+  open fun SerializersModuleBuilder.buildCustomSerializers() {
+    // Add nothing by default
+  }
+  abstract suspend fun sendDeferredNotifications(id: IconIdentifier, result: Icon)
+  abstract fun markDeferredIconUnused(id: IconIdentifier)
 
   override fun getSerializersModule(): SerializersModule {
     return SerializersModule {
       polymorphic(Icon::class, DefaultLayeredIcon::class, DefaultLayeredIcon.serializer())
-      polymorphic(Icon::class, DefaultDeferredIcon::class, DefaultDeferredIcon.serializer())
-      polymorphic(DeferredIcon::class, DefaultDeferredIcon::class, DefaultDeferredIcon.serializer())
+      polymorphic(Icon::class, DefaultDeferredIcon::class, deferredIconDeserializer)
+      polymorphic(DeferredIcon::class, DefaultDeferredIcon::class, deferredIconDeserializer)
       polymorphic(
         IconModifier::class,
         IconModifier.Companion::class,
         IconModifierConstSerializer
+      )
+      polymorphic(
+        IconIdentifier::class,
+        StringIconIdentifier::class,
+        StringIconIdentifier.serializer()
       )
 
       iconLayer(AnimatedIconLayer::class)
@@ -60,7 +107,13 @@ abstract class DefaultIconManager: IconManager {
     error("Swing Icons are not supported.")
   }
 
-  private var dynamicIconNextId = 0
+  companion object {
+    fun getDefaultManagerInstance(): DefaultIconManager {
+      return IconManager.getInstance() as? DefaultIconManager ?: error("IconManager is not DefaultIconManager.")
+    }
+
+    private val dynamicIconNextId = AtomicInteger()
+  }
 }
 
 private object IconModifierConstSerializer : KSerializer<IconModifier.Companion> {

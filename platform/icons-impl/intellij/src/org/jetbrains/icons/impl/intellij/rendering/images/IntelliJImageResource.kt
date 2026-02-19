@@ -4,7 +4,6 @@ package org.jetbrains.icons.impl.intellij.rendering.images
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.JBHiDPIScaledImage
-import org.jetbrains.icons.impl.rendering.AwtImageResource
 import org.jetbrains.icons.impl.rendering.CachedGPUImageResourceHolder
 import org.jetbrains.icons.rendering.BitmapImageResource
 import org.jetbrains.icons.rendering.Bounds

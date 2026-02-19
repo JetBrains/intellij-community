@@ -79,7 +79,7 @@ internal fun DecoratedWindowScope.TitleBarView() {
                     { Desktop.getDesktop().browse(URI.create(jewelGithubLink)) },
                     Modifier.size(40.dp).padding(5.dp),
                 ) {
-                    Icon(ShowcaseIcons.gitHubKey, "Github")
+                    Icon(ShowcaseIcons.gitHub, "Github")
                 }
             }
 
@@ -121,7 +121,7 @@ internal fun DecoratedWindowScope.TitleBarView() {
                             )
 
                         IntUiThemes.Dark ->
-                            Icon(ShowcaseIcons.themeDarkKey, contentDescription = "Dark")
+                            Icon(ShowcaseIcons.themeDark, contentDescription = "Dark")
 
                         IntUiThemes.System ->
                             Icon(

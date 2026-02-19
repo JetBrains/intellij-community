@@ -7,7 +7,6 @@ create_kotlinc_options(
   opt_in = [
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "org.jetbrains.icons.api.ExperimentalIconsApi",
   ],
   plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"]
 )

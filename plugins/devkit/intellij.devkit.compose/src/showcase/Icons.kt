@@ -25,7 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import org.jetbrains.icons.Icon
 import org.jetbrains.icons.IconManager
-import org.jetbrains.icons.deferredIconAsync
+import org.jetbrains.icons.deferredIcon
 import org.jetbrains.icons.design.Circle
 import org.jetbrains.icons.design.IconAlign
 import org.jetbrains.icons.design.percent
@@ -136,7 +136,7 @@ internal fun Icons(project: Project) {
     ShowcaseIcon(
       deferredIcon.toNewIcon(),
       deferredIcon,
-      "Deferred Icon"
+      "Legacy Deferred Icon"
     )
   )
 
@@ -149,7 +149,7 @@ internal fun Icons(project: Project) {
   })
 
   val json = Json { serializersModule = IconManager.getInstance().getSerializersModule() }
-  val dynIcon = deferredIconAsync(missingIcon) {
+  val dynIcon = deferredIcon(missingIcon) {
     delay(5000)
     icon {
       icon(missingIcon, modifier = IconModifier.patchSvg {
@@ -164,7 +164,7 @@ internal fun Icons(project: Project) {
     ShowcaseIcon(
       dynIcon,
       null,
-      "Dynamic Icon"
+      "Deferred Icon"
     )
   })
 
@@ -172,7 +172,7 @@ internal fun Icons(project: Project) {
     ShowcaseIcon(
       deserialized,
       null,
-      "Deserialized Dynamic Icon"
+      "Deserialized Deferred Icon"
     )
   })
 

@@ -20,6 +20,6 @@ interface CustomIconLayerRendererProvider {
       return null
     }
 
-    val EP_NAME: ExtensionPointName<CustomIconLayerRendererProvider> = ExtensionPointName("com.intellij.icons.customIconLayerRendererProvider")
+    val EP_NAME: ExtensionPointName<CustomIconLayerRendererProvider> = ExtensionPointName("com.intellij.icons.customLayerRendererProvider")
   }
 }

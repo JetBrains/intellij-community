@@ -5,8 +5,10 @@ package org.jetbrains.jewel.intui.standalone.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import org.jetbrains.icons.IconManager
 import org.jetbrains.jewel.foundation.DisabledAppearanceValues
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
@@ -20,6 +22,7 @@ import org.jetbrains.jewel.intui.standalone.IntUiMessageResourceResolver
 import org.jetbrains.jewel.intui.standalone.IntUiTypography
 import org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
 import org.jetbrains.jewel.intui.standalone.StandalonePlatformCursorController
+import org.jetbrains.jewel.intui.standalone.icon.StandaloneIconManager
 import org.jetbrains.jewel.intui.standalone.icon.StandaloneNewUiChecker
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneMenuItemShortcutHintProvider
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
@@ -1075,6 +1078,8 @@ public fun IntUiTheme(
     swingCompatMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val managerScope = rememberCoroutineScope()
+    IconManager.activate(StandaloneIconManager(managerScope))
     BaseJewelTheme(theme, ComponentStyling.default().with(styling), swingCompatMode) {
         CompositionLocalProvider(
             LocalPainterHintsProvider provides StandalonePainterHintsProvider(theme),

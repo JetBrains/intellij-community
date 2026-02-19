@@ -270,9 +270,6 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.analysis")
     embeddedModule("intellij.platform.analysis.impl")
 
-    embeddedModule("intellij.platform.icons.api")
-    embeddedModule("intellij.platform.icons.api.rendering")
-
     // Include minimal RPC infrastructure AFTER core platform modules
     // (kernel depends on platform.core, so core must be available first)
     moduleSet(rpcMinimal())
@@ -346,7 +343,6 @@ object CoreModuleSets {
     // IDE implementation (depends on lang.core, so must come after)
     embeddedModule("intellij.platform.ide.impl")
 
-    embeddedModule("intellij.platform.icons.impl")
     embeddedModule("intellij.platform.icons.impl.intellij")
 
     // Additional dependencies specific to lang.impl and ide.impl

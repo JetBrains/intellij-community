@@ -192,11 +192,11 @@ public fun Icons(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Image(ShowcaseIcons.jewelLogoKey, contentDescription = "Jewel Logo", modifier = Modifier.size(96.dp))
+                Image(ShowcaseIcons.jewelLogo, contentDescription = "Jewel Logo", modifier = Modifier.size(96.dp))
 
                 // Note: this currently looks identical to the hint-less image due to JEWEL-971
                 Image(
-                    iconKey = ShowcaseIcons.jewelLogoKey,
+                    iconKey = ShowcaseIcons.jewelLogo,
                     contentDescription = "Jewel Logo with hint",
                     hints = arrayOf(Stroke(Color.Red)),
                     modifier = Modifier.size(96.dp),

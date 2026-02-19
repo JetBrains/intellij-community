@@ -2,7 +2,12 @@
 package org.jetbrains.icons.impl.rendering
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.icons.DeferredIcon
+import org.jetbrains.icons.Icon
+import org.jetbrains.icons.IconManager
 import org.jetbrains.icons.impl.DefaultDeferredIcon
+import org.jetbrains.icons.impl.DefaultIconManager
+import org.jetbrains.icons.impl.DeferredIconEventHandler
 import org.jetbrains.icons.rendering.Dimensions
 import org.jetbrains.icons.rendering.IconRenderer
 import org.jetbrains.icons.rendering.LoadingStrategy
@@ -11,17 +16,29 @@ import org.jetbrains.icons.rendering.RenderingContext
 import org.jetbrains.icons.rendering.ScalingContext
 import org.jetbrains.icons.rendering.createRenderer
 
-// TODO Implement actual resolving & data transfer
 internal class DefaultDeferredIconRenderer(
   override val icon: DefaultDeferredIcon,
   val renderingContext: RenderingContext,
-  loadingStrategy: LoadingStrategy
-): IconRenderer {
-  private var currentIcon = icon.currentIcon
-  private var renderer = currentIcon?.createRenderer(renderingContext, loadingStrategy)
+  val loadingStrategy: LoadingStrategy
+): IconRenderer, DeferredIconEventHandler {
+  private var isDone = false
+  private var renderer = icon.placeholder?.createRenderer(renderingContext, loadingStrategy)
+
+  override fun whenDone(deferredIcon: DeferredIcon, resolvedIcon: Icon) {
+    val oldRenderer = renderer
+    val strategy = if (oldRenderer != null) {
+      LoadingStrategy.RenderPlaceholder(oldRenderer)
+    } else loadingStrategy
+    renderer = resolvedIcon.createRenderer(renderingContext, strategy)
+    isDone = true
+    renderingContext.updateFlow.triggerUpdate()
+  }
 
   @ApiStatus.Internal
   override fun render(api: PaintingApi) {
+    if (!isDone) {
+      DefaultIconManager.getDefaultManagerInstance().scheduleEvaluation(icon)
+    }
     renderer?.render(api)
   }
 

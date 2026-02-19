@@ -37,18 +37,10 @@ class ModuleImageResourceLocation(
 
   companion object {
     fun fromClassLoader(path: String, classLoader: ClassLoader): ImageResourceLocation {
-      val (pluginId, moduleId) = getPluginAndModuleId(classLoader)
+      val (pluginId, moduleId) = IntelliJIconManager.getPluginAndModuleId(classLoader)
       return ModuleImageResourceLocation(path, pluginId, moduleId)
     }
 
-    private fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> {
-      if (classLoader is PluginAwareClassLoader) {
-        return classLoader.pluginId.idString to classLoader.moduleId
-      }
-      else {
-        return "com.intellij" to null
-      }
-    }
   }
 
 }

@@ -4,7 +4,6 @@ package org.jetbrains.icons.impl.intellij.rendering
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.icons.impl.intellij.rendering.custom.CustomIconLayerRendererProvider
 import org.jetbrains.icons.rendering.ImageModifiers
 import org.jetbrains.icons.rendering.MutableIconUpdateFlow
@@ -16,7 +15,6 @@ import org.jetbrains.icons.impl.rendering.DefaultImageModifiers
 import org.jetbrains.icons.impl.rendering.layers.IconLayerRenderer
 
 @Suppress("UNCHECKED_CAST")
-@OptIn(InternalIconsApi::class, ExperimentalIconsApi::class)
 class IntelliJIconRendererManager: DefaultIconRendererManager() {
   override fun createRenderer(layer: IconLayer, renderingContext: RenderingContext): IconLayerRenderer {
     val defaultRenderer = createRendererOrNull(layer, renderingContext)

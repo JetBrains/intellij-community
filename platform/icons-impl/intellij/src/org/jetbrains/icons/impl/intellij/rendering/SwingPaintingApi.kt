@@ -1,8 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.icons.impl.rendering
+package org.jetbrains.icons.impl.intellij.rendering
 
 import org.jetbrains.icons.design.Color
 import org.jetbrains.icons.filters.ColorFilter
+import org.jetbrains.icons.impl.intellij.rendering.images.awtImage
 import org.jetbrains.icons.rendering.BitmapImageResource
 import org.jetbrains.icons.rendering.Bounds
 import org.jetbrains.icons.rendering.DrawMode
@@ -20,7 +21,6 @@ import java.awt.RenderingHints
 import java.awt.Shape
 import java.awt.geom.Ellipse2D
 import java.awt.geom.Rectangle2D
-import kotlin.text.toInt
 
 class SwingPaintingApi(
   val c: Component?,
@@ -48,7 +48,7 @@ class SwingPaintingApi(
   override fun getUsedBounds(): Bounds = bounds
 
   override fun withCustomContext(bounds: Bounds, overrideColorFilter: ColorFilter?): PaintingApi {
-    return _root_ide_package_.org.jetbrains.icons.impl.rendering.SwingPaintingApi(
+    return SwingPaintingApi(
         c,
         g,
         x,

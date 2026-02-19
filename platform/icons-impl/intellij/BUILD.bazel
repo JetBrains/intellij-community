@@ -1,14 +1,5 @@
 ### auto-generated section `build intellij.platform.icons.impl.intellij` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-create_kotlinc_options(
-  name = "custom_intellij",
-  api_version = "2.2",
-  language_version = "2.2",
-  progressive = False,
-  x_x_language = []
-)
 
 resourcegroup(
   name = "intellij_resources",
@@ -22,7 +13,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":intellij_resources"],
-  kotlinc_opts = ":custom_intellij",
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -39,6 +29,12 @@ jvm_library(
     "//platform/core-ui",
     "//libraries/kotlinx/serialization/core",
     "@lib//:jetbrains-annotations",
+    "//platform/util/concurrency",
+  ],
+  exports = [
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-impl",
   ]
 )
 
@@ -46,7 +42,6 @@ jvm_library(
   name = "intellij_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_intellij",
   associates = [":intellij"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -71,6 +66,13 @@ jvm_library(
     "@lib//:assert_j",
     "//libraries/kotlinx/serialization/core",
     "@lib//:jetbrains-annotations",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ],
+  exports = [
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij` end

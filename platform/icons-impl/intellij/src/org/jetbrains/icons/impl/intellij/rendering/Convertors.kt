@@ -8,7 +8,6 @@ import org.jetbrains.icons.filters.ColorFilter
 import org.jetbrains.icons.filters.TintColorFilter
 import org.jetbrains.icons.patchers.SvgPatchOperation
 import org.jetbrains.icons.patchers.SvgPatcher
-import org.jetbrains.icons.impl.rendering.toAwtColor
 import java.awt.Color
 import java.awt.image.RGBImageFilter
 

@@ -34,9 +34,15 @@ abstract class DefaultIconRendererManager: IconRendererManager, IconLayerManager
   protected fun createRendererOrNull(icon: Icon, context: RenderingContext, loadingStrategy: LoadingStrategy): IconRenderer? {
     return when (icon) {
       is DefaultLayeredIcon -> DefaultIconRenderer(icon, context, loadingStrategy)
-      is DefaultDeferredIcon -> DefaultDeferredIconRenderer(icon, context, loadingStrategy)
+      is DefaultDeferredIcon -> createDeferredIconRenderer(icon, context, loadingStrategy)
       else -> null
     }
+  }
+
+  private fun createDeferredIconRenderer(icon: DefaultDeferredIcon, context: RenderingContext, loadingStrategy: LoadingStrategy): IconRenderer {
+    val renderer = DefaultDeferredIconRenderer(icon, context, loadingStrategy)
+    icon.addDoneListener(renderer)
+    return renderer
   }
 
   override fun createRenderer(layer: IconLayer, renderingContext: RenderingContext): IconLayerRenderer {

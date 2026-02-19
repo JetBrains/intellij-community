@@ -27,7 +27,6 @@ import org.junit.jupiter.api.Test
 @OptIn(DelicateCoroutinesApi::class)
 @TestApplication
 class DynamicIconTest {
-  @OptIn(ExperimentalIconsApi::class)
 
   @Test
   fun `should be properly updated after serialization and deserialization`() {
