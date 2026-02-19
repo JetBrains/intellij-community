@@ -14,12 +14,13 @@ import com.intellij.openapi.extensions.PluginId
 /**
  * Describes a group of errors with the same stracktrace in [com.intellij.diagnostic.IdeErrorsDialog].
  */
-internal class ErrorMessageCluster(val first: AbstractMessage) {
+internal class ErrorMessageCluster(val messages: List<AbstractMessage>) {
+  val first = messages.first()
   val pluginId: PluginId? = PluginUtil.getInstance().findPluginId(first.throwable)
   val plugin: IdeaPluginDescriptor? = PluginManagerCore.getPlugin(pluginId)
   val submitter: ErrorReportSubmitter? = DefaultIdeaErrorLogger.findSubmitter(first.throwable, plugin)
+  @Volatile
   var detailsText: String? = detailsText()
-  val messages: MutableList<AbstractMessage> = ArrayList()
 
   private fun detailsText(): String? {
     val t = first.throwable
