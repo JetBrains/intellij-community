@@ -505,6 +505,7 @@ internal class AgentSessionsLoadingCoordinator(
           queueSizeAfterRequeue = pendingSourceRefreshProviders.size
         }
         LOG.debug {
+          @Suppress("SpellCheckingInspection")
           "Source refresh gate blocked id=$refreshId provider=${provider.value}; requeued (queueSize=$queueSizeAfterRequeue)"
         }
         delay(SOURCE_REFRESH_GATE_RETRY_MS.milliseconds)

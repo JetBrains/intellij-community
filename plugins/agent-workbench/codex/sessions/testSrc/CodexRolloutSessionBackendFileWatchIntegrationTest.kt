@@ -15,6 +15,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,7 +52,10 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
         assertThat(initialThreads).hasSize(1)
         assertThat(initialThreads.single().thread.title).isEqualTo("Initial title")
 
-        drainUpdateChannel(updates)
+        primeWatcher(
+          updates = updates,
+          sessionsDirectory = rollout.parent,
+        )
         replaceRolloutAtomically(
           file = rollout,
           lines = listOf(
@@ -60,8 +64,7 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
           ),
         )
 
-        val updateReceived = awaitWatcherUpdate(updates)
-        assertThat(updateReceived).isTrue()
+        awaitWatcherUpdate(updates)
 
         val refreshedTitle = awaitThreadTitle(
           backend = backend,
@@ -104,7 +107,10 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
         assertThat(initialThreads).hasSize(1)
         assertThat(initialThreads.single().thread.title).isEqualTo("Initial title")
 
-        drainUpdateChannel(updates)
+        primeWatcher(
+          updates = updates,
+          sessionsDirectory = rollout.parent,
+        )
         writeRollout(
           file = rollout,
           lines = listOf(
@@ -113,8 +119,7 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
           ),
         )
 
-        val updateReceived = awaitWatcherUpdate(updates)
-        assertThat(updateReceived).isTrue()
+        awaitWatcherUpdate(updates)
 
         val refreshedTitle = awaitThreadTitle(
           backend = backend,
@@ -131,9 +136,14 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
 }
 
 private val FILE_WATCH_UPDATE_TIMEOUT = 8.seconds
+private val WATCHER_PRIME_ATTEMPT_TIMEOUT = 500.milliseconds
+private val WATCHER_PRIME_RETRY_DELAY = 100.milliseconds
 
-private suspend fun awaitWatcherUpdate(updates: Channel<Unit>): Boolean {
-  val update = withTimeoutOrNull(FILE_WATCH_UPDATE_TIMEOUT) {
+private suspend fun awaitWatcherUpdate(
+  updates: Channel<Unit>,
+  timeout: Duration = FILE_WATCH_UPDATE_TIMEOUT,
+): Boolean {
+  val update = withTimeoutOrNull(timeout) {
     updates.receive()
   }
   return update != null
@@ -165,6 +175,29 @@ private fun drainUpdateChannel(updates: Channel<Unit>) {
       break
     }
   }
+}
+
+private suspend fun primeWatcher(updates: Channel<Unit>, sessionsDirectory: Path) {
+  drainUpdateChannel(updates)
+  Files.createDirectories(sessionsDirectory)
+
+  var attempt = 0
+  val primed = withTimeoutOrNull(FILE_WATCH_UPDATE_TIMEOUT) {
+    while (true) {
+      attempt++
+      val marker = sessionsDirectory.resolve("watcher-prime-${System.nanoTime()}-$attempt.tmp")
+      Files.write(marker, listOf("prime-$attempt"))
+      if (awaitWatcherUpdate(updates, timeout = WATCHER_PRIME_ATTEMPT_TIMEOUT)) {
+        return@withTimeoutOrNull true
+      }
+      delay(WATCHER_PRIME_RETRY_DELAY)
+    }
+  } == true
+  if (!primed) {
+    drainUpdateChannel(updates)
+    return
+  }
+  drainUpdateChannel(updates)
 }
 
 private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {

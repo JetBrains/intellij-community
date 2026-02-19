@@ -105,6 +105,38 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
     assertThat(EditorTabPresentationUtil.getEditorTabTitle(project, file)).isEqualTo(title)
   }
 
+  fun testUpdateOpenChatTabTitlesRefreshesExistingTabTitle() {
+    openChatOnEdt(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "Initial title",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    runWithModalProgressBlocking(project, "") {
+      val updatedTabs = updateOpenAgentChatTabTitles(
+        titleByPathAndThreadIdentity = mapOf(
+          (projectPath to "CODEX:thread-1") to "Renamed by source update",
+        ),
+      )
+      assertThat(updatedTabs).isEqualTo(1)
+    }
+
+    assertThat(file.threadTitle).isEqualTo("Renamed by source update")
+    assertThat(EditorTabPresentationUtil.getEditorTabTitle(project, file)).isEqualTo("Renamed by source update")
+
+    runWithModalProgressBlocking(project, "") {
+      val updatedTabs = updateOpenAgentChatTabTitles(
+        titleByPathAndThreadIdentity = mapOf(
+          (projectPath to "CODEX:thread-1") to "Renamed by source update",
+        ),
+      )
+      assertThat(updatedTabs).isEqualTo(0)
+    }
+  }
+
   fun testDifferentSessionIdentitiesDoNotReuseTab() {
     openChatOnEdt(
       threadIdentity = "CODEX:session-1",

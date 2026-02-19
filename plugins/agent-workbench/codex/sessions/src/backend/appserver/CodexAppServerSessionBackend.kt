@@ -19,16 +19,29 @@ class CodexAppServerSessionBackend : CodexSessionBackend {
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<CodexBackendThread>> {
     if (paths.isEmpty()) return emptyMap()
+
+    val pathFilters = resolvePathFilters(paths)
+    if (pathFilters.isEmpty()) return emptyMap()
+
+    val targetCwds = pathFilters.mapTo(HashSet(pathFilters.size)) { (_, cwdFilter) -> cwdFilter }
+    val threadsByCwd = HashMap<String, MutableList<CodexBackendThread>>(targetCwds.size)
     val codexService = service<SharedCodexAppServerService>()
-    val allThreads = codexService.listAllThreads()
-    val pathToCwd = paths.mapNotNull { path ->
-      resolveProjectDirectoryFromPath(path)?.let { dir ->
-        path to normalizeRootPath(dir.invariantSeparatorsPathString)
-      }
+    for (thread in codexService.listAllThreads()) {
+      val cwd = thread.cwd ?: continue
+      if (!targetCwds.contains(cwd)) continue
+      threadsByCwd.getOrPut(cwd) { ArrayList() }.add(CodexBackendThread(thread))
     }
-    return pathToCwd.associate { (path, cwdFilter) ->
-      val matching = allThreads.filter { it.cwd == cwdFilter }
-      path to matching.map { CodexBackendThread(it) }
+
+    return pathFilters.associate { (path, cwdFilter) ->
+      path to threadsByCwd[cwdFilter].orEmpty()
+    }
+  }
+}
+
+private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> {
+  return paths.mapNotNull { path ->
+    resolveProjectDirectoryFromPath(path)?.let { directory ->
+      path to normalizeRootPath(directory.invariantSeparatorsPathString)
     }
   }
 }
