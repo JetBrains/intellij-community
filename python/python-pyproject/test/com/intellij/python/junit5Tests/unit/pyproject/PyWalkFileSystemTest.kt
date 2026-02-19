@@ -38,8 +38,7 @@ class PyWalkFileSystemTest {
 
   @Test
   fun testSunnyDay(): Unit = timeoutRunBlocking {
-    val (files, exclude) = walkFileSystemNoTomlContent(root).orThrow()
-    assertThat("Wrong dirs excluded", exclude, Matchers.containsInAnyOrder(expectedExcludedDir))
+    val files = walkFileSystemNoTomlContent(root).orThrow().rawTomlFiles
     assertThat("Wrong files", files, Matchers.containsInAnyOrder(*expectedTomlFiles))
   }
 

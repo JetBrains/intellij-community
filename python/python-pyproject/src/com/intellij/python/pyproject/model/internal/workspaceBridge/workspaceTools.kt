@@ -8,7 +8,6 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.DependencyScope
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleDependency
@@ -59,7 +58,7 @@ import kotlin.io.path.name
 
 internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWithToml) {
   changeWorkspaceMutex.withLock {
-    val (entries, _) = generatePyProjectTomlEntries(files)
+    val entries = generatePyProjectTomlEntries(files)
     // No pyproject.toml files, no need to touch model at all
     if (entries.isEmpty()) {
       return
@@ -113,8 +112,8 @@ private fun relocateFacetAndSdk(syncStorage: MutableEntityStorage, projectStorag
  */
 private suspend fun generatePyProjectTomlEntries(
   fsInfo: FSWalkInfoWithToml,
-): Pair<Set<PyProjectTomlBasedEntryImpl>, Set<Directory>> = withContext(Dispatchers.Default) {
-  val (files, allExcludeDirs) = fsInfo
+): Set<PyProjectTomlBasedEntryImpl> = withContext(Dispatchers.Default) {
+  val files = fsInfo.tomlFiles
   val entries = ArrayList<PyProjectTomlBasedEntryImpl>()
   val usedNamed = mutableSetOf<String>()
   val tools = Tool.EP.extensionList
@@ -141,7 +140,6 @@ private suspend fun generatePyProjectTomlEntries(
     val sourceRootsAndTools = tools.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
     val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
     participatedTools.addAll(sourceRootsAndTools.map { it.first.id })
-    val excludedDirs = allExcludeDirs.filter { it.startsWith(root) }
     if (participatedTools.isEmpty()) {
       // If a tool is mentioned as a tool.<toolId> in pyproject.toml, we consider it participated in project configuration
       for (tool in tools) {
@@ -166,8 +164,7 @@ private suspend fun generatePyProjectTomlEntries(
                                             projectName,
                                             root,
                                             mutableSetOf(),
-                                            sourceRoots,
-                                            excludedDirs.toSet())
+                                            sourceRoots)
     entries.add(entry)
   }
   val entriesByName = entries.associateBy { it.name }
@@ -198,7 +195,7 @@ private suspend fun generatePyProjectTomlEntries(
     val entity = entriesByName[name] ?: error("returned broken name $name")
     entity.dependencies.addAll(deps)
   }
-  return@withContext Pair(entries.toSet(), allExcludeDirs)
+  return@withContext entries.toSet()
 }
 
 private suspend fun Iterable<Tool>.getNameFromEP(projectToml: PyProjectToml): Pair<Tool, @NlsSafe String>? =
@@ -222,9 +219,6 @@ private suspend fun createProjectModel(
       contentRoots = listOf(ContentRootEntity(pyProject.root.toVirtualFileUrl(virtualFileUrlManager), emptyList(), entitySource) {
         sourceRoots = pyProject.sourceRoots.map { srcRoot ->
           SourceRootEntity(srcRoot.toVirtualFileUrl(virtualFileUrlManager), PYTHON_SOURCE_ROOT_TYPE, entitySource)
-        }
-        excludedUrls = pyProject.excludedRoots.map { excludedRoot ->
-          ExcludeUrlEntity(excludedRoot.toVirtualFileUrl(virtualFileUrlManager), entitySource)
         }
       })
       val participatedTools: MutableMap<ToolId, ModuleId?> =
@@ -265,7 +259,6 @@ private data class PyProjectTomlBasedEntryImpl(
   override val root: Directory,
   val dependencies: MutableSet<ProjectName>,
   val sourceRoots: Set<Directory>,
-  val excludedRoots: Set<Directory>,
 ) : PyProjectTomlProject
 
 
@@ -297,7 +290,6 @@ private suspend fun findSrc(root: Directory): Set<Directory> =
 
 private val PYTHON_MODULE_ID: ModuleTypeId = ModuleTypeId(PyNames.PYTHON_MODULE_ID)
 
-private val ModuleEntity.isPythonModule: Boolean get() = entitySource.isPythonEntity || type == PYTHON_MODULE_ID
 private val EntitySource.isPythonEntity: Boolean get() = (this as? JpsImportedEntitySource)?.externalSystemId == PY_PROJECT_SYSTEM_ID.id
 
 private class ModuleAnchor(moduleEntity: ModuleEntity) {
