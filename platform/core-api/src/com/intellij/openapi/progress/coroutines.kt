@@ -558,7 +558,7 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
  * We keep this class as an inheritor of [EmptyProgressIndicator] for ease of debugging -- if one sees an instance of this class,
  * it means that the currently used indicator depends on some job.
  */
-private class JobDependentIndicator(modalityState: ModalityState): EmptyProgressIndicator(modalityState)
+private class JobDependentIndicator(modalityState: ModalityState): BridgeJobIndicatorBase(modalityState)
 
 @Throws(CancellationException::class)
 @Internal
