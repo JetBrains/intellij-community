@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.parents
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentQuickFix
 import com.jetbrains.python.psi.PyAssignmentStatement
@@ -76,9 +77,8 @@ class PyNoneFunctionAssignmentInspection : PyInspection() {
       return getParentSkippingParentheses() !is PyExpressionStatement
     }
 
-    private fun PsiElement.getParentSkippingParentheses(): PsiElement {
-      return generateSequence(parent) { it.parent }
+    private fun PsiElement.getParentSkippingParentheses(): PsiElement =
+      parents(withSelf = false)
         .first { it !is PyParenthesizedExpression }
-    }
   }
 }
