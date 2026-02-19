@@ -322,6 +322,32 @@ package org.jetbrains.jewel.foundation.lazy {
   public static final class DefaultSelectableOnKeyEvent.Companion extends org.jetbrains.jewel.foundation.lazy.DefaultSelectableOnKeyEvent {
   }
 
+  public final class MultiSelectionLazyListState implements androidx.compose.foundation.gestures.ScrollableState org.jetbrains.jewel.foundation.lazy.SelectableScope {
+    ctor public MultiSelectionLazyListState(androidx.compose.foundation.lazy.LazyListState lazyListState, optional java.util.Set<?> initialSelectedKeys);
+    method public int getFirstVisibleItemIndex();
+    method public int getFirstVisibleItemScrollOffset();
+    method public androidx.compose.foundation.interaction.InteractionSource getInteractionSource();
+    method public Integer? getLastActiveItemIndex();
+    method public androidx.compose.foundation.lazy.LazyListLayoutInfo getLayoutInfo();
+    method public androidx.compose.foundation.lazy.LazyListState getLazyListState();
+    method public java.util.Set<java.lang.Object> getSelectedKeys();
+    method public org.jetbrains.jewel.foundation.lazy.SelectionMode getSelectionMode();
+    method public boolean isKeyboardNavigating();
+    method public suspend Object? scrollToItem(int itemIndex, optional boolean animateScroll, optional int scrollOffset, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public void setKeyboardNavigating(boolean);
+    method public void setLastActiveItemIndex(Integer?);
+    method public void setSelectedKeys(java.util.Set<?>);
+    property public int firstVisibleItemIndex;
+    property public int firstVisibleItemScrollOffset;
+    property public androidx.compose.foundation.interaction.InteractionSource interactionSource;
+    property public boolean isKeyboardNavigating;
+    property public Integer? lastActiveItemIndex;
+    property public androidx.compose.foundation.lazy.LazyListLayoutInfo layoutInfo;
+    property public androidx.compose.foundation.lazy.LazyListState lazyListState;
+    property public java.util.Set<java.lang.Object> selectedKeys;
+    property public org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode;
+  }
+
   public interface SelectableColumnKeybindings {
     property public abstract boolean androidx.compose.ui.input.key.KeyEvent.isContiguousSelectionKeyPressed;
     property public abstract boolean androidx.compose.ui.input.pointer.PointerKeyboardModifiers.isContiguousSelectionKeyPressed;
@@ -363,8 +389,10 @@ package org.jetbrains.jewel.foundation.lazy {
   }
 
   public final class SelectableLazyColumnKt {
-    method @androidx.compose.runtime.Composable public static void SelectableLazyColumn(optional androidx.compose.ui.Modifier modifier, optional org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode, optional org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state, optional androidx.compose.foundation.layout.PaddingValues contentPadding, optional boolean reverseLayout, optional kotlin.jvm.functions.Function1<? super java.util.List<java.lang.Integer>,kotlin.Unit> onSelectedIndexesChange, optional androidx.compose.foundation.layout.Arrangement.Vertical verticalArrangement, optional androidx.compose.ui.Alignment.Horizontal horizontalAlignment, optional androidx.compose.foundation.gestures.FlingBehavior flingBehavior, optional org.jetbrains.jewel.foundation.lazy.tree.KeyActions keyActions, optional org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions pointerEventActions, optional androidx.compose.foundation.interaction.MutableInteractionSource? interactionSource, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void MultiSelectionLazyColumn(optional androidx.compose.ui.Modifier modifier, optional org.jetbrains.jewel.foundation.lazy.MultiSelectionLazyListState state, optional androidx.compose.foundation.layout.PaddingValues contentPadding, optional boolean reverseLayout, optional kotlin.jvm.functions.Function1<? super java.util.List<java.lang.Integer>,kotlin.Unit> onSelectedIndexesChange, optional androidx.compose.foundation.layout.Arrangement.Vertical verticalArrangement, optional androidx.compose.ui.Alignment.Horizontal horizontalAlignment, optional androidx.compose.foundation.gestures.FlingBehavior flingBehavior, optional org.jetbrains.jewel.foundation.lazy.tree.KeyActions keyActions, optional org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions pointerEventActions, optional androidx.compose.foundation.interaction.MutableInteractionSource? interactionSource, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,kotlin.Unit> content);
+    method @Deprecated @androidx.compose.runtime.Composable public static void SelectableLazyColumn(optional androidx.compose.ui.Modifier modifier, optional org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode, optional org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state, optional androidx.compose.foundation.layout.PaddingValues contentPadding, optional boolean reverseLayout, optional kotlin.jvm.functions.Function1<? super java.util.List<java.lang.Integer>,kotlin.Unit> onSelectedIndexesChange, optional androidx.compose.foundation.layout.Arrangement.Vertical verticalArrangement, optional androidx.compose.ui.Alignment.Horizontal horizontalAlignment, optional androidx.compose.foundation.gestures.FlingBehavior flingBehavior, optional org.jetbrains.jewel.foundation.lazy.tree.KeyActions keyActions, optional org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions pointerEventActions, optional androidx.compose.foundation.interaction.MutableInteractionSource? interactionSource, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void SelectableLazyColumn(optional androidx.compose.ui.Modifier modifier, optional org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode, optional org.jetbrains.jewel.foundation.lazy.SelectableLazyListState state, optional androidx.compose.foundation.layout.PaddingValues contentPadding, optional boolean reverseLayout, optional kotlin.jvm.functions.Function1<? super java.util.List<java.lang.Integer>,kotlin.Unit> onSelectedIndexesChange, optional androidx.compose.foundation.layout.Arrangement.Vertical verticalArrangement, optional androidx.compose.ui.Alignment.Horizontal horizontalAlignment, optional androidx.compose.foundation.gestures.FlingBehavior flingBehavior, optional org.jetbrains.jewel.foundation.lazy.tree.KeyActions keyActions, optional org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions pointerEventActions, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void SingleSelectionLazyColumn(optional androidx.compose.ui.Modifier modifier, optional org.jetbrains.jewel.foundation.lazy.SingleSelectionLazyListState state, optional androidx.compose.foundation.layout.PaddingValues contentPadding, optional boolean reverseLayout, optional kotlin.jvm.functions.Function1<? super java.util.List<java.lang.Integer>,kotlin.Unit> onSelectedIndexesChange, optional androidx.compose.foundation.layout.Arrangement.Vertical verticalArrangement, optional androidx.compose.ui.Alignment.Horizontal horizontalAlignment, optional androidx.compose.foundation.gestures.FlingBehavior flingBehavior, optional org.jetbrains.jewel.foundation.lazy.tree.KeyActions keyActions, optional org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions pointerEventActions, optional androidx.compose.foundation.interaction.MutableInteractionSource? interactionSource, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,kotlin.Unit> content);
   }
 
   public interface SelectableLazyItemScope extends androidx.compose.foundation.lazy.LazyItemScope {
@@ -404,7 +432,7 @@ package org.jetbrains.jewel.foundation.lazy {
   }
 
   public final class SelectableLazyListState implements androidx.compose.foundation.gestures.ScrollableState org.jetbrains.jewel.foundation.lazy.SelectableScope {
-    ctor public SelectableLazyListState(androidx.compose.foundation.lazy.LazyListState lazyListState);
+    ctor public SelectableLazyListState(androidx.compose.foundation.lazy.LazyListState lazyListState, optional org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode, optional java.util.Set<?> initialSelectedKeys);
     method public int getFirstVisibleItemIndex();
     method public int getFirstVisibleItemScrollOffset();
     method public androidx.compose.foundation.interaction.InteractionSource getInteractionSource();
@@ -412,6 +440,7 @@ package org.jetbrains.jewel.foundation.lazy {
     method public androidx.compose.foundation.lazy.LazyListLayoutInfo getLayoutInfo();
     method public androidx.compose.foundation.lazy.LazyListState getLazyListState();
     method public java.util.Set<java.lang.Object> getSelectedKeys();
+    method public org.jetbrains.jewel.foundation.lazy.SelectionMode getSelectionMode();
     method public boolean isKeyboardNavigating();
     method public suspend Object? scrollToItem(int itemIndex, optional boolean animateScroll, optional int scrollOffset, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setKeyboardNavigating(boolean);
@@ -425,12 +454,16 @@ package org.jetbrains.jewel.foundation.lazy {
     property public androidx.compose.foundation.lazy.LazyListLayoutInfo layoutInfo;
     property public androidx.compose.foundation.lazy.LazyListState lazyListState;
     property public java.util.Set<java.lang.Object> selectedKeys;
+    property public org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode;
   }
 
   public final class SelectableLazyListStateKt {
     method public static kotlin.ranges.IntRange getVisibleItemsRange(androidx.compose.foundation.lazy.LazyListState);
     method public static kotlin.ranges.IntRange getVisibleItemsRange(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState);
-    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.foundation.lazy.SelectableLazyListState rememberSelectableLazyListState(optional int firstVisibleItemIndex, optional int firstVisibleItemScrollOffset);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.foundation.lazy.MultiSelectionLazyListState rememberMultiSelectionLazyListState(optional int initialFirstVisibleItemIndex, optional int initialFirstVisibleItemScrollOffset, optional java.util.Set<?> initialSelectedKeys);
+    method @Deprecated @androidx.compose.runtime.Composable public static org.jetbrains.jewel.foundation.lazy.SelectableLazyListState rememberSelectableLazyListState(optional int firstVisibleItemIndex, optional int firstVisibleItemScrollOffset);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.foundation.lazy.SelectableLazyListState rememberSelectableLazyListState(optional int initialFirstVisibleItemIndex, optional int initialFirstVisibleItemScrollOffset, optional org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode, optional java.util.List<?> initialSelectedKeys);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.foundation.lazy.SingleSelectionLazyListState rememberSingleSelectionLazyListState(optional int initialFirstVisibleItemIndex, optional int initialFirstVisibleItemScrollOffset, optional Object? initialSelectedKey);
     property public static kotlin.ranges.IntRange androidx.compose.foundation.lazy.LazyListState.visibleItemsRange;
     property public static kotlin.ranges.IntRange org.jetbrains.jewel.foundation.lazy.SelectableLazyListState.visibleItemsRange;
   }
@@ -445,6 +478,32 @@ package org.jetbrains.jewel.foundation.lazy {
     enum_constant public static final org.jetbrains.jewel.foundation.lazy.SelectionMode Multiple;
     enum_constant public static final org.jetbrains.jewel.foundation.lazy.SelectionMode None;
     enum_constant public static final org.jetbrains.jewel.foundation.lazy.SelectionMode Single;
+  }
+
+  public final class SingleSelectionLazyListState implements androidx.compose.foundation.gestures.ScrollableState org.jetbrains.jewel.foundation.lazy.SelectableScope {
+    ctor public SingleSelectionLazyListState(androidx.compose.foundation.lazy.LazyListState lazyListState, optional Object? initialSelectedKey);
+    method public int getFirstVisibleItemIndex();
+    method public int getFirstVisibleItemScrollOffset();
+    method public androidx.compose.foundation.interaction.InteractionSource getInteractionSource();
+    method public Integer? getLastActiveItemIndex();
+    method public androidx.compose.foundation.lazy.LazyListLayoutInfo getLayoutInfo();
+    method public androidx.compose.foundation.lazy.LazyListState getLazyListState();
+    method public java.util.Set<java.lang.Object> getSelectedKeys();
+    method public org.jetbrains.jewel.foundation.lazy.SelectionMode getSelectionMode();
+    method public boolean isKeyboardNavigating();
+    method public suspend Object? scrollToItem(int itemIndex, optional boolean animateScroll, optional int scrollOffset, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public void setKeyboardNavigating(boolean);
+    method public void setLastActiveItemIndex(Integer?);
+    method public void setSelectedKeys(java.util.Set<?>);
+    property public int firstVisibleItemIndex;
+    property public int firstVisibleItemScrollOffset;
+    property public androidx.compose.foundation.interaction.InteractionSource interactionSource;
+    property public boolean isKeyboardNavigating;
+    property public Integer? lastActiveItemIndex;
+    property public androidx.compose.foundation.lazy.LazyListLayoutInfo layoutInfo;
+    property public androidx.compose.foundation.lazy.LazyListState lazyListState;
+    property public java.util.Set<java.lang.Object> selectedKeys;
+    property public org.jetbrains.jewel.foundation.lazy.SelectionMode selectionMode;
   }
 
 }
@@ -913,7 +972,7 @@ package org.jetbrains.jewel.foundation.theme {
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class ThemeColorPalette {
-    ctor public ThemeColorPalette(java.util.List<androidx.compose.ui.graphics.Color> gray, java.util.List<androidx.compose.ui.graphics.Color> blue, java.util.List<androidx.compose.ui.graphics.Color> green, java.util.List<androidx.compose.ui.graphics.Color> red, java.util.List<androidx.compose.ui.graphics.Color> yellow, java.util.List<androidx.compose.ui.graphics.Color> orange, java.util.List<androidx.compose.ui.graphics.Color> purple, java.util.List<androidx.compose.ui.graphics.Color> teal, java.util.Map<java.lang.String,androidx.compose.ui.graphics.Color> rawMap);
+    ctor public ThemeColorPalette(java.util.List<androidx.compose.ui.graphics.Color> gray, java.util.List<androidx.compose.ui.graphics.Color> blue, java.util.List<androidx.compose.ui.graphics.Color> green, java.util.List<androidx.compose.ui.graphics.Color> red, java.util.List<androidx.compose.ui.graphics.Color> yellow, java.util.List<androidx.compose.ui.graphics.Color> orange, java.util.List<androidx.compose.ui.graphics.Color> purple, java.util.List<androidx.compose.ui.graphics.Color> teal, java.util.Map<java.lang.String,androidx.compose.ui.graphics.Color> rawMap, boolean isIslands);
     method @Deprecated public long blue(int index);
     method public androidx.compose.ui.graphics.Color? blueOrNull(int index);
     method public java.util.List<androidx.compose.ui.graphics.Color> getBlue();
