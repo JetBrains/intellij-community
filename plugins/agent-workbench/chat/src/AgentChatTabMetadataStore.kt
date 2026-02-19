@@ -98,6 +98,46 @@ internal class AgentChatTabMetadataStore {
     }
   }
 
+  fun deleteByThread(projectPath: String, threadIdentity: String): Int {
+    if (!Files.isDirectory(tabsDir)) {
+      return 0
+    }
+
+    // tabKey is a one-way hash over (projectHash, projectPath, threadIdentity, subAgentId).
+    // Archive cleanup only knows (projectPath, threadIdentity), so without a reverse index we
+    // must scan metadata files to remove all sub-agent variants of the same thread.
+    val normalizedProjectPath = normalizeAgentChatProjectPath(projectPath)
+    var deleted = 0
+    Files.newDirectoryStream(tabsDir, "*${AGENT_CHAT_METADATA_FILE_SUFFIX}").use { files ->
+      for (file in files) {
+        if (!Files.isRegularFile(file)) {
+          continue
+        }
+
+        val metadata = readMetadata(file)
+        val identity = if (metadata != null && metadataPath(metadata.tabKey) == file) {
+          IdentityPayload(
+            projectHash = metadata.projectHash,
+            projectPath = metadata.projectPath,
+            threadIdentity = metadata.threadIdentity,
+            subAgentId = metadata.subAgentId,
+          )
+        }
+        else {
+          // Fallback path for malformed/version-mismatched files: keep deletion resilient by
+          // parsing only the identity fields needed for archive matching.
+          readMetadataIdentity(file)
+        } ?: continue
+
+        if (normalizeAgentChatProjectPath(identity.projectPath) == normalizedProjectPath && identity.threadIdentity == threadIdentity) {
+          deleteMetadataFile(file)
+          deleted++
+        }
+      }
+    }
+    return deleted
+  }
+
   fun pruneStale() {
     synchronized(lock) {
       if (!Files.isDirectory(tabsDir)) {
@@ -153,6 +193,63 @@ internal class AgentChatTabMetadataStore {
       LOG.debug("Failed to read Agent Chat metadata file $path", t)
       null
     }
+  }
+
+  private fun readMetadataIdentity(path: Path): IdentityPayload? {
+    return try {
+      Files.newBufferedReader(path).use { reader ->
+        jsonFactory.createParser(reader).use { parser ->
+          parseMetadataIdentity(parser)
+        }
+      }
+    }
+    catch (t: Throwable) {
+      LOG.debug("Failed to read Agent Chat metadata identity from $path", t)
+      null
+    }
+  }
+
+  private fun parseMetadataIdentity(parser: JsonParser): IdentityPayload? {
+    if (parser.nextToken() != JsonToken.START_OBJECT) {
+      return null
+    }
+
+    var projectPath: String? = null
+    var threadIdentity: String? = null
+
+    while (parser.nextToken() != JsonToken.END_OBJECT) {
+      val fieldName = parser.currentName() ?: return null
+      parser.nextToken()
+      when (fieldName) {
+        "identity" -> {
+          val identity = parseIdentity(parser)
+          if (identity != null) {
+            if (identity.projectPath.isNotBlank()) {
+              projectPath = identity.projectPath
+            }
+            if (identity.threadIdentity.isNotBlank()) {
+              threadIdentity = identity.threadIdentity
+            }
+          }
+        }
+        "projectPath" -> {
+          readStringOrNull(parser)?.takeIf { it.isNotBlank() }?.let { projectPath = it }
+        }
+        "threadIdentity" -> {
+          readStringOrNull(parser)?.takeIf { it.isNotBlank() }?.let { threadIdentity = it }
+        }
+        else -> parser.skipChildren()
+      }
+    }
+
+    val resolvedProjectPath = projectPath ?: return null
+    val resolvedThreadIdentity = threadIdentity ?: return null
+    return IdentityPayload(
+      projectHash = "",
+      projectPath = resolvedProjectPath,
+      threadIdentity = resolvedThreadIdentity,
+      subAgentId = null,
+    )
   }
 
   private fun parseMetadata(parser: JsonParser): AgentChatTabMetadata? {

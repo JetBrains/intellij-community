@@ -53,6 +53,7 @@ internal suspend fun withService(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
+  archiveChatCleanup: suspend (projectPath: String, threadIdentity: String) -> Unit = { _, _ -> },
   action: suspend (AgentSessionsService) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
@@ -63,6 +64,7 @@ internal suspend fun withService(
       sessionSourcesProvider = sessionSourcesProvider,
       projectEntriesProvider = projectEntriesProvider,
       treeUiState = treeUiState,
+      archiveChatCleanup = archiveChatCleanup,
       subscribeToProjectLifecycle = false,
     )
     action(service)

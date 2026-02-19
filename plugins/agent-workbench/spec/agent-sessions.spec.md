@@ -14,7 +14,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-02-16
+Date: 2026-02-19
 
 ## Summary
 Define the Agent Threads tool window as a provider-agnostic, project-scoped session browser. Threads from supported providers are aggregated per project/worktree, rendered in one tree, opened through a shared chat routing flow, and optionally archived when the provider supports archive.
@@ -64,6 +64,7 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
 - Thread context menu must expose `Archive` only when the corresponding provider bridge advertises archive capability.
 - Archive action requests must be deduplicated per `(path, provider, threadId)` while in flight.
 - Successful archive must optimistically remove the thread from current state and then trigger refresh.
+- Successful archive must close all open Agent chat tabs for the same normalized project path and thread identity (`provider:threadId`) and delete corresponding chat metadata files.
 - Archive failures (provider missing, unsupported, or backend error) must resolve to provider-unavailable warning behavior.
 - Codex thread discovery must default to rollout session files; app-server thread discovery remains an explicit compatibility override path.
 - Codex thread title normalization and filtering rules are defined in `spec/agent-sessions-codex-rollout-source.spec.md` and must be used for Codex thread rows.
@@ -94,6 +95,7 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
 - Missing provider CLI/tooling must resolve to provider-specific user-facing messages.
 - Unexpected provider failures must resolve to generic provider-unavailable warnings when partial data exists.
 - Refresh/load failures must preserve already loaded thread data when possible.
+- Archive chat-metadata cleanup failures must be logged and must not block successful thread removal and refresh behavior.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest'`

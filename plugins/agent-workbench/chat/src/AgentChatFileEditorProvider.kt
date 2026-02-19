@@ -48,6 +48,7 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
   private fun createChatEditor(project: Project, file: AgentChatVirtualFile): FileEditor {
     val validationError = validate(file)
     if (validationError != null) {
+      forgetAgentChatTabMetadata(file.tabKey)
       AgentChatRestoreNotificationService.reportRestoreFailure(project, file, validationError)
       if (!project.isDisposed) {
         FileEditorManager.getInstance(project).closeFile(file)

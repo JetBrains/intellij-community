@@ -14,7 +14,7 @@ targets:
 # Agent Chat Editor
 
 Status: Draft
-Date: 2026-02-18
+Date: 2026-02-19
 
 ## Summary
 Define how thread/sub-agent selections open chat editor tabs. Routing honors dedicated-frame mode, reuses tabs by session identity, persists/restores chat tabs through a protocol-backed virtual file system, and lazily initializes heavy terminal content on first explicit tab selection.
@@ -44,6 +44,7 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 - Metadata file payload must include identity and runtime fields: project hash/path, thread identity/sub-agent, thread id, shell command, title, and updated timestamp.
 - Metadata files are canonical restore state for Agent chat tabs; URL compatibility with previous descriptor-encoded format is not required.
 - Stale or invalid metadata files must be pruned periodically.
+- Successful thread archive from Agent Threads must close all matching open chat tabs and delete matching metadata files for the same normalized project path + thread identity.
 - Chat editor creation must be lazy for heavy terminal content:
   - tab/editor shell is created immediately,
   - terminal session is created only after first explicit selection/focus of that tab.
@@ -84,8 +85,10 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 - If the project path is invalid or project opening fails, do not open a chat editor tab.
 - If provider/session identity cannot be resolved, fail safely without crashing the UI.
 - If a restored tab metadata file is missing/corrupt/invalid (or has missing path/identity/command), skip and close that tab and show a non-blocking warning notification.
+- Restore validation failures must delete the tab metadata file immediately.
 - Restore warnings for the same tab/reason must be deduplicated per IDE session to avoid startup notification spam.
 - If terminal initialization fails on first tab activation, close the tab and show a warning notification.
+- Terminal initialization failures must delete the tab metadata file immediately.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsOpenModeRoutingTest'`

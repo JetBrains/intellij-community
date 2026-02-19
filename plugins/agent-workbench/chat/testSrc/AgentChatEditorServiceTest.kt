@@ -125,6 +125,99 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
     assertThat(files).hasSize(2)
   }
 
+  fun testArchiveCleanupClosesOpenTabsAndDeletesMetadata() {
+    openChatOnEdt(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "Main thread",
+      subAgentId = null,
+    )
+    openChatOnEdt(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "Main thread",
+      subAgentId = "alpha",
+    )
+    openChatOnEdt(
+      threadIdentity = "CODEX:thread-2",
+      shellCommand = listOf("codex", "resume", "thread-2"),
+      threadId = "thread-2",
+      threadTitle = "Other thread",
+      subAgentId = null,
+    )
+
+    val store = AgentChatTabMetadataStores.getInstance()
+    val beforeCleanup = openedChatFiles()
+    assertThat(beforeCleanup).hasSize(3)
+    val matchingTabKeys = beforeCleanup
+      .filter { it.threadIdentity == "CODEX:thread-1" }
+      .map { it.tabKey }
+    val unrelatedTabKey = beforeCleanup.first { it.threadIdentity == "CODEX:thread-2" }.tabKey
+
+    runWithModalProgressBlocking(project, "") {
+      closeAndForgetAgentChatsForThread(
+        projectPath = projectPath,
+        threadIdentity = "CODEX:thread-1",
+      )
+    }
+
+    val afterCleanup = openedChatFiles()
+    assertThat(afterCleanup.map { it.threadIdentity })
+      .containsExactly("CODEX:thread-2")
+    for (tabKey in matchingTabKeys) {
+      assertThat(store.loadDescriptor(tabKey)).isNull()
+    }
+    assertThat(store.loadDescriptor(unrelatedTabKey)).isNotNull
+  }
+
+  fun testValidationFailureDeletesMetadata() {
+    val descriptor = AgentChatFileDescriptor.create(
+      projectHash = project.locationHash,
+      projectPath = projectPath,
+      threadIdentity = "CODEX:invalid-shell",
+      threadId = "invalid-shell",
+      threadTitle = "Invalid",
+      subAgentId = null,
+      shellCommand = emptyList(),
+    )
+    val store = AgentChatTabMetadataStores.getInstance()
+    store.upsert(descriptor)
+    try {
+      val file = AgentChatVirtualFileSystems.getInstance().getOrCreateFile(descriptor)
+      AgentChatFileEditorProvider().createEditor(project, file)
+
+      assertThat(store.loadDescriptor(descriptor.tabKey)).isNull()
+    }
+    finally {
+      store.delete(descriptor.tabKey)
+    }
+  }
+
+  fun testTerminalInitializationFailureDeletesMetadata() {
+    val descriptor = AgentChatFileDescriptor.create(
+      projectHash = project.locationHash,
+      projectPath = projectPath,
+      threadIdentity = "CODEX:init-failure",
+      threadId = "init-failure",
+      threadTitle = "Init failure",
+      subAgentId = null,
+      shellCommand = codexCommand,
+    )
+    val store = AgentChatTabMetadataStores.getInstance()
+    store.upsert(descriptor)
+    try {
+      val file = AgentChatVirtualFileSystems.getInstance().getOrCreateFile(descriptor)
+      AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, RuntimeException("boom"))
+
+      assertThat(store.loadDescriptor(descriptor.tabKey)).isNull()
+    }
+    finally {
+      store.delete(descriptor.tabKey)
+    }
+  }
+
   private fun openedChatFiles(): List<AgentChatVirtualFile> {
     return FileEditorManager.getInstance(project).openFiles.filterIsInstance<AgentChatVirtualFile>()
   }

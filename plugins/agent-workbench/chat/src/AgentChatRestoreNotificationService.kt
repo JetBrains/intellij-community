@@ -19,6 +19,7 @@ internal object AgentChatRestoreNotificationService {
 
   fun reportTerminalInitializationFailure(project: Project, file: AgentChatVirtualFile, throwable: Throwable) {
     LOG.warn("Failed to initialize Agent Chat terminal tab for ${file.url}", throwable)
+    forgetAgentChatTabMetadata(file.tabKey)
     reportWarning(
       project = project,
       file = file,

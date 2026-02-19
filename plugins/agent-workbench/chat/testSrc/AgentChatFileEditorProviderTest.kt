@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.openapi.application.PathManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import java.nio.file.Files
 
 class AgentChatFileEditorProviderTest {
   @Test
@@ -143,5 +145,96 @@ class AgentChatFileEditorProviderTest {
     assertThat(resolved.threadId).isEqualTo(descriptor.threadId)
     assertThat(resolved.subAgentId).isEqualTo(descriptor.subAgentId)
     assertThat(resolved.shellCommand).isEqualTo(descriptor.shellCommand)
+  }
+
+  @Test
+  fun deleteByThreadRemovesOnlyMatchingMetadataFiles() {
+    val store = AgentChatTabMetadataStores.createStandaloneForTest()
+    val matchingBase = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "codex:thread-1",
+      threadId = "thread-1",
+      threadTitle = "Thread",
+      subAgentId = null,
+      shellCommand = listOf("codex", "resume", "thread-1"),
+    )
+    val matchingSubAgent = matchingBase.copy(tabKey = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "codex:thread-1",
+      threadId = "thread-1",
+      threadTitle = "Thread",
+      subAgentId = "alpha",
+      shellCommand = listOf("codex", "resume", "thread-1"),
+    ).tabKey, subAgentId = "alpha")
+    val differentIdentity = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "codex:thread-2",
+      threadId = "thread-2",
+      threadTitle = "Thread",
+      subAgentId = null,
+      shellCommand = listOf("codex", "resume", "thread-2"),
+    )
+    val differentProject = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-b",
+      threadIdentity = "codex:thread-1",
+      threadId = "thread-1",
+      threadTitle = "Thread",
+      subAgentId = null,
+      shellCommand = listOf("codex", "resume", "thread-1"),
+    )
+
+    store.upsert(matchingBase)
+    store.upsert(matchingSubAgent)
+    store.upsert(differentIdentity)
+    store.upsert(differentProject)
+    try {
+      val deleted = store.deleteByThread("/work/project-a/", "codex:thread-1")
+
+      assertThat(deleted).isEqualTo(2)
+      assertThat(store.loadDescriptor(matchingBase.tabKey)).isNull()
+      assertThat(store.loadDescriptor(matchingSubAgent.tabKey)).isNull()
+      assertThat(store.loadDescriptor(differentIdentity.tabKey)).isNotNull
+      assertThat(store.loadDescriptor(differentProject.tabKey)).isNotNull
+    }
+    finally {
+      store.delete(matchingBase.tabKey)
+      store.delete(matchingSubAgent.tabKey)
+      store.delete(differentIdentity.tabKey)
+      store.delete(differentProject.tabKey)
+    }
+  }
+
+  @Test
+  fun deleteByThreadRemovesVersionMismatchedMetadataFile() {
+    val descriptor = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "codex:thread-legacy",
+      threadId = "thread-legacy",
+      threadTitle = "Thread",
+      subAgentId = null,
+      shellCommand = listOf("codex", "resume", "thread-legacy"),
+    )
+    val store = AgentChatTabMetadataStores.createStandaloneForTest()
+    store.upsert(descriptor)
+    val metadataPath = PathManager.getConfigDir()
+      .resolve("agent-workbench-chat-frame")
+      .resolve("tabs")
+      .resolve("${descriptor.tabKey}.awchat.json")
+    val originalJson = Files.readString(metadataPath)
+    Files.writeString(metadataPath, originalJson.replace("\"version\":2", "\"version\":99"))
+    try {
+      val deleted = store.deleteByThread("/work/project-a", "codex:thread-legacy")
+
+      assertThat(deleted).isEqualTo(1)
+      assertThat(store.loadDescriptor(descriptor.tabKey)).isNull()
+    }
+    finally {
+      store.delete(descriptor.tabKey)
+    }
   }
 }

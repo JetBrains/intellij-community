@@ -25,7 +25,7 @@ targets:
 # Agent Threads Testing
 
 Status: Draft
-Date: 2026-02-16
+Date: 2026-02-19
 
 ## Summary
 Define required test coverage for the multi-provider Agent Threads stack: source aggregation, service behavior, tree/UI rendering, and Codex backend protocol compatibility.
@@ -52,7 +52,8 @@ Define required test coverage for the multi-provider Agent Threads stack: source
   - unknown-count behavior when unknown provider fails/succeeds,
   - cached preview rows rendered before open-path provider load completes,
   - persisted visible thread count restoration during refresh bootstrap,
-  - archive action removing the thread from state and preserving remaining threads after refresh.
+  - archive action removing the thread from state and preserving remaining threads after refresh,
+  - archive action invoking chat cleanup (close tabs + delete metadata) only on successful archive.
 - On-demand integration tests must cover:
   - project request deduplication,
   - worktree request deduplication with refresh interaction,
@@ -80,7 +81,9 @@ Define required test coverage for the multi-provider Agent Threads stack: source
 - Chat editor tests must cover metadata-backed restore and title refresh semantics:
   - v2 `agent-chat://2/<tabKey>` path parsing,
   - metadata file round-trip for shell command/thread identity/title,
-  - open-tab title refresh via editor presentation updates.
+  - open-tab title refresh via editor presentation updates,
+  - archive-triggered close-and-forget behavior for matching thread tabs,
+  - immediate metadata deletion on restore validation failure and terminal initialization failure.
 
 ## Requirement Ownership Matrix
 Primary ownership is singular by design to avoid overlap-heavy tests and keep failures actionable.

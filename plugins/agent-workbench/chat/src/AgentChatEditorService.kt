@@ -14,9 +14,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.InvalidPathException
-import java.nio.file.Path
-import kotlin.io.path.invariantSeparatorsPathString
 
 private class AgentChatEditorServiceLog
 
@@ -80,7 +77,7 @@ suspend fun collectOpenAgentChatProjectPaths(): Set<String> = runOnEdt {
     val manager = runCatching { FileEditorManagerEx.getInstanceEx(project) }.getOrNull() ?: continue
     for (openFile in manager.openFiles) {
       val chatFile = openFile as? AgentChatVirtualFile ?: continue
-      paths.add(normalizeChatProjectPath(chatFile.projectPath))
+      paths.add(normalizeAgentChatProjectPath(chatFile.projectPath))
     }
   }
   paths
@@ -101,7 +98,7 @@ suspend fun updateOpenAgentChatTabTitles(
       for (openFile in manager.openFiles) {
         val chatFile = openFile as? AgentChatVirtualFile ?: continue
         val targetTitle = titleByPathAndThreadIdentity[
-          normalizeChatProjectPath(chatFile.projectPath) to chatFile.threadIdentity
+          normalizeAgentChatProjectPath(chatFile.projectPath) to chatFile.threadIdentity
         ] ?: continue
         if (chatFile.updateThreadTitle(targetTitle)) {
           metadataStore.upsert(chatFile.toDescriptor())
@@ -137,14 +134,5 @@ private suspend fun <T> runOnEdt(action: () -> T): T {
   }
   return withContext(Dispatchers.EDT) {
     action()
-  }
-}
-
-private fun normalizeChatProjectPath(path: String): String {
-  return try {
-    Path.of(path).invariantSeparatorsPathString
-  }
-  catch (_: InvalidPathException) {
-    path
   }
 }

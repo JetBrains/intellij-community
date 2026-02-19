@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.sessions
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
+import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
 import com.intellij.agent.workbench.chat.openChat
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
@@ -59,6 +60,7 @@ internal class AgentSessionsService private constructor(
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
   private val projectEntriesProvider: suspend (AgentSessionsService) -> List<ProjectEntry>,
   private val treeUiState: SessionsTreeUiState,
+  private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String) -> Unit,
   subscribeToProjectLifecycle: Boolean,
 ) {
   @Suppress("unused")
@@ -67,6 +69,9 @@ internal class AgentSessionsService private constructor(
     sessionSourcesProvider = AgentSessionProviderBridges::sessionSources,
     projectEntriesProvider = { service -> service.projectCatalog.collectProjects() },
     treeUiState = service<AgentSessionsTreeUiStateService>(),
+    archiveChatCleanup = { projectPath, threadIdentity ->
+      closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity)
+    },
     subscribeToProjectLifecycle = true,
   )
 
@@ -75,12 +80,14 @@ internal class AgentSessionsService private constructor(
     sessionSourcesProvider: () -> List<AgentSessionSource>,
     projectEntriesProvider: suspend () -> List<ProjectEntry>,
     treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
+    archiveChatCleanup: suspend (projectPath: String, threadIdentity: String) -> Unit = { _, _ -> },
     subscribeToProjectLifecycle: Boolean = false,
   ) : this(
     serviceScope = serviceScope,
     sessionSourcesProvider = sessionSourcesProvider,
     projectEntriesProvider = { _ -> projectEntriesProvider() },
     treeUiState = treeUiState,
+    archiveChatCleanup = archiveChatCleanup,
     subscribeToProjectLifecycle = subscribeToProjectLifecycle,
   )
 
@@ -339,6 +346,20 @@ internal class AgentSessionsService private constructor(
         loadingCoordinator.suppressArchivedThread(path = normalized, provider = thread.provider, threadId = thread.id)
       }
       stateStore.removeThread(normalized, thread.provider, thread.id)
+
+      val threadIdentity = buildAgentSessionIdentity(thread.provider, thread.id)
+      try {
+        archiveChatCleanup(normalized, threadIdentity)
+      }
+      catch (t: Throwable) {
+        if (t is CancellationException) {
+          throw t
+        }
+        // Archive is already successful at provider level; cleanup is best-effort and must not
+        // resurrect the thread in UI by short-circuiting state update/refresh.
+        LOG.warn("Failed to clean archived thread chat metadata for ${thread.provider}:${thread.id}", t)
+      }
+
       if (thread.provider == AgentSessionProvider.CODEX) {
         delay(CODEX_ARCHIVE_REFRESH_DELAY)
       }
