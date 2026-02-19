@@ -1347,6 +1347,11 @@
                      key="inspection.clamp.migration.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.MathClampMigrationInspection"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     shortName="ComparatorMinMaxCanBeUsed" bundle="messages.InspectionGadgetsBundle"
+                     key="comparator.min.max.can.be.used.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids26" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.migration.ComparatorMinMaxCanBeUsedInspection"/>
 
     <!--group.names.java.language.level.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnnotationClass" bundle="messages.InspectionGadgetsBundle" key="annotation.class.display.name"

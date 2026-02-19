@@ -62,6 +62,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.binary.literals" to "Binary literals",
     "feature.classfile.api" to "ClassFile API",
     "feature.collection.factories" to "Collection factory methods",
+    "feature.comparator.min.max" to "Comparator min/max methods",
     "feature.diamond.types" to "Diamond types",
     "feature.effectively.final" to "Effectively final variables",
     "feature.enhanced.switch" to "Enhanced 'switch' blocks",

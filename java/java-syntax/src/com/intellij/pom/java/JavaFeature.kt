@@ -305,6 +305,8 @@ enum class JavaFeature {
   PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_26_PREVIEW, "feature.patterns.with.tightened.dominance"),
 
 
+  COMPARATOR_MIN_MAX(LanguageLevel.JDK_26, "feature.comparator.min.max"),
+
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;
 

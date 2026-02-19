@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports ternary expressions using <code>Comparator.compare()</code> that can be replaced
+with <code>Comparator.max()</code> or <code>Comparator.min()</code> methods available since Java 26.
+
+<p>Example:</p>
+<pre><code>
+Comparator&lt;String&gt; comp = Comparator.naturalOrder();
+/*before*/ String result = comp.compare(a, b) > 0 ? a : b;
+/*after*/  String result = comp.max(a, b);
+</code></pre>
+<!-- tooltip end -->
+
+<p><small>New in 2026.2</small></p>
+</body>
+</html>
