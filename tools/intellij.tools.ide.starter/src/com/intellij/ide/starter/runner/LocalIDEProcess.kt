@@ -16,7 +16,6 @@ import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeBeforeKillEvent
 import com.intellij.ide.starter.runner.events.IdeBeforeLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeBeforeRunIdeProcessEvent
-import com.intellij.ide.starter.runner.events.IdeExceptionEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.runner.events.StopProfilerEvent
 import com.intellij.ide.starter.telemetry.TestTelemetryService
@@ -87,11 +86,6 @@ class LocalIDEProcess : IDEProcess {
             stderrRedirect = stderr,
             onProcessCreated = { process, pid ->
               span.addEvent("process created")
-              EventsBus.subscribeOnce(process) { _: IdeExceptionEvent ->
-                if (process.isAlive) {
-                  captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir, runContext)
-                }
-              }
               runInterruptible {
                 EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process.toHandle())))
               }
