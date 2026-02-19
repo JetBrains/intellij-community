@@ -13,6 +13,7 @@ private val yaml = Yaml(
   configuration = YamlConfiguration(
     encodeDefaults = false,
     singleLineStringStyle = SingleLineStringStyle.PlainExceptAmbiguous,
+    codePointLimit = 10 * 1024 * 1024, // 10 MiB, slightly lower than the max file size in our Git repo (12 MiB)
   ),
 )
 
