@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
 import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -34,12 +35,21 @@ import javax.swing.ListCellRenderer
  */
 @ApiStatus.Internal
 interface FilesTabSEContributor {
+  fun setScope(scope: ScopeDescriptor)
+
   companion object {
     @ApiStatus.Internal
     @JvmStatic
-    fun SearchEverywhereContributor<*>.isFilesTabContributor(): Boolean {
-      return this is FilesTabSEContributor || this is SearchEverywhereContributorWrapper && this.getEffectiveContributor().isFilesTabContributor()
-    }
+    fun SearchEverywhereContributor<*>.isFilesTabContributor(): Boolean = unwrapFilesTabContributorIfPossible() != null
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun SearchEverywhereContributor<*>.unwrapFilesTabContributorIfPossible(): FilesTabSEContributor? =
+      when (this) {
+        is FilesTabSEContributor -> this
+        is SearchEverywhereContributorWrapper -> this.getEffectiveContributor().unwrapFilesTabContributorIfPossible()
+        else -> null
+      }
 
     @ApiStatus.Internal
     @JvmStatic
@@ -86,6 +96,10 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 
   override fun isDumbAware(): Boolean {
     return true
+  }
+
+  override fun setScope(scope: ScopeDescriptor) {
+    // TODO: Ilia Malakhov
   }
 
   /**
